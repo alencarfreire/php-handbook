@@ -12,7 +12,7 @@
 - [Fallback Strategy](#fallback-strategy)
 - [Bulkhead Pattern (complemento)](#bulkhead-pattern-complemento)
 - [Monitoring](#monitoring)
-- [Best Practices](#best-practices)
+- [Boas práticas](#boas-práticas)
 - [Circuit Breaker + Retry](#circuit-breaker--retry)
 - [Exercícios práticos](#exercícios-práticos)
 
@@ -432,7 +432,7 @@ Métricas:
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
 ✓ Timeout: use um timeout razoável (3-5 segundos)

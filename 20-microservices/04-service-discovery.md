@@ -13,7 +13,7 @@
 - [Caching Service Discovery](#caching-service-discovery)
 - [Graceful Degradation](#graceful-degradation)
 - [Health Checks](#health-checks)
-- [Best Practices](#best-practices)
+- [Boas práticas](#boas-práticas)
 - [Alternativas](#alternativas)
 - [Exercícios práticos](#exercícios-práticos)
 
@@ -453,7 +453,7 @@ Route::get('/health/ready', function () {
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
 ✓ Health checks com dependências (banco, Redis, etc.)

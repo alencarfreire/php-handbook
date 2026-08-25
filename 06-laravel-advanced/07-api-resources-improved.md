@@ -12,7 +12,7 @@
 - [Campos condicionais](#campos-condicionais)
 - [Paginação](#paginação)
 - [Erros comuns](#erros-comuns)
-- [Best Practices](#best-practices)
+- [Boas práticas](#boas-práticas)
 
 ---
 
@@ -367,7 +367,7 @@ public function show(User $user)
 
 ---
 
-## ✅ Best Practices
+## ✅ Boas práticas
 
 ### 1. Tirar o wrap "data" (opcional)
 

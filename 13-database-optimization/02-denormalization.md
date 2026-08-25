@@ -16,7 +16,7 @@
 - [Riscos da desnormalização](#riscos-da-desnormalização)
 - [Quando desnormalizar](#quando-desnormalizar)
 - [Quando NÃO desnormalizar](#quando-não-desnormalizar)
-- [Best Practices](#best-practices)
+- [Boas práticas](#boas-práticas)
 - [Verificar consistency](#verificar-consistency)
 - [Exercícios práticos](#exercícios-práticos)
 
@@ -494,7 +494,7 @@ class Comment extends Model
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
 ✓ Desnormalização = trade-off (velocidade vs consistency)
