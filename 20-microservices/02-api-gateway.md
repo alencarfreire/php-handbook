@@ -1,31 +1,31 @@
 # 18.2 API Gateway
 
 > **TL;DR**
-> API Gateway — единая точка входа для всех клиентов в микросервисной архитектуре. Функции: routing к микросервисам, authentication/authorization, rate limiting, request aggregation (1 запрос вместо N), caching, protocol translation. Популярные решения: Kong (Nginx-based), AWS API Gateway, custom на Laravel. Backend for Frontend (BFF) — разные gateways для разных типов клиентов (mobile/web).
+> API Gateway — ponto único de entrada para todos os clients na arquitetura de microsserviços. Funções: routing para os microsserviços, autenticação/autorização, rate limiting, request aggregation (1 request no lugar de N), caching, protocol translation. Soluções comuns: Kong (baseado em Nginx), AWS API Gateway, custom no Laravel. Backend for Frontend (BFF) — gateways diferentes para cada tipo de client (mobile/web).
 
-## Содержание
-- [Что это](#что-это)
-- [Функции API Gateway](#функции-api-gateway)
-- [Популярные API Gateways](#популярные-api-gateways)
+## Conteúdo
+- [O que é](#o-que-é)
+- [Funções do API Gateway](#funções-do-api-gateway)
+- [API Gateways populares](#api-gateways-populares)
 - [Backend for Frontend (BFF)](#backend-for-frontend-bff)
 - [Service Discovery](#service-discovery)
-- [Best Practices](#best-practices)
-- [Практические задания](#практические-задания)
+- [Boas práticas](#boas-práticas)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
 **API Gateway:**
-Единая точка входа для всех клиентов. Маршрутизирует запросы к соответствующим микросервисам.
+Ponto único de entrada para todos os clients. Encaminha os requests para os microsserviços certos.
 
-**Зачем:**
-- Централизованный routing
+**Para quê:**
+- Routing centralizado
 - Authentication/Authorization
 - Rate limiting
 - Request/Response transformation
 - Caching
 - Load balancing
 
-**Без API Gateway:**
+**Sem API Gateway:**
 
 ```
 Mobile App ──┐
@@ -35,14 +35,14 @@ Desktop ────┤    Order Service
 API ────────┘    Payment Service
                  Notification Service
 
-Проблемы:
-❌ Clients знают о всех микросервисах
-❌ Дублирование auth логики
-❌ CORS для каждого сервиса
-❌ Сложный client код
+Problemas:
+❌ Clients conhecem todos os microsserviços
+❌ Auth duplicada
+❌ CORS em cada serviço
+❌ Código do client fica complexo
 ```
 
-**С API Gateway:**
+**Com API Gateway:**
 
 ```
 Mobile App ──┐
@@ -52,18 +52,18 @@ Desktop ────┤                   ├──→ Order Service
 API ────────┘                   ├──→ Payment Service
                                 └──→ Notification Service
 
-Преимущества:
-✅ Один endpoint для clients
-✅ Централизованная auth
-✅ Routing логика в одном месте
-✅ Простой client код
+Vantagens:
+✅ Um endpoint para os clients
+✅ Auth centralizada
+✅ Lógica de routing num só lugar
+✅ Código do client fica simples
 ```
 
 ---
 
-## Функции API Gateway
+## Funções do API Gateway
 
-### 1. Routing (маршрутизация)
+### 1. Routing (roteamento)
 
 ```
 GET  /api/users/*       → User Service
@@ -71,7 +71,7 @@ GET  /api/orders/*      → Order Service
 POST /api/payments/*    → Payment Service
 ```
 
-**Kong конфигурация:**
+**Configuração do Kong:**
 
 ```yaml
 services:
@@ -94,7 +94,7 @@ services:
 
 ### 2. Authentication
 
-**API Gateway проверяет JWT:**
+**API Gateway verifica o JWT:**
 
 ```
 Client → API Gateway (verify JWT) → Microservice
@@ -111,7 +111,7 @@ plugins:
       key_claim_name: iss
 ```
 
-**Laravel (Custom Gateway):**
+**Laravel (Gateway custom):**
 
 ```php
 // routes/api.php (Gateway)
@@ -154,19 +154,19 @@ Route::middleware('throttle:100,1')->group(function () {
 
 ### 4. Request Aggregation
 
-**Проблема:**
+**Problema:**
 
 ```
-Mobile App нужно:
+O app mobile precisa:
 - User data
 - User orders
 - User notifications
 
-Без Gateway: 3 requests
-С Gateway: 1 request
+Sem Gateway: 3 requests
+Com Gateway: 1 request
 ```
 
-**Реализация:**
+**Implementação:**
 
 ```php
 // API Gateway
@@ -174,7 +174,7 @@ class ProfileController extends Controller
 {
     public function show($userId)
     {
-        // Parallel requests
+        // Requests em paralelo
         [$user, $orders, $notifications] = Promise\Utils::unwrap([
             Http::async()->get("http://user-service/api/users/{$userId}"),
             Http::async()->get("http://order-service/api/users/{$userId}/orders"),
@@ -189,7 +189,7 @@ class ProfileController extends Controller
     }
 }
 
-// Client делает 1 запрос
+// Client faz 1 request
 GET /api/profile/123
 ```
 
@@ -223,13 +223,13 @@ class GatewayController extends Controller
 
 ---
 
-## Популярные API Gateways
+## API Gateways populares
 
 ### 1. Kong
 
-**Что это:** Open-source API Gateway на базе Nginx.
+**O que é:** API Gateway open-source baseado em Nginx.
 
-**Установка:**
+**Instalação:**
 
 ```bash
 docker run -d --name kong \
@@ -242,7 +242,7 @@ docker run -d --name kong \
   kong:latest
 ```
 
-**Добавить сервис:**
+**Adicionar serviço:**
 
 ```bash
 curl -i -X POST http://localhost:8001/services/ \
@@ -265,7 +265,7 @@ curl -i -X POST http://localhost:8001/services/user-service/routes \
 
 ### 2. AWS API Gateway
 
-**Managed service от AWS.**
+**Managed service da AWS.**
 
 **Terraform:**
 
@@ -300,7 +300,7 @@ resource "aws_api_gateway_integration" "lambda" {
 
 ### 3. Nginx
 
-**Custom Gateway на Nginx:**
+**Gateway custom no Nginx:**
 
 ```nginx
 upstream user_service {
@@ -360,18 +360,18 @@ class GatewayController extends Controller
 
     public function proxy(Request $request, string $service, string $path)
     {
-        // 1. Auth check
+        // 1. Checagem de auth
         if (!$request->bearerToken()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Não autorizado'], 401);
         }
 
         // 2. Service discovery
         $serviceUrl = $this->serviceMap[$service] ?? null;
         if (!$serviceUrl) {
-            return response()->json(['error' => 'Service not found'], 404);
+            return response()->json(['error' => 'Serviço não encontrado'], 404);
         }
 
-        // 3. Forward request
+        // 3. Encaminha o request
         $response = Http::asForm()
             ->withToken($request->bearerToken())
             ->withHeaders([
@@ -387,7 +387,7 @@ class GatewayController extends Controller
                 ]
             );
 
-        // 4. Return response
+        // 4. Devolve a response
         return response($response->body(), $response->status())
             ->withHeaders($response->headers());
     }
@@ -404,11 +404,11 @@ Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
 
 ## Backend for Frontend (BFF)
 
-**Проблема:**
-Mobile и Web нужны разные данные.
+**Problema:**
+Mobile e Web precisam de dados diferentes.
 
-**Решение:**
-Отдельный Gateway для каждого типа клиента.
+**Solução:**
+Um Gateway separado para cada tipo de client.
 
 ```
 Mobile App → Mobile BFF ──┬──→ User Service
@@ -420,7 +420,7 @@ Web App → Web BFF ────────┬──→ User Service
                           └──→ Analytics Service
 ```
 
-**Mobile BFF (меньше данных):**
+**Mobile BFF (menos dados):**
 
 ```php
 class MobileGatewayController extends Controller
@@ -430,7 +430,7 @@ class MobileGatewayController extends Controller
         $user = Http::get("http://user-service/api/users/{$userId}")->json();
         $orders = Http::get("http://order-service/api/users/{$userId}/orders")->json();
 
-        // Минимальные данные для мобилки
+        // Dados mínimos para o mobile
         return response()->json([
             'user' => [
                 'id' => $user['id'],
@@ -443,7 +443,7 @@ class MobileGatewayController extends Controller
 }
 ```
 
-**Web BFF (больше данных):**
+**Web BFF (mais dados):**
 
 ```php
 class WebGatewayController extends Controller
@@ -456,7 +456,7 @@ class WebGatewayController extends Controller
             Http::async()->get("http://analytics-service/api/users/{$userId}"),
         ]);
 
-        // Полные данные для веба
+        // Dados completos para o web
         return response()->json([
             'user' => $user->json(),
             'orders' => $orders->json(),
@@ -470,61 +470,61 @@ class WebGatewayController extends Controller
 
 ## Service Discovery
 
-**Проблема:**
-Сервисы могут перемещаться (динамические IP в Kubernetes).
+**Problema:**
+Serviços podem mudar de lugar (IP dinâmico no Kubernetes).
 
-**Решение:**
+**Solução:**
 Service Discovery (Consul, Eureka, Kubernetes DNS).
 
-**Consul пример:**
+**Exemplo com Consul:**
 
 ```php
 class ServiceDiscovery
 {
     public function getServiceUrl(string $service): string
     {
-        // Запросить Consul
+        // Consultar o Consul
         $response = Http::get("http://consul:8500/v1/catalog/service/{$service}");
         $instances = $response->json();
 
-        // Выбрать случайный instance (client-side load balancing)
+        // Escolher um instance aleatório (client-side load balancing)
         $instance = $instances[array_rand($instances)];
 
         return "http://{$instance['Address']}:{$instance['ServicePort']}";
     }
 }
 
-// Использование
+// Uso
 $serviceUrl = $this->serviceDiscovery->getServiceUrl('user-service');
 $user = Http::get("$serviceUrl/api/users/{$id}")->json();
 ```
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Stateless: Gateway не хранит состояние (можно масштабировать)
-✓ Timeout: устанавливай timeout для requests к сервисам
-✓ Circuit Breaker: не спамить упавший сервис
-✓ Monitoring: логировать все requests (request ID для trace)
-✓ Caching: кешировать где возможно
-✓ Compression: gzip response
-✓ CORS: настроить для frontend
+✓ Stateless: o Gateway não guarda estado (dá para escalar)
+✓ Timeout: defina timeout nos requests aos serviços
+✓ Circuit Breaker: não spamme o serviço que caiu
+✓ Monitoring: logue todos os requests (request ID para trace)
+✓ Caching: cacheie onde der
+✓ Compression: gzip na response
+✓ CORS: configure para o frontend
 ✓ Versioning: /api/v1, /api/v2
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
 <details>
-<summary>Задание 1: Простой API Gateway на Laravel</summary>
+<summary>Exercício 1: API Gateway simples no Laravel</summary>
 
-**Задача:**
-Создайте базовый API Gateway с маршрутизацией к двум микросервисам: users и orders.
+**Enunciado:**
+Crie um API Gateway básico com roteamento para dois microsserviços: users e orders.
 
-**Решение:**
+**Solução:**
 
 ```php
 // routes/api.php
@@ -547,7 +547,7 @@ class GatewayController extends Controller
         $serviceUrl = $this->serviceMap[$service] ?? null;
 
         if (!$serviceUrl) {
-            return response()->json(['error' => 'Service not found'], 404);
+            return response()->json(['error' => 'Serviço não encontrado'], 404);
         }
 
         $response = Http::timeout(5)
@@ -567,19 +567,19 @@ class GatewayController extends Controller
 </details>
 
 <details>
-<summary>Задание 2: Request Aggregation</summary>
+<summary>Exercício 2: Request Aggregation</summary>
 
-**Задача:**
-Реализуйте endpoint в API Gateway, который агрегирует данные с трех микросервисов параллельно.
+**Enunciado:**
+Implemente um endpoint no API Gateway que agrega dados de três microsserviços em paralelo.
 
-**Решение:**
+**Solução:**
 
 ```php
 class ProfileController extends Controller
 {
     public function show(Request $request, int $userId)
     {
-        // Параллельные запросы к трем сервисам
+        // Requests em paralelo para três serviços
         $responses = Http::pool(fn (Pool $pool) => [
             $pool->as('user')->get("http://user-service/api/users/{$userId}"),
             $pool->as('orders')->get("http://order-service/api/users/{$userId}/orders"),
@@ -594,18 +594,18 @@ class ProfileController extends Controller
     }
 }
 
-// 1 запрос от клиента вместо 3!
+// 1 request do client no lugar de 3!
 // GET /api/profile/123
 ```
 </details>
 
 <details>
-<summary>Задание 3: Backend for Frontend (BFF)</summary>
+<summary>Exercício 3: Backend for Frontend (BFF)</summary>
 
-**Задача:**
-Создайте разные endpoints для Mobile и Web приложений с разным объемом данных.
+**Enunciado:**
+Crie endpoints diferentes para os apps Mobile e Web, com volume de dados diferente.
 
-**Решение:**
+**Solução:**
 
 ```php
 // routes/api.php
@@ -617,7 +617,7 @@ Route::prefix('web')->group(function () {
     Route::get('/profile/{id}', [WebBFFController::class, 'profile']);
 });
 
-// Mobile BFF (минимум данных)
+// Mobile BFF (mínimo de dados)
 class MobileBFFController extends Controller
 {
     public function profile(int $id)
@@ -627,12 +627,12 @@ class MobileBFFController extends Controller
         return response()->json([
             'id' => $user['id'],
             'name' => $user['name'],
-            'avatar' => $user['avatar'], // только аватар
+            'avatar' => $user['avatar'], // só o avatar
         ]);
     }
 }
 
-// Web BFF (полные данные)
+// Web BFF (dados completos)
 class WebBFFController extends Controller
 {
     public function profile(int $id)
@@ -655,11 +655,10 @@ class WebBFFController extends Controller
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "API Gateway — единая точка входа для clients. Функции: routing к микросервисам, authentication (JWT), rate limiting, request aggregation (1 request вместо N), protocol translation, caching. Популярные: Kong (Nginx-based), AWS API Gateway, custom на Laravel/Nginx. Backend for Frontend (BFF): разные gateways для mobile/web. Service Discovery (Consul, K8s DNS) для динамических IP. Best practices: stateless, timeout, circuit breaker, monitoring, compression."
+> "API Gateway é o ponto único de entrada para os clients. Funções: routing para os microsserviços, autenticação (JWT), rate limiting, request aggregation (1 request no lugar de N), protocol translation, caching. Os mais usados: Kong (baseado em Nginx), AWS API Gateway, custom no Laravel/Nginx. Backend for Frontend (BFF): gateways diferentes para mobile e web. Service Discovery (Consul, K8s DNS) para IP dinâmico. Best practices: stateless, timeout, circuit breaker, monitoring, compression."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

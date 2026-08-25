@@ -1,95 +1,95 @@
 # 18.5 Saga Pattern
 
 > **TL;DR**
-> Saga Pattern — управление распределенными транзакциями в микросервисах без ACID. Последовательность локальных транзакций с compensation логикой при ошибках. Типы: Choreography (события, decentralized) и Orchestration (центральный coordinator, HTTP calls). Idempotency для защиты от дублирования. State Machine для сложных саг. Monitoring: логировать все шаги, dashboard для незавершенных саг.
+> Saga Pattern — transação distribuída em microsserviços sem ACID. Sequência de transações locais com compensation se der erro. Tipos: Choreography (events, descentralizado) e Orchestration (coordinator no centro, HTTP calls). Idempotency contra duplicata. State Machine nas sagas complexas. Monitoring: loga cada passo, dashboard das sagas que não fecharam.
 
-## Содержание
-- [Что это](#что-это)
-- [Типы Saga](#типы-saga)
+## Conteúdo
+- [O que é](#o-que-é)
+- [Tipos de Saga](#tipos-de-saga)
 - [Choreography Saga (Laravel)](#choreography-saga-laravel)
 - [Orchestration Saga (Laravel)](#orchestration-saga-laravel)
 - [Choreography vs Orchestration](#choreography-vs-orchestration)
 - [Saga State Machine](#saga-state-machine)
 - [Idempotency](#idempotency)
-- [Monitoring & Debugging](#monitoring--debugging)
-- [Best Practices](#best-practices)
-- [Когда использовать](#когда-использовать)
-- [Практические задания](#практические-задания)
+- [Monitoramento e debug](#monitoramento-e-debug)
+- [Boas práticas](#boas-práticas)
+- [Quando usar](#quando-usar)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
 **Saga Pattern:**
-Паттерн для управления распределёнными транзакциями в микросервисах.
+Padrão para gerenciar transações distribuídas em microsserviços.
 
-**Проблема:**
-В микросервисах нельзя использовать ACID транзакции между БД разных сервисов.
+**Problema:**
+Em microsserviços você não usa transação ACID entre bancos de serviços diferentes.
 
 ```
-Монолит:
+Monolito:
 BEGIN TRANSACTION;
   INSERT INTO orders (...);
   UPDATE inventory SET stock = stock - 1;
   INSERT INTO payments (...);
-COMMIT;  -- Всё или ничего!
+COMMIT;  -- Tudo ou nada!
 
-Микросервисы:
+Microsserviços:
 Order Service → Order DB
 Inventory Service → Inventory DB
 Payment Service → Payment DB
-❌ Нет транзакций между БД!
+❌ Sem transação entre bancos!
 ```
 
-**Решение: Saga**
-Последовательность локальных транзакций с compensation логикой.
+**Solução: Saga**
+Sequência de transações locais com lógica de compensation.
 
 ---
 
-## Типы Saga
+## Tipos de Saga
 
-### 1. Choreography (хореография)
+### 1. Choreography (coreografia)
 
-**Сервисы общаются через events (нет coordinator).**
-
-```
-1. Order Service: создать заказ → emit OrderCreated event
-2. Inventory Service: слушает OrderCreated → резервирует товар → emit InventoryReserved
-3. Payment Service: слушает InventoryReserved → списывает деньги → emit PaymentProcessed
-4. Order Service: слушает PaymentProcessed → подтверждает заказ
-```
-
-**Если ошибка:**
+**Os serviços conversam por events (sem coordinator).**
 
 ```
-3. Payment Service: ошибка → emit PaymentFailed
-4. Inventory Service: слушает PaymentFailed → отменяет резерв
-5. Order Service: слушает PaymentFailed → отменяет заказ
+1. Order Service: cria o pedido → emite OrderCreated
+2. Inventory Service: escuta OrderCreated → reserva o estoque → emite InventoryReserved
+3. Payment Service: escuta InventoryReserved → cobra o pagamento → emite PaymentProcessed
+4. Order Service: escuta PaymentProcessed → confirma o pedido
+```
+
+**Se der erro:**
+
+```
+3. Payment Service: erro → emite PaymentFailed
+4. Inventory Service: escuta PaymentFailed → cancela a reserva
+5. Order Service: escuta PaymentFailed → cancela o pedido
 ```
 
 ---
 
-### 2. Orchestration (оркестрация)
+### 2. Orchestration (orquestração)
 
-**Центральный coordinator управляет saga.**
+**Um coordinator no centro manda na saga.**
 
 ```
 Saga Orchestrator:
-1. Вызвать Order Service → создать заказ
-2. Вызвать Inventory Service → резервировать товар
-3. Вызвать Payment Service → списать деньги
-4. Вызвать Order Service → подтвердить заказ
+1. Chama Order Service → cria o pedido
+2. Chama Inventory Service → reserva o estoque
+3. Chama Payment Service → cobra o pagamento
+4. Chama Order Service → confirma o pedido
 
-Если ошибка:
-3. Payment Service: ошибка
+Se der erro:
+3. Payment Service: erro
 4. Orchestrator: compensation
-   - Вызвать Inventory Service → отменить резерв
-   - Вызвать Order Service → отменить заказ
+   - Chama Inventory Service → cancela a reserva
+   - Chama Order Service → cancela o pedido
 ```
 
 ---
 
 ## Choreography Saga (Laravel)
 
-**Scenario: Create Order**
+**Cenário: criar pedido**
 
 **1. Order Service**
 
@@ -104,7 +104,7 @@ class CreateOrderController extends Controller
             'total' => $request->total,
         ]);
 
-        // Emit event
+        // Emite o event
         event(new OrderCreated($order));
 
         return response()->json($order);
@@ -122,11 +122,11 @@ class HandlePaymentFailed implements ShouldQueue
 {
     public function handle(PaymentFailed $event)
     {
-        // Compensation: отменить заказ
+        // Compensation: cancela o pedido
         $order = Order::find($event->orderId);
         $order->update(['status' => 'cancelled']);
 
-        Log::info("Order {$order->id} cancelled due to payment failure");
+        Log::info("Pedido {$order->id} cancelado por falha no pagamento");
     }
 }
 ```
@@ -153,7 +153,7 @@ class ReserveInventory implements ShouldQueue
 
                 $product->decrement('stock', $item->quantity);
 
-                // Создать резерв
+                // Cria a reserva
                 Reservation::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
@@ -161,11 +161,11 @@ class ReserveInventory implements ShouldQueue
                 ]);
             }
 
-            // Success: emit event
+            // Success: emite o event
             event(new InventoryReserved($order->id));
 
         } catch (OutOfStockException $e) {
-            // Failure: emit event
+            // Failure: emite o event
             event(new InventoryReservationFailed($order->id, $e->getMessage()));
         }
     }
@@ -175,7 +175,7 @@ class CancelReservation implements ShouldQueue
 {
     public function handle(PaymentFailed $event)
     {
-        // Compensation: отменить резерв
+        // Compensation: cancela a reserva
         $reservations = Reservation::where('order_id', $event->orderId)->get();
 
         foreach ($reservations as $reservation) {
@@ -185,7 +185,7 @@ class CancelReservation implements ShouldQueue
             $reservation->delete();
         }
 
-        Log::info("Reservations for order {$event->orderId} cancelled");
+        Log::info("Reservas do pedido {$event->orderId} canceladas");
     }
 }
 ```
@@ -203,14 +203,14 @@ class ProcessPayment implements ShouldQueue
         try {
             $order = Order::find($event->orderId);
 
-            // Списать деньги
+            // Cobra o pagamento
             $payment = $this->chargeCustomer($order);
 
-            // Success: emit event
+            // Success: emite o event
             event(new PaymentProcessed($order->id, $payment->id));
 
         } catch (PaymentException $e) {
-            // Failure: emit event (запустит compensation)
+            // Failure: emite o event (dispara a compensation)
             event(new PaymentFailed($order->id, $e->getMessage()));
         }
     }
@@ -229,7 +229,7 @@ class ProcessPayment implements ShouldQueue
 
 ---
 
-**4. Завершение (Order Service)**
+**4. Encerramento (Order Service)**
 
 ```php
 // Listener
@@ -240,10 +240,10 @@ class CompleteOrder implements ShouldQueue
         $order = Order::find($event->orderId);
         $order->update(['status' => 'completed']);
 
-        // Уведомление клиента
+        // Notifica o cliente
         Mail::to($order->user)->send(new OrderCompletedEmail($order));
 
-        Log::info("Order {$order->id} completed");
+        Log::info("Pedido {$order->id} concluído");
     }
 }
 ```
@@ -281,7 +281,7 @@ class CreateOrderSaga
             return $this->order;
 
         } catch (Exception $e) {
-            // Rollback: выполнить compensations в обратном порядке
+            // Rollback: roda as compensations na ordem inversa
             $this->compensate();
 
             throw $e;
@@ -299,14 +299,14 @@ class CreateOrderSaga
 
     private function reserveInventory(Order $order): array
     {
-        // HTTP вызов Inventory Service
+        // Chamada HTTP no Inventory Service
         $response = Http::post('http://inventory-service/api/reserve', [
             'order_id' => $order->id,
             'items' => $order->items->toArray(),
         ]);
 
         if ($response->failed()) {
-            throw new InventoryException('Failed to reserve inventory');
+            throw new InventoryException('Falha ao reservar estoque');
         }
 
         return $response->json('reservations');
@@ -314,14 +314,14 @@ class CreateOrderSaga
 
     private function processPayment(Order $order): Payment
     {
-        // HTTP вызов Payment Service
+        // Chamada HTTP no Payment Service
         $response = Http::post('http://payment-service/api/charge', [
             'order_id' => $order->id,
             'amount' => $order->total,
         ]);
 
         if ($response->failed()) {
-            throw new PaymentException('Payment failed');
+            throw new PaymentException('Pagamento falhou');
         }
 
         return new Payment($response->json());
@@ -334,12 +334,12 @@ class CreateOrderSaga
 
     private function compensate(): void
     {
-        // Выполнить compensations в обратном порядке
+        // Roda as compensations na ordem inversa
         foreach (array_reverse($this->compensations) as $compensation) {
             try {
                 $compensation();
             } catch (Exception $e) {
-                Log::error('Compensation failed', ['error' => $e->getMessage()]);
+                Log::error('Compensation falhou', ['error' => $e->getMessage()]);
             }
         }
     }
@@ -376,7 +376,7 @@ class OrderController extends Controller
 
         } catch (Exception $e) {
             return response()->json([
-                'error' => 'Order creation failed',
+                'error' => 'Falha ao criar o pedido',
                 'message' => $e->getMessage(),
             ], 500);
         }
@@ -390,17 +390,17 @@ class OrderController extends Controller
 
 | Choreography | Orchestration |
 |--------------|---------------|
-| Decentralized | Centralized (Orchestrator) |
+| Descentralizado | Centralizado (Orchestrator) |
 | Events | HTTP calls |
-| Слабое coupling | Сильное coupling |
-| Сложнее debugging | Проще debugging |
-| Для простых saga | Для сложных saga |
+| Coupling fraco | Coupling forte |
+| Debug mais difícil | Debug mais fácil |
+| Saga simples | Saga complexa |
 
 ---
 
 ## Saga State Machine
 
-**Для сложных saga — state machine:**
+**Saga complexa → state machine:**
 
 ```php
 class OrderSagaStateMachine
@@ -426,7 +426,7 @@ class OrderSagaStateMachine
 
     private function save(): void
     {
-        // Persist state в БД
+        // Persiste o state no banco
         SagaState::updateOrCreate(
             ['saga_id' => $this->sagaId],
             ['state' => $this->state]
@@ -439,9 +439,9 @@ class OrderSagaStateMachine
 
 ## Idempotency
 
-**Проблема: события могут дублироваться (network retry).**
+**Problema: events podem duplicar (network retry).**
 
-**Решение: idempotency key**
+**Solução: idempotency key**
 
 ```php
 class ReserveInventory implements ShouldQueue
@@ -450,16 +450,16 @@ class ReserveInventory implements ShouldQueue
     {
         $idempotencyKey = "reserve_inventory:{$event->order->id}";
 
-        // Проверить уже выполнено?
+        // Já rodou?
         if (Cache::has($idempotencyKey)) {
-            Log::info("Inventory already reserved for order {$event->order->id}");
+            Log::info("Estoque já reservado para o pedido {$event->order->id}");
             return;
         }
 
-        // Резервировать товар
+        // Reserva o estoque
         $this->reserve($event->order);
 
-        // Отметить как выполненное (TTL 24h)
+        // Marca como feito (TTL 24h)
         Cache::put($idempotencyKey, true, 86400);
     }
 }
@@ -467,7 +467,7 @@ class ReserveInventory implements ShouldQueue
 
 ---
 
-## Monitoring & Debugging
+## Monitoramento e debug
 
 **Saga Log:**
 
@@ -477,7 +477,7 @@ class SagaLog extends Model
     protected $fillable = ['saga_id', 'step', 'status', 'data', 'error'];
 }
 
-// В каждом шаге
+// Em cada passo
 SagaLog::create([
     'saga_id' => $this->sagaId,
     'step' => 'reserve_inventory',
@@ -485,7 +485,7 @@ SagaLog::create([
     'data' => json_encode($reservations),
 ]);
 
-// При ошибке
+// Se der erro
 SagaLog::create([
     'saga_id' => $this->sagaId,
     'step' => 'process_payment',
@@ -494,10 +494,10 @@ SagaLog::create([
 ]);
 ```
 
-**Dashboard для Saga:**
+**Dashboard da Saga:**
 
 ```php
-// Посмотреть все шаги saga
+// Ver todos os passos da saga
 $logs = SagaLog::where('saga_id', $sagaId)->orderBy('created_at')->get();
 
 foreach ($logs as $log) {
@@ -507,45 +507,45 @@ foreach ($logs as $log) {
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Idempotency для всех операций
-✓ Compensation для каждого шага
-✓ Logging всех шагов saga
-✓ Retry с exponential backoff
-✓ Timeout для каждого шага
-✓ Monitoring: незавершённые saga
-✓ Dead Letter Queue для failed events
-✓ State machine для сложных saga
-✓ Orchestration для сложных, Choreography для простых
+✓ Idempotency em toda operação
+✓ Compensation em cada passo
+✓ Logging de todos os passos da saga
+✓ Retry com exponential backoff
+✓ Timeout em cada passo
+✓ Monitoring: sagas que não fecharam
+✓ Dead Letter Queue para events que falharam
+✓ State machine nas sagas complexas
+✓ Orchestration no complexo, Choreography no simples
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Saga нужна когда:**
-- ✅ Микросервисы с разными БД
-- ✅ Операция затрагивает несколько сервисов
-- ✅ Нужна consistency
+**Saga entra quando:**
+- ✅ Microsserviços com bancos diferentes
+- ✅ A operação toca vários serviços
+- ✅ Precisa de consistência
 
-**Saga НЕ нужна когда:**
-- ❌ Монолит (используй ACID транзакции)
-- ❌ Eventual consistency OK (простые events)
-- ❌ Операция в одном сервисе
+**Saga NÃO entra quando:**
+- ❌ Monolito (usa transação ACID)
+- ❌ Eventual consistency serve (events simples)
+- ❌ A operação fica num serviço só
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
 <details>
-<summary>Задание 1: Orchestration Saga для заказа</summary>
+<summary>Exercício 1: Orchestration Saga para pedido</summary>
 
-**Задача:**
-Создайте Orchestration Saga для создания заказа с шагами: создание заказа, резервирование товара, оплата, подтверждение. При ошибке выполнять compensation.
+**Enunciado:**
+Crie uma Orchestration Saga para criar pedido, com os passos: criar pedido, reservar estoque, pagamento, confirmar. Se der erro, roda a compensation.
 
-**Решение:**
+**Solução:**
 
 ```php
 class CreateOrderSaga
@@ -558,7 +558,7 @@ class CreateOrderSaga
         DB::beginTransaction();
 
         try {
-            // Шаг 1: Создать заказ
+            // Passo 1: criar o pedido
             $this->order = Order::create([
                 'user_id' => $data['user_id'],
                 'status' => 'pending',
@@ -567,17 +567,17 @@ class CreateOrderSaga
             $this->compensations[] = fn() => $this->order->delete();
             $this->logStep('order_created', 'completed');
 
-            // Шаг 2: Резервировать товар
+            // Passo 2: reservar estoque
             $reservation = $this->reserveInventory($data['items']);
             $this->compensations[] = fn() => $this->cancelReservation($reservation);
             $this->logStep('inventory_reserved', 'completed');
 
-            // Шаг 3: Оплата
+            // Passo 3: pagamento
             $payment = $this->processPayment($this->order);
             $this->compensations[] = fn() => $this->refundPayment($payment);
             $this->logStep('payment_processed', 'completed');
 
-            // Шаг 4: Подтвердить заказ
+            // Passo 4: confirmar o pedido
             $this->order->update(['status' => 'completed']);
             $this->logStep('order_completed', 'completed');
 
@@ -600,7 +600,7 @@ class CreateOrderSaga
         ]);
 
         if ($response->failed()) {
-            throw new InventoryException('Failed to reserve inventory');
+            throw new InventoryException('Falha ao reservar estoque');
         }
 
         return $response->json('reservation_id');
@@ -614,7 +614,7 @@ class CreateOrderSaga
         ]);
 
         if ($response->failed()) {
-            throw new PaymentException('Payment failed');
+            throw new PaymentException('Pagamento falhou');
         }
 
         return $response->json('payment_id');
@@ -622,14 +622,14 @@ class CreateOrderSaga
 
     private function compensate(): void
     {
-        logger()->warning("Starting compensation for order {$this->order->id}");
+        logger()->warning("Iniciando compensation do pedido {$this->order->id}");
 
         foreach (array_reverse($this->compensations) as $index => $compensation) {
             try {
                 $compensation();
-                logger()->info("Compensation step {$index} completed");
+                logger()->info("Passo de compensation {$index} concluído");
             } catch (Exception $e) {
-                logger()->error("Compensation step {$index} failed: {$e->getMessage()}");
+                logger()->error("Passo de compensation {$index} falhou: {$e->getMessage()}");
             }
         }
     }
@@ -659,15 +659,15 @@ class CreateOrderSaga
 </details>
 
 <details>
-<summary>Задание 2: Choreography Saga с событиями</summary>
+<summary>Exercício 2: Choreography Saga com events</summary>
 
-**Задача:**
-Реализуйте Choreography Saga используя Laravel Events для создания заказа.
+**Enunciado:**
+Implemente uma Choreography Saga usando Laravel Events para criar pedido.
 
-**Решение:**
+**Solução:**
 
 ```php
-// 1. Order Service - создание заказа
+// 1. Order Service — cria o pedido
 class CreateOrderController extends Controller
 {
     public function store(Request $request)
@@ -678,14 +678,14 @@ class CreateOrderController extends Controller
             'total' => $request->total,
         ]);
 
-        // Emit событие
+        // Emite o event
         event(new OrderCreated($order));
 
         return response()->json($order);
     }
 }
 
-// 2. Inventory Service - слушает OrderCreated
+// 2. Inventory Service — escuta OrderCreated
 class ReserveInventoryListener
 {
     public function handle(OrderCreated $event)
@@ -711,7 +711,7 @@ class ReserveInventoryListener
     }
 }
 
-// 3. Payment Service - слушает InventoryReserved
+// 3. Payment Service — escuta InventoryReserved
 class ProcessPaymentListener
 {
     public function handle(InventoryReserved $event)
@@ -725,7 +725,7 @@ class ProcessPaymentListener
     }
 }
 
-// 4. Compensation - Order Service слушает PaymentFailed
+// 4. Compensation — Order Service escuta PaymentFailed
 class CancelOrderListener
 {
     public function handle(PaymentFailed $event)
@@ -733,11 +733,11 @@ class CancelOrderListener
         $order = Order::find($event->orderId);
         $order->update(['status' => 'cancelled']);
 
-        logger()->info("Order {$event->orderId} cancelled due to payment failure");
+        logger()->info("Pedido {$event->orderId} cancelado por falha no pagamento");
     }
 }
 
-// 5. Compensation - Inventory Service слушает PaymentFailed
+// 5. Compensation — Inventory Service escuta PaymentFailed
 class CancelReservationListener
 {
     public function handle(PaymentFailed $event)
@@ -749,7 +749,7 @@ class CancelReservationListener
             $product->increment('stock', $item->quantity);
         }
 
-        logger()->info("Inventory reservation cancelled for order {$event->orderId}");
+        logger()->info("Reserva de estoque cancelada para o pedido {$event->orderId}");
     }
 }
 
@@ -764,12 +764,12 @@ protected $listen = [
 </details>
 
 <details>
-<summary>Задание 3: Idempotency для Saga</summary>
+<summary>Exercício 3: Idempotency na Saga</summary>
 
-**Задача:**
-Добавьте idempotency в Saga listener чтобы избежать дублирования при retry событий.
+**Enunciado:**
+Coloque idempotency no listener da Saga para não duplicar quando o event der retry.
 
-**Решение:**
+**Solução:**
 
 ```php
 class ReserveInventoryListener implements ShouldQueue
@@ -779,9 +779,9 @@ class ReserveInventoryListener implements ShouldQueue
         $orderId = $event->order->id;
         $idempotencyKey = "saga:reserve_inventory:{$orderId}";
 
-        // Проверить уже выполнено?
+        // Já rodou?
         if (Cache::has($idempotencyKey)) {
-            logger()->info("Inventory already reserved for order {$orderId} (idempotency)");
+            logger()->info("Estoque já reservado para o pedido {$orderId} (idempotency)");
             return;
         }
 
@@ -796,7 +796,7 @@ class ReserveInventoryListener implements ShouldQueue
 
                     $product->decrement('stock', $item->quantity);
 
-                    // Сохранить резервацию
+                    // Salva a reserva
                     Reservation::create([
                         'order_id' => $event->order->id,
                         'product_id' => $product->id,
@@ -805,7 +805,7 @@ class ReserveInventoryListener implements ShouldQueue
                 }
             });
 
-            // Отметить как выполненное (TTL 24 часа)
+            // Marca como feito (TTL 24 horas)
             Cache::put($idempotencyKey, true, 86400);
 
             // Success event
@@ -818,17 +818,17 @@ class ReserveInventoryListener implements ShouldQueue
     }
 }
 
-// В тестах можно проверить idempotency
+// No teste você confere a idempotency
 public function test_reservation_is_idempotent()
 {
     $order = Order::factory()->create();
     $event = new OrderCreated($order);
 
-    // Первый вызов
+    // Primeira chamada
     (new ReserveInventoryListener())->handle($event);
     $firstStock = Product::first()->stock;
 
-    // Повторный вызов (не должен изменить stock)
+    // Segunda chamada (não pode mudar o stock)
     (new ReserveInventoryListener())->handle($event);
     $secondStock = Product::first()->stock;
 
@@ -839,10 +839,10 @@ public function test_reservation_is_idempotent()
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Saga Pattern — управление распределёнными транзакциями в микросервисах. Проблема: нет ACID между разными БД. Решение: последовательность локальных транзакций + compensation. Типы: Choreography (события, decentralized, слабое coupling) и Orchestration (coordinator, HTTP calls, centralized). Compensation: откат изменений при ошибке в обратном порядке. Idempotency: защита от дублирования событий. State Machine для сложных saga. Monitoring: логировать все шаги, dashboard для незавершённых saga. Best practices: idempotency, retry, timeout, DLQ. Orchestration для сложных saga, Choreography для простых."
+> "Saga Pattern gerencia transação distribuída em microsserviços. O problema: não tem ACID entre bancos diferentes. A solução: sequência de transações locais + compensation. Tipos: Choreography (events, descentralizado, coupling fraco) e Orchestration (coordinator, HTTP calls, centralizado). Compensation: desfaz na ordem inversa se der erro. Idempotency: não duplica event. State Machine nas sagas complexas. Monitoring: loga cada passo, dashboard das sagas abertas. Boas práticas: idempotency, retry, timeout, DLQ. Orchestration no complexo, Choreography no simples."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

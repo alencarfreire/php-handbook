@@ -1,88 +1,88 @@
 # 18.4 Service Discovery
 
 > **TL;DR**
-> Service Discovery — механизм для автоматического обнаружения микросервисов в распределенной системе. Типы: Client-Side (клиент сам находит сервис через Registry) и Server-Side (Load Balancer делает discovery). Consul: регистрация через HTTP API, health checks, client-side load balancing. Kubernetes: DNS-based discovery автоматически. Health checks: liveness (жив?) и readiness (готов?). Fallback на статический конфиг при недоступности Registry.
+> Service Discovery é o mecanismo para achar microsserviços automaticamente num sistema distribuído. Tipos: Client-Side (o cliente acha o serviço no Registry) e Server-Side (o Load Balancer faz o discovery). Consul: registro via HTTP API, health checks, client-side load balancing. Kubernetes: DNS-based discovery automático. Health checks: liveness (vivo?) e readiness (pronto?). Fallback para config estático se o Registry cair.
 
-## Содержание
-- [Что это](#что-это)
-- [Типы Service Discovery](#типы-service-discovery)
+## Conteúdo
+- [O que é](#o-que-é)
+- [Tipos de Service Discovery](#tipos-de-service-discovery)
 - [Consul (HashiCorp)](#consul-hashicorp)
 - [Kubernetes Service Discovery](#kubernetes-service-discovery)
 - [Eureka (Netflix)](#eureka-netflix)
-- [Laravel Package для Service Discovery](#laravel-package-для-service-discovery)
+- [Laravel Package para Service Discovery](#laravel-package-para-service-discovery)
 - [Caching Service Discovery](#caching-service-discovery)
 - [Graceful Degradation](#graceful-degradation)
 - [Health Checks](#health-checks)
 - [Best Practices](#best-practices)
-- [Альтернативы](#альтернативы)
-- [Практические задания](#практические-задания)
+- [Alternativas](#alternativas)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
 **Service Discovery:**
-Механизм для автоматического обнаружения сетевых адресов сервисов в распределённой системе.
+Mecanismo para achar automaticamente o endereço de rede dos serviços num sistema distribuído.
 
-**Проблема:**
-В микросервисной архитектуре сервисы динамически масштабируются, IP/порты меняются.
+**Problema:**
+Em arquitetura de microsserviços os serviços sobem e descem o tempo todo. IP e porta mudam.
 
 ```
-Раньше (монолит):
+Antes (monolito):
 Order Service → http://payment-service:8080
 
-Теперь (микросервисы):
-Order Service → Payment Service (где он?)
+Agora (microsserviços):
+Order Service → Payment Service (onde está?)
                 ├ instance-1: 10.0.1.5:8080
-                ├ instance-2: 10.0.1.7:8080 (автоскейлинг добавил)
+                ├ instance-2: 10.0.1.7:8080 (autoscaling adicionou)
                 └ instance-3: 10.0.1.9:8080
 ```
 
-**Зачем:**
-- Динамическая маршрутизация
-- Автоскейлинг (добавление/удаление instances)
+**Para quê:**
+- Roteamento dinâmico
+- Autoscaling (adicionar/remover instances)
 - Health checks
 - Load balancing
 
 ---
 
-## Типы Service Discovery
+## Tipos de Service Discovery
 
 ### 1. Client-Side Discovery
 
-**Клиент сам находит сервис:**
+**O cliente acha o serviço sozinho:**
 
 ```
-1. Client → Service Registry: "Где Payment Service?"
+1. Client → Service Registry: "Onde está o Payment Service?"
 2. Service Registry → Client: [10.0.1.5:8080, 10.0.1.7:8080]
-3. Client выбирает instance (client-side load balancing)
+3. Client escolhe a instance (client-side load balancing)
 4. Client → Payment Service instance
 ```
 
-**Примеры:** Consul, Eureka
+**Exemplos:** Consul, Eureka
 
 ---
 
 ### 2. Server-Side Discovery
 
-**Load Balancer находит сервис:**
+**O Load Balancer acha o serviço:**
 
 ```
 1. Client → Load Balancer
-2. Load Balancer → Service Registry: "Где Payment Service?"
+2. Load Balancer → Service Registry: "Onde está o Payment Service?"
 3. Service Registry → Load Balancer: [instances]
-4. Load Balancer выбирает instance
+4. Load Balancer escolhe a instance
 5. Load Balancer → Payment Service instance
 ```
 
-**Примеры:** Kubernetes Service, AWS ELB, Nginx
+**Exemplos:** Kubernetes Service, AWS ELB, Nginx
 
 ---
 
 ## Consul (HashiCorp)
 
-**Что это:**
-Service mesh с service discovery, health checks, KV store.
+**O que é:**
+Service mesh com service discovery, health checks, KV store.
 
-**Установка:**
+**Instalação:**
 
 ```bash
 docker run -d --name=consul \
@@ -95,7 +95,7 @@ docker run -d --name=consul \
 
 ---
 
-### Регистрация сервиса
+### Registro do serviço
 
 **Laravel Service Provider:**
 
@@ -126,7 +126,7 @@ class ConsulServiceProvider extends ServiceProvider
 
         Http::put('http://consul:8500/v1/agent/service/register', $data);
 
-        // Deregister при shutdown
+        // Deregister no shutdown
         register_shutdown_function(function () use ($serviceId) {
             Http::put("http://consul:8500/v1/agent/service/deregister/{$serviceId}");
         });
@@ -139,7 +139,7 @@ class ConsulServiceProvider extends ServiceProvider
 ```php
 // routes/web.php
 Route::get('/health', function () {
-    // Проверить БД, Redis, etc.
+    // Checar banco, Redis, etc.
     try {
         DB::connection()->getPdo();
         Redis::ping();
@@ -153,22 +153,22 @@ Route::get('/health', function () {
 
 ---
 
-### Service Discovery (получить сервис)
+### Service Discovery (obter o serviço)
 
 ```php
 class ConsulServiceDiscovery
 {
     public function getService(string $serviceName): ?string
     {
-        // Получить все healthy instances
+        // Pegar todas as instances healthy
         $response = Http::get("http://consul:8500/v1/health/service/{$serviceName}", [
-            'passing' => true,  // только healthy
+            'passing' => true,  // só healthy
         ]);
 
         $instances = $response->json();
 
         if (empty($instances)) {
-            throw new ServiceNotFoundException("Service {$serviceName} not found");
+            throw new ServiceNotFoundException("Serviço {$serviceName} não encontrado");
         }
 
         // Client-side load balancing (random)
@@ -181,7 +181,7 @@ class ConsulServiceDiscovery
     }
 }
 
-// Использование
+// Uso
 $discovery = new ConsulServiceDiscovery();
 $paymentUrl = $discovery->getService('payment-service');
 
@@ -220,14 +220,14 @@ class ConsulServiceDiscovery
 }
 ```
 
-**Weighted (по нагрузке):**
+**Weighted (por carga):**
 
 ```php
 public function getService(string $serviceName): string
 {
     $instances = $this->getInstances($serviceName);
 
-    // Выбрать instance с наименьшей нагрузкой
+    // Escolher a instance com menor carga
     usort($instances, fn($a, $b) => $a['load'] <=> $b['load']);
 
     $instance = $instances[0];
@@ -261,29 +261,29 @@ spec:
 **Laravel:**
 
 ```php
-// Просто используй имя сервиса
+// Só use o nome do serviço
 $response = Http::post('http://payment-service/api/charge', [
     'amount' => 100,
 ]);
 
-// Kubernetes автоматически резолвит DNS и балансирует
+// Kubernetes resolve o DNS e faz o balance sozinho
 ```
 
-**Как работает:**
-1. Kubernetes создаёт DNS запись для Service
-2. DNS запись указывает на ClusterIP
-3. kube-proxy балансирует между Pods
+**Como funciona:**
+1. Kubernetes cria o registro DNS do Service
+2. O registro DNS aponta para o ClusterIP
+3. kube-proxy faz o balance entre os Pods
 
 ---
 
 ## Eureka (Netflix)
 
-**Spring Boot ecosystem, для Java/Kotlin.**
+**Ecossistema Spring Boot, para Java/Kotlin.**
 
-**PHP клиент не существует, но можно REST API:**
+**Não existe cliente PHP, mas dá para usar a REST API:**
 
 ```php
-// Регистрация в Eureka
+// Registro no Eureka
 Http::post('http://eureka:8761/eureka/apps/PAYMENT-SERVICE', [
     'instance' => [
         'hostName' => gethostname(),
@@ -294,14 +294,14 @@ Http::post('http://eureka:8761/eureka/apps/PAYMENT-SERVICE', [
     ],
 ]);
 
-// Получить instances
+// Pegar as instances
 $response = Http::get('http://eureka:8761/eureka/apps/PAYMENT-SERVICE');
 $instances = $response->json()['application']['instance'];
 ```
 
 ---
 
-## Laravel Package для Service Discovery
+## Laravel Package para Service Discovery
 
 **Composer:**
 
@@ -323,7 +323,7 @@ class ServiceDiscoveryServiceProvider extends ServiceProvider
                 'consul' => new ConsulServiceDiscovery(),
                 'kubernetes' => new KubernetesServiceDiscovery(),
                 'static' => new StaticServiceDiscovery(),
-                default => throw new Exception("Unknown driver: {$driver}"),
+                default => throw new Exception("Driver desconhecido: {$driver}"),
             };
         });
     }
@@ -338,7 +338,7 @@ class ServiceDiscoveryServiceProvider extends ServiceProvider
 ],
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 class PaymentService
@@ -360,10 +360,10 @@ class PaymentService
 
 ## Caching Service Discovery
 
-**Проблема:**
-Каждый запрос к Consul/Eureka замедляет систему.
+**Problema:**
+Cada request no Consul/Eureka deixa o sistema mais lento.
 
-**Решение: Cache**
+**Solução: Cache**
 
 ```php
 class CachedServiceDiscovery implements ServiceDiscovery
@@ -388,7 +388,7 @@ class CachedServiceDiscovery implements ServiceDiscovery
 
 ## Graceful Degradation
 
-**Fallback при unavailable Service Registry:**
+**Fallback quando o Service Registry está indisponível:**
 
 ```php
 class ResilientServiceDiscovery implements ServiceDiscovery
@@ -396,12 +396,12 @@ class ResilientServiceDiscovery implements ServiceDiscovery
     public function getService(string $serviceName): string
     {
         try {
-            // Попытка через Consul
+            // Tenta pelo Consul
             return $this->consulDiscovery->getService($serviceName);
 
         } catch (ConsulUnavailableException $e) {
-            // Fallback: статический конфиг
-            Log::warning("Consul unavailable, using static config");
+            // Fallback: config estático
+            Log::warning("Consul indisponível, usando config estático");
 
             return config("services.static.{$serviceName}");
         }
@@ -419,11 +419,11 @@ class ResilientServiceDiscovery implements ServiceDiscovery
 
 ## Health Checks
 
-**Типы:**
+**Tipos:**
 
 ### 1. Liveness Probe
 
-**Проверка: "сервис жив?"**
+**Checagem: "o serviço está vivo?"**
 
 ```php
 // /health/live
@@ -434,13 +434,13 @@ Route::get('/health/live', function () {
 
 ### 2. Readiness Probe
 
-**Проверка: "сервис готов принимать запросы?"**
+**Checagem: "o serviço está pronto para receber requests?"**
 
 ```php
 // /health/ready
 Route::get('/health/ready', function () {
     try {
-        // Проверить зависимости
+        // Checar as dependências
         DB::connection()->getPdo();
         Redis::ping();
 
@@ -456,21 +456,21 @@ Route::get('/health/ready', function () {
 ## Best Practices
 
 ```
-✓ Health checks с зависимостями (БД, Redis, etc.)
-✓ Graceful shutdown (deregister перед остановкой)
-✓ Client-side caching (не спамить Service Registry)
-✓ Fallback на статический конфиг
-✓ Retry с exponential backoff
+✓ Health checks com dependências (banco, Redis, etc.)
+✓ Graceful shutdown (deregister antes de parar)
+✓ Client-side caching (não spammar o Service Registry)
+✓ Fallback para config estático
+✓ Retry com exponential backoff
 ✓ Load balancing strategy (round robin, weighted)
-✓ Monitoring: регистрация/deregistration events
-✓ TTL для health checks
+✓ Monitoring: eventos de registro/deregistration
+✓ TTL nos health checks
 ```
 
 ---
 
-## Альтернативы
+## Alternativas
 
-**Для простых случаев:**
+**Para casos simples:**
 
 ### 1. Env Variables
 
@@ -483,14 +483,14 @@ USER_SERVICE_URL=http://user-service:8080
 Http::post(config('services.payment.url') . '/api/charge');
 ```
 
-**Плюсы:**
-- ✅ Просто
-- ✅ Нет зависимостей
+**Prós:**
+- ✅ Simples
+- ✅ Sem dependências
 
-**Минусы:**
-- ❌ Нет автоскейлинга
-- ❌ Нет health checks
-- ❌ Нужен redeploy при изменении
+**Contras:**
+- ❌ Sem autoscaling
+- ❌ Sem health checks
+- ❌ Precisa de redeploy quando muda
 
 ---
 
@@ -506,24 +506,24 @@ payment-service.example.com → 10.0.1.9
 Http::post('http://payment-service.example.com/api/charge');
 ```
 
-**Плюсы:**
-- ✅ Простой load balancing
+**Prós:**
+- ✅ Load balancing simples
 
-**Минусы:**
-- ❌ Нет health checks (может роутить на мёртвый instance)
-- ❌ DNS caching проблемы
+**Contras:**
+- ❌ Sem health checks (pode rotear para instance morta)
+- ❌ Problemas de DNS caching
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
 <details>
-<summary>Задание 1: Consul Service Registration</summary>
+<summary>Exercício 1: Consul Service Registration</summary>
 
-**Задача:**
-Создайте Service Provider для автоматической регистрации Laravel приложения в Consul при старте.
+**Enunciado:**
+Crie um Service Provider para registrar o app Laravel no Consul automaticamente na subida.
 
-**Решение:**
+**Solução:**
 
 ```php
 // app/Providers/ConsulServiceProvider.php
@@ -563,9 +563,9 @@ class ConsulServiceProvider extends ServiceProvider
 
         try {
             Http::put('http://consul:8500/v1/agent/service/register', $data);
-            logger()->info("Registered in Consul as {$serviceId}");
+            logger()->info("Registrado no Consul como {$serviceId}");
         } catch (\Exception $e) {
-            logger()->error("Failed to register in Consul: {$e->getMessage()}");
+            logger()->error("Falha ao registrar no Consul: {$e->getMessage()}");
         }
     }
 
@@ -576,15 +576,15 @@ class ConsulServiceProvider extends ServiceProvider
         register_shutdown_function(function () use ($serviceId) {
             try {
                 Http::put("http://consul:8500/v1/agent/service/deregister/{$serviceId}");
-                logger()->info("Deregistered from Consul: {$serviceId}");
+                logger()->info("Deregistrado do Consul: {$serviceId}");
             } catch (\Exception $e) {
-                logger()->error("Failed to deregister from Consul: {$e->getMessage()}");
+                logger()->error("Falha ao fazer deregister no Consul: {$e->getMessage()}");
             }
         });
     }
 }
 
-// config/app.php - добавить в providers
+// config/app.php — adicionar em providers
 'providers' => [
     // ...
     App\Providers\ConsulServiceProvider::class,
@@ -593,12 +593,12 @@ class ConsulServiceProvider extends ServiceProvider
 </details>
 
 <details>
-<summary>Задание 2: Service Discovery с кешированием</summary>
+<summary>Exercício 2: Service Discovery com cache</summary>
 
-**Задача:**
-Реализуйте Service Discovery клиент с кешированием результатов и round-robin load balancing.
+**Enunciado:**
+Implemente um cliente de Service Discovery com cache dos resultados e round-robin load balancing.
 
-**Решение:**
+**Solução:**
 
 ```php
 class ConsulServiceDiscovery
@@ -609,13 +609,13 @@ class ConsulServiceDiscovery
     {
         $cacheKey = "service_discovery:{$serviceName}";
 
-        // Кеш на 60 секунд
+        // Cache de 60 segundos
         $instances = Cache::remember($cacheKey, 60, function () use ($serviceName) {
             return $this->fetchHealthyInstances($serviceName);
         });
 
         if (empty($instances)) {
-            throw new ServiceNotFoundException("Service {$serviceName} not found");
+            throw new ServiceNotFoundException("Serviço {$serviceName} não encontrado");
         }
 
         // Round-robin load balancing
@@ -635,7 +635,7 @@ class ConsulServiceDiscovery
     {
         try {
             $response = Http::timeout(3)->get("http://consul:8500/v1/health/service/{$serviceName}", [
-                'passing' => true, // только healthy instances
+                'passing' => true, // só instances healthy
             ]);
 
             return collect($response->json())->map(function ($item) {
@@ -646,13 +646,13 @@ class ConsulServiceDiscovery
             })->toArray();
 
         } catch (\Exception $e) {
-            logger()->error("Failed to fetch service from Consul: {$e->getMessage()}");
+            logger()->error("Falha ao buscar o serviço no Consul: {$e->getMessage()}");
             return [];
         }
     }
 }
 
-// Использование
+// Uso
 $discovery = app(ConsulServiceDiscovery::class);
 $url = $discovery->getServiceUrl('payment-service');
 $response = Http::post("{$url}/api/charge", ['amount' => 100]);
@@ -660,12 +660,12 @@ $response = Http::post("{$url}/api/charge", ['amount' => 100]);
 </details>
 
 <details>
-<summary>Задание 3: Health Check Endpoints</summary>
+<summary>Exercício 3: Health Check Endpoints</summary>
 
-**Задача:**
-Создайте health check endpoints для liveness и readiness проверок.
+**Enunciado:**
+Crie endpoints de health check para liveness e readiness.
 
-**Решение:**
+**Solução:**
 
 ```php
 // routes/web.php
@@ -675,7 +675,7 @@ Route::get('/health/ready', [HealthController::class, 'ready']);
 // app/Http/Controllers/HealthController.php
 class HealthController extends Controller
 {
-    // Liveness: приложение живо?
+    // Liveness: o app está vivo?
     public function live()
     {
         return response()->json([
@@ -684,7 +684,7 @@ class HealthController extends Controller
         ]);
     }
 
-    // Readiness: готов принимать запросы?
+    // Readiness: pronto para receber requests?
     public function ready()
     {
         $checks = [
@@ -708,7 +708,7 @@ class HealthController extends Controller
             DB::connection()->getPdo();
             return true;
         } catch (\Exception $e) {
-            logger()->error("Database health check failed: {$e->getMessage()}");
+            logger()->error("Health check do banco falhou: {$e->getMessage()}");
             return false;
         }
     }
@@ -719,7 +719,7 @@ class HealthController extends Controller
             Redis::ping();
             return true;
         } catch (\Exception $e) {
-            logger()->error("Redis health check failed: {$e->getMessage()}");
+            logger()->error("Health check do Redis falhou: {$e->getMessage()}");
             return false;
         }
     }
@@ -727,7 +727,7 @@ class HealthController extends Controller
     private function checkQueue(): bool
     {
         try {
-            // Проверить что queue worker работает
+            // Checar se o queue worker está rodando
             return Cache::store('redis')->get('queue:heartbeat', 0) > (time() - 60);
         } catch (\Exception $e) {
             return false;
@@ -739,10 +739,10 @@ class HealthController extends Controller
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Service Discovery — механизм для автоматического обнаружения сервисов в микросервисах. Типы: Client-Side (клиент получает список instances от Registry и выбирает сам) и Server-Side (Load Balancer делает discovery). Consul: регистрация через HTTP API, health checks, client-side load balancing (random, round robin, weighted). Kubernetes: DNS-based discovery, Service автоматически резолвит в ClusterIP. Laravel: ServiceProvider регистрирует сервис при старте, deregister при shutdown, cache для discovery запросов. Health checks: liveness (жив ли), readiness (готов принимать запросы). Best practices: caching, fallback на статический конфиг, graceful shutdown, monitoring."
+> "Service Discovery é o mecanismo para achar serviços automaticamente em microsserviços. Tipos: Client-Side (o cliente pega a lista de instances no Registry e escolhe) e Server-Side (o Load Balancer faz o discovery). Consul: registro via HTTP API, health checks, client-side load balancing (random, round robin, weighted). Kubernetes: DNS-based discovery, o Service resolve sozinho no ClusterIP. Laravel: Service Provider registra o serviço na subida, deregister no shutdown, cache nos requests de discovery. Health checks: liveness (está vivo?), readiness (pronto para receber requests?). Best practices: caching, fallback para config estático, graceful shutdown, monitoring."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

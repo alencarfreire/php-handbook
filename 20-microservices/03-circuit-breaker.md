@@ -1,71 +1,71 @@
 # 18.3 Circuit Breaker
 
 > **TL;DR**
-> Circuit Breaker защищает от каскадных сбоев в микросервисах. 3 состояния: CLOSED (работает нормально), OPEN (fail fast без вызова сервиса), HALF-OPEN (проверка восстановления). При failures > threshold переходит в OPEN, после timeout пробует HALF-OPEN. Fallback strategies: default value, cached data, degraded mode, queue. Bulkhead Pattern для изоляции ресурсов.
+> Circuit Breaker protege contra falhas em cascata em microsserviços. 3 estados: CLOSED (funciona normal), OPEN (fail fast sem chamar o serviço), HALF-OPEN (testa se voltou). Se failures > threshold, vai para OPEN; depois do timeout tenta HALF-OPEN. Fallback strategies: valor default, dados em cache, degraded mode, queue. Bulkhead Pattern para isolar recursos.
 
-## Содержание
-- [Что это](#что-это)
-- [Проблема без Circuit Breaker](#проблема-без-circuit-breaker)
-- [Состояния Circuit Breaker](#состояния-circuit-breaker)
-- [Реализация на PHP](#реализация-на-php)
+## Conteúdo
+- [O que é](#o-que-é)
+- [O problema sem Circuit Breaker](#o-problema-sem-circuit-breaker)
+- [Estados do Circuit Breaker](#estados-do-circuit-breaker)
+- [Implementação em PHP](#implementação-em-php)
 - [Laravel Package](#laravel-package)
 - [Fallback Strategy](#fallback-strategy)
-- [Bulkhead Pattern (дополнение)](#bulkhead-pattern-дополнение)
+- [Bulkhead Pattern (complemento)](#bulkhead-pattern-complemento)
 - [Monitoring](#monitoring)
 - [Best Practices](#best-practices)
 - [Circuit Breaker + Retry](#circuit-breaker--retry)
-- [Практические задания](#практические-задания)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
 **Circuit Breaker:**
-Паттерн для защиты от каскадных сбоев в распределённых системах. Предотвращает вызовы к недоступному сервису.
+Padrão para proteger de falhas em cascata em sistemas distribuídos. Impede chamadas a um serviço fora do ar.
 
-**Зачем:**
-- Защита от cascade failures
-- Fast fail вместо timeout
-- Дать времени сервису восстановиться
+**Para quê:**
+- Proteção contra cascade failures
+- Fail fast em vez de timeout
+- Dar tempo do serviço se recuperar
 - Graceful degradation
 
-**Аналогия:**
-Как автоматический выключатель в электрической сети. Если короткое замыкание → выключатель разрывает цепь.
+**Analogia:**
+Como o disjuntor na rede elétrica. Se der curto-circuito → o disjuntor abre o circuito.
 
 ---
 
-## Проблема без Circuit Breaker
+## O problema sem Circuit Breaker
 
-**Scenario:**
+**Cenário:**
 
 ```
-Order Service → Payment Service (медленный/упал)
+Order Service → Payment Service (lento/caiu)
    ↓
-Каждый request ждёт 30 секунд timeout
+Cada request espera 30 segundos de timeout
    ↓
-Threads блокируются
+Threads travam
    ↓
-Order Service перестаёт отвечать
+Order Service para de responder
    ↓
-Cascade failure: вся система упала
+Cascade failure: o sistema inteiro caiu
 ```
 
-**С Circuit Breaker:**
+**Com Circuit Breaker:**
 
 ```
 Order Service → Circuit Breaker → Payment Service
                     ↓
-        если Payment упал:
-        open circuit → fast fail
+        se o Payment caiu:
+        open circuit → fail fast
                     ↓
-        Order Service продолжает работать
+        Order Service continua funcionando
 ```
 
 ---
 
-## Состояния Circuit Breaker
+## Estados do Circuit Breaker
 
 ```
       ┌───────────┐
-      │  CLOSED   │ ← Нормальная работа
+      │  CLOSED   │ ← Funcionamento normal
       │ (working) │
       └─────┬─────┘
             │
@@ -73,7 +73,7 @@ Order Service → Circuit Breaker → Payment Service
             │
             ↓
       ┌───────────┐
-      │   OPEN    │ ← Все requests fail fast
+      │   OPEN    │ ← Todos os requests fail fast
       │  (broken) │
       └─────┬─────┘
             │
@@ -81,7 +81,7 @@ Order Service → Circuit Breaker → Payment Service
             │
             ↓
       ┌───────────┐
-      │ HALF-OPEN │ ← Пробуем 1 request
+      │ HALF-OPEN │ ← Tenta 1 request
       │  (testing)│
       └─────┬─────┘
             │
@@ -92,43 +92,43 @@ Success           Failure
 CLOSED            OPEN
 ```
 
-### 1. CLOSED (Закрыт)
+### 1. CLOSED (Fechado)
 
-**Нормальная работа:**
-- Requests проходят к сервису
-- Считаются failures
-- Если failures > threshold → OPEN
-
----
-
-### 2. OPEN (Открыт)
-
-**Сервис недоступен:**
-- Все requests fail fast (без вызова сервиса)
-- Не нагружаем упавший сервис
-- После timeout → HALF-OPEN
+**Funcionamento normal:**
+- Requests passam para o serviço
+- Conta as failures
+- Se failures > threshold → OPEN
 
 ---
 
-### 3. HALF-OPEN (Полуоткрыт)
+### 2. OPEN (Aberto)
 
-**Проверка восстановления:**
-- Пропустить 1 пробный request
-- Если success → CLOSED
-- Если failure → OPEN
+**Serviço fora do ar:**
+- Todos os requests fail fast (sem chamar o serviço)
+- Não sobrecarrega o serviço caído
+- Depois do timeout → HALF-OPEN
 
 ---
 
-## Реализация на PHP
+### 3. HALF-OPEN (Meio aberto)
 
-**Базовая реализация:**
+**Teste de recuperação:**
+- Deixa passar 1 request de teste
+- Se success → CLOSED
+- Se failure → OPEN
+
+---
+
+## Implementação em PHP
+
+**Implementação básica:**
 
 ```php
 class CircuitBreaker
 {
     private string $service;
     private int $failureThreshold = 5;
-    private int $timeout = 60;  // seconds
+    private int $timeout = 60;  // segundos
 
     public function call(callable $callback)
     {
@@ -140,20 +140,20 @@ class CircuitBreaker
                 return $this->attemptReset($callback);
             }
 
-            throw new CircuitBreakerOpenException("Service {$this->service} is unavailable");
+            throw new CircuitBreakerOpenException("Serviço {$this->service} indisponível");
         }
 
-        // CLOSED or HALF-OPEN: try call
+        // CLOSED ou HALF-OPEN: tenta a chamada
         try {
             $result = $callback();
 
-            // Success: reset failures
+            // Success: zera as failures
             $this->onSuccess();
 
             return $result;
 
         } catch (Exception $e) {
-            // Failure: increment counter
+            // Failure: incrementa o contador
             $this->onFailure();
 
             throw $e;
@@ -188,13 +188,13 @@ class CircuitBreaker
         try {
             $result = $callback();
 
-            // Success: close circuit
+            // Success: fecha o circuit
             $this->reset();
 
             return $result;
 
         } catch (Exception $e) {
-            // Still failing: reopen
+            // Ainda falhando: reabre
             Cache::put("circuit:{$this->service}:opened_at", time(), 3600);
 
             throw $e;
@@ -223,7 +223,7 @@ class CircuitBreaker
 }
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 $circuitBreaker = new CircuitBreaker('payment-service');
@@ -237,19 +237,19 @@ try {
     });
 
 } catch (CircuitBreakerOpenException $e) {
-    // Circuit open: fail fast
-    Log::warning('Payment service unavailable');
+    // Circuit OPEN: fail fast
+    Log::warning('Serviço de pagamento indisponível');
 
     return response()->json([
-        'error' => 'Payment service temporarily unavailable'
+        'error' => 'Serviço de pagamento temporariamente indisponível'
     ], 503);
 
 } catch (Exception $e) {
-    // Other error
-    Log::error('Payment failed', ['error' => $e->getMessage()]);
+    // Outro erro
+    Log::error('Pagamento falhou', ['error' => $e->getMessage()]);
 
     return response()->json([
-        'error' => 'Payment failed'
+        'error' => 'Pagamento falhou'
     ], 500);
 }
 ```
@@ -264,7 +264,7 @@ try {
 composer require opis/circuit-breaker
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 use Opis\CircuitBreaker\CircuitBreaker;
@@ -284,9 +284,9 @@ $result = $breaker->call('payment-service', function () {
 
 ## Fallback Strategy
 
-**Что делать когда Circuit открыт?**
+**O que fazer quando o circuit está OPEN?**
 
-### 1. Вернуть дефолтное значение
+### 1. Devolver valor default
 
 ```php
 try {
@@ -294,7 +294,7 @@ try {
         return Http::get('http://recommendation-service/api/products')->json();
     });
 } catch (CircuitBreakerOpenException $e) {
-    // Fallback: популярные товары
+    // Fallback: produtos populares
     $recommendations = Product::orderBy('views', 'desc')->limit(10)->get();
 }
 ```
@@ -309,7 +309,7 @@ try {
         return Http::get("http://user-service/api/users/{$userId}")->json();
     });
 } catch (CircuitBreakerOpenException $e) {
-    // Fallback: данные из кеша
+    // Fallback: dados do cache
     $user = Cache::get("user:{$userId}");
 
     if (!$user) {
@@ -328,18 +328,18 @@ try {
         return Http::get('http://analytics-service/api/stats')->json();
     });
 } catch (CircuitBreakerOpenException $e) {
-    // Degraded: показать страницу без аналитики
+    // Degraded: mostra a página sem analytics
     $analytics = null;
 }
 
 return view('dashboard', [
-    'analytics' => $analytics,  // может быть null
+    'analytics' => $analytics,  // pode ser null
 ]);
 ```
 
 ---
 
-### 4. Queue для retry
+### 4. Queue para retry
 
 ```php
 try {
@@ -347,20 +347,20 @@ try {
         Http::post('http://notification-service/api/send', ['email' => $email]);
     });
 } catch (CircuitBreakerOpenException $e) {
-    // Fallback: добавить в queue
+    // Fallback: coloca na queue
     SendEmailJob::dispatch($email)->delay(now()->addMinutes(5));
 }
 ```
 
 ---
 
-## Bulkhead Pattern (дополнение)
+## Bulkhead Pattern (complemento)
 
-**Проблема:**
-Один медленный сервис забирает все threads.
+**Problema:**
+Um serviço lento come todas as threads.
 
-**Решение:**
-Изолировать ресурсы для каждого сервиса.
+**Solução:**
+Isolar recursos por serviço.
 
 ```php
 class BulkheadCircuitBreaker extends CircuitBreaker
@@ -372,7 +372,7 @@ class BulkheadCircuitBreaker extends CircuitBreaker
         $currentCalls = Cache::get("bulkhead:{$this->service}:calls", 0);
 
         if ($currentCalls >= $this->maxConcurrentCalls) {
-            throw new BulkheadFullException("Too many concurrent calls to {$this->service}");
+            throw new BulkheadFullException("Chamadas concorrentes demais para {$this->service}");
         }
 
         Cache::increment("bulkhead:{$this->service}:calls");
@@ -390,7 +390,7 @@ class BulkheadCircuitBreaker extends CircuitBreaker
 
 ## Monitoring
 
-**Метрики:**
+**Métricas:**
 
 ```php
 class CircuitBreaker
@@ -399,7 +399,7 @@ class CircuitBreaker
     {
         $this->reset();
 
-        // Метрики
+        // Métricas
         Metrics::increment("circuit_breaker.{$this->service}.success");
     }
 
@@ -407,14 +407,14 @@ class CircuitBreaker
     {
         $failures = Cache::increment("circuit:{$this->service}:failures");
 
-        // Метрики
+        // Métricas
         Metrics::increment("circuit_breaker.{$this->service}.failure");
 
         if ($failures >= $this->failureThreshold) {
             Cache::put("circuit:{$this->service}:opened_at", time(), 3600);
 
             // Alert
-            Log::critical("Circuit breaker opened for {$this->service}");
+            Log::critical("Circuit breaker aberto para {$this->service}");
             Metrics::increment("circuit_breaker.{$this->service}.opened");
         }
     }
@@ -424,7 +424,7 @@ class CircuitBreaker
 **Dashboard (Grafana):**
 
 ```
-Метрики:
+Métricas:
 - circuit_breaker.{service}.success_rate (%)
 - circuit_breaker.{service}.state (closed/open/half-open)
 - circuit_breaker.{service}.failures (count)
@@ -435,21 +435,21 @@ class CircuitBreaker
 ## Best Practices
 
 ```
-✓ Timeout: устанавливай разумный timeout (3-5 секунд)
+✓ Timeout: use um timeout razoável (3-5 segundos)
 ✓ Failure threshold: 5-10 failures
-✓ Reset timeout: 30-60 секунд
-✓ Exponential backoff: увеличивай timeout после каждой неудачи
-✓ Fallback: всегда имей plan B
-✓ Monitoring: следи за состоянием circuits
-✓ Alerts: уведомляй когда circuit opens
-✓ Granularity: отдельный circuit для каждого сервиса/endpoint
+✓ Reset timeout: 30-60 segundos
+✓ Exponential backoff: aumenta o timeout depois de cada falha
+✓ Fallback: sempre tenha um plano B
+✓ Monitoring: acompanhe o estado dos circuits
+✓ Alerts: avise quando o circuit abre
+✓ Granularity: um circuit por serviço/endpoint
 ```
 
 ---
 
 ## Circuit Breaker + Retry
 
-**Комбинация:**
+**Combinação:**
 
 ```php
 class ResilientHttpClient
@@ -463,7 +463,7 @@ class ResilientHttpClient
                 return $circuitBreaker->call($callback);
 
             } catch (CircuitBreakerOpenException $e) {
-                // Circuit open: не retry
+                // Circuit OPEN: não faz retry
                 throw $e;
 
             } catch (Exception $e) {
@@ -478,7 +478,7 @@ class ResilientHttpClient
     }
 }
 
-// Использование
+// Uso
 $client = new ResilientHttpClient();
 
 $result = $client->call('payment-service', function () {
@@ -488,22 +488,22 @@ $result = $client->call('payment-service', function () {
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
 <details>
-<summary>Задание 1: Базовый Circuit Breaker</summary>
+<summary>Exercício 1: Circuit Breaker básico</summary>
 
-**Задача:**
-Реализуйте простой Circuit Breaker с тремя состояниями для защиты от сбоев Payment Service.
+**Enunciado:**
+Implemente um Circuit Breaker simples com três estados para proteger o Payment Service de falhas.
 
-**Решение:**
+**Solução:**
 
 ```php
 class SimpleCircuitBreaker
 {
     private string $service;
     private int $failureThreshold = 3;
-    private int $timeout = 30; // seconds
+    private int $timeout = 30; // segundos
 
     public function __construct(string $service)
     {
@@ -518,14 +518,14 @@ class SimpleCircuitBreaker
         // OPEN state
         if ($failures >= $this->failureThreshold) {
             if ($openedAt && (time() - $openedAt) >= $this->timeout) {
-                // HALF-OPEN: пробуем один запрос
+                // HALF-OPEN: tenta um request
                 return $this->attemptReset($callback);
             }
 
-            throw new CircuitBreakerOpenException("Service {$this->service} is down");
+            throw new CircuitBreakerOpenException("Serviço {$this->service} fora do ar");
         }
 
-        // CLOSED state: normal operation
+        // CLOSED: operação normal
         try {
             $result = $callback();
             Cache::forget("cb:{$this->service}:failures");
@@ -535,7 +535,7 @@ class SimpleCircuitBreaker
 
             if ($failures >= $this->failureThreshold) {
                 Cache::put("cb:{$this->service}:opened_at", time(), 3600);
-                Log::error("Circuit breaker opened for {$this->service}");
+                Log::error("Circuit breaker aberto para {$this->service}");
             }
 
             throw $e;
@@ -546,10 +546,10 @@ class SimpleCircuitBreaker
     {
         try {
             $result = $callback();
-            // Success: close circuit
+            // Success: fecha o circuit
             Cache::forget("cb:{$this->service}:failures");
             Cache::forget("cb:{$this->service}:opened_at");
-            Log::info("Circuit breaker closed for {$this->service}");
+            Log::info("Circuit breaker fechado para {$this->service}");
             return $result;
         } catch (Exception $e) {
             Cache::put("cb:{$this->service}:opened_at", time(), 3600);
@@ -558,7 +558,7 @@ class SimpleCircuitBreaker
     }
 }
 
-// Использование
+// Uso
 $cb = new SimpleCircuitBreaker('payment-service');
 
 try {
@@ -571,12 +571,12 @@ try {
 </details>
 
 <details>
-<summary>Задание 2: Fallback Strategy с кешем</summary>
+<summary>Exercício 2: Fallback Strategy com cache</summary>
 
-**Задача:**
-Реализуйте Circuit Breaker с fallback на кешированные данные при недоступности сервиса.
+**Enunciado:**
+Implemente um Circuit Breaker com fallback para dados em cache quando o serviço estiver fora do ar.
 
-**Решение:**
+**Solução:**
 
 ```php
 class RecommendationService
@@ -594,21 +594,21 @@ class RecommendationService
                     ->json();
             });
 
-            // Обновить кеш при успехе
+            // Atualiza o cache se deu certo
             Cache::put($cacheKey, $recommendations, 3600);
 
             return $recommendations;
 
         } catch (CircuitBreakerOpenException $e) {
-            // Fallback: данные из кеша
+            // Fallback: dados do cache
             $cached = Cache::get($cacheKey);
 
             if ($cached) {
-                Log::info("Using cached recommendations for user {$userId}");
+                Log::info("Usando recommendations em cache para o usuário {$userId}");
                 return $cached;
             }
 
-            // Ultimate fallback: популярные товары
+            // Fallback final: produtos populares
             return Product::orderBy('views', 'desc')->limit(10)->pluck('id')->toArray();
         }
     }
@@ -617,12 +617,12 @@ class RecommendationService
 </details>
 
 <details>
-<summary>Задание 3: Circuit Breaker с Retry и Exponential Backoff</summary>
+<summary>Exercício 3: Circuit Breaker com Retry e Exponential Backoff</summary>
 
-**Задача:**
-Комбинируйте Circuit Breaker с retry логикой и exponential backoff.
+**Enunciado:**
+Combine Circuit Breaker com retry e exponential backoff.
 
-**Решение:**
+**Solução:**
 
 ```php
 class ResilientHttpClient
@@ -636,26 +636,26 @@ class ResilientHttpClient
                 return $circuitBreaker->call($callback);
 
             } catch (CircuitBreakerOpenException $e) {
-                // Circuit открыт: не retry
-                Log::warning("Circuit breaker open for {$service}, skipping retry");
+                // Circuit OPEN: não faz retry
+                Log::warning("Circuit breaker aberto para {$service}, pulando retry");
                 throw $e;
 
             } catch (RequestException $e) {
                 if ($attempt === $maxRetries) {
-                    Log::error("All {$maxRetries} attempts failed for {$service}");
+                    Log::error("Todas as {$maxRetries} tentativas falharam para {$service}");
                     throw $e;
                 }
 
-                // Exponential backoff: 2^attempt seconds
+                // Exponential backoff: 2^attempt segundos
                 $delay = pow(2, $attempt);
-                Log::info("Retry {$attempt}/{$maxRetries} for {$service} in {$delay}s");
+                Log::info("Retry {$attempt}/{$maxRetries} para {$service} em {$delay}s");
                 sleep($delay);
             }
         }
     }
 }
 
-// Использование
+// Uso
 $client = new ResilientHttpClient();
 
 $result = $client->call('user-service', function () use ($userId) {
@@ -666,11 +666,10 @@ $result = $client->call('user-service', function () use ($userId) {
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Circuit Breaker защищает от каскадных сбоев. 3 состояния: CLOSED (работает), OPEN (fail fast), HALF-OPEN (проверка восстановления). Параметры: failure threshold (5-10), timeout (30-60s). Transitions: CLOSED → OPEN при failures > threshold, OPEN → HALF-OPEN после timeout, HALF-OPEN → CLOSED при success. Fallback strategies: default value, cached data, degraded mode, queue для retry. Bulkhead Pattern для изоляции ресурсов. Monitoring: метрики успеха/failures, alerts при open. Best practices: timeout, exponential backoff, granular circuits, fallbacks."
+> "Circuit Breaker protege contra falhas em cascata. 3 estados: CLOSED (funciona), OPEN (fail fast), HALF-OPEN (testa se voltou). Parâmetros: failure threshold (5-10), timeout (30-60s). Transições: CLOSED → OPEN se failures > threshold, OPEN → HALF-OPEN depois do timeout, HALF-OPEN → CLOSED se success. Fallback strategies: valor default, dados em cache, degraded mode, queue para retry. Bulkhead Pattern para isolar recursos. Monitoring: métricas de sucesso/failures, alerts quando abre. Best practices: timeout, exponential backoff, circuits granulares, fallbacks."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

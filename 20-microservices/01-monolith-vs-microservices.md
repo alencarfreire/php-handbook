@@ -1,32 +1,32 @@
-# 18.1 Монолит vs Микросервисы
+# 18.1 Monólito vs Microsserviços
 
 > **TL;DR**
-> Монолит — одна кодовая база, одна БД, простота разработки, но проблемы с масштабированием. Микросервисы — независимые сервисы со своими БД, сложнее в разработке, но лучше масштабируются. Модульный монолит — золотая середина для подготовки к микросервисам. Миграция через Strangler Fig Pattern. Данные в микросервисах — Saga Pattern для consistency.
+> Monólito — uma base de código, um banco, desenvolvimento simples, mas o scaling dói. Microsserviços — serviços independentes, cada um com seu banco; mais difícil de desenvolver, mas escalam melhor. Monólito modular é o meio-termo para se preparar. Migração pelo Strangler Fig Pattern. Dados nos microsserviços: Saga Pattern para consistência.
 
-## Содержание
-- [Что это](#что-это)
-- [Монолит](#монолит)
-- [Микросервисы](#микросервисы)
-- [Когда использовать](#когда-использовать)
-- [Модульный монолит (гибрид)](#модульный-монолит-гибрид)
-- [Миграция монолит → микросервисы](#миграция-монолит--микросервисы)
-- [Data Management](#data-management)
-- [Communication](#communication)
-- [Практические задания](#практические-задания)
+## Conteúdo
+- [O que é](#o-que-é)
+- [Monólito](#monólito)
+- [Microsserviços](#microsserviços)
+- [Quando usar](#quando-usar)
+- [Monólito modular (híbrido)](#monólito-modular-híbrido)
+- [Migração monólito → microsserviços](#migração-monólito--microsserviços)
+- [Gestão de dados](#gestão-de-dados)
+- [Comunicação](#comunicação)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
-**Монолит:**
-Всё приложение в одной кодовой базе. Один деплой, одна БД, один процесс.
+**Monólito:**
+O app inteiro numa base de código só. Um deploy, um banco, um processo.
 
-**Микросервисы:**
-Приложение разделено на независимые сервисы. Каждый сервис — отдельный деплой, своя БД, своя кодовая база.
+**Microsserviços:**
+O app vira serviços independentes. Cada serviço tem deploy próprio, banco próprio, base de código própria.
 
 ---
 
-## Монолит
+## Monólito
 
-**Архитектура:**
+**Arquitetura:**
 
 ```
 Single Application
@@ -37,30 +37,30 @@ Single Application
 └── Shared Database
 ```
 
-**Плюсы:**
+**Prós:**
 
 ```
-✅ Простота разработки (один проект)
-✅ Простота деплоя (один deploy)
-✅ Простота тестирования (интеграционные тесты)
-✅ Транзакции работают (одна БД)
-✅ Нет сетевых вызовов (всё в одном процессе)
-✅ Проще debugging
-✅ Меньше DevOps сложности
+✅ Desenvolvimento simples (um projeto só)
+✅ Deploy simples (um deploy)
+✅ Teste simples (testes de integração)
+✅ Transações funcionam (um banco)
+✅ Sem chamada de rede (tudo no mesmo processo)
+✅ Debug mais fácil
+✅ Menos complexidade de DevOps
 ```
 
-**Минусы:**
+**Contras:**
 
 ```
-❌ Scaling: нужно масштабировать всё (даже если bottleneck в одном модуле)
-❌ Tight coupling: изменение в одном модуле влияет на всё
-❌ Deployment: один баг блокирует весь deploy
-❌ Technology lock-in: нельзя использовать разные технологии
-❌ Team scaling: сложно работать большой командой
-❌ Startup time: большое приложение долго стартует
+❌ Scaling: você escala tudo (mesmo se o bottleneck for um módulo só)
+❌ Tight coupling: mudança num módulo mexe no resto
+❌ Deployment: um bug trava o deploy inteiro
+❌ Technology lock-in: não dá para misturar tecnologias
+❌ Team scaling: time grande sofre
+❌ Startup time: o app grande demora para iniciar
 ```
 
-**Пример (Laravel Monolith):**
+**Exemplo (Laravel Monolith):**
 
 ```php
 // app/Http/Controllers/OrderController.php
@@ -86,14 +86,14 @@ class OrderController extends Controller
     }
 }
 
-// Всё в одной транзакции, одной БД, одном процессе
+// Tudo numa transação, um banco, um processo
 ```
 
 ---
 
-## Микросервисы
+## Microsserviços
 
-**Архитектура:**
+**Arquitetura:**
 
 ```
 API Gateway
@@ -106,30 +106,30 @@ API Gateway
 └─────────────┴─────────────┴─────────────┴─────────────┘
 ```
 
-**Плюсы:**
+**Prós:**
 
 ```
-✅ Independent scaling: масштабировать только нужный сервис
-✅ Independent deployment: деплой одного сервиса не влияет на другие
-✅ Technology diversity: каждый сервис может быть на своём языке
-✅ Team independence: команды работают независимо
-✅ Fault isolation: баг в одном сервисе не роняет всё
-✅ Easier understanding: маленькие кодовые базы проще понять
+✅ Independent scaling: escala só o serviço que precisa
+✅ Independent deployment: deploy de um serviço não mexe nos outros
+✅ Technology diversity: cada serviço pode ter a própria linguagem
+✅ Team independence: times trabalham separados
+✅ Fault isolation: bug num serviço não derruba o resto
+✅ Easier understanding: base de código pequena é mais fácil de entender
 ```
 
-**Минусы:**
+**Contras:**
 
 ```
-❌ Complexity: distributed system сложнее
-❌ Network calls: latency, failures
-❌ Data consistency: нет ACID транзакций между сервисами
-❌ Testing: сложнее интеграционные тесты
-❌ Debugging: trace через N сервисов
-❌ DevOps overhead: N сервисов, N deployments, N databases
-❌ Eventual consistency вместо strong consistency
+❌ Complexity: sistema distribuído é mais difícil
+❌ Network calls: latência, falhas
+❌ Data consistency: sem transação ACID entre serviços
+❌ Testing: teste de integração fica mais difícil
+❌ Debugging: o trace atravessa N serviços
+❌ DevOps overhead: N serviços, N deploys, N bancos
+❌ Eventual consistency no lugar de strong consistency
 ```
 
-**Пример (Микросервисы):**
+**Exemplo (Microsserviços):**
 
 ```php
 // Order Service
@@ -137,26 +137,26 @@ class OrderController extends Controller
 {
     public function store(Request $request)
     {
-        // 1. Вызов User Service через HTTP
+        // 1. Chama o User Service via HTTP
         $user = Http::get("http://user-service/api/users/{$userId}")->json();
 
-        // 2. Создать заказ (локальная БД)
+        // 2. Cria o pedido (banco local)
         $order = Order::create([...]);
 
-        // 3. Вызов Payment Service
+        // 3. Chama o Payment Service
         $payment = Http::post("http://payment-service/api/charge", [
             'user_id' => $userId,
             'amount' => $order->total,
         ])->json();
 
         if (!$payment['success']) {
-            // Rollback? Нельзя! Разные БД
-            // Нужна Saga или compensation
+            // Rollback? Não dá! Bancos diferentes
+            // Precisa de Saga ou compensation
             $this->compensateOrder($order);
             throw new PaymentFailedException();
         }
 
-        // 4. Async notification через message queue
+        // 4. Notificação assíncrona via message queue
         Queue::push('notification-service', new OrderCreated($order));
 
         return response()->json($order);
@@ -166,36 +166,36 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-### Монолит для:
-
-```
-✓ Стартапы / MVP
-✓ Маленькие команды (< 10 человек)
-✓ Простые приложения
-✓ Строгая consistency нужна
-✓ Нет опыта в микросервисах
-```
-
-### Микросервисы для:
+### Monólito para:
 
 ```
-✓ Большие команды (> 20 человек)
-✓ Разные части нуждаются в разном масштабировании
-✓ Независимые deployment циклы
-✓ Разные технологии для разных частей
-✓ Есть DevOps expertise
+✓ Startups / MVP
+✓ Time pequeno (< 10 pessoas)
+✓ Apps simples
+✓ Precisa de consistência forte
+✓ Sem experiência em microsserviços
+```
+
+### Microsserviços para:
+
+```
+✓ Times grandes (> 20 pessoas)
+✓ Partes diferentes precisam de scaling diferente
+✓ Ciclos de deploy independentes
+✓ Tecnologias diferentes para partes diferentes
+✓ Tem expertise de DevOps
 ```
 
 ---
 
-## Модульный монолит (гибрид)
+## Monólito modular (híbrido)
 
-**Что это:**
-Монолит с чётким разделением на модули. Подготовка к микросервисам.
+**O que é:**
+Monólito com divisão clara em módulos. Preparação para microsserviços.
 
-**Структура:**
+**Estrutura:**
 
 ```php
 app/
@@ -216,49 +216,49 @@ app/
 │       ├── Services/
 │       └── routes.php
 └── Shared/
-    └── Database (общая, но можем разделить позже)
+    └── Database (compartilhado, mas dá para separar depois)
 ```
 
-**Правила:**
+**Regras:**
 
 ```
-✓ Модули общаются только через публичные API (Services)
-✓ Нет прямого доступа к Models другого модуля
-✓ Чёткие boundaries
+✓ Módulos só se falam pela API pública (Services)
+✓ Sem acesso direto aos Models de outro módulo
+✓ Boundaries claros
 
-// ❌ ПЛОХО
+// ❌ RUIM
 $user = \App\Modules\Users\Models\User::find($id);
 
-// ✅ ХОРОШО
+// ✅ BOM
 $user = app(UserService::class)->find($id);
 ```
 
-**Преимущества:**
+**Prós:**
 
 ```
-✅ Простота монолита
-✅ Подготовка к микросервисам
-✅ Легко выделить модуль в отдельный сервис позже
+✅ Simplicidade do monólito
+✅ Preparação para microsserviços
+✅ Depois é fácil extrair o módulo para um serviço
 ```
 
 ---
 
-## Миграция монолит → микросервисы
+## Migração monólito → microsserviços
 
 **Strangler Fig Pattern:**
 
 ```
-1. Монолит работает как есть
-2. Выделить один модуль в микросервис
-3. API Gateway роутит часть запросов в новый сервис
-4. Постепенно мигрировать остальные модули
-5. В конце выключить монолит
+1. O monólito continua rodando
+2. Extrai um módulo para microsserviço
+3. O API Gateway roteia parte das requests para o serviço novo
+4. Migra o resto dos módulos aos poucos
+5. No fim, desliga o monólito
 ```
 
-**Шаги:**
+**Passos:**
 
 ```
-Step 1: Монолит
+Step 1: Monólito
 ┌─────────────────────────┐
 │   Monolith              │
 │  - Users                │
@@ -266,7 +266,7 @@ Step 1: Монолит
 │  - Payments             │
 └─────────────────────────┘
 
-Step 2: Выделить Payment Service
+Step 2: Extrai o Payment Service
 ┌─────────────────────────┐        ┌─────────────┐
 │   Monolith              │        │  Payment    │
 │  - Users                │──────▶ │  Service    │
@@ -274,7 +274,7 @@ Step 2: Выделить Payment Service
 │  - Payments (deprecated)│
 └─────────────────────────┘
 
-Step 3: Выделить Order Service
+Step 3: Extrai o Order Service
 ┌─────────────────────────┐        ┌─────────────┐
 │   Monolith              │        │  Order      │
 │  - Users                │──────▶ │  Service    │
@@ -284,7 +284,7 @@ Step 3: Выделить Order Service
                                    │  Service    │
                                    └─────────────┘
 
-Step 4: Только User Service остался
+Step 4: Só o User Service sobrou
 ┌─────────────┐
 │  User       │
 │  Service    │
@@ -301,12 +301,12 @@ Step 4: Только User Service остался
 
 ---
 
-## Data Management
+## Gestão de dados
 
-**Монолит:**
+**Monólito:**
 
 ```sql
--- Одна БД, ACID транзакции
+-- Um banco, transações ACID
 BEGIN;
   INSERT INTO orders (...);
   UPDATE products SET stock = stock - 1;
@@ -314,17 +314,17 @@ BEGIN;
 COMMIT;
 ```
 
-**Микросервисы:**
+**Microsserviços:**
 
 ```
 Order Service DB: orders
 Payment Service DB: payments
 Product Service DB: products
 
-Нельзя сделать транзакцию между БД!
+Não dá para fazer transação entre bancos!
 ```
 
-**Решения:**
+**Soluções:**
 
 ### 1. Saga Pattern
 
@@ -335,22 +335,22 @@ class CreateOrderSaga
     public function execute($data)
     {
         try {
-            // 1. Создать заказ
+            // 1. Cria o pedido
             $order = $this->orderService->create($data);
 
-            // 2. Зарезервировать товар
+            // 2. Reserva o produto
             $reservation = $this->productService->reserve($data['product_id']);
 
-            // 3. Оплата
+            // 3. Pagamento
             $payment = $this->paymentService->charge($data['amount']);
 
-            // 4. Подтвердить резерв
+            // 4. Confirma a reserva
             $this->productService->confirmReservation($reservation['id']);
 
             return $order;
 
         } catch (Exception $e) {
-            // Compensation: откатить изменения
+            // Compensation: desfaz as mudanças
             $this->productService->cancelReservation($reservation['id']);
             $this->orderService->cancel($order['id']);
 
@@ -363,46 +363,46 @@ class CreateOrderSaga
 ### 2. Event Sourcing
 
 ```php
-// Каждое изменение = событие
+// Cada mudança = um evento
 event(new OrderCreated($order));
 event(new PaymentProcessed($payment));
 event(new InventoryReserved($product));
 
-// Другие сервисы слушают события и обновляют свои БД
+// Os outros serviços escutam os eventos e atualizam o próprio banco
 ```
 
-### 3. Два-фазный коммит (2PC)
+### 3. Two-phase commit (2PC)
 
 ```
 Coordinator:
-1. Prepare phase: спросить все сервисы "готовы?"
-2. Commit phase: если все "да" → commit, иначе → rollback
+1. Prepare phase: pergunta a todos os serviços "prontos?"
+2. Commit phase: se todos disserem "sim" → commit, senão → rollback
 
-❌ Редко используется (медленно, blocking)
+❌ Quase ninguém usa (lento, blocking)
 ```
 
 ---
 
-## Communication
+## Comunicação
 
-**Синхронная (HTTP/REST):**
+**Síncrona (HTTP/REST):**
 
 ```php
-// Order Service вызывает User Service
+// Order Service chama o User Service
 $user = Http::get("http://user-service/api/users/{$id}")->json();
 
-✅ Просто
+✅ Simples
 ❌ Tight coupling
-❌ If user-service down → order-service не работает
+❌ Se o user-service cair → o order-service para
 ```
 
-**Асинхронная (Message Queue):**
+**Assíncrona (Message Queue):**
 
 ```php
-// Order Service публикует событие
+// Order Service publica o evento
 event(new OrderCreated($order));
 
-// User Service, Payment Service слушают и реагируют
+// User Service e Payment Service escutam e reagem
 ✅ Loose coupling
 ✅ Fault tolerant
 ❌ Eventual consistency
@@ -410,15 +410,14 @@ event(new OrderCreated($order));
 
 ---
 
-## Практические задания
+## Exercícios práticos
+
+### Exercício 1: Monólito modular
+
+**Enunciado:** Crie um monólito modular com dois módulos: Users e Orders. Os módulos só se falam por services, nunca direto pelos Models.
 
 <details>
-<summary>Задание 1: Модульный монолит</summary>
-
-**Задача:**
-Создайте модульный монолит с двумя модулями: Users и Orders. Модули должны общаться только через сервисы, не напрямую через Models.
-
-**Решение:**
+<summary>Solução</summary>
 
 ```php
 // app/Modules/Users/Services/UserService.php
@@ -449,11 +448,11 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        // ✅ ПРАВИЛЬНО: через сервис
+        // ✅ CERTO: pelo service
         $user = $this->userService->find($request->user_id);
 
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
+            return response()->json(['error' => 'Usuário não encontrado'], 404);
         }
 
         $order = Order::create([
@@ -467,13 +466,12 @@ class OrderController extends Controller
 ```
 </details>
 
+### Exercício 2: Saga Pattern para criar pedido
+
+**Enunciado:** Implemente uma Saga simples para criar o pedido, com compensation se o pagamento falhar.
+
 <details>
-<summary>Задание 2: Saga Pattern для создания заказа</summary>
-
-**Задача:**
-Реализуйте простую Saga для создания заказа с компенсацией при ошибке оплаты.
-
-**Решение:**
+<summary>Solução</summary>
 
 ```php
 class CreateOrderSaga
@@ -483,11 +481,11 @@ class CreateOrderSaga
     public function execute(array $data): Order
     {
         try {
-            // Шаг 1: Создать заказ
+            // Passo 1: Cria o pedido
             $order = Order::create(['status' => 'pending', ...$data]);
             $this->compensations[] = fn() => $order->delete();
 
-            // Шаг 2: Зарезервировать товар
+            // Passo 2: Reserva o produto
             $product = Product::lockForUpdate()->find($data['product_id']);
             if ($product->stock < $data['quantity']) {
                 throw new OutOfStockException();
@@ -495,16 +493,16 @@ class CreateOrderSaga
             $product->decrement('stock', $data['quantity']);
             $this->compensations[] = fn() => $product->increment('stock', $data['quantity']);
 
-            // Шаг 3: Оплата (может упасть)
+            // Passo 3: Pagamento (pode falhar)
             $payment = $this->processPayment($order);
             $this->compensations[] = fn() => $this->refundPayment($payment);
 
-            // Успех
+            // Sucesso
             $order->update(['status' => 'completed']);
             return $order;
 
         } catch (Exception $e) {
-            // Compensation: откат в обратном порядке
+            // Compensation: desfaz na ordem inversa
             foreach (array_reverse($this->compensations) as $compensation) {
                 $compensation();
             }
@@ -514,7 +512,7 @@ class CreateOrderSaga
 
     private function processPayment(Order $order): Payment
     {
-        // Симуляция оплаты
+        // Simula o pagamento
         if (rand(0, 1)) {
             throw new PaymentFailedException();
         }
@@ -529,18 +527,17 @@ class CreateOrderSaga
 ```
 </details>
 
+### Exercício 3: Strangler Fig Migration
+
+**Enunciado:** Implemente o Strangler Fig para migrar o monólito para microsserviços aos poucos, via API Gateway.
+
 <details>
-<summary>Задание 3: Strangler Fig Migration</summary>
-
-**Задача:**
-Реализуйте шаблон Strangler Fig для постепенной миграции монолита в микросервисы через API Gateway.
-
-**Решение:**
+<summary>Solução</summary>
 
 ```php
 // API Gateway (routes/api.php)
 Route::any('/api/payments/{path}', function (Request $request, $path) {
-    // Новый микросервис
+    // Microsserviço novo
     return Http::asForm()
         ->withToken($request->bearerToken())
         ->send(
@@ -551,25 +548,24 @@ Route::any('/api/payments/{path}', function (Request $request, $path) {
 })->where('path', '.*');
 
 Route::any('/api/{service}/{path}', function (Request $request, $service, $path) {
-    // Старый монолит (остальные сервисы)
+    // Monólito antigo (os outros serviços)
     return app()->call("App\\Http\\Controllers\\{$service}@{$path}", $request->all());
 })->where('path', '.*');
 
-// Постепенно выносим сервисы:
-// 1. Payment Service → микросервис (готово)
-// 2. Order Service → следующий
-// 3. User Service → последний
-// 4. Монолит удаляем
+// Vai extraindo os serviços:
+// 1. Payment Service → microsserviço (pronto)
+// 2. Order Service → o próximo
+// 3. User Service → o último
+// 4. Apaga o monólito
 ```
 </details>
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Монолит: одна кодовая база, одна БД, один деплой. Плюсы: простота, транзакции, debugging. Минусы: scaling всего, tight coupling, большие команды сложно. Микросервисы: независимые сервисы со своими БД. Плюсы: independent scaling/deployment, technology diversity. Минусы: distributed system complexity, eventual consistency, network latency. Модульный монолит — гибрид: подготовка к микросервисам. Миграция: Strangler Fig Pattern. Data consistency: Saga Pattern, Event Sourcing. Коммуникация: синхронная (HTTP) или асинхронная (message queue)."
+> "Monólito: uma base de código, um banco, um deploy. Prós: simplicidade, transações, debug. Contras: scaling do sistema inteiro, tight coupling, time grande sofre. Microsserviços: serviços independentes, cada um com seu banco. Prós: scaling e deploy independentes, tecnologias diferentes. Contras: sistema distribuído, eventual consistency, latência de rede. Monólito modular é o híbrido: você se prepara para microsserviços. Migração: Strangler Fig Pattern. Consistência dos dados: Saga Pattern, Event Sourcing. Comunicação: síncrona (HTTP) ou assíncrona (message queue)."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
