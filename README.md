@@ -89,6 +89,21 @@ O livro está dividido por nível:
 
 Este handbook foi feito pela equipe [CodeMate](https://codemate.team) com base em entrevistas reais e na preparação de devs.
 
+## Tradução pt-BR
+
+Esta edição em português brasileiro foi **traduzida por IA** a partir do original em russo da CodeMate.
+
+**Metodologia:**
+
+1. Tradução no lugar, sem i18n. Pastas, slugs e APIs ficaram em inglês.
+2. Guia fixo em [`TRANSLATION.md`](TRANSLATION.md): pt-BR de entrevista, **você**, frases curtas. Sem tradução literal do russo e sem tom de manual.
+3. Piloto humano em [`01-php-basics/01-types.md`](01-php-basics/01-types.md). O resto copiou esse tom e a tabela de rótulos (Resumo, Conteúdo, Na entrevista…).
+4. Um arquivo por vez. Comentários e strings de exemplo traduzidos; identificadores PHP/SQL intactos.
+5. Checagem mecânica: zero cirílico, TOC alinhado aos headings, `npm run docs:build`.
+6. Passe de consistência (labels, `tu`, amostra de um capítulo por pasta). Não houve revisão linguística de cada capítulo.
+
+Pode ter tom irregular. Correção via PR é bem-vinda.
+
 ---
 
 **Pronto?** Escolha uma seção na navegação e começa.
