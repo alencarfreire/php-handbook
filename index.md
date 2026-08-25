@@ -4,7 +4,7 @@ layout: home
 hero:
   name: PHP/Laravel Handbook
   text: Guia completo para quem desenvolve PHP/Laravel
-  tagline: Do básico à arquitetura. Para estudar sozinho e se preparar para entrevista
+  tagline: Do básico à arquitetura. Tradução pt-BR por IA — Vinícius Freire
   actions:
     - theme: brand
       text: Começar
