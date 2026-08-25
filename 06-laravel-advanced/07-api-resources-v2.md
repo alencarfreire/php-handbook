@@ -1,55 +1,56 @@
 # 5.7 API Resources
 
-## Краткое резюме
+## Resumo
 
-> **API Resources** — слой трансформации моделей Eloquent в JSON для API. Контролируют структуру ответа, скрывают внутренние поля, добавляют computed данные.
+> **API Resources** — camada que transforma models Eloquent em JSON para a API. Você controla a estrutura da response, esconde campo interno e adiciona dado computed.
 >
-> `Resource` для одной модели, `ResourceCollection` для коллекций.
+> `Resource` para um model, `ResourceCollection` para coleção.
 >
-> Используют `whenLoaded()` для отношений, `when()` для условных полей.
+> Use `whenLoaded()` nas relationships, `when()` em campo condicional.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Основы](#основы)
+- [Fundamentos](#fundamentos)
 - [Resource vs ResourceCollection](#resource-vs-resourcecollection)
-- [Работа с отношениями](#работа-с-отношениями)
-- [Условные поля](#условные-поля)
-- [Пагинация](#пагинация)
-- [Частые ошибки](#частые-ошибки)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании)
-- [Практические задания](#практические-задания)
+- [Trabalhando com relationships](#trabalhando-com-relationships)
+- [Campos condicionais](#campos-condicionais)
+- [Paginação](#paginação)
+- [Erros comuns](#erros-comuns)
+- [Boas práticas](#boas-práticas)
+- [Comparação de abordagens](#comparação-de-abordagens)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Основы
+## Fundamentos
 
-### Что это?
+### O que é
 
-**API Resource** — класс который определяет как модель Eloquent должна быть преобразована в JSON для API ответа.
+**API Resource** — classe que define como o model Eloquent vira JSON na response da API.
 
-### Зачем нужны?
+### Para que servem?
 
-| Проблема | Решение с Resources |
+| Problema | Solução com Resources |
 |----------|-------------------|
-| Возвращаем все поля модели (включая пароли) | Контролируем какие поля показывать |
-| Структура БД = структура API | Независимая структура API |
-| Дублирование логики трансформации | Централизованная трансформация |
-| Сложно добавить computed поля | Легко добавить любые поля |
+| Devolve todos os campos do model (incluindo senha) | Você controla quais campos entram |
+| Estrutura do banco = estrutura da API | API independente do banco |
+| Lógica de transformação duplicada | Transformação num lugar só |
+| Computed field é chato de adicionar | Qualquer campo entra fácil |
 
-### Создание
+### Criar
 
 ```bash
-# Resource для одной модели
+# Resource para um model
 php artisan make:resource UserResource
 
 # ResourceCollection
 php artisan make:resource UserCollection --collection
 ```
 
-### Базовый пример
+### Exemplo básico
 
 ```php
 // app/Http/Resources/UserResource.php
@@ -71,7 +72,7 @@ class UserResource extends JsonResource
 }
 ```
 
-**Использование в контроллере:**
+**Uso no controller:**
 
 ```php
 use App\Http\Resources\UserResource;
@@ -85,14 +86,14 @@ class UserController extends Controller
 }
 ```
 
-**Ответ API:**
+**Response da API:**
 
 ```json
 {
   "data": {
     "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
+    "name": "João Silva",
+    "email": "joao@email.com",
     "created_at": "2024-01-15T10:30:00.000000Z"
   }
 }
@@ -102,15 +103,15 @@ class UserController extends Controller
 
 ## Resource vs ResourceCollection
 
-### Когда что использовать?
+### Quando usar cada um?
 
-| Тип | Использование | Метод |
+| Tipo | Uso | Método |
 |-----|--------------|-------|
-| **Resource** | Одна модель | `new UserResource($user)` |
-| **Resource::collection()** | Коллекция (простая) | `UserResource::collection($users)` |
-| **ResourceCollection** | Коллекция (кастомная) | `new UserCollection($users)` |
+| **Resource** | Um model | `new UserResource($user)` |
+| **Resource::collection()** | Coleção (simples) | `UserResource::collection($users)` |
+| **ResourceCollection** | Coleção (customizada) | `new UserCollection($users)` |
 
-### Resource для коллекции
+### Resource para coleção
 
 ```php
 class UserController extends Controller
@@ -119,13 +120,13 @@ class UserController extends Controller
     {
         $users = User::paginate(20);
 
-        // Автоматическая коллекция
+        // Coleção automática
         return UserResource::collection($users);
     }
 }
 ```
 
-### Кастомная ResourceCollection
+### ResourceCollection customizada
 
 ```php
 namespace App\Http\Resources;
@@ -152,11 +153,11 @@ class UserCollection extends ResourceCollection
 
 ---
 
-## Работа с отношениями
+## Trabalhando com relationships
 
-### whenLoaded() — избегаем N+1
+### whenLoaded() — evita N+1
 
-> **Важно:** Всегда используйте `whenLoaded()` для отношений, чтобы избежать N+1 проблемы.
+> **Importante:** Sempre use `whenLoaded()` nas relationships. Sem isso, você cai no N+1.
 
 ```php
 class PostResource extends JsonResource
@@ -168,11 +169,11 @@ class PostResource extends JsonResource
             'title' => $this->title,
             'body' => $this->body,
 
-            // Загрузится ТОЛЬКО если было eager loading
+            // Carrega SÓ se veio no eager load
             'author' => new UserResource($this->whenLoaded('user')),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
 
-            // Счётчик
+            // Contador
             'comments_count' => $this->when(
                 isset($this->comments_count),
                 $this->comments_count
@@ -182,7 +183,7 @@ class PostResource extends JsonResource
 }
 ```
 
-**В контроллере: eager loading**
+**No controller: eager loading**
 
 ```php
 public function show(Post $post)
@@ -195,9 +196,9 @@ public function show(Post $post)
 
 ---
 
-## Условные поля
+## Campos condicionais
 
-### when() — одно поле
+### when() — um campo
 
 ```php
 class PostResource extends JsonResource
@@ -208,13 +209,13 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
 
-            // Показать только авторизованным
+            // Só para autenticados
             'body' => $this->when(
                 $request->user(),
                 $this->body
             ),
 
-            // Показать только владельцу
+            // Só para o dono
             'draft' => $this->when(
                 $request->user()?->id === $this->user_id,
                 $this->draft
@@ -224,7 +225,7 @@ class PostResource extends JsonResource
 }
 ```
 
-### mergeWhen() — группа полей
+### mergeWhen() — grupo de campos
 
 ```php
 class OrderResource extends JsonResource
@@ -236,7 +237,7 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'total' => $this->total,
 
-            // Показать группу полей только владельцу или админу
+            // Grupo de campos só para o dono ou admin
             $this->mergeWhen($this->canView($request->user()), [
                 'payment_method' => $this->payment_method,
                 'billing_address' => $this->billing_address,
@@ -257,9 +258,9 @@ class OrderResource extends JsonResource
 
 ---
 
-## Пагинация
+## Paginação
 
-### Автоматическая пагинация
+### Paginação automática
 
 ```php
 class PostController extends Controller
@@ -273,7 +274,7 @@ class PostController extends Controller
 }
 ```
 
-**Ответ:**
+**Response:**
 
 ```json
 {
@@ -295,7 +296,7 @@ class PostController extends Controller
 }
 ```
 
-### Дополнительные мета-данные
+### Metadados extras
 
 ```php
 class PostResource extends JsonResource
@@ -315,11 +316,11 @@ class PostResource extends JsonResource
 
 ---
 
-## Частые ошибки
+## Erros comuns
 
-### Ошибка 1: N+1 проблема
+### Erro 1: problema N+1
 
-**Неправильно:**
+**Errado:**
 
 ```php
 class PostResource extends JsonResource
@@ -328,13 +329,13 @@ class PostResource extends JsonResource
     {
         return [
             'title' => $this->title,
-            'author' => new UserResource($this->user), // N+1 запрос!
+            'author' => new UserResource($this->user), // N+1!
         ];
     }
 }
 ```
 
-**Правильно:**
+**Certo:**
 
 ```php
 class PostResource extends JsonResource
@@ -348,22 +349,22 @@ class PostResource extends JsonResource
     }
 }
 
-// В контроллере: eager loading
+// No controller: eager loading
 $posts = Post::with('user')->get();
 ```
 
-### Ошибка 2: Возврат модели вместо Resource
+### Erro 2: devolver o model em vez do Resource
 
-**Неправильно:**
+**Errado:**
 
 ```php
 public function show(User $user)
 {
-    return $user; // Показывает ВСЕ поля включая password_hash!
+    return $user; // Mostra TODOS os campos, inclusive password_hash!
 }
 ```
 
-**Правильно:**
+**Certo:**
 
 ```php
 public function show(User $user)
@@ -372,15 +373,15 @@ public function show(User $user)
 }
 ```
 
-### Ошибка 3: Не проверять загружены ли отношения
+### Erro 3: não checar se a relationship carregou
 
-**Неправильно:**
+**Errado:**
 
 ```php
 'comments_count' => $this->comments_count
 ```
 
-**Правильно:**
+**Certo:**
 
 ```php
 'comments_count' => $this->when(
@@ -391,9 +392,9 @@ public function show(User $user)
 
 ---
 
-## Best Practices
+## Boas práticas
 
-### 1. Убрать обёртку "data" (опционально)
+### 1. Tirar o wrap "data" (opcional)
 
 ```php
 // AppServiceProvider
@@ -405,26 +406,26 @@ public function boot(): void
 }
 ```
 
-**Было:**
+**Antes:**
 ```json
-{"data": {"id": 1, "name": "John"}}
+{"data": {"id": 1, "name": "João"}}
 ```
 
-**Стало:**
+**Depois:**
 ```json
-{"id": 1, "name": "John"}
+{"id": 1, "name": "João"}
 ```
 
-### 2. Кастомная обёртка
+### 2. Wrap customizado
 
 ```php
 class PostResource extends JsonResource
 {
-    public static $wrap = 'post'; // Обернёт в 'post'
+    public static $wrap = 'post'; // Envolve em 'post'
 }
 ```
 
-### 3. Computed поля
+### 3. Campos computed
 
 ```php
 class OrderResource extends JsonResource
@@ -435,7 +436,7 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'total' => $this->total,
 
-            // Computed поля
+            // Campos computed
             'status_label' => $this->getStatusLabel(),
             'is_shipped' => $this->status === 'shipped',
             'can_cancel' => $this->canBeCancelled(),
@@ -445,16 +446,16 @@ class OrderResource extends JsonResource
     private function getStatusLabel(): string
     {
         return match($this->status) {
-            'pending' => 'В обработке',
-            'shipped' => 'Отправлен',
-            'delivered' => 'Доставлен',
-            default => 'Неизвестно',
+            'pending' => 'Em processamento',
+            'shipped' => 'Enviado',
+            'delivered' => 'Entregue',
+            default => 'Desconhecido',
         };
     }
 }
 ```
 
-### 4. Версионирование API
+### 4. Versionamento da API
 
 ```php
 // v1/UserResource.php
@@ -476,8 +477,8 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'full_name' => $this->name, // Переименовали
-            'avatar_url' => $this->avatar, // Новое поле
+            'full_name' => $this->name, // Renomeamos
+            'avatar_url' => $this->avatar, // Campo novo
         ];
     }
 }
@@ -485,60 +486,60 @@ class UserResource extends JsonResource
 
 ---
 
-## Сравнение подходов
+## Comparação de abordagens
 
-| Подход | Плюсы | Минусы | Когда использовать |
+| Abordagem | Prós | Contras | Quando usar |
 |--------|-------|--------|-------------------|
-| **Модель напрямую** | Просто | Показывает ВСЁ, нет контроля | Внутренние API, прототипы |
-| **Array вручную** | Гибко | Дублирование кода | Разовые случаи |
-| **Resource** | Переиспользование, чистота | Чуть больше кода | Любые публичные API |
-| **DTO + Resource** | Максимальная типизация | Больше всего кода | Enterprise проекты |
+| **Model direto** | Simples | Mostra TUDO, sem controle | API interna, protótipo |
+| **Array na mão** | Flexível | Código duplicado | Caso pontual |
+| **Resource** | Reuso, código limpo | Um pouco mais de código | Qualquer API pública |
+| **DTO + Resource** | Tipagem máxima | Mais código | Projeto enterprise |
 
 ---
 
-## На собеседовании
+## Na entrevista
 
-### Структурированный ответ
+### Resposta estruturada
 
-**Что это:**
-- API Resources трансформируют модели Eloquent в JSON для API ответов
-- Resource для одной модели, ResourceCollection для коллекций
+**O que é:**
+- API Resources transformam models Eloquent em JSON para a API
+- Resource para um model, ResourceCollection para coleção
 
-**Основные методы:**
-- `toArray()` — определяет структуру JSON
-- `whenLoaded()` — загружать отношения только если были eager loaded (избегает N+1)
-- `when()` — условное поле
-- `mergeWhen()` — группа условных полей
-- `with()` — дополнительные мета-данные
+**Métodos principais:**
+- `toArray()` — define a estrutura do JSON
+- `whenLoaded()` — carrega a relationship só se veio no eager load (evita N+1)
+- `when()` — campo condicional
+- `mergeWhen()` — grupo de campos condicionais
+- `with()` — metadados extras
 
-**Использование:**
+**Uso:**
 ```php
-// Одна модель
+// Um model
 return new UserResource($user);
 
-// Коллекция
+// Coleção
 return UserResource::collection($users);
 
-// Пагинация (автоматически)
+// Paginação (automática)
 return UserResource::collection(User::paginate(20));
 ```
 
-**Best practices:**
-- Всегда `whenLoaded()` для отношений
-- Условные поля для чувствительных данных
-- Computed поля для бизнес-логики
-- Версионирование Resources для API v1, v2
+**Boas práticas:**
+- Sempre `whenLoaded()` nas relationships
+- Campo condicional para dado sensível
+- Campo computed para regra de negócio
+- Versionar Resources na API v1, v2
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Resource с условными полями
+### Exercício 1: Resource com campos condicionais
 
-Создай `ArticleResource` который показывает поле `draft_content` только автору статьи, а `views_count` только админам.
+**Enunciado:** Crie um `ArticleResource` que mostra `draft_content` só para o autor do artigo, e `views_count` só para admin.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class ArticleResource extends JsonResource
@@ -550,13 +551,13 @@ class ArticleResource extends JsonResource
             'title' => $this->title,
             'content' => $this->content,
 
-            // Только для автора
+            // Só para o autor
             'draft_content' => $this->when(
                 $request->user()?->id === $this->author_id,
                 $this->draft_content
             ),
 
-            // Только для админов
+            // Só para admin
             'views_count' => $this->when(
                 $request->user()?->isAdmin(),
                 $this->views_count
@@ -567,9 +568,9 @@ class ArticleResource extends JsonResource
 ```
 </details>
 
-### Задание 2: Исправь N+1 проблему
+### Exercício 2: Corrija o N+1
 
-Что не так в этом коде? Исправь.
+**Enunciado:** O que está errado neste código? Corrija.
 
 ```php
 class BookResource extends JsonResource
@@ -586,7 +587,7 @@ class BookResource extends JsonResource
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class BookResource extends JsonResource
@@ -601,18 +602,18 @@ class BookResource extends JsonResource
     }
 }
 
-// В контроллере
+// No controller
 $books = Book::with(['author', 'reviews'])->get();
 return BookResource::collection($books);
 ```
 </details>
 
-### Задание 3: Добавь computed поле
+### Exercício 3: Adicione um campo computed
 
-Добавь в `ProductResource` computed поле `discount_percentage` которое вычисляет процент скидки: `(original_price - price) / original_price * 100`.
+**Enunciado:** Adicione em `ProductResource` o campo computed `discount_percentage`: `(original_price - price) / original_price * 100`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class ProductResource extends JsonResource
@@ -645,28 +646,28 @@ class ProductResource extends JsonResource
 
 ---
 
-## Дополнительные материалы
+## Materiais extras
 
-**Официальная документация Laravel:**
+**Documentação oficial do Laravel:**
 - [API Resources](https://laravel.com/docs/eloquent-resources)
 
-**Связанные темы:**
+**Temas relacionados:**
 - [5.1 Eloquent Relationships](./01-eloquent-relationships.md)
 - [5.2 Query Builder](./02-query-builder.md)
 
 ---
 
-## Помощь с подготовкой
+## Ajuda na preparação
 
-Нужна помощь с подготовкой к собеседованию?
+Precisa de ajuda para a entrevista?
 
-**CodeMate** поможет:
-- Mock interview по Laravel
-- Разбор реальных вопросов
-- Code review твоих проектов
+O **CodeMate** ajuda:
+- Mock interview de Laravel
+- Revisão de perguntas reais
+- Code review dos seus projetos
 
-[Записаться на консультацию](https://codemate.team/consultation)
+[Agendar uma consultoria](https://codemate.team/consultation)
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
