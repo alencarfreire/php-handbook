@@ -1,72 +1,72 @@
-# Roadmap развития PHP/Laravel разработчика
+# Roadmap de PHP/Laravel
 
-Структурированный путь от основ до Senior уровня. Каждый раздел содержит темы для изучения и ссылки на соответствующие главы handbook.
+Caminho do básico ao Senior. Cada bloco aponta para o capítulo correspondente do handbook.
 
 ---
 
 ## Junior Developer
 
-### Основы PHP
+### Fundamentos de PHP
 
-**Базовый синтаксис**
-- [Типы данных](/01-php-basics/01-types) - примитивные типы, приведение типов
-- [Переменные](/01-php-basics/02-variables) - область видимости, константы
-- [Операторы](/01-php-basics/03-operators) - арифметические, логические, сравнения
-- [Управляющие конструкции](/01-php-basics/04-control-structures) - if, switch, циклы
+**Sintaxe**
+- [Tipos](/01-php-basics/01-types) — tipos primitivos, type casting
+- [Variáveis](/01-php-basics/02-variables) — escopo, constantes
+- [Operadores](/01-php-basics/03-operators) — aritméticos, lógicos, comparação
+- [Estruturas de controle](/01-php-basics/04-control-structures) — if, switch, loops
 
-**Функции и структуры данных**
-- [Функции](/01-php-basics/05-functions) - объявление, параметры, возврат значений
-- [Массивы](/01-php-basics/06-arrays) - индексные, ассоциативные, функции работы с массивами
-- [Строки и регулярные выражения](/01-php-basics/07-strings-regex) - обработка строк, PCRE
+**Funções e estruturas de dados**
+- [Funções](/01-php-basics/05-functions) — declaração, parâmetros, retorno
+- [Arrays](/01-php-basics/06-arrays) — indexados, associativos, funções de array
+- [Strings e regex](/01-php-basics/07-strings-regex) — strings, PCRE
 
-### Объектно-ориентированное программирование
+### Programação orientada a objetos
 
-**Основы ООП**
-- [Классы и объекты](/02-oop/01-classes-objects) - инстанцирование, свойства, методы
-- [Наследование](/02-oop/02-inheritance) - extends, переопределение методов
-- [Интерфейсы](/02-oop/03-interfaces) - контракты, множественная реализация
-- [Абстрактные классы](/02-oop/04-abstract-classes) - абстракция, шаблонные методы
+**OOP básico**
+- [Classes e objetos](/02-oop/01-classes-objects) — instância, propriedades, métodos
+- [Herança](/02-oop/02-inheritance) — extends, override
+- [Interfaces](/02-oop/03-interfaces) — contratos, implementação múltipla
+- [Classes abstratas](/02-oop/04-abstract-classes) — abstração, template method
 
-**Продвинутые возможности**
-- [Трейты](/02-oop/05-traits) - повторное использование кода
-- [Магические методы](/02-oop/06-magic-methods) - __construct, __get, __set, __call
-- [Статическое связывание](/02-oop/07-static-binding) - self vs static
-- [Область видимости](/02-oop/08-visibility) - public, protected, private
+**Recursos avançados**
+- [Traits](/02-oop/05-traits) — reuso de código
+- [Magic methods](/02-oop/06-magic-methods) — __construct, __get, __set, __call
+- [Late static binding](/02-oop/07-static-binding) — self vs static
+- [Visibilidade](/02-oop/08-visibility) — public, protected, private
 
 ### PHP Advanced
 
-**Современные возможности**
-- [Пространства имён](/03-php-advanced/01-namespaces) - организация кода, автозагрузка
-- [Composer и PSR-4](/03-php-advanced/02-autoloading) - управление зависимостями
-- [Исключения](/03-php-advanced/03-exceptions) - обработка ошибок, custom exceptions
-- [PSR стандарты](/03-php-advanced/04-psr) - PSR-1, PSR-2, PSR-4, PSR-12
+**Recursos modernos**
+- [Namespaces](/03-php-advanced/01-namespaces) — organização do código, autoload
+- [Composer e PSR-4](/03-php-advanced/02-autoloading) — dependências
+- [Exceções](/03-php-advanced/03-exceptions) — erros, custom exceptions
+- [Padrões PSR](/03-php-advanced/04-psr) — PSR-1, PSR-2, PSR-4, PSR-12
 
 **PHP 8+**
-- [PHP 8 features](/03-php-advanced/07-php8-features) - Named arguments, Match, Attributes
-- [Генераторы](/03-php-advanced/05-generators) - yield, экономия памяти
-- [Рефлексия](/03-php-advanced/06-reflection) - метапрограммирование
+- [PHP 8 features](/03-php-advanced/07-php8-features) — Named arguments, Match, Attributes
+- [Generators](/03-php-advanced/05-generators) — yield, menos memória
+- [Reflection](/03-php-advanced/06-reflection) — metaprogramação
 
 ### Git
 
-- [Git Basics](/04-git/01-git-basics) - init, add, commit, push, pull
-- [Branching Strategies](/04-git/02-branching-strategies) - feature branches
-- [Rebase vs Merge](/04-git/03-rebase-vs-merge) - когда что использовать
-- [Git Flow](/04-git/04-git-flow) - workflow для команды
-- [Conflict Resolution](/04-git/05-conflict-resolution) - разрешение конфликтов
+- [Git Basics](/04-git/01-git-basics) — init, add, commit, push, pull
+- [Branching Strategies](/04-git/02-branching-strategies) — feature branches
+- [Rebase vs Merge](/04-git/03-rebase-vs-merge) — quando usar cada um
+- [Git Flow](/04-git/04-git-flow) — workflow de time
+- [Conflict Resolution](/04-git/05-conflict-resolution) — resolver conflitos
 
 ### Laravel Basics
 
-**Архитектура фреймворка**
-- [Архитектура Laravel](/05-laravel-basics/01-architecture) - MVC, структура проекта
-- [Service Container](/05-laravel-basics/02-service-container) - DI контейнер
-- [Service Providers](/05-laravel-basics/03-service-providers) - регистрация сервисов
-- [Facades](/05-laravel-basics/04-facades) - статический доступ к сервисам
+**Arquitetura do framework**
+- [Arquitetura do Laravel](/05-laravel-basics/01-architecture) — MVC, estrutura do projeto
+- [Service Container](/05-laravel-basics/02-service-container) — container de DI
+- [Service Providers](/05-laravel-basics/03-service-providers) — registro de serviços
+- [Facades](/05-laravel-basics/04-facades) — acesso estático aos serviços
 
-**Основные компоненты**
-- [Routing](/05-laravel-basics/05-routing) - маршруты, группы, параметры
-- [Middleware](/05-laravel-basics/06-middleware) - обработка запросов
-- [Controllers](/05-laravel-basics/07-controllers) - бизнес-логика
-- [Request/Response](/05-laravel-basics/08-request-response) - обработка HTTP
+**Peças principais**
+- [Routing](/05-laravel-basics/05-routing) — rotas, grupos, parâmetros
+- [Middleware](/05-laravel-basics/06-middleware) — tratamento do request
+- [Controllers](/05-laravel-basics/07-controllers) — regra de negócio
+- [Request/Response](/05-laravel-basics/08-request-response) — HTTP
 
 ---
 
@@ -74,65 +74,65 @@
 
 ### Laravel Advanced
 
-**Работа с данными**
-- [Eloquent Relationships](/06-laravel-advanced/01-eloquent-relationships) - отношения моделей
-- [Query Builder](/06-laravel-advanced/02-query-builder) - построение запросов
-- [Миграции и Сидеры](/06-laravel-advanced/03-migrations-seeders) - версионирование БД
-- [Validation](/06-laravel-advanced/08-validation) - валидация данных
+**Dados**
+- [Eloquent Relationships](/06-laravel-advanced/01-eloquent-relationships) — relações entre models
+- [Query Builder](/06-laravel-advanced/02-query-builder) — montar queries
+- [Migrations e Seeders](/06-laravel-advanced/03-migrations-seeders) — versionar o banco
+- [Validation](/06-laravel-advanced/08-validation) — validar dados
 
-**Асинхронная обработка**
-- [Events & Listeners](/06-laravel-advanced/04-events-listeners) - событийная модель
-- [Jobs & Queues](/06-laravel-advanced/05-jobs-queues) - фоновые задачи
-- [Notifications](/06-laravel-advanced/06-notifications) - уведомления
+**Processamento assíncrono**
+- [Events & Listeners](/06-laravel-advanced/04-events-listeners) — modelo de eventos
+- [Jobs & Queues](/06-laravel-advanced/05-jobs-queues) — tarefas em background
+- [Notifications](/06-laravel-advanced/06-notifications) — notificações
 
-**API разработка**
-- [API Resources](/06-laravel-advanced/07-api-resources) - трансформация данных
+**API**
+- [API Resources](/06-laravel-advanced/07-api-resources) — transformar dados
 
-### Базы данных
+### Bancos de dados
 
-**SQL основы**
-- [SQL Basics](/07-sql-databases/01-sql-basics) - SELECT, JOIN, подзапросы
-- [Aggregate Functions](/07-sql-databases/02-aggregate-functions) - COUNT, SUM, AVG
-- [Indexes](/07-sql-databases/03-indexes) - типы индексов, оптимизация
-- [Transactions](/07-sql-databases/04-transactions) - ACID, уровни изоляции
-- [Normalization](/07-sql-databases/05-normalization) - нормальные формы
+**SQL**
+- [SQL Basics](/07-sql-databases/01-sql-basics) — SELECT, JOIN, subqueries
+- [Aggregate Functions](/07-sql-databases/02-aggregate-functions) — COUNT, SUM, AVG
+- [Indexes](/07-sql-databases/03-indexes) — tipos de índice, otimização
+- [Transactions](/07-sql-databases/04-transactions) — ACID, isolation levels
+- [Normalization](/07-sql-databases/05-normalization) — formas normais
 
-**Оптимизация**
-- [N+1 Query Problem](/07-sql-databases/06-n-plus-one) - eager loading
-- [Query Optimization](/07-sql-databases/07-query-optimization) - EXPLAIN, индексы
-- [Caching](/07-sql-databases/09-caching) - кеширование запросов
+**Otimização**
+- [N+1 Query Problem](/07-sql-databases/06-n-plus-one) — eager loading
+- [Query Optimization](/07-sql-databases/07-query-optimization) — EXPLAIN, índices
+- [Caching](/07-sql-databases/09-caching) — cache de query
 
 ### Testing
 
-- [Unit Tests](/08-testing/01-unit-tests) - тестирование изолированных компонентов
-- [Feature Tests](/08-testing/02-feature-tests) - интеграционные тесты
-- [TDD](/08-testing/03-tdd) - разработка через тестирование
-- [Mocking & Stubbing](/08-testing/04-mocking-stubbing) - моки, стабы
-- [PHPUnit](/08-testing/05-phpunit) - фреймворк для тестирования
+- [Unit Tests](/08-testing/01-unit-tests) — testar peça isolada
+- [Feature Tests](/08-testing/02-feature-tests) — testes de integração
+- [TDD](/08-testing/03-tdd) — desenvolver pelo teste
+- [Mocking & Stubbing](/08-testing/04-mocking-stubbing) — mocks, stubs
+- [PHPUnit](/08-testing/05-phpunit) — framework de teste
 
 ### Security
 
-- [XSS](/09-security/01-xss) - защита от XSS атак
-- [CSRF](/09-security/02-csrf) - токены, защита форм
-- [SQL Injection](/09-security/03-sql-injection) - параметризованные запросы
-- [Authentication](/09-security/04-authentication) - аутентификация пользователей
-- [Authorization](/09-security/05-authorization) - права доступа, policies
-- [OWASP Top 10](/09-security/08-owasp-top-10) - основные уязвимости
+- [XSS](/09-security/01-xss) — se proteger de XSS
+- [CSRF](/09-security/02-csrf) — tokens, proteger formulário
+- [SQL Injection](/09-security/03-sql-injection) — queries parametrizadas
+- [Authentication](/09-security/04-authentication) — autenticar usuário
+- [Authorization](/09-security/05-authorization) — permissão, policies
+- [OWASP Top 10](/09-security/08-owasp-top-10) — falhas mais comuns
 
 ### API Development
 
-- [REST API](/10-api-development/01-rest-api) - принципы REST
-- [API Versioning](/10-api-development/05-api-versioning) - версионирование API
-- [Rate Limiting](/10-api-development/04-rate-limiting) - ограничение запросов
-- [CORS](/10-api-development/06-cors) - кросс-доменные запросы
-- [Swagger Documentation](/10-api-development/03-swagger-documentation) - документирование
+- [REST API](/10-api-development/01-rest-api) — princípios REST
+- [API Versioning](/10-api-development/05-api-versioning) — versionar a API
+- [Rate Limiting](/10-api-development/04-rate-limiting) — limitar request
+- [CORS](/10-api-development/06-cors) — request cross-origin
+- [Swagger Documentation](/10-api-development/03-swagger-documentation) — documentar
 
 ### Docker
 
-- [Docker Basics](/11-docker/01-docker-basics) - контейнеры, образы
-- [Dockerfile](/11-docker/02-dockerfile) - создание образов
-- [Docker Compose](/11-docker/03-docker-compose) - multi-container приложения
-- [CI/CD](/11-docker/04-ci-cd) - автоматизация деплоя
+- [Docker Basics](/11-docker/01-docker-basics) — containers, images
+- [Dockerfile](/11-docker/02-dockerfile) — criar image
+- [Docker Compose](/11-docker/03-docker-compose) — app multi-container
+- [CI/CD](/11-docker/04-ci-cd) — automatizar o deploy
 
 ---
 
@@ -140,113 +140,113 @@
 
 ### Database Advanced
 
-**Продвинутые возможности**
-- [Replication](/12-database-advanced/01-replication) - репликация данных
-- [Sharding](/12-database-advanced/02-sharding) - горизонтальное масштабирование
-- [Window Functions](/12-database-advanced/03-window-functions) - аналитические функции
-- [Isolation Levels](/12-database-advanced/04-isolation-levels) - уровни изоляции
-- [Locks](/12-database-advanced/05-locks) - блокировки, deadlocks
-- [JSONB](/12-database-advanced/06-jsonb) - работа с JSON в PostgreSQL
-- [Materialized Views](/12-database-advanced/07-materialized-views) - материализованные представления
-- [Partitioning](/12-database-advanced/08-partitioning) - партиционирование таблиц
+**Recursos avançados**
+- [Replication](/12-database-advanced/01-replication) — replicar dados
+- [Sharding](/12-database-advanced/02-sharding) — escala horizontal
+- [Window Functions](/12-database-advanced/03-window-functions) — funções analíticas
+- [Isolation Levels](/12-database-advanced/04-isolation-levels) — níveis de isolamento
+- [Locks](/12-database-advanced/05-locks) — locks, deadlocks
+- [JSONB](/12-database-advanced/06-jsonb) — JSON no PostgreSQL
+- [Materialized Views](/12-database-advanced/07-materialized-views) — views materializadas
+- [Partitioning](/12-database-advanced/08-partitioning) — particionar tabela
 
-**Оптимизация**
-- [Normalization](/13-database-optimization/01-normalization) - нормализация
-- [Denormalization](/13-database-optimization/02-denormalization) - денормализация
-- [Big Data](/13-database-optimization/03-big-data) - работа с большими объемами
+**Otimização**
+- [Normalization](/13-database-optimization/01-normalization) — normalização
+- [Denormalization](/13-database-optimization/02-denormalization) — desnormalização
+- [Big Data](/13-database-optimization/03-big-data) — volume grande
 
 ### Caching
 
-- [Caching Strategies](/14-caching/01-strategies) - стратегии кеширования
-- [Redis](/14-caching/02-redis) - in-memory кеш
-- [Memcached](/14-caching/03-memcached) - распределенный кеш
-- [HTTP Cache](/14-caching/04-http-cache) - браузерное кеширование
-- [OPcache](/14-caching/05-opcache) - кеширование байт-кода
+- [Caching Strategies](/14-caching/01-strategies) — estratégias de cache
+- [Redis](/14-caching/02-redis) — cache in-memory
+- [Memcached](/14-caching/03-memcached) — cache distribuído
+- [HTTP Cache](/14-caching/04-http-cache) — cache do browser
+- [OPcache](/14-caching/05-opcache) — cache de bytecode
 
 ### Performance
 
-- [Caching](/15-performance/01-caching) - применение кеширования
-- [Database Optimization](/15-performance/02-database-optimization) - оптимизация БД
-- [Query Optimization](/15-performance/03-query-optimization) - оптимизация запросов
-- [PHP Optimization](/15-performance/05-php-optimization) - оптимизация PHP кода
-- [Scaling](/15-performance/06-scaling) - масштабирование приложений
+- [Caching](/15-performance/01-caching) — aplicar cache
+- [Database Optimization](/15-performance/02-database-optimization) — otimizar o banco
+- [Query Optimization](/15-performance/03-query-optimization) — otimizar query
+- [PHP Optimization](/15-performance/05-php-optimization) — otimizar PHP
+- [Scaling](/15-performance/06-scaling) — escalar o app
 
 ### Principles & Patterns
 
-**Принципы проектирования**
-- [KISS, DRY, YAGNI](/16-principles/01-kiss-dry-yagni) - базовые принципы
-- [GRASP](/16-principles/02-grasp) - шаблоны распределения ответственности
+**Princípios**
+- [KISS, DRY, YAGNI](/16-principles/01-kiss-dry-yagni) — princípios básicos
+- [GRASP](/16-principles/02-grasp) — quem fica com cada responsabilidade
 
-**Архитектурные паттерны**
-- [MVC](/17-architecture-patterns/01-mvc) - Model-View-Controller
-- [Repository Pattern](/17-architecture-patterns/02-repository-pattern) - абстракция данных
-- [Service Layer](/17-architecture-patterns/03-service-layer) - бизнес-логика
-- [SOLID](/17-architecture-patterns/04-solid) - принципы ООП
-- [DDD](/17-architecture-patterns/05-ddd) - Domain-Driven Design
-- [CQRS](/17-architecture-patterns/06-cqrs) - разделение команд и запросов
-- [Event Sourcing](/17-architecture-patterns/07-event-sourcing) - событийное хранение
-- [Dependency Injection](/17-architecture-patterns/08-dependency-injection) - внедрение зависимостей
+**Patterns de arquitetura**
+- [MVC](/17-architecture-patterns/01-mvc) — Model-View-Controller
+- [Repository Pattern](/17-architecture-patterns/02-repository-pattern) — abstrair dados
+- [Service Layer](/17-architecture-patterns/03-service-layer) — regra de negócio
+- [SOLID](/17-architecture-patterns/04-solid) — princípios de OOP
+- [DDD](/17-architecture-patterns/05-ddd) — Domain-Driven Design
+- [CQRS](/17-architecture-patterns/06-cqrs) — separar comando e query
+- [Event Sourcing](/17-architecture-patterns/07-event-sourcing) — guardar eventos
+- [Dependency Injection](/17-architecture-patterns/08-dependency-injection) — injeção de dependência
 
 **Design Patterns**
-- [Creational Patterns](/18-design-patterns/01-creational) - порождающие паттерны
-- [Structural Patterns](/18-design-patterns/02-structural) - структурные паттерны
-- [Behavioral Patterns](/18-design-patterns/03-behavioral) - поведенческие паттерны
+- [Creational Patterns](/18-design-patterns/01-creational) — patterns criacionais
+- [Structural Patterns](/18-design-patterns/02-structural) — patterns estruturais
+- [Behavioral Patterns](/18-design-patterns/03-behavioral) — patterns comportamentais
 
 ### Message Brokers
 
-- [RabbitMQ](/19-message-brokers/01-rabbitmq) - очереди сообщений
-- [Kafka](/19-message-brokers/02-kafka) - event streaming
-- [Redis Pub/Sub](/19-message-brokers/03-redis-pubsub) - публикация/подписка
-- [Comparison](/19-message-brokers/04-comparison) - сравнение решений
+- [RabbitMQ](/19-message-brokers/01-rabbitmq) — filas de mensagem
+- [Kafka](/19-message-brokers/02-kafka) — event streaming
+- [Redis Pub/Sub](/19-message-brokers/03-redis-pubsub) — publish/subscribe
+- [Comparison](/19-message-brokers/04-comparison) — comparar as opções
 
 ### Microservices
 
-- [Monolith vs Microservices](/20-microservices/01-monolith-vs-microservices) - выбор архитектуры
-- [API Gateway](/20-microservices/02-api-gateway) - единая точка входа
-- [Circuit Breaker](/20-microservices/03-circuit-breaker) - защита от сбоев
-- [Service Discovery](/20-microservices/04-service-discovery) - обнаружение сервисов
-- [Saga Pattern](/20-microservices/05-saga-pattern) - распределенные транзакции
+- [Monolith vs Microservices](/20-microservices/01-monolith-vs-microservices) — escolher a arquitetura
+- [API Gateway](/20-microservices/02-api-gateway) — porta de entrada única
+- [Circuit Breaker](/20-microservices/03-circuit-breaker) — se proteger de falha
+- [Service Discovery](/20-microservices/04-service-discovery) — achar o serviço
+- [Saga Pattern](/20-microservices/05-saga-pattern) — transação distribuída
 
 ### Soft Skills
 
-- [Code Review](/21-soft-skills/01-code-review) - ревью кода
-- [Agile & Scrum](/21-soft-skills/02-agile-scrum) - методологии разработки
-- [Tech Interview](/21-soft-skills/03-tech-interview) - прохождение интервью
-- [Documentation](/21-soft-skills/04-documentation) - документирование кода
+- [Code Review](/21-soft-skills/01-code-review) — revisar código
+- [Agile & Scrum](/21-soft-skills/02-agile-scrum) — método de trabalho
+- [Tech Interview](/21-soft-skills/03-tech-interview) — passar na entrevista
+- [Documentation](/21-soft-skills/04-documentation) — documentar código
 
 ---
 
-## Практика
+## Prática
 
-После изучения теории важно закрепить знания на практике:
+Depois da teoria, fixe na prática:
 
-- [Coding Challenges](/22-practice/01-coding-challenges) - алгоритмические задачи
-- [System Design](/22-practice/02-system-design) - проектирование систем
-- [Debugging](/22-practice/03-debugging) - отладка и поиск ошибок
-- [Refactoring](/22-practice/04-refactoring) - рефакторинг кода
-- [Real World Cases](/22-practice/05-real-world-cases) - реальные кейсы
+- [Coding Challenges](/22-practice/01-coding-challenges) — problemas de algoritmo
+- [System Design](/22-practice/02-system-design) — desenhar sistema
+- [Debugging](/22-practice/03-debugging) — achar e corrigir bug
+- [Refactoring](/22-practice/04-refactoring) — refatorar
+- [Real World Cases](/22-practice/05-real-world-cases) — casos reais
 
 ---
 
-## Дополнительные рекомендации
+## Extra
 
-**Для Junior**
-- Пиши код каждый день
-- Делай pet-проекты
-- Читай чужой код на GitHub
-- Участвуй в code review
+**Junior**
+- Escreva código todo dia
+- Faça pet projects
+- Leia código dos outros no GitHub
+- Entre em code review
 
-**Для Middle**
-- Изучай архитектуру реальных проектов
-- Практикуй TDD
-- Оптимизируй производительность
-- Делись знаниями с командой
+**Middle**
+- Estude a arquitetura de projetos reais
+- Pratique TDD
+- Otimize performance
+- Ensine o time
 
-**Для Senior**
-- Проектируй архитектуру систем
-- Менторь junior разработчиков
-- Изучай DevOps практики
-- Следи за трендами индустрии
+**Senior**
+- Desenhe a arquitetura
+- Mentore juniors
+- Estude práticas de DevOps
+- Acompanhe o que a indústria está fazendo
 
-**С ментором**
-Программа менторинга CodeMate помогает пройти этот путь быстрее: персональные консультации, код-ревью, mock-интервью и помощь с трудоустройством. Подробности на [codemate.team](https://codemate.team).
+**Com mentor**
+O programa de mentoria da CodeMate encurta esse caminho: consultoria, code review, mock interview e ajuda com a vaga. Detalhes em [codemate.team](https://codemate.team).

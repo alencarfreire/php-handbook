@@ -1,158 +1,158 @@
-# 1.1 Типы данных в PHP
+# 1.1 Tipos em PHP
 
 > **TL;DR**
-> PHP поддерживает 8 основных типов: int, float, string, bool (скалярные), array, object (составные), null, resource (специальные). Для денег используй int в копейках, не float (потеря точности). Массивы используют copy-on-write, объекты передаются по ссылке. PHP 8.0 добавил mixed, union types, never. Всегда используй строгую типизацию (declare(strict_types=1)).
+> PHP tem 8 tipos principais: int, float, string, bool (escalares), array, object (compostos), null, resource (especiais). Dinheiro: use int em centavos, não float (perde precisão). Array usa copy-on-write, objeto passa por referência. PHP 8.0 trouxe mixed, union types, never. Sempre use tipagem estrita (`declare(strict_types=1)`).
 
-## Содержание
+## Conteúdo
 
-- [Скалярные типы](#скалярные-типы)
-  - [int (Целое число)](#int-целое-число)
-  - [float (Число с плавающей точкой)](#float-число-с-плавающей-точкой)
-  - [string (Строка)](#string-строка)
-  - [bool (Булево значение)](#bool-булево-значение)
-- [Составные типы](#составные-типы)
-  - [array (Массив)](#array-массив)
-  - [object (Объект)](#object-объект)
-- [Специальные типы](#специальные-типы)
+- [Tipos escalares](#tipos-escalares)
+  - [int (Número inteiro)](#int-número-inteiro)
+  - [float (Número de ponto flutuante)](#float-número-de-ponto-flutuante)
+  - [string (String)](#string-string)
+  - [bool (Booleano)](#bool-booleano)
+- [Tipos compostos](#tipos-compostos)
+  - [array (Array)](#array-array)
+  - [object (Objeto)](#object-objeto)
+- [Tipos especiais](#tipos-especiais)
   - [null](#null)
   - [resource](#resource)
-- [Псевдотипы (PHP 7.0+)](#псевдотипы-php-70)
+- [Pseudotipos (PHP 7.0+)](#pseudotipos-php-70)
   - [mixed (PHP 8.0+)](#mixed-php-80)
   - [callable](#callable)
   - [iterable (PHP 7.1+)](#iterable-php-71)
   - [void (PHP 7.1+)](#void-php-71)
   - [never (PHP 8.1+)](#never-php-81)
-- [Резюме типов](#резюме-типов)
-- [Практические задания](#практические-задания)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Скалярные типы
+## Tipos escalares
 
-### int (Целое число)
+### int (Número inteiro)
 
-**Что это:**
-Целые числа без дробной части (положительные, отрицательные, ноль).
+**O que é:**
+Números inteiros, sem parte fracionária (positivo, negativo, zero).
 
-**Как работает:**
+**Como funciona:**
 ```php
 $age = 25;
 $temperature = -10;
 $zero = 0;
 
-// Максимальное значение зависит от системы (32-bit / 64-bit)
-echo PHP_INT_MAX;  // 9223372036854775807 (на 64-bit)
+// O máximo depende do sistema (32-bit / 64-bit)
+echo PHP_INT_MAX;  // 9223372036854775807 (em 64-bit)
 
-// Переполнение → автоматически становится float
+// Overflow → vira float sozinho
 $big = PHP_INT_MAX + 1;  // float
 ```
 
-**Когда использовать:**
-Счётчики, ID, количество, возраст, год, месяц, пагинация.
+**Quando usar:**
+Contadores, ID, quantidade, idade, ano, mês, paginação.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Пагинация
+// Paginação
 $page = 1;
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
 
-// ID пользователя
+// ID do usuário
 $userId = User::find($id)->id;  // int
 ```
 
-**На собеседовании скажешь:**
-> "int — целые числа. Использую для ID, счётчиков, пагинации. Если выходит за PHP_INT_MAX → автоматически становится float."
+**Na entrevista:**
+> "int é número inteiro. Uso para ID, contador, paginação. Se passar de PHP_INT_MAX, vira float sozinho."
 
 ---
 
-### float (Число с плавающей точкой)
+### float (Número de ponto flutuante)
 
-**Что это:**
-Числа с дробной частью.
+**O que é:**
+Número com parte fracionária.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $price = 99.99;
 $temperature = 36.6;
 $pi = 3.14159;
 
-// Научная нотация
+// Notação científica
 $bigNumber = 1.5e10;  // 15000000000
 ```
 
-**⚠️ Проблема потери точности:**
+**⚠️ Problema de precisão:**
 ```php
 $a = 0.1 + 0.2;
 var_dump($a === 0.3);  // FALSE! 😱
-// $a = 0.30000000000000004 (внутреннее представление)
+// $a = 0.30000000000000004 (representação interna)
 
-// Правильное сравнение
+// Comparação correta
 $epsilon = 0.00001;
 var_dump(abs($a - 0.3) < $epsilon);  // TRUE
 ```
 
-**Когда использовать:**
-Математические вычисления, физические величины (вес, рост, температура).
+**Quando usar:**
+Cálculo matemático, grandeza física (peso, altura, temperatura).
 
-**❌ НЕ использовать для денег!**
+**❌ Não use para dinheiro!**
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// ПЛОХО для денег
+// RUIM para dinheiro
 $total = 10.1 + 10.2;  // 20.30000000000000004
 
-// ХОРОШО — использовать int (копейки/центы)
-$totalCents = 1010 + 1020;  // 2030 (точно)
-$totalRubles = $totalCents / 100;  // 20.30 (только для отображения)
+// BOM — int em centavos
+$totalCents = 1010 + 1020;  // 2030 (exato)
+$totalReais = $totalCents / 100;  // 20.30 (só para exibir)
 
-// Или библиотека
+// Ou uma lib
 use Brick\Money\Money;
-$price = Money::of(99.99, 'RUB');
+$price = Money::of(99.99, 'BRL');
 ```
 
-**На собеседовании скажешь:**
-> "float — числа с плавающей точкой. Главная проблема — потеря точности (0.1 + 0.2 ≠ 0.3). Для денег использую int в копейках или библиотеку Brick\Money."
+**Na entrevista:**
+> "float é número de ponto flutuante. O problema clássico é precisão: 0.1 + 0.2 ≠ 0.3. Para dinheiro eu uso int em centavos ou Brick\Money."
 
 ---
 
-### string (Строка)
+### string (String)
 
-**Что это:**
-Последовательность символов.
+**O que é:**
+Sequência de caracteres.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Одинарные кавычки (literal)
-$name = 'Иван';
+// Aspas simples (literal)
+$name = 'João';
 
-// Двойные кавычки (интерполяция)
-$greeting = "Привет, $name!";  // "Привет, Иван!"
+// Aspas duplas (interpolação)
+$greeting = "Olá, $name!";  // "Olá, João!"
 
-// Heredoc (многострочный с интерполяцией)
+// Heredoc (várias linhas, com interpolação)
 $html = <<<HTML
 <div>
     <h1>$name</h1>
 </div>
 HTML;
 
-// Nowdoc (многострочный без интерполяции)
+// Nowdoc (várias linhas, sem interpolação)
 $text = <<<'TEXT'
-Привет, $name!
+Olá, $name!
 TEXT;
-// Результат: "Привет, $name!" (буквально)
+// Resultado: "Olá, $name!" (literal)
 ```
 
-**Когда использовать:**
-Имена, email, тексты, HTML, JSON, сообщения, логи.
+**Quando usar:**
+Nome, email, texto, HTML, JSON, mensagem, log.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Email шаблон
+// Template de email
 $user = User::find($userId);
-$subject = "Привет, {$user->name}!";
+$subject = "Olá, {$user->name}!";
 
-// Многострочный SQL
+// SQL em várias linhas
 $query = <<<SQL
     SELECT u.name, COUNT(p.id) as posts_count
     FROM users u
@@ -162,36 +162,36 @@ $query = <<<SQL
 SQL;
 ```
 
-**На собеседовании скажешь:**
-> "string — строки. Одинарные кавычки — literal (быстрее), двойные — с интерполяцией. Для Unicode использую mb_* функции (mb_strlen, mb_substr)."
+**Na entrevista:**
+> "string é texto. Aspas simples é literal (mais rápido), aspas duplas interpolam. Para Unicode eu uso as funções mb_* (mb_strlen, mb_substr)."
 
 ---
 
-### bool (Булево значение)
+### bool (Booleano)
 
-**Что это:**
-Логическое значение: `true` или `false`.
+**O que é:**
+Valor lógico: `true` ou `false`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $isActive = true;
 $isAdmin = false;
 
-// Преобразование в bool (falsy values)
+// Cast para bool (valores falsy)
 var_dump((bool) 0);          // false
 var_dump((bool) '0');        // false
 var_dump((bool) '');         // false
 var_dump((bool) null);       // false
 var_dump((bool) []);         // false
-var_dump((bool) 'false');    // TRUE! (непустая строка)
+var_dump((bool) 'false');    // TRUE! (string não vazia)
 ```
 
-**Когда использовать:**
-Флаги (is_active, is_admin), результаты проверок, условия.
+**Quando usar:**
+Flags (is_active, is_admin), resultado de checagem, condição.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка прав
+// Checar permissão
 if ($user->isAdmin()) {
     // ...
 }
@@ -199,64 +199,64 @@ if ($user->isAdmin()) {
 // Feature flags
 $featureEnabled = config('features.new_ui');
 
-// Валидация
+// Validação
 $isValid = filter_var($email, FILTER_VALIDATE_EMAIL);
 ```
 
-**На собеседовании скажешь:**
-> "bool — true или false. Важно помнить falsy values: 0, '0', '', null, [], false — всё это приводится к false. Строка 'false' → true (непустая строка)."
+**Na entrevista:**
+> "bool é true ou false. O pulo do gato são os falsy: 0, '0', '', null, [], false — tudo isso vira false. A string 'false' vira true, porque não está vazia."
 
 ---
 
-## Составные типы
+## Tipos compostos
 
-### array (Массив)
+### array (Array)
 
-**Что это:**
-Упорядоченная коллекция пар ключ-значение (ассоциативная хеш-таблица).
+**O que é:**
+Coleção ordenada de pares chave-valor (hash table associativa).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Индексный массив
+// Array indexado
 $numbers = [1, 2, 3, 4, 5];
 
-// Ассоциативный массив
+// Array associativo
 $user = [
     'id' => 1,
-    'name' => 'Иван',
-    'email' => 'ivan@mail.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
 ];
 
-// Вложенные массивы
+// Arrays aninhados
 $users = [
-    ['id' => 1, 'name' => 'Иван'],
-    ['id' => 2, 'name' => 'Пётр'],
+    ['id' => 1, 'name' => 'João'],
+    ['id' => 2, 'name' => 'Pedro'],
 ];
 
-// Доступ
-echo $user['name'];  // "Иван"
+// Acesso
+echo $user['name'];  // "João"
 echo $users[0]['id'];  // 1
 ```
 
 **Copy-on-Write:**
 ```php
-$a = [1, 2, 3];  // Выделена память
-$b = $a;         // Копия НЕ создаётся (только ссылка)
-$b[] = 4;        // ЗДЕСЬ создаётся копия (copy-on-write)
+$a = [1, 2, 3];  // Alocou memória
+$b = $a;         // Ainda não copia (só a referência)
+$b[] = 4;        // AQUI cria a cópia (copy-on-write)
 
 var_dump($a);  // [1, 2, 3]
 var_dump($b);  // [1, 2, 3, 4]
 ```
 
-**Когда использовать:**
-Списки, коллекции, конфигурация, параметры, результаты запросов.
+**Quando usar:**
+Lista, coleção, config, parâmetros, resultado de query.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Результат запроса
+// Resultado de query
 $users = DB::table('users')->get()->toArray();
 
-// Передача параметров
+// Passar parâmetros
 Post::create([
     'title' => 'Post Title',
     'content' => 'Content...',
@@ -268,17 +268,17 @@ Route::get('/admin', [AdminController::class, 'index'])
     ->middleware(['auth', 'role:admin']);
 ```
 
-**На собеседовании скажешь:**
-> "array — упорядоченная хеш-таблица. Поддерживает индексные и ассоциативные массивы. Использует copy-on-write: копия создаётся только при изменении."
+**Na entrevista:**
+> "array é uma hash table ordenada. Serve para indexado e associativo. Usa copy-on-write: a cópia só nasce quando você altera."
 
 ---
 
-### object (Объект)
+### object (Objeto)
 
-**Что это:**
-Экземпляр класса с данными (свойства) и поведением (методы).
+**O que é:**
+Instância de uma classe, com dados (propriedades) e comportamento (métodos).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -293,36 +293,36 @@ class User
 
     public function greet(): string
     {
-        return "Привет, {$this->name}!";
+        return "Olá, {$this->name}!";
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com');
-echo $user->greet();  // "Привет, Иван!"
+$user = new User('João', 'joao@email.com');
+echo $user->greet();  // "Olá, João!"
 ```
 
-**Передача по ссылке (поведение):**
+**Passa por referência (no comportamento):**
 ```php
 function changeEmail(User $user): void
 {
-    $user->email = 'new@mail.com';  // Изменяет оригинал
+    $user->email = 'novo@email.com';  // Muda o original
 }
 
-$user = new User('Иван', 'ivan@mail.com');
+$user = new User('João', 'joao@email.com');
 changeEmail($user);
-echo $user->email;  // "new@mail.com" (изменился!)
+echo $user->email;  // "novo@email.com" (mudou!)
 ```
 
-**Когда использовать:**
-Модели (User, Post), сервисы (PaymentService), Value Objects (Money, Email).
+**Quando usar:**
+Models (User, Post), services (PaymentService), Value Objects (Money, Email).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent модель
+// Model Eloquent
 $user = User::find(1);
-$user->update(['name' => 'Новое имя']);
+$user->update(['name' => 'Novo nome']);
 
-// Сервис
+// Service
 class OrderService
 {
     public function create(array $data): Order
@@ -349,41 +349,41 @@ class Money
 }
 ```
 
-**На собеседовании скажешь:**
-> "object — экземпляр класса. Передаётся по ссылке (поведение): изменение свойств внутри функции влияет на оригинал. Использую для моделей, сервисов, value objects."
+**Na entrevista:**
+> "object é instância de classe. Na prática passa por referência: se você muda a propriedade dentro da função, o original muda. Uso para model, service, value object."
 
 ---
 
-## Специальные типы
+## Tipos especiais
 
 ### null
 
-**Что это:**
-Отсутствие значения.
+**O que é:**
+Ausência de valor.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $value = null;
 
-// Проверка
+// Checagem
 if ($value === null) {
-    echo 'Значение не установлено';
+    echo 'Valor não definido';
 }
 
-// isset() проверяет isset AND !== null
+// isset() checa se existe E !== null
 isset($value);  // false
 
 // ?? (null coalescing) - PHP 7.0+
-$name = $user->name ?? 'Гость';
+$name = $user->name ?? 'Visitante';
 
 // ?-> (nullsafe) - PHP 8.0+
-$street = $user->address?->street;  // Если address = null → вернёт null (без ошибки)
+$street = $user->address?->street;  // Se address = null → devolve null (sem erro)
 ```
 
-**Когда использовать:**
-Необязательные параметры, результат поиска (найдено/не найдено), опциональные свойства.
+**Quando usar:**
+Parâmetro opcional, resultado de busca (achou / não achou), propriedade opcional.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Eloquent
 $user = User::find($userId);  // User | null
@@ -399,22 +399,22 @@ function getUser(?int $id): ?User
 }
 
 // Nullsafe chain (PHP 8.0+)
-$city = $user?->address?->city ?? 'Не указан';
+$city = $user?->address?->city ?? 'Não informado';
 ```
 
-**На собеседовании скажешь:**
-> "null — отсутствие значения. PHP 8.0 добавил nullsafe оператор (?->), PHP 7.0 — null coalescing (??). Использую для опциональных параметров, результатов поиска."
+**Na entrevista:**
+> "null é ausência de valor. PHP 8.0 trouxe o operador nullsafe (?->), PHP 7.0 o null coalescing (??). Uso em parâmetro opcional e resultado de busca."
 
 ---
 
 ### resource
 
-**Что это:**
-Ссылка на внешний ресурс (файл, соединение с БД, curl).
+**O que é:**
+Referência a um recurso externo (arquivo, conexão de banco, curl).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Файл
+// Arquivo
 $file = fopen('file.txt', 'r');
 var_dump($file);  // resource(3) of type (stream)
 fclose($file);
@@ -426,31 +426,31 @@ $response = curl_exec($ch);
 curl_close($ch);
 ```
 
-**PHP 8.0+ — объекты вместо resource:**
+**PHP 8.0+ — objeto no lugar de resource:**
 ```php
-$ch = curl_init();  // CurlHandle object (не resource)
-$file = fopen('file.txt', 'r');  // resource (stream) → в будущем тоже станет объектом
+$ch = curl_init();  // CurlHandle object (não resource)
+$file = fopen('file.txt', 'r');  // resource (stream) → no futuro também vira objeto
 ```
 
-**Когда использовать:**
-Legacy код (PHP < 8.0), низкоуровневая работа с файлами/сетью.
+**Quando usar:**
+Código legado (PHP < 8.0), trabalho baixo nível com arquivo/rede.
 
-**На собеседовании скажешь:**
-> "resource — ссылка на внешний ресурс (файл, соединение). В PHP 8+ постепенно заменяются на объекты (curl_init() → CurlHandle). Важно не забывать закрывать ресурсы."
+**Na entrevista:**
+> "resource é referência a recurso externo (arquivo, conexão). No PHP 8+ isso vai virando objeto (curl_init() → CurlHandle). O ponto é não esquecer de fechar."
 
 ---
 
-## Псевдотипы (PHP 7.0+)
+## Pseudotipos (PHP 7.0+)
 
 ### mixed (PHP 8.0+)
 
-**Что это:**
-Любой тип (эквивалент отсутствия type hint).
+**O que é:**
+Qualquer tipo (equivalente a não ter type hint).
 
 ```php
 function process(mixed $value): mixed
 {
-    // Принимает что угодно, возвращает что угодно
+    // Aceita qualquer coisa, devolve qualquer coisa
     return $value;
 }
 ```
@@ -459,8 +459,8 @@ function process(mixed $value): mixed
 
 ### callable
 
-**Что это:**
-Функция, замыкание, метод класса.
+**O que é:**
+Função, closure, método de classe.
 
 ```php
 function hello(): void
@@ -471,7 +471,7 @@ function hello(): void
 $callback = 'hello';
 $callback();  // "Hello!"
 
-// В array_map
+// Em array_map
 array_map(fn($x) => $x * 2, [1, 2, 3]);  // [2, 4, 6]
 ```
 
@@ -479,8 +479,8 @@ array_map(fn($x) => $x * 2, [1, 2, 3]);  // [2, 4, 6]
 
 ### iterable (PHP 7.1+)
 
-**Что это:**
-Массив или объект с интерфейсом Traversable.
+**O que é:**
+Array ou objeto que implementa Traversable.
 
 ```php
 function printItems(iterable $items): void
@@ -498,14 +498,14 @@ printItems(new ArrayIterator([1, 2, 3]));  // Traversable
 
 ### void (PHP 7.1+)
 
-**Что это:**
-Функция ничего не возвращает.
+**O que é:**
+A função não devolve nada.
 
 ```php
 function log(string $message): void
 {
     file_put_contents('log.txt', $message);
-    // return; — можно, но необязательно
+    // return; — pode, mas não é obrigatório
 }
 ```
 
@@ -513,8 +513,8 @@ function log(string $message): void
 
 ### never (PHP 8.1+)
 
-**Что это:**
-Функция никогда не возвращает управление (exit, exception).
+**O que é:**
+A função nunca devolve o controle (exit, exception).
 
 ```php
 function redirect(string $url): never
@@ -531,45 +531,45 @@ function fail(string $message): never
 
 ---
 
-## Резюме типов
+## Recapitulando
 
-**Скалярные:**
-- `int` — целые числа (ID, счётчики)
-- `float` — дробные числа (**НЕ для денег!**)
-- `string` — строки (имена, тексты)
-- `bool` — true/false (флаги)
+**Escalares:**
+- `int` — inteiro (ID, contador)
+- `float` — fracionário (**não use para dinheiro**)
+- `string` — texto (nome, conteúdo)
+- `bool` — true/false (flags)
 
-**Составные:**
-- `array` — хеш-таблица (copy-on-write)
-- `object` — экземпляр класса (по ссылке)
+**Compostos:**
+- `array` — hash table (copy-on-write)
+- `object` — instância de classe (por referência)
 
-**Специальные:**
-- `null` — отсутствие значения
-- `resource` — внешний ресурс (устарел в PHP 8+)
+**Especiais:**
+- `null` — ausência de valor
+- `resource` — recurso externo (legado no PHP 8+)
 
-**Псевдотипы:**
-- `mixed` — любой тип (PHP 8.0+)
-- `callable` — функция
-- `iterable` — array или Traversable (PHP 7.1+)
-- `void` — ничего не возвращает (PHP 7.1+)
-- `never` — никогда не возвращает (PHP 8.1+)
+**Pseudotipos:**
+- `mixed` — qualquer tipo (PHP 8.0+)
+- `callable` — função
+- `iterable` — array ou Traversable (PHP 7.1+)
+- `void` — não devolve nada (PHP 7.1+)
+- `never` — nunca devolve (PHP 8.1+)
 
-**Важно на собесе:**
-- float: потеря точности → int для денег
+**Importante na entrevista:**
+- float: perde precisão → int para dinheiro
 - array: copy-on-write
-- object: передача по ссылке (поведение)
+- object: passa por referência (no comportamento)
 - null: ??, ?->
-- Falsy values: 0, '0', '', null, [], false
+- Falsy: 0, '0', '', null, [], false
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Работа с типами данных
-**Условие:** Создай функцию, которая принимает mixed параметр и возвращает информацию о его типе и значении.
+### Exercício 1: Trabalhar com tipos
+**Enunciado:** Crie uma função que recebe mixed e devolve informação sobre o tipo e o valor.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -586,7 +586,7 @@ function analyzeType(mixed $value): array
     ];
 }
 
-// Тесты
+// Testes
 var_dump(analyzeType(42));
 // ['type' => 'int', 'value' => 42, 'is_scalar' => true, 'is_truthy' => true, ...]
 
@@ -597,17 +597,17 @@ var_dump(analyzeType(''));
 // ['type' => 'string', 'value' => '', 'is_scalar' => true, 'is_truthy' => false, ...]
 ```
 
-**Ключевые моменты:**
-- `get_debug_type()` (PHP 8.0) возвращает точный тип
-- `is_scalar()` проверяет скалярные типы
-- Приведение к bool показывает truthy/falsy
+**Pontos-chave:**
+- `get_debug_type()` (PHP 8.0) devolve o tipo exato
+- `is_scalar()` checa tipos escalares
+- Cast para bool mostra truthy/falsy
 </details>
 
-### Задание 2: Работа с деньгами
-**Условие:** Реализуй класс Money для работы с денежными суммами без потери точности.
+### Exercício 2: Dinheiro
+**Enunciado:** Implemente a classe Money para somar valores sem perder precisão.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -617,12 +617,12 @@ class Money
 {
     public function __construct(
         private int $amountInCents,
-        private string $currency = 'RUB'
+        private string $currency = 'BRL'
     ) {}
 
-    public static function fromRubles(float $rubles, string $currency = 'RUB'): self
+    public static function fromReais(float $reais, string $currency = 'BRL'): self
     {
-        return new self((int) round($rubles * 100), $currency);
+        return new self((int) round($reais * 100), $currency);
     }
 
     public function add(Money $other): self
@@ -634,40 +634,40 @@ class Money
         return new self($this->amountInCents + $other->amountInCents, $this->currency);
     }
 
-    public function toRubles(): float
+    public function toReais(): float
     {
         return $this->amountInCents / 100;
     }
 
     public function format(): string
     {
-        return number_format($this->toRubles(), 2, '.', ' ') . ' ' . $this->currency;
+        return 'R$ ' . number_format($this->toReais(), 2, ',', '.');
     }
 }
 
-// Тесты
-$price1 = Money::fromRubles(10.10, 'RUB');
-$price2 = Money::fromRubles(20.20, 'RUB');
+// Testes
+$price1 = Money::fromReais(10.10, 'BRL');
+$price2 = Money::fromReais(20.20, 'BRL');
 
 $total = $price1->add($price2);
-echo $total->format();  // "30.30 RUB"
+echo $total->format();  // "R$ 30,30"
 ```
 
-**Ключевые моменты:**
-- Храним в копейках (int) для точности
-- Конвертация только для отображения
-- Валидация валюты при операциях
+**Pontos-chave:**
+- Guarda em centavos (int) para não perder precisão
+- Converte só na hora de exibir
+- Valida a moeda nas operações
 </details>
 
-### Задание 3: Type Juggling и Strict Types
-**Условие:** Объясни разницу в поведении функции с strict_types и без.
+### Exercício 3: Type Juggling e Strict Types
+**Enunciado:** Explique a diferença de comportamento da função com e sem strict_types.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
-// Файл: without_strict.php (БЕЗ strict_types)
+// Arquivo: without_strict.php (SEM strict_types)
 
 function add(int $a, int $b): int
 {
@@ -675,13 +675,13 @@ function add(int $a, int $b): int
 }
 
 echo add(5, 10);      // 15 ✅
-echo add(5, '10');    // 15 ✅ (приведёт '10' → 10)
-echo add('5', '10');  // 15 ✅ (приведёт оба к int)
+echo add(5, '10');    // 15 ✅ (converte '10' → 10)
+echo add('5', '10');  // 15 ✅ (converte os dois para int)
 ```
 
 ```php
 <?php
-// Файл: with_strict.php (С strict_types)
+// Arquivo: with_strict.php (COM strict_types)
 declare(strict_types=1);
 
 function add(int $a, int $b): int
@@ -694,13 +694,13 @@ echo add(5, '10');    // ❌ TypeError: Argument #2 must be of type int, string 
 echo add('5', '10');  // ❌ TypeError
 ```
 
-**Ключевые моменты:**
-- Без `strict_types` PHP автоматически приводит типы
-- С `strict_types=1` требует точного соответствия
-- `strict_types` работает только для файла, где объявлен
-- Всегда используй `strict_types=1` для предсказуемости
+**Pontos-chave:**
+- Sem `strict_types` o PHP converte o tipo sozinho
+- Com `strict_types=1` exige o tipo exato
+- `strict_types` vale só no arquivo onde foi declarado
+- Use sempre `strict_types=1` para o comportamento ficar previsível
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

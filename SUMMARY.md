@@ -1,37 +1,37 @@
-# Table of Contents
+# Sumário
 
-* [Введение](README.md)
+* [Introdução](README.md)
 
-## 1. PHP Основы
+## 1. Fundamentos de PHP
 
-* [1.1 Типы данных](01-php-basics/01-types.md)
-* [1.2 Переменные](01-php-basics/02-variables.md)
-* [1.3 Операторы](01-php-basics/03-operators.md)
-* [1.4 Управляющие конструкции](01-php-basics/04-control-structures.md)
-* [1.5 Функции](01-php-basics/05-functions.md)
-* [1.6 Массивы](01-php-basics/06-arrays.md)
-* [1.7 Строки и регулярные выражения](01-php-basics/07-strings-regex.md)
+* [1.1 Tipos](01-php-basics/01-types.md)
+* [1.2 Variáveis](01-php-basics/02-variables.md)
+* [1.3 Operadores](01-php-basics/03-operators.md)
+* [1.4 Estruturas de controle](01-php-basics/04-control-structures.md)
+* [1.5 Funções](01-php-basics/05-functions.md)
+* [1.6 Arrays](01-php-basics/06-arrays.md)
+* [1.7 Strings e regex](01-php-basics/07-strings-regex.md)
 
-## 2. ООП в PHP
+## 2. OOP em PHP
 
-* [2.1 Классы и объекты](02-oop/01-classes-objects.md)
-* [2.2 Наследование](02-oop/02-inheritance.md)
-* [2.3 Интерфейсы](02-oop/03-interfaces.md)
-* [2.4 Абстрактные классы](02-oop/04-abstract-classes.md)
-* [2.5 Трейты](02-oop/05-traits.md)
-* [2.6 Магические методы](02-oop/06-magic-methods.md)
-* [2.7 Статическое связывание](02-oop/07-static-binding.md)
-* [2.8 Область видимости](02-oop/08-visibility.md)
+* [2.1 Classes e objetos](02-oop/01-classes-objects.md)
+* [2.2 Herança](02-oop/02-inheritance.md)
+* [2.3 Interfaces](02-oop/03-interfaces.md)
+* [2.4 Classes abstratas](02-oop/04-abstract-classes.md)
+* [2.5 Traits](02-oop/05-traits.md)
+* [2.6 Magic methods](02-oop/06-magic-methods.md)
+* [2.7 Late static binding](02-oop/07-static-binding.md)
+* [2.8 Visibilidade](02-oop/08-visibility.md)
 
-## 3. PHP Продвинутое
+## 3. PHP avançado
 
-* [3.1 Пространства имён](03-php-advanced/01-namespaces.md)
-* [3.2 Автозагрузка (Composer, PSR-4)](03-php-advanced/02-autoloading.md)
-* [3.3 Исключения и ошибки](03-php-advanced/03-exceptions.md)
-* [3.4 PSR стандарты](03-php-advanced/04-psr.md)
-* [3.5 Генераторы](03-php-advanced/05-generators.md)
-* [3.6 Рефлексия](03-php-advanced/06-reflection.md)
-* [3.7 Новые возможности PHP 8.x](03-php-advanced/07-php8-features.md)
+* [3.1 Namespaces](03-php-advanced/01-namespaces.md)
+* [3.2 Autoload (Composer, PSR-4)](03-php-advanced/02-autoloading.md)
+* [3.3 Exceções e erros](03-php-advanced/03-exceptions.md)
+* [3.4 Padrões PSR](03-php-advanced/04-psr.md)
+* [3.5 Generators](03-php-advanced/05-generators.md)
+* [3.6 Reflection](03-php-advanced/06-reflection.md)
+* [3.7 Novidades do PHP 8.x](03-php-advanced/07-php8-features.md)
 
 ## 4. Git
 
@@ -41,22 +41,22 @@
 * [4.4 Git Flow](04-git/04-git-flow.md)
 * [4.5 Conflict Resolution](04-git/05-conflict-resolution.md)
 
-## 5. Laravel Основы
+## 5. Fundamentos de Laravel
 
-* [5.1 Архитектура Laravel](05-laravel-basics/01-architecture.md)
+* [5.1 Arquitetura do Laravel](05-laravel-basics/01-architecture.md)
 * [5.2 Service Container](05-laravel-basics/02-service-container.md)
 * [5.3 Service Providers](05-laravel-basics/03-service-providers.md)
 * [5.4 Facades](05-laravel-basics/04-facades.md)
-* [5.5 Маршрутизация](05-laravel-basics/05-routing.md)
+* [5.5 Rotas](05-laravel-basics/05-routing.md)
 * [5.6 Middleware](05-laravel-basics/06-middleware.md)
-* [5.7 Контроллеры](05-laravel-basics/07-controllers.md)
+* [5.7 Controllers](05-laravel-basics/07-controllers.md)
 * [5.8 Request/Response](05-laravel-basics/08-request-response.md)
 
-## 6. Laravel Продвинутое
+## 6. Laravel avançado
 
 * [6.1 Eloquent Relationships](06-laravel-advanced/01-eloquent-relationships.md)
 * [6.2 Query Builder](06-laravel-advanced/02-query-builder.md)
-* [6.3 Миграции и Сидеры](06-laravel-advanced/03-migrations-seeders.md)
+* [6.3 Migrations e Seeders](06-laravel-advanced/03-migrations-seeders.md)
 * [6.4 Events & Listeners](06-laravel-advanced/04-events-listeners.md)
 * [6.5 Jobs & Queues](06-laravel-advanced/05-jobs-queues.md)
 * [6.6 Notifications](06-laravel-advanced/06-notifications.md)

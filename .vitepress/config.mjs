@@ -2,8 +2,8 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'PHP/Laravel Handbook',
-  description: 'Полное руководство по подготовке к собеседованиям на PHP/Laravel разработчика',
-  lang: 'ru-RU',
+  description: 'Guia completo para entrevista de desenvolvedor PHP/Laravel',
+  lang: 'pt-BR',
 
   ignoreDeadLinks: true,
 
@@ -13,7 +13,7 @@ export default defineConfig({
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/php-handbook/logo.svg' }],
     ['meta', { name: 'theme-color', content: '#5f67ee' }],
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:locale', content: 'ru' }],
+    ['meta', { property: 'og:locale', content: 'pt_BR' }],
     ['meta', { property: 'og:title', content: 'PHP/Laravel Interview Handbook' }],
     ['meta', { property: 'og:site_name', content: 'PHP/Laravel Handbook' }],
     ['meta', { property: 'og:url', content: 'https://codemateteam.github.io/php-handbook/' }],
@@ -23,51 +23,51 @@ export default defineConfig({
     logo: '/logo.svg',
 
     nav: [
-      { text: 'Главная', link: '/' },
+      { text: 'Início', link: '/' },
       { text: 'Roadmap', link: '/roadmap' },
-      { text: 'Менторинг', link: 'https://codemate.team' },
+      { text: 'Mentoria', link: 'https://codemate.team' },
       { text: 'GitHub', link: 'https://github.com/codemateteam/php-handbook' }
     ],
 
     sidebar: [
       {
-        text: 'PHP Основы',
+        text: 'Fundamentos de PHP',
         collapsed: false,
         items: [
-          { text: 'Типы данных', link: '/01-php-basics/01-types' },
-          { text: 'Переменные', link: '/01-php-basics/02-variables' },
-          { text: 'Операторы', link: '/01-php-basics/03-operators' },
-          { text: 'Управляющие конструкции', link: '/01-php-basics/04-control-structures' },
-          { text: 'Функции', link: '/01-php-basics/05-functions' },
-          { text: 'Массивы', link: '/01-php-basics/06-arrays' },
-          { text: 'Строки и регулярные выражения', link: '/01-php-basics/07-strings-regex' }
+          { text: 'Tipos', link: '/01-php-basics/01-types' },
+          { text: 'Variáveis', link: '/01-php-basics/02-variables' },
+          { text: 'Operadores', link: '/01-php-basics/03-operators' },
+          { text: 'Estruturas de controle', link: '/01-php-basics/04-control-structures' },
+          { text: 'Funções', link: '/01-php-basics/05-functions' },
+          { text: 'Arrays', link: '/01-php-basics/06-arrays' },
+          { text: 'Strings e regex', link: '/01-php-basics/07-strings-regex' }
         ]
       },
       {
-        text: 'ООП в PHP',
+        text: 'OOP em PHP',
         collapsed: false,
         items: [
-          { text: 'Классы и объекты', link: '/02-oop/01-classes-objects' },
-          { text: 'Наследование', link: '/02-oop/02-inheritance' },
-          { text: 'Интерфейсы', link: '/02-oop/03-interfaces' },
-          { text: 'Абстрактные классы', link: '/02-oop/04-abstract-classes' },
-          { text: 'Трейты', link: '/02-oop/05-traits' },
-          { text: 'Магические методы', link: '/02-oop/06-magic-methods' },
-          { text: 'Статическое связывание', link: '/02-oop/07-static-binding' },
-          { text: 'Область видимости', link: '/02-oop/08-visibility' }
+          { text: 'Classes e objetos', link: '/02-oop/01-classes-objects' },
+          { text: 'Herança', link: '/02-oop/02-inheritance' },
+          { text: 'Interfaces', link: '/02-oop/03-interfaces' },
+          { text: 'Classes abstratas', link: '/02-oop/04-abstract-classes' },
+          { text: 'Traits', link: '/02-oop/05-traits' },
+          { text: 'Magic methods', link: '/02-oop/06-magic-methods' },
+          { text: 'Late static binding', link: '/02-oop/07-static-binding' },
+          { text: 'Visibilidade', link: '/02-oop/08-visibility' }
         ]
       },
       {
-        text: 'PHP Продвинутое',
+        text: 'PHP avançado',
         collapsed: false,
         items: [
-          { text: 'Пространства имён', link: '/03-php-advanced/01-namespaces' },
-          { text: 'Автозагрузка (Composer, PSR-4)', link: '/03-php-advanced/02-autoloading' },
-          { text: 'Исключения и ошибки', link: '/03-php-advanced/03-exceptions' },
-          { text: 'PSR стандарты', link: '/03-php-advanced/04-psr' },
-          { text: 'Генераторы', link: '/03-php-advanced/05-generators' },
-          { text: 'Рефлексия', link: '/03-php-advanced/06-reflection' },
-          { text: 'Новые возможности PHP 8.x', link: '/03-php-advanced/07-php8-features' }
+          { text: 'Namespaces', link: '/03-php-advanced/01-namespaces' },
+          { text: 'Autoload (Composer, PSR-4)', link: '/03-php-advanced/02-autoloading' },
+          { text: 'Exceções e erros', link: '/03-php-advanced/03-exceptions' },
+          { text: 'Padrões PSR', link: '/03-php-advanced/04-psr' },
+          { text: 'Generators', link: '/03-php-advanced/05-generators' },
+          { text: 'Reflection', link: '/03-php-advanced/06-reflection' },
+          { text: 'Novidades do PHP 8.x', link: '/03-php-advanced/07-php8-features' }
         ]
       },
       {
@@ -82,26 +82,26 @@ export default defineConfig({
         ]
       },
       {
-        text: 'Laravel Основы',
+        text: 'Fundamentos de Laravel',
         collapsed: false,
         items: [
-          { text: 'Архитектура Laravel', link: '/05-laravel-basics/01-architecture' },
+          { text: 'Arquitetura do Laravel', link: '/05-laravel-basics/01-architecture' },
           { text: 'Service Container', link: '/05-laravel-basics/02-service-container' },
           { text: 'Service Providers', link: '/05-laravel-basics/03-service-providers' },
           { text: 'Facades', link: '/05-laravel-basics/04-facades' },
-          { text: 'Маршрутизация', link: '/05-laravel-basics/05-routing' },
+          { text: 'Rotas', link: '/05-laravel-basics/05-routing' },
           { text: 'Middleware', link: '/05-laravel-basics/06-middleware' },
-          { text: 'Контроллеры', link: '/05-laravel-basics/07-controllers' },
+          { text: 'Controllers', link: '/05-laravel-basics/07-controllers' },
           { text: 'Request/Response', link: '/05-laravel-basics/08-request-response' }
         ]
       },
       {
-        text: 'Laravel Продвинутое',
+        text: 'Laravel avançado',
         collapsed: false,
         items: [
           { text: 'Eloquent Relationships', link: '/06-laravel-advanced/01-eloquent-relationships' },
           { text: 'Query Builder', link: '/06-laravel-advanced/02-query-builder' },
-          { text: 'Миграции и Сидеры', link: '/06-laravel-advanced/03-migrations-seeders' },
+          { text: 'Migrations e Seeders', link: '/06-laravel-advanced/03-migrations-seeders' },
           { text: 'Events & Listeners', link: '/06-laravel-advanced/04-events-listeners' },
           { text: 'Jobs & Queues', link: '/06-laravel-advanced/05-jobs-queues' },
           { text: 'Notifications', link: '/06-laravel-advanced/06-notifications' },
@@ -306,12 +306,12 @@ export default defineConfig({
 
     editLink: {
       pattern: 'https://github.com/codemateteam/php-handbook/edit/main/:path',
-      text: 'Редактировать эту страницу на GitHub'
+      text: 'Editar esta página no GitHub'
     },
 
     footer: {
-      message: 'Опубликовано под лицензией MIT',
-      copyright: 'Сделано с ❤️ командой CodeMate'
+      message: 'Publicado sob a licença MIT',
+      copyright: 'Feito com ❤️ pela equipe CodeMate'
     },
 
     search: {
@@ -319,16 +319,16 @@ export default defineConfig({
       options: {
         translations: {
           button: {
-            buttonText: 'Поиск',
-            buttonAriaLabel: 'Поиск'
+            buttonText: 'Buscar',
+            buttonAriaLabel: 'Buscar'
           },
           modal: {
-            noResultsText: 'Нет результатов для',
-            resetButtonTitle: 'Сбросить поиск',
+            noResultsText: 'Sem resultados para',
+            resetButtonTitle: 'Limpar busca',
             footer: {
-              selectText: 'выбрать',
-              navigateText: 'перейти',
-              closeText: 'закрыть'
+              selectText: 'selecionar',
+              navigateText: 'navegar',
+              closeText: 'fechar'
             }
           }
         }
@@ -337,26 +337,26 @@ export default defineConfig({
 
     outline: {
       level: [2, 3],
-      label: 'На этой странице'
+      label: 'Nesta página'
     },
 
     docFooter: {
-      prev: 'Предыдущая страница',
-      next: 'Следующая страница'
+      prev: 'Anterior',
+      next: 'Próxima'
     },
 
     lastUpdated: {
-      text: 'Обновлено',
+      text: 'Atualizado',
       formatOptions: {
         dateStyle: 'short',
         timeStyle: 'short'
       }
     },
 
-    darkModeSwitchLabel: 'Тема',
-    lightModeSwitchTitle: 'Переключить на светлую тему',
-    darkModeSwitchTitle: 'Переключить на темную тему',
-    sidebarMenuLabel: 'Меню',
-    returnToTopLabel: 'Вернуться к началу'
+    darkModeSwitchLabel: 'Tema',
+    lightModeSwitchTitle: 'Mudar para o tema claro',
+    darkModeSwitchTitle: 'Mudar para o tema escuro',
+    sidebarMenuLabel: 'Menu',
+    returnToTopLabel: 'Voltar ao topo'
   }
 })

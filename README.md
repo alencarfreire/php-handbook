@@ -1,100 +1,96 @@
 # PHP/Laravel Interview Handbook
 
-> Полное руководство по подготовке к собеседованиям на PHP/Laravel разработчика с реальными примерами, практическими заданиями и готовыми ответами на собеседованиях.
+> Guia completo para entrevista de PHP/Laravel: exemplos reais, exercícios práticos e respostas prontas.
 
-## О книге
+## Sobre o livro
 
-Этот handbook содержит:
+Este handbook tem:
 
-- **138+ тем** от Junior до Senior уровня
-- **Краткие резюме** для быстрого повторения
-- **Примеры из практики** с реальным кодом
-- **Практические задания** для закрепления материала
-- **Готовые ответы** для собеседований
-- **Структурированный подход** от простого к сложному
+- **138+ temas** do Junior ao Senior
+- **Resumos** para revisar rápido
+- **Exemplos práticos** com código de verdade
+- **Exercícios práticos** para fixar
+- **Respostas prontas** para entrevista
+- **Do simples ao avançado**
 
-## Для кого эта книга
+## Para quem é
 
-- **Junior разработчики** - для изучения основ PHP и Laravel
-- **Middle разработчики** - для углубления знаний и подготовки к собеседованиям
-- **Senior разработчики** - для систематизации знаний и повторения перед интервью
-- **Интервьюеры** - как база вопросов для собеседований
+- **Junior** — fundamentos de PHP e Laravel
+- **Middle** — aprofundar e se preparar para entrevista
+- **Senior** — organizar o que você já sabe e revisar antes da entrevista
+- **Entrevistadores** — base de perguntas
 
-## Структура книги
+## Estrutura
 
-Книга разделена на уровни сложности:
+O livro está dividido por nível:
 
-### Уровень 1: PHP Основы (Junior)
-- PHP Basics - типы данных, переменные, операторы, функции, массивы
-- ООП в PHP - классы, наследование, интерфейсы, трейты
-- PHP Advanced - namespaces, PSR, исключения, PHP 8 features
+### Nível 1: Fundamentos de PHP (Junior)
+- PHP Basics — tipos, variáveis, operadores, funções, arrays
+- OOP em PHP — classes, herança, interfaces, traits
+- PHP Advanced — namespaces, PSR, exceções, PHP 8
 
-### Уровень 2: Laravel & Frameworks (Middle)
-- Laravel Basics - архитектура, Service Container, Facades, роутинг
-- Laravel Advanced - Eloquent, очереди, события, валидация
-- SQL & Databases - запросы, транзакции, оптимизация
+### Nível 2: Laravel & Frameworks (Middle)
+- Laravel Basics — arquitetura, Service Container, Facades, rotas
+- Laravel Advanced — Eloquent, queues, events, validation
+- SQL & Databases — queries, transações, otimização
 
-### Уровень 3: Архитектура & Паттерны (Middle+)
-- Design Patterns - порождающие, структурные, поведенческие
-- Architecture Patterns - MVC, Repository, Service Layer, DDD, CQRS
-- Принципы проектирования - SOLID, KISS, DRY, GRASP
+### Nível 3: Arquitetura & Patterns (Middle+)
+- Design Patterns — criacionais, estruturais, comportamentais
+- Architecture Patterns — MVC, Repository, Service Layer, DDD, CQRS
+- Princípios — SOLID, KISS, DRY, GRASP
 
-### Уровень 4: Инфраструктура & DevOps (Senior)
-- Docker - контейнеризация, docker-compose, CI/CD
-- Performance - кэширование, профилирование, оптимизация
-- Message Brokers - RabbitMQ, Kafka, Redis Pub/Sub
-- Microservices - архитектура, API Gateway, Service Discovery
+### Nível 4: Infra & DevOps (Senior)
+- Docker — containers, docker-compose, CI/CD
+- Performance — cache, profiling, otimização
+- Message Brokers — RabbitMQ, Kafka, Redis Pub/Sub
+- Microservices — arquitetura, API Gateway, Service Discovery
 
-### Уровень 5: Дополнительные темы
-- Security - XSS, CSRF, SQL Injection, аутентификация
-- Testing - Unit, Feature, TDD, моки и стабы
-- API Development - REST, GraphQL, документация
-- Soft Skills - code review, Agile, tech interview
+### Nível 5: Extra
+- Security — XSS, CSRF, SQL Injection, autenticação
+- Testing — Unit, Feature, TDD, mocks e stubs
+- API Development — REST, GraphQL, documentação
+- Soft Skills — code review, Agile, tech interview
 
-## Как использовать книгу
+## Como usar
 
-**Для изучения:**
-1. Читай последовательно от простого к сложному
-2. Каждая тема занимает ~10-15 минут
-3. Выполняй практические задания для закрепления
+**Para estudar:**
+1. Leia na ordem, do simples ao avançado
+2. Cada tema leva ~10–15 minutos
+3. Faça os exercícios práticos
 
-**Перед собеседованием:**
-1. Повтори разделы по своему уровню (Junior/Middle/Senior)
-2. Прочитай секцию "На собеседовании скажешь" в каждой теме
-3. Подготовь примеры из своего опыта
+**Antes da entrevista:**
+1. Revise as seções do seu nível (Junior/Middle/Senior)
+2. Leia **Na entrevista** em cada tema
+3. Prepare exemplos da sua experiência
 
-**По конкретным темам:**
-1. Используй поиск или навигацию для нужной темы
-2. Прочитай всю тему целиком
-3. Попробуй примеры кода в своем проекте
+**Por tema:**
+1. Use a busca ou a navegação
+2. Leia o tema inteiro
+3. Teste os exemplos no seu projeto
 
-## Формат каждой темы
+## Formato de cada tema
 
-Каждая тема содержит:
+1. **Resumo** — TL;DR para revisar rápido
+2. **Conteúdo** — navegação do tema
+3. **O que é** — definição simples
+4. **Como funciona** — exemplos com código
+5. **Prós e contras** — quando usar e o que evitar
+6. **Na entrevista** — resposta pronta e estruturada
+7. **Exercícios práticos** — problemas com solução
 
-1. **Краткое резюме** - TL;DR для быстрого повторения
-2. **Содержание** - навигация по теме
-3. **Что это** - определение простыми словами
-4. **Как работает** - примеры с кодом
-5. **Плюсы и минусы** - когда использовать и чего избегать
-6. **На собеседовании скажешь** - готовый структурированный ответ
-7. **Практические задания** - задачи с решениями для закрепления
+## Por onde começar
 
-## Начало работы
+- [Começar pelo PHP](01-php-basics/01-types.md) — se você é iniciante
+- [Laravel Basics](05-laravel-basics/01-architecture.md) — se já sabe PHP e quer Laravel
+- [Design Patterns](18-design-patterns/01-creational.md) — para ir fundo em arquitetura
+- [Docker & DevOps](11-docker/01-docker-basics.md) — para infra
 
-Выбери свой путь:
+## Sobre o autor
 
-- [Начать с основ PHP](01-php-basics/01-types.md) - если ты новичок
-- [Laravel Basics](05-laravel-basics/01-architecture.md) - если знаешь PHP и хочешь изучить Laravel
-- [Design Patterns](18-design-patterns/01-creational.md) - для углубления в архитектуру
-- [Docker & DevOps](11-docker/01-docker-basics.md) - для изучения инфраструктуры
-
-## Об авторе
-
-Этот handbook создан командой [CodeMate](https://codemate.team) на основе реального опыта проведения собеседований и подготовки разработчиков.
+Este handbook foi feito pela equipe [CodeMate](https://codemate.team) com base em entrevistas reais e na preparação de devs.
 
 ---
 
-**Готов начать?** Выбери раздел в навигации слева и начни изучение!
+**Pronto?** Escolha uma seção na navegação e começa.
 
-*Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

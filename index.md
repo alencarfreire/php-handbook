@@ -3,123 +3,123 @@ layout: home
 
 hero:
   name: PHP/Laravel Handbook
-  text: Полное руководство для PHP/Laravel разработчика
-  tagline: От основ до архитектуры. Для самостоятельного изучения и подготовки к собеседованиям
+  text: Guia completo para quem desenvolve PHP/Laravel
+  tagline: Do básico à arquitetura. Para estudar sozinho e se preparar para entrevista
   actions:
     - theme: brand
-      text: Начать изучение
+      text: Começar
       link: /01-php-basics/01-types
     - theme: alt
-      text: Roadmap обучения
+      text: Roadmap
       link: /roadmap
     - theme: alt
-      text: О менторинге
+      text: Mentoria
       link: https://codemate.team
 
 features:
   - icon: 📚
-    title: 141 тема
-    details: От базового синтаксиса PHP до микросервисной архитектуры. Структурированный материал с примерами кода и практическими заданиями.
+    title: 141 temas
+    details: Da sintaxe básica de PHP à arquitetura de microsserviços. Material organizado, com código e exercícios práticos.
 
   - icon: 🎯
-    title: Подготовка к интервью
-    details: Каждая тема содержит раздел "На собеседовании скажешь" с готовыми ответами и реальными вопросами работодателей.
+    title: Preparação para entrevista
+    details: Cada tema tem a seção "Na entrevista", com resposta pronta e perguntas reais de empresa.
 
   - icon: 💼
-    title: Реальный опыт
-    details: Материалы основаны на опыте проведения собеседований и работы над реальными проектами в крупных компаниях.
+    title: Experiência real
+    details: Baseado em entrevistas de verdade e em projetos de empresas grandes.
 
   - icon: 🗺️
-    title: Roadmap развития
-    details: Четкий план развития от Junior до Senior уровня с пониманием, что изучать на каждом этапе карьеры.
+    title: Roadmap
+    details: Plano claro do Junior ao Senior. Você sabe o que estudar em cada etapa.
 
   - icon: 👨‍🏫
-    title: Менторинг
-    details: Материалы используются в программе менторинга CodeMate для подготовки разработчиков к выходу на рынок труда.
+    title: Mentoria
+    details: O material entra no programa de mentoria da CodeMate, para quem está saindo para o mercado.
 
   - icon: ⚡
-    title: Актуальный стек
-    details: PHP 8.2+, Laravel 11, PostgreSQL, Docker, Redis, RabbitMQ, Kafka - всё, что требуют современные работодатели.
+    title: Stack atual
+    details: PHP 8.2+, Laravel 11, PostgreSQL, Docker, Redis, RabbitMQ, Kafka — o que as vagas pedem hoje.
 ---
 
-## Структура обучения
+## Estrutura
 
-Handbook разделен на 22 раздела, выстроенных по принципу от простого к сложному:
+O handbook tem 22 seções, do simples ao avançado:
 
-### Уровень Junior
+### Junior
 
-**Основы PHP**
-- Типы данных, переменные, операторы
-- Функции, массивы, строки
-- ООП: классы, интерфейсы, трейты
+**Fundamentos de PHP**
+- Tipos, variáveis, operadores
+- Funções, arrays, strings
+- OOP: classes, interfaces, traits
 
 **Git & Workflow**
-- Основы Git, ветвление, конфликты
-- Git Flow, работа в команде
+- Git básico, branches, conflitos
+- Git Flow, trabalho em time
 
 **Laravel Basics**
-- Архитектура фреймворка
+- Arquitetura do framework
 - Routing, Controllers, Middleware
 - Service Container, Service Providers
 
-### Уровень Middle
+### Middle
 
 **Laravel Advanced**
 - Eloquent, Query Builder
 - Events, Jobs, Queues
 - API Resources, Validation
 
-**Базы данных**
-- SQL, транзакции, индексы
-- Оптимизация запросов, N+1 проблема
-- Продвинутые возможности PostgreSQL
+**Bancos de dados**
+- SQL, transações, índices
+- Otimização de query, problema N+1
+- Recursos avançados do PostgreSQL
 
 **Testing & Security**
-- Unit и Feature тесты, TDD
+- Testes Unit e Feature, TDD
 - XSS, CSRF, SQL Injection
 - Authentication, Authorization
 
-### Уровень Senior
+### Senior
 
-**Архитектура**
+**Arquitetura**
 - SOLID, Design Patterns
 - DDD, CQRS, Event Sourcing
-- Repository Pattern, Service Layer
+- Repository, Service Layer
 
-**Инфраструктура**
+**Infra**
 - Docker, CI/CD
-- Кеширование (Redis, Memcached)
+- Cache (Redis, Memcached)
 - Message Brokers (RabbitMQ, Kafka)
 
 **Highload**
-- Оптимизация производительности
-- Масштабирование приложений
-- Микросервисная архитектура
+- Otimização de performance
+- Escalabilidade
+- Arquitetura de microsserviços
 
 ---
 
-## Как использовать handbook
+## Como usar
 
-**Для изучения**
-Читай последовательно от простого к сложному. Каждая тема занимает 10-15 минут и содержит примеры кода.
+**Para estudar**
+Leia na ordem, do simples ao avançado. Cada tema leva 10–15 minutos e tem código.
 
-**Перед собеседованием**
-Используй раздел "На собеседовании скажешь" в каждой теме для быстрого повторения.
+**Antes da entrevista**
+Use **Na entrevista** em cada tema para revisar rápido.
 
-**Для практики**
-Выполняй задания в конце каждой темы. Реализуй изученные паттерны в своих проектах.
+**Para praticar**
+Faça os exercícios no fim de cada tema. Leve os patterns para os seus projetos.
 
-**С ментором**
-Материалы handbook используются в программе менторинга для структурированной подготовки к трудоустройству.
+**Com mentor**
+O handbook entra no programa de mentoria, para uma preparação organizada rumo à vaga.
 
 ---
 
-## О проекте
+## Sobre o projeto
 
-Handbook создан командой CodeMate на основе реального опыта собеседований и работы над коммерческими проектами. Материалы постоянно обновляются с учетом требований современного рынка труда.
+Feito pela equipe CodeMate com base em entrevistas reais e projetos comerciais. O material é atualizado conforme o mercado muda.
 
 **Open Source**
-Исходники доступны на [GitHub](https://github.com/codemateteam/php-handbook). Contributions приветствуются.
+O código está no [GitHub](https://github.com/codemateteam/php-handbook). Contributions são bem-vindas.
 
-**Менторинг**
-Если нужна помощь с трудоустройством, код-ревью или подготовкой к интервью — узнайте о программе менторинга на [codemate.team](https://codemate.team).
+**Mentoria**
+Se você quer ajuda com vaga, code review ou entrevista — veja o programa em [codemate.team](https://codemate.team).
