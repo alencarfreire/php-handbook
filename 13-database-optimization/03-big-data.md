@@ -1,37 +1,37 @@
-# 9.3 Работа с большими данными
+# 9.3 Trabalhando com Big Data
 
 > **TL;DR**
-> Big Data в БД — таблицы с millions/billions строк. Проблемы: медленные queries, долгие migrations, lock contentions. Решения: Partitioning (разделение по времени/регионам), Sharding (горизонтальное разделение), Read Replicas (analytics на replica), Archiving (старые данные в S3), Bulk INSERT (batch вместо single), Cursor (streaming без памяти). Оптимизация: covering indexes, materialized views, index на JSONB.
+> Big Data no banco — tabelas com millions/billions de rows. Problemas: queries lentas, migrations longas, lock contentions. Soluções: Partitioning (divide por tempo/região), Sharding (particionamento horizontal), Read Replicas (analytics na replica), Archiving (dados velhos no S3), Bulk INSERT (batch no lugar de insert um a um), Cursor (streaming sem estourar memória). Otimização: covering indexes, materialized views, index em JSONB.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Проблемы с большими таблицами](#проблемы-с-большими-таблицами)
+- [O que é](#o-que-é)
+- [Problemas com tabelas grandes](#problemas-com-tabelas-grandes)
   - [1. Slow SELECT](#1-slow-select)
   - [2. Slow INSERT/UPDATE](#2-slow-insertupdate)
-  - [3. Долгие Migrations](#3-долгие-migrations)
-  - [4. Archiving старых данных](#4-archiving-старых-данных)
-  - [5. Read Replicas для analytics](#5-read-replicas-для-analytics)
-  - [6. Cursor для batch processing](#6-cursor-для-batch-processing)
-- [Оптимизация queries на больших таблицах](#оптимизация-queries-на-больших-таблицах)
-- [Monitoring больших таблиц](#monitoring-больших-таблиц)
-- [Best Practices](#best-practices)
-- [Tools](#tools)
-- [Практические задания](#практические-задания)
+  - [3. Migrations longas](#3-migrations-longas)
+  - [4. Archiving de dados antigos](#4-archiving-de-dados-antigos)
+  - [5. Read Replicas para analytics](#5-read-replicas-para-analytics)
+  - [6. Cursor para batch processing](#6-cursor-para-batch-processing)
+- [Otimização de queries em tabelas grandes](#otimização-de-queries-em-tabelas-grandes)
+- [Monitoramento de tabelas grandes](#monitoramento-de-tabelas-grandes)
+- [Boas práticas](#boas-práticas)
+- [Ferramentas](#ferramentas)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
-**Big Data в контексте БД:**
-Таблицы с millions/billions строк, которые требуют специальных подходов для эффективной работы.
+**Big Data no contexto de banco:**
+Tabelas com millions/billions de rows. Sem abordagem específica, você não consegue trabalhar direito.
 
-**Проблемы:**
-- Медленные queries
-- Долгие migrations
-- Нехватка памяти
-- Slow backup/restore
+**Problemas:**
+- Queries lentas
+- Migrations longas
+- Falta de memória
+- Backup/restore lento
 - Lock contentions
 
-**Решения:**
+**Soluções:**
 - Partitioning
 - Sharding
 - Read replicas
@@ -40,38 +40,38 @@
 
 ---
 
-## Проблемы с большими таблицами
+## Problemas com tabelas grandes
 
 ### 1. Slow SELECT
 
-**Проблема:**
+**Problema:**
 
 ```sql
 -- 100 million rows
 SELECT * FROM logs WHERE user_id = 123;
--- Slow! (даже с индексом)
+-- Lento! (mesmo com índice)
 ```
 
-**Решения:**
+**Soluções:**
 
 **A. Partitioning**
 
 ```sql
--- Partition по месяцам
+-- Partition por mês
 CREATE TABLE logs_2024_01 PARTITION OF logs
     FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
 
--- Query только нужную партицию
+-- Query só na partição certa
 SELECT * FROM logs
 WHERE created_at >= '2024-01-15'
   AND user_id = 123;
--- Scan только logs_2024_01
+-- Scan só em logs_2024_01
 ```
 
 **B. Sharding**
 
 ```php
-// Разделить users по ID на разные БД
+// Dividir users por ID em bancos diferentes
 function getUserShard($userId)
 {
     return 'shard_' . ($userId % 4);  // 4 shards
@@ -85,21 +85,21 @@ $user = DB::connection($shardName)->table('users')->find(123);
 
 ### 2. Slow INSERT/UPDATE
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Bulk insert 1 million rows (медленно)
+// Bulk insert de 1 milhão de rows (lento)
 foreach ($records as $record) {
-    DB::table('logs')->insert($record);  // 1 million queries!
+    DB::table('logs')->insert($record);  // 1 milhão de queries!
 }
 ```
 
-**Решения:**
+**Soluções:**
 
 **A. Bulk INSERT**
 
 ```php
-// Batch insert (100x faster)
+// Batch insert (100x mais rápido)
 $chunks = array_chunk($records, 1000);
 
 foreach ($chunks as $chunk) {
@@ -110,17 +110,17 @@ foreach ($chunks as $chunk) {
 **B. COPY (PostgreSQL)**
 
 ```php
-// Fastest: PostgreSQL COPY
+// Mais rápido: PostgreSQL COPY
 $file = '/tmp/logs.csv';
 
-// Export to CSV
+// Export para CSV
 $fp = fopen($file, 'w');
 foreach ($records as $record) {
     fputcsv($fp, $record);
 }
 fclose($fp);
 
-// COPY from CSV (super fast!)
+// COPY do CSV (super rápido!)
 DB::statement("
     COPY logs (user_id, action, created_at)
     FROM '{$file}'
@@ -131,7 +131,7 @@ DB::statement("
 **C. LOAD DATA INFILE (MySQL)**
 
 ```php
-// MySQL equivalent
+// Equivalente no MySQL
 DB::statement("
     LOAD DATA LOCAL INFILE '{$file}'
     INTO TABLE logs
@@ -143,29 +143,29 @@ DB::statement("
 
 ---
 
-### 3. Долгие Migrations
+### 3. Migrations longas
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Добавить колонку к большой таблице (часы!)
+// Adicionar coluna em tabela grande (horas!)
 Schema::table('logs', function (Blueprint $table) {
     $table->string('ip_address')->nullable();
 });
 // Locks table!
 ```
 
-**Решения:**
+**Soluções:**
 
 **A. Online Schema Change (PostgreSQL)**
 
 ```php
-// PostgreSQL: добавить колонку без lock
+// PostgreSQL: adicionar coluna sem lock
 DB::statement("
     ALTER TABLE logs
     ADD COLUMN ip_address VARCHAR(255) DEFAULT NULL
 ");
-// Быстро (metadata change only)
+// Rápido (só muda metadata)
 ```
 
 **B. pt-online-schema-change (MySQL)**
@@ -176,13 +176,13 @@ pt-online-schema-change \
   --alter "ADD COLUMN ip_address VARCHAR(255)" \
   D=mydb,t=logs \
   --execute
-# Создаёт новую таблицу, копирует данные, swap
+# Cria tabela nova, copia os dados, faz swap
 ```
 
 **C. Batch UPDATE**
 
 ```php
-// Вместо UPDATE всех строк сразу
+// Em vez de UPDATE em todas as rows de uma vez
 $lastId = 0;
 $batchSize = 10000;
 
@@ -201,29 +201,29 @@ while (true) {
         ->where('id', '>', $lastId)
         ->min('id');
 
-    sleep(1);  // Пауза чтобы не нагружать БД
+    sleep(1);  // Pausa para não sobrecarregar o banco
 }
 ```
 
 ---
 
-### 4. Archiving старых данных
+### 4. Archiving de dados antigos
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- Logs за 5 лет (миллиарды строк)
--- Нужны только последние 3 месяца
+-- Logs de 5 anos (bilhões de rows)
+-- Só precisa dos últimos 3 meses
 ```
 
-**Решения:**
+**Soluções:**
 
 **A. Partitioning + DROP**
 
 ```php
-// Удалить старую партицию (instant!)
+// Dropar partição antiga (instantâneo!)
 DB::statement("DROP TABLE logs_2023_01");
-// Быстро (no DELETE queries)
+// Rápido (sem queries DELETE)
 ```
 
 **B. Archive to cold storage**
@@ -235,7 +235,7 @@ class ArchiveOldLogs extends Command
     {
         $cutoffDate = now()->subMonths(3);
 
-        // Export to S3
+        // Export para S3
         $logs = DB::table('logs')
             ->where('created_at', '<', $cutoffDate)
             ->cursor();
@@ -255,7 +255,7 @@ class ArchiveOldLogs extends Command
             file_get_contents($file)
         );
 
-        // Delete old data
+        // Apagar dados antigos
         DB::table('logs')
             ->where('created_at', '<', $cutoffDate)
             ->delete();
@@ -264,18 +264,18 @@ class ArchiveOldLogs extends Command
     }
 }
 
-// Scheduler: archive раз в месяц
+// Scheduler: archive uma vez por mês
 $schedule->command('logs:archive')->monthly();
 ```
 
 ---
 
-### 5. Read Replicas для analytics
+### 5. Read Replicas para analytics
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- Heavy analytics queries блокируют production
+-- Queries pesadas de analytics travam o production
 SELECT
     DATE_TRUNC('day', created_at) as date,
     COUNT(*) as count,
@@ -283,10 +283,10 @@ SELECT
 FROM logs
 WHERE created_at >= NOW() - INTERVAL '1 year'
 GROUP BY DATE_TRUNC('day', created_at);
--- Slow query блокирует другие queries
+-- Query lenta trava as outras
 ```
 
-**Решение: Read Replica**
+**Solução: Read Replica**
 
 ```php
 // config/database.php
@@ -302,35 +302,35 @@ GROUP BY DATE_TRUNC('day', created_at);
     ],
 ],
 
-// Analytics на replica
+// Analytics na replica
 DB::connection('mysql')
     ->table('logs')
     ->where('created_at', '>=', now()->subYear())
     ->groupBy(DB::raw('DATE_TRUNC("day", created_at)'))
     ->get();
-// Не нагружает master
+// Não sobrecarrega o master
 ```
 
 ---
 
-### 6. Cursor для batch processing
+### 6. Cursor para batch processing
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Загрузить 100 million rows в память (crash!)
+// Carregar 100 milhões de rows na memória (crash!)
 $logs = Log::all();
 ```
 
-**Решение: Cursor**
+**Solução: Cursor**
 
 ```php
-// Streaming (не загружает всё в память)
+// Streaming (não carrega tudo na memória)
 foreach (Log::cursor() as $log) {
     $this->process($log);
 }
 
-// Или chunk
+// Ou chunk
 Log::chunk(10000, function ($logs) {
     foreach ($logs as $log) {
         $this->process($log);
@@ -340,7 +340,7 @@ Log::chunk(10000, function ($logs) {
 
 ---
 
-## Оптимизация queries на больших таблицах
+## Otimização de queries em tabelas grandes
 
 ### 1. Covering Index
 
@@ -352,24 +352,24 @@ WHERE user_id = 123
 ORDER BY created_at DESC
 LIMIT 100;
 
--- Covering index (содержит ВСЕ нужные колонки)
+-- Covering index (tem TODAS as colunas da query)
 CREATE INDEX idx_logs_user_created_cover
 ON logs (user_id, created_at DESC)
 INCLUDE (id);
 
--- Теперь БД не читает таблицу (index-only scan)
+-- Agora o banco não lê a tabela (index-only scan)
 ```
 
 ---
 
-### 2. Index на JSONB
+### 2. Index em JSONB
 
 ```sql
--- Slow: scan всю таблицу
+-- Lento: scan na tabela inteira
 SELECT * FROM products
 WHERE attributes->>'brand' = 'Dell';
 
--- Fast: GIN index
+-- Rápido: GIN index
 CREATE INDEX idx_products_attributes ON products USING gin (attributes);
 ```
 
@@ -378,12 +378,12 @@ CREATE INDEX idx_products_attributes ON products USING gin (attributes);
 ### 3. Partial Index
 
 ```sql
--- Index только нужные строки
+-- Index só nas rows que importam
 CREATE INDEX idx_logs_pending
 ON logs (user_id)
 WHERE status = 'pending';
 
--- Query использует partial index
+-- Query usa o partial index
 SELECT * FROM logs
 WHERE user_id = 123 AND status = 'pending';
 ```
@@ -405,18 +405,18 @@ GROUP BY DATE_TRUNC('day', created_at);
 -- Refresh periodically
 REFRESH MATERIALIZED VIEW daily_stats;
 
--- Fast query
+-- Query rápida
 SELECT * FROM daily_stats WHERE date >= NOW() - INTERVAL '30 days';
 ```
 
 ---
 
-## Monitoring больших таблиц
+## Monitoramento de tabelas grandes
 
 **PostgreSQL:**
 
 ```sql
--- Размер таблиц
+-- Tamanho das tabelas
 SELECT
     schemaname,
     tablename,
@@ -439,7 +439,7 @@ LIMIT 10;
 **MySQL:**
 
 ```sql
--- Размер таблиц
+-- Tamanho das tabelas
 SELECT
     table_name,
     ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
@@ -450,49 +450,49 @@ ORDER BY (data_length + index_length) DESC;
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Partitioning для временных данных (logs, events)
-✓ Sharding для horizontal scaling
-✓ Read replicas для analytics
-✓ Archive старых данных (S3, cold storage)
-✓ Bulk INSERT вместо single inserts
-✓ Cursor для batch processing
-✓ Covering indexes для частых queries
-✓ Materialized views для aggregations
-✓ Мониторинг размера таблиц и slow queries
-✓ Vacuum/Analyze регулярно (PostgreSQL)
-✓ Optimize Table регулярно (MySQL)
+✓ Partitioning para dados temporais (logs, events)
+✓ Sharding para horizontal scaling
+✓ Read replicas para analytics
+✓ Archive de dados antigos (S3, cold storage)
+✓ Bulk INSERT no lugar de insert um a um
+✓ Cursor para batch processing
+✓ Covering indexes nas queries frequentes
+✓ Materialized views para aggregations
+✓ Monitorar tamanho das tabelas e slow queries
+✓ Vacuum/Analyze de forma regular (PostgreSQL)
+✓ Optimize Table de forma regular (MySQL)
 ```
 
 ---
 
-## Tools
+## Ferramentas
 
 **PostgreSQL:**
-- `pg_partman` — автоматическое партиционирование
-- `pgbadger` — анализ логов
-- `pg_repack` — rebuild таблиц без downtime
+- `pg_partman` — particionamento automático
+- `pgbadger` — análise de logs
+- `pg_repack` — rebuild de tabelas sem downtime
 
 **MySQL:**
-- `pt-online-schema-change` — миграции без downtime
-- `pt-archiver` — архивирование данных
-- `mysqldumper` — быстрый dump больших БД
+- `pt-online-schema-change` — migrations sem downtime
+- `pt-archiver` — arquivamento de dados
+- `mysqldumper` — dump rápido de bancos grandes
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Оптимизировать bulk insert
+### Exercício 1: Otimizar bulk insert
 
-Нужно импортировать 1 миллион записей логов из CSV файла. Наивный подход слишком медленный. Оптимизируйте.
+**Enunciado:** Você precisa importar 1 milhão de logs de um CSV. O jeito ingênuo é lento demais. Otimize.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: по одной записи (часы!)
+// ❌ RUIM: uma row por vez (horas!)
 class ImportLogsCommand extends Command
 {
     public function handle()
@@ -511,7 +511,7 @@ class ImportLogsCommand extends Command
     }
 }
 
-// ✅ ХОРОШО: batch insert (минуты)
+// ✅ BOM: batch insert (minutos)
 class ImportLogsCommand extends Command
 {
     public function handle()
@@ -527,14 +527,14 @@ class ImportLogsCommand extends Command
                 'created_at' => $row[2],
             ];
 
-            // Вставить пакет
+            // Inserir o lote
             if (count($batch) >= $batchSize) {
                 DB::table('logs')->insert($batch);
                 $batch = [];
             }
         }
 
-        // Остаток
+        // Resto
         if (!empty($batch)) {
             DB::table('logs')->insert($batch);
         }
@@ -543,7 +543,7 @@ class ImportLogsCommand extends Command
     }
 }
 
-// ⚡ СУПЕР БЫСТРО: PostgreSQL COPY (секунды!)
+// ⚡ SUPER RÁPIDO: PostgreSQL COPY (segundos!)
 class ImportLogsCommand extends Command
 {
     public function handle()
@@ -556,7 +556,7 @@ class ImportLogsCommand extends Command
             CSV HEADER
         ");
 
-        $this->info('Imported successfully!');
+        $this->info('Importado com sucesso!');
     }
 }
 
@@ -576,28 +576,28 @@ class ImportLogsCommand extends Command
             (user_id, action, created_at)
         ");
 
-        $this->info('Imported successfully!');
+        $this->info('Importado com sucesso!');
     }
 }
 ```
 
-**Производительность:**
-- Single INSERT: ~3 часа для 1M записей
-- Batch INSERT (1000): ~5 минут для 1M записей
-- COPY/LOAD DATA: ~30 секунд для 1M записей
+**Performance:**
+- Single INSERT: ~3 horas para 1M de registros
+- Batch INSERT (1000): ~5 minutos para 1M de registros
+- COPY/LOAD DATA: ~30 segundos para 1M de registros
 </details>
 
 ---
 
-### Задание 2: Реализовать archiving старых данных
+### Exercício 2: Implementar archiving de dados antigos
 
-Таблица `activity_logs` содержит 500 миллионов записей за 5 лет. Для работы приложения нужны только последние 3 месяца. Реализуйте архивирование.
+**Enunciado:** A tabela `activity_logs` tem 500 milhões de registros em 5 anos. O app só precisa dos últimos 3 meses. Implemente o arquivamento.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Command для архивирования
+// Command para arquivar
 class ArchiveOldLogsCommand extends Command
 {
     protected $signature = 'logs:archive {--dry-run}';
@@ -606,20 +606,20 @@ class ArchiveOldLogsCommand extends Command
     {
         $cutoffDate = now()->subMonths(3);
 
-        $this->info("Archiving logs older than {$cutoffDate}...");
+        $this->info("Arquivando logs anteriores a {$cutoffDate}...");
 
-        // Подсчет записей
+        // Contar registros
         $count = DB::table('activity_logs')
             ->where('created_at', '<', $cutoffDate)
             ->count();
 
-        $this->info("Found {$count} records to archive");
+        $this->info("Encontrados {$count} registros para arquivar");
 
         if ($this->option('dry-run')) {
             return;
         }
 
-        // Export в CSV
+        // Export para CSV
         $filename = 'logs_archive_' . now()->format('Y-m-d') . '.csv';
         $filepath = storage_path('archives/' . $filename);
 
@@ -632,7 +632,7 @@ class ArchiveOldLogsCommand extends Command
         // Header
         fputcsv($file, ['id', 'user_id', 'action', 'ip_address', 'created_at']);
 
-        // Streaming export (не загружает всё в память)
+        // Streaming export (não carrega tudo na memória)
         DB::table('activity_logs')
             ->where('created_at', '<', $cutoffDate)
             ->orderBy('id')
@@ -644,24 +644,24 @@ class ArchiveOldLogsCommand extends Command
 
         fclose($file);
 
-        $this->info("Exported to {$filepath}");
+        $this->info("Exportado para {$filepath}");
 
         // Compress
         $compressed = $filepath . '.gz';
-        $this->info('Compressing...');
+        $this->info('Compactando...');
 
         exec("gzip {$filepath}");
 
         // Upload to S3
-        $this->info('Uploading to S3...');
+        $this->info('Enviando para o S3...');
 
         Storage::disk('s3')->put(
             'archives/' . basename($compressed),
             file_get_contents($compressed)
         );
 
-        // Delete from database
-        $this->info('Deleting old records...');
+        // Apagar do banco
+        $this->info('Apagando registros antigos...');
 
         $deleted = 0;
         while (true) {
@@ -671,30 +671,30 @@ class ArchiveOldLogsCommand extends Command
                 ->delete();
 
             $deleted += $batch;
-            $this->info("Deleted {$deleted} / {$count}");
+            $this->info("Apagados {$deleted} / {$count}");
 
             if ($batch === 0) {
                 break;
             }
 
-            sleep(1); // Пауза чтобы не нагружать БД
+            sleep(1); // Pausa para não sobrecarregar o banco
         }
 
-        // Delete local file
+        // Apagar arquivo local
         unlink($compressed);
 
-        $this->info('Archive completed!');
+        $this->info('Arquivamento concluído!');
     }
 }
 
-// Scheduler: архивировать раз в месяц
+// Scheduler: arquivar uma vez por mês
 protected function schedule(Schedule $schedule)
 {
     $schedule->command('logs:archive')
         ->monthlyOn(1, '02:00');
 }
 
-// Command для восстановления из архива
+// Command para restaurar do arquivo
 class RestoreLogsCommand extends Command
 {
     protected $signature = 'logs:restore {file}';
@@ -704,7 +704,7 @@ class RestoreLogsCommand extends Command
         $file = $this->argument('file');
 
         // Download from S3
-        $this->info('Downloading from S3...');
+        $this->info('Baixando do S3...');
         $content = Storage::disk('s3')->get($file);
 
         $localFile = storage_path('temp/' . basename($file));
@@ -715,7 +715,7 @@ class RestoreLogsCommand extends Command
         $csvFile = str_replace('.gz', '', $localFile);
 
         // Import
-        $this->info('Importing...');
+        $this->info('Importando...');
 
         DB::statement("
             COPY activity_logs (id, user_id, action, ip_address, created_at)
@@ -725,23 +725,23 @@ class RestoreLogsCommand extends Command
 
         unlink($csvFile);
 
-        $this->info('Restore completed!');
+        $this->info('Restore concluído!');
     }
 }
 ```
 
-**Преимущества:**
-- БД остается маленькой и быстрой
-- Архивы в S3 (дешевое хранение)
-- Можно восстановить при необходимости
-- Batch delete (не блокирует БД)
+**Vantagens:**
+- O banco fica pequeno e rápido
+- Arquivos no S3 (storage barato)
+- Dá para restaurar se precisar
+- Batch delete (não trava o banco)
 </details>
 
 ---
 
-### Задание 3: Оптимизировать query на большой таблице
+### Exercício 3: Otimizar query em tabela grande
 
-Дан медленный запрос к таблице с 100 миллионами записей:
+**Enunciado:** Query lenta numa tabela com 100 milhões de registros:
 
 ```sql
 SELECT * FROM orders
@@ -751,31 +751,31 @@ ORDER BY total DESC
 LIMIT 100;
 ```
 
-EXPLAIN показывает Seq Scan. Оптимизируйте.
+EXPLAIN mostra Seq Scan. Otimize.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Анализ проблемы
-// EXPLAIN ANALYZE показывает:
+// Análise do problema
+// EXPLAIN ANALYZE mostra:
 // Seq Scan on orders (cost=0..1000000 rows=5000000)
 //   Filter: (status = 'pending' AND created_at > ...)
 
-// Решение 1: Composite Index
+// Solução 1: Composite Index
 Schema::table('orders', function (Blueprint $table) {
-    // Covering index (содержит все нужные колонки)
+    // Covering index (tem todas as colunas da query)
     $table->index(['status', 'created_at', 'total', 'id'], 'idx_orders_pending_recent');
 });
 
-// Решение 2: Partial Index (PostgreSQL)
+// Solução 2: Partial Index (PostgreSQL)
 DB::statement("
     CREATE INDEX idx_orders_pending ON orders (created_at, total)
     WHERE status = 'pending'
 ");
-// Меньший размер, быстрее
+// Menor, mais rápido
 
-// Решение 3: Materialized View для частого запроса
+// Solução 3: Materialized View para query frequente
 DB::statement("
     CREATE MATERIALIZED VIEW pending_orders_recent AS
     SELECT *
@@ -784,16 +784,16 @@ DB::statement("
       AND created_at > NOW() - INTERVAL '7 days'
 ");
 
-// Refresh периодически
+// Refresh periódico
 DB::statement("REFRESH MATERIALIZED VIEW pending_orders_recent");
 
-// Query к materialized view (мгновенно!)
+// Query na materialized view (instantâneo!)
 $orders = DB::table('pending_orders_recent')
     ->orderBy('total', 'desc')
     ->limit(100)
     ->get();
 
-// Решение 4: Партиционирование по created_at
+// Solução 4: Partitioning por created_at
 Schema::create('orders', function (Blueprint $table) {
     $table->id();
     $table->foreignId('customer_id');
@@ -808,9 +808,9 @@ DB::statement("
     CREATE TABLE orders_2024_01 PARTITION OF orders
     FOR VALUES FROM ('2024-01-01') TO ('2024-02-01')
 ");
-// Query будет сканировать только нужные партиции
+// A query escaneia só as partições certas
 
-// Eloquent query builder (использует индексы)
+// Eloquent query builder (usa os índices)
 class Order extends Model
 {
     public function scopePending($query)
@@ -829,33 +829,33 @@ class Order extends Model
     }
 }
 
-// Использование
+// Uso
 $orders = Order::pending()
     ->recent(7)
     ->highestValue()
     ->limit(100)
     ->get();
 
-// EXPLAIN после оптимизации:
+// EXPLAIN depois da otimização:
 // Index Scan using idx_orders_pending on orders (cost=0..500 rows=100)
 //   Index Cond: (status = 'pending' AND created_at > ...)
 //   Order By: total DESC
-// 1000x быстрее!
+// 1000x mais rápido!
 ```
 
-**Итог:**
-- БЫЛО: Seq Scan 100M строк, ~30 секунд
-- СТАЛО: Index Scan ~1000 строк, ~10ms
-- Covering index избегает чтение таблицы
-- Partial index экономит место
+**Resultado:**
+- ANTES: Seq Scan em 100M de rows, ~30 segundos
+- DEPOIS: Index Scan em ~1000 rows, ~10ms
+- Covering index evita ler a tabela
+- Partial index economiza espaço
 </details>
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Big Data в БД — millions/billions строк. Проблемы: медленные queries, долгие migrations, нехватка памяти. Решения: Partitioning (разделить по времени), Sharding (горизонтальное разделение), Read Replicas (analytics на replica), Archiving (старые данные в S3), Bulk INSERT (batch вместо single), Cursor (streaming без памяти). Оптимизация: covering indexes, partial indexes, materialized views, index на JSONB. Migrations: online schema change, batch UPDATE. Monitoring: размер таблиц, slow queries. Tools: pg_partman, pt-online-schema-change, pt-archiver."
+> "Big Data no banco é millions/billions de rows. Problemas: queries lentas, migrations longas, falta de memória. Soluções: Partitioning (divide por tempo), Sharding (particionamento horizontal), Read Replicas (analytics na replica), Archiving (dados velhos no S3), Bulk INSERT (batch no lugar de insert um a um), Cursor (streaming sem estourar memória). Otimização: covering indexes, partial indexes, materialized views, index em JSONB. Migrations: online schema change, batch UPDATE. Monitoring: tamanho das tabelas, slow queries. Tools: pg_partman, pt-online-schema-change, pt-archiver."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

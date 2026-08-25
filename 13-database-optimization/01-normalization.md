@@ -1,63 +1,63 @@
-# 9.1 Нормализация базы данных
+# 9.1 Normalização de banco
 
 > **TL;DR**
-> Нормализация устраняет избыточность данных путем разделения на связанные таблицы. Основные формы: 1NF (атомарные значения), 2NF (зависимость от всего ключа), 3NF (нет транзитивных зависимостей). На практике достаточно 3NF. Преимущества: целостность, простота обновлений. Недостатки: больше JOIN'ов. Используй для OLTP, денормализуй для OLAP.
+> Normalização corta redundância: você parte os dados em tabelas relacionadas. Formas principais: 1NF (valores atômicos), 2NF (depende da chave inteira), 3NF (sem dependência transitiva). Na prática, 3NF basta. Prós: integridade, UPDATE simples. Contras: mais JOIN. Use para OLTP, desnormalize para OLAP.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [1NF (First Normal Form)](#1nf-first-normal-form)
 - [2NF (Second Normal Form)](#2nf-second-normal-form)
 - [3NF (Third Normal Form)](#3nf-third-normal-form)
 - [BCNF (Boyce-Codd Normal Form)](#bcnf-boyce-codd-normal-form)
-- [Примеры нормализации](#примеры-нормализации)
-- [Аномалии без нормализации](#аномалии-без-нормализации)
-- [Преимущества нормализации](#преимущества-нормализации)
-- [Недостатки нормализации](#недостатки-нормализации)
-- [Когда нормализовать](#когда-нормализовать)
-- [Когда НЕ нормализовать (денормализация)](#когда-не-нормализовать-денормализация)
-- [Laravel Migrations для normalized schema](#laravel-migrations-для-normalized-schema)
-- [Best Practices](#best-practices)
-- [Практические задания](#практические-задания)
+- [Exemplos de normalização](#exemplos-de-normalização)
+- [Anomalias sem normalização](#anomalias-sem-normalização)
+- [Vantagens da normalização](#vantagens-da-normalização)
+- [Desvantagens da normalização](#desvantagens-da-normalização)
+- [Quando normalizar](#quando-normalizar)
+- [Quando NÃO normalizar (desnormalização)](#quando-não-normalizar-desnormalização)
+- [Laravel Migrations para schema normalizado](#laravel-migrations-para-schema-normalizado)
+- [Boas práticas](#boas-práticas)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
-**Нормализация:**
-Процесс организации данных в БД для уменьшения избыточности и улучшения целостности данных.
+**Normalização:**
+Organizar os dados no banco para reduzir redundância e melhorar a integridade.
 
-**Цели:**
-- Устранить дублирование данных
-- Обеспечить consistency
-- Упростить изменение структуры
-- Уменьшить anomalies (insert/update/delete)
+**Objetivos:**
+- Eliminar duplicata
+- Garantir consistência
+- Facilitar mudança de schema
+- Reduzir anomalias (insert/update/delete)
 
-**Нормальные формы:**
+**Formas normais:**
 1NF → 2NF → 3NF → BCNF → 4NF → 5NF
 
-**На практике чаще всего используется 3NF.**
+**Na prática, o que mais aparece é 3NF.**
 
 ---
 
 ## 1NF (First Normal Form)
 
-**Правила:**
-- Каждое поле содержит атомарное значение (не массивы, не списки)
-- Нет повторяющихся групп
-- Есть primary key
+**Regras:**
+- Cada campo tem valor atômico (não array, não lista)
+- Sem grupos repetidos
+- Tem primary key
 
-**❌ Не 1NF:**
+**❌ Não é 1NF:**
 
 ```sql
 CREATE TABLE orders (
     id INT PRIMARY KEY,
     customer_name VARCHAR(255),
-    products VARCHAR(255)  -- 'Laptop, Mouse, Keyboard'
+    products VARCHAR(255)  -- 'Notebook, Mouse, Teclado'
 );
 ```
 
-**Проблема:**
-- Нельзя запросить заказы с конкретным продуктом
-- Сложно добавить/удалить продукт
+**Problema:**
+- Não dá para buscar pedidos de um produto específico
+- Incluir/remover produto fica difícil
 
 **✅ 1NF:**
 
@@ -78,26 +78,26 @@ CREATE TABLE order_items (
 
 ## 2NF (Second Normal Form)
 
-**Правила:**
-- Соблюдает 1NF
-- Нет частичной зависимости (non-key поля зависят от ВСЕГО primary key)
+**Regras:**
+- Cumpre 1NF
+- Sem dependência parcial (campo que não é chave depende da primary key INTEIRA)
 
-**❌ Не 2NF:**
+**❌ Não é 2NF:**
 
 ```sql
 CREATE TABLE order_items (
     order_id INT,
     product_id INT,
-    customer_name VARCHAR(255),  -- зависит только от order_id!
-    product_name VARCHAR(255),    -- зависит только от product_id!
+    customer_name VARCHAR(255),  -- depende só de order_id!
+    product_name VARCHAR(255),    -- depende só de product_id!
     quantity INT,
     PRIMARY KEY (order_id, product_id)
 );
 ```
 
-**Проблема:**
-- Дублирование customer_name для каждого товара
-- Изменение customer требует UPDATE всех строк
+**Problema:**
+- customer_name se repete em cada item
+- Mudar o cliente exige UPDATE em todas as linhas
 
 **✅ 2NF:**
 
@@ -124,24 +124,24 @@ CREATE TABLE order_items (
 
 ## 3NF (Third Normal Form)
 
-**Правила:**
-- Соблюдает 2NF
-- Нет транзитивной зависимости (non-key поля не зависят от других non-key полей)
+**Regras:**
+- Cumpre 2NF
+- Sem dependência transitiva (campo que não é chave não depende de outro campo que também não é chave)
 
-**❌ Не 3NF:**
+**❌ Não é 3NF:**
 
 ```sql
 CREATE TABLE employees (
     id INT PRIMARY KEY,
     name VARCHAR(255),
     department_id INT,
-    department_name VARCHAR(255)  -- зависит от department_id!
+    department_name VARCHAR(255)  -- depende de department_id!
 );
 ```
 
-**Проблема:**
-- Дублирование department_name
-- Изменение department требует UPDATE всех сотрудников
+**Problema:**
+- department_name se repete
+- Mudar o departamento exige UPDATE em todos os funcionários
 
 **✅ 3NF:**
 
@@ -169,7 +169,7 @@ class Employee extends Model
     }
 }
 
-// Использование
+// Uso
 $employee = Employee::with('department')->find(1);
 echo $employee->department->name;
 ```
@@ -178,20 +178,20 @@ echo $employee->department->name;
 
 ## BCNF (Boyce-Codd Normal Form)
 
-**Правила:**
-- Соблюдает 3NF
-- Каждый determinant (определяющий атрибут) должен быть candidate key
+**Regras:**
+- Cumpre 3NF
+- Todo determinant (atributo que determina os outros) tem que ser candidate key
 
-**Редко нарушается, на практике 3NF обычно достаточно.**
+**Raramente se quebra. Na prática, 3NF costuma bastar.**
 
 ---
 
-## Примеры нормализации
+## Exemplos de normalização
 
-### E-commerce: До нормализации
+### E-commerce: antes da normalização
 
 ```sql
--- ❌ Denormalized (всё в одной таблице)
+-- ❌ Desnormalizado (tudo numa tabela só)
 CREATE TABLE orders_denormalized (
     order_id INT,
     order_date DATE,
@@ -208,19 +208,19 @@ CREATE TABLE orders_denormalized (
 );
 ```
 
-**Проблемы:**
-- Дублирование customer data для каждого товара в заказе
-- Дублирование product data для каждого заказа
-- Изменение email клиента требует UPDATE тысяч строк
-- Insert anomaly: нельзя добавить продукт без заказа
-- Delete anomaly: удаление последнего заказа удалит информацию о клиенте
+**Problemas:**
+- Dados do cliente se repetem em cada item do pedido
+- Dados do produto se repetem em cada pedido
+- Mudar o email do cliente exige UPDATE em milhares de linhas
+- Insert anomaly: não dá para cadastrar produto sem pedido
+- Delete anomaly: apagar o último pedido apaga os dados do cliente
 
 ---
 
-### E-commerce: После нормализации (3NF)
+### E-commerce: depois da normalização (3NF)
 
 ```sql
--- ✅ Normalized (3NF)
+-- ✅ Normalizado (3NF)
 CREATE TABLE customers (
     id INT PRIMARY KEY,
     name VARCHAR(255),
@@ -252,11 +252,11 @@ CREATE TABLE order_items (
     order_id INT REFERENCES orders(id),
     product_id INT REFERENCES products(id),
     quantity INT,
-    price DECIMAL(10, 2)  -- цена на момент заказа
+    price DECIMAL(10, 2)  -- preço no momento do pedido
 );
 ```
 
-**Laravel Models:**
+**Models no Laravel:**
 
 ```php
 class Customer extends Model
@@ -304,22 +304,22 @@ class Product extends Model
 
 ---
 
-## Аномалии без нормализации
+## Anomalias sem normalização
 
 ### 1. Insert Anomaly
 
 ```sql
--- ❌ Нельзя добавить продукт без заказа
+-- ❌ Não dá para cadastrar produto sem pedido
 INSERT INTO orders_denormalized (product_name, product_price)
-VALUES ('New Product', 99.99);
+VALUES ('Novo Produto', 99.99);
 -- ERROR: order_id cannot be NULL
 ```
 
-**Решение: отдельная таблица products**
+**Solução: tabela products à parte**
 
 ```sql
--- ✅ Можем добавить продукт без заказа
-INSERT INTO products (name, price) VALUES ('New Product', 99.99);
+-- ✅ Dá para cadastrar produto sem pedido
+INSERT INTO products (name, price) VALUES ('Novo Produto', 99.99);
 ```
 
 ---
@@ -327,19 +327,19 @@ INSERT INTO products (name, price) VALUES ('New Product', 99.99);
 ### 2. Update Anomaly
 
 ```sql
--- ❌ Изменить email клиента = UPDATE всех его заказов
+-- ❌ Mudar o email do cliente = UPDATE em todos os pedidos dele
 UPDATE orders_denormalized
-SET customer_email = 'newemail@example.com'
+SET customer_email = 'novo@email.com'
 WHERE customer_id = 123;
--- Может быть тысячи строк!
+-- Podem ser milhares de linhas!
 ```
 
-**Решение: отдельная таблица customers**
+**Solução: tabela customers à parte**
 
 ```sql
--- ✅ UPDATE одной строки
+-- ✅ UPDATE numa linha só
 UPDATE customers
-SET email = 'newemail@example.com'
+SET email = 'novo@email.com'
 WHERE id = 123;
 ```
 
@@ -348,71 +348,71 @@ WHERE id = 123;
 ### 3. Delete Anomaly
 
 ```sql
--- ❌ Удаление последнего заказа клиента удалит всю информацию о клиенте
+-- ❌ Apagar o último pedido do cliente apaga todos os dados dele
 DELETE FROM orders_denormalized
 WHERE order_id = 999;
--- Потеряли customer_name, customer_email, customer_address!
+-- Perdeu customer_name, customer_email, customer_address!
 ```
 
-**Решение: отдельная таблица customers**
+**Solução: tabela customers à parte**
 
 ```sql
--- ✅ Клиент остаётся после удаления заказа
+-- ✅ O cliente continua depois de apagar o pedido
 DELETE FROM orders WHERE id = 999;
--- Customer всё ещё в таблице customers
+-- Customer continua na tabela customers
 ```
 
 ---
 
-## Преимущества нормализации
+## Vantagens da normalização
 
 ```
-✅ Нет дублирования данных (меньше места)
-✅ Consistency (один источник правды)
-✅ Проще UPDATE (изменение в одном месте)
-✅ Нет anomalies (insert/update/delete)
-✅ Гибкость (проще добавлять новые поля/таблицы)
-✅ Referential integrity (foreign keys)
+✅ Sem duplicata (menos espaço)
+✅ Consistência (uma fonte da verdade)
+✅ UPDATE mais simples (muda num lugar só)
+✅ Sem anomalias (insert/update/delete)
+✅ Flexibilidade (mais fácil adicionar campo/tabela)
+✅ Integridade referencial (foreign keys)
 ```
 
 ---
 
-## Недостатки нормализации
+## Desvantagens da normalização
 
 ```
-❌ Больше JOIN'ов (медленнее SELECT)
-❌ Сложнее запросы
-❌ Больше таблиц (сложнее понимать схему)
+❌ Mais JOIN (SELECT mais lento)
+❌ Queries mais complexas
+❌ Mais tabelas (schema mais difícil de ler)
 ```
 
-**Решение: денормализация для performance-critical запросов** (см. следующую тему).
+**Solução: desnormalizar queries críticas de performance** (veja o próximo tópico).
 
 ---
 
-## Когда нормализовать
+## Quando normalizar
 
 ```
-✓ OLTP (транзакционные системы): INSERT/UPDATE часто
+✓ OLTP (sistemas transacionais): INSERT/UPDATE o tempo todo
 ✓ E-commerce, CRM, ERP
-✓ Данные часто изменяются
-✓ Нужна strong consistency
+✓ Dados mudam o tempo todo
+✓ Precisa de consistência forte
 ```
 
 ---
 
-## Когда НЕ нормализовать (денормализация)
+## Quando NÃO normalizar (desnormalização)
 
 ```
-✓ OLAP (аналитика): SELECT часто, INSERT редко
-✓ Reporting, dashboards
-✓ Read-heavy workload
-✓ Performance критична
+✓ OLAP (analítica): SELECT o tempo todo, INSERT raro
+✓ Relatórios, dashboards
+✓ Workload read-heavy
+✓ Performance é crítica
 ✓ Data Warehouses
 ```
 
 ---
 
-## Laravel Migrations для normalized schema
+## Laravel Migrations para schema normalizado
 
 ```php
 // Migration: customers
@@ -447,62 +447,62 @@ Schema::create('order_items', function (Blueprint $table) {
     $table->foreignId('order_id')->constrained()->onDelete('cascade');
     $table->foreignId('product_id')->constrained();
     $table->integer('quantity');
-    $table->decimal('price', 10, 2);  // цена на момент заказа
+    $table->decimal('price', 10, 2);  // preço no momento do pedido
     $table->timestamps();
 });
 ```
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Стремись к 3NF для транзакционных систем
-✓ BCNF, 4NF, 5NF редко нужны на практике
-✓ Используй foreign keys для referential integrity
-✓ Индексы на foreign keys для быстрых JOIN'ов
-✓ Денормализация допустима для performance
-✓ Используй Laravel relationships вместо ручных JOIN'ов
-✓ Migrations для версионирования схемы
+✓ Vá de 3NF em sistema transacional
+✓ BCNF, 4NF, 5NF quase não aparecem na prática
+✓ Use foreign keys para integridade referencial
+✓ Índice em foreign key para JOIN rápido
+✓ Desnormalizar vale quando performance pede
+✓ Use relationships do Laravel no lugar de JOIN na mão
+✓ Migrations para versionar o schema
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Привести таблицу к 1NF
+### Exercício 1: Levar a tabela para 1NF
 
-Дана денормализованная таблица:
+**Enunciado:** Dada a tabela desnormalizada:
 
 ```sql
 CREATE TABLE orders (
     id INT PRIMARY KEY,
     customer_name VARCHAR(255),
-    phone_numbers VARCHAR(255),  -- '555-1234, 555-5678'
-    products VARCHAR(500)         -- 'Laptop, Mouse, Keyboard'
+    phone_numbers VARCHAR(255),  -- '11999991111, 11988882222'
+    products VARCHAR(500)         -- 'Notebook, Mouse, Teclado'
 );
 ```
 
-Приведите её к 1NF.
+Leve ela para 1NF.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Таблица заказов
+-- Tabela de pedidos
 CREATE TABLE orders (
     id INT PRIMARY KEY,
     customer_name VARCHAR(255)
 );
 
--- Таблица телефонов
+-- Tabela de telefones
 CREATE TABLE customer_phones (
     id INT PRIMARY KEY,
     order_id INT REFERENCES orders(id),
     phone_number VARCHAR(20)
 );
 
--- Таблица товаров в заказе
+-- Tabela de itens do pedido
 CREATE TABLE order_items (
     id INT PRIMARY KEY,
     order_id INT REFERENCES orders(id),
@@ -524,14 +524,14 @@ class Order extends Model
 }
 ```
 
-**Объяснение:** 1NF требует атомарные значения. Разбили CSV-списки на отдельные строки в связанных таблицах.
+**Pontos-chave:** 1NF exige valores atômicos. Listas CSV viram linhas em tabelas relacionadas.
 </details>
 
 ---
 
-### Задание 2: Привести таблицу к 3NF
+### Exercício 2: Levar a tabela para 3NF
 
-Дана таблица:
+**Enunciado:** Dada a tabela:
 
 ```sql
 CREATE TABLE employees (
@@ -543,27 +543,27 @@ CREATE TABLE employees (
 );
 ```
 
-Приведите её к 3NF.
+Leve ela para 3NF.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Таблица отделов
+-- Tabela de departamentos
 CREATE TABLE departments (
     id INT PRIMARY KEY,
     name VARCHAR(255),
     location VARCHAR(255)
 );
 
--- Таблица сотрудников
+-- Tabela de funcionários
 CREATE TABLE employees (
     id INT PRIMARY KEY,
     name VARCHAR(255),
     department_id INT REFERENCES departments(id)
 );
 
--- Laravel Models
+-- Models no Laravel
 class Department extends Model
 {
     protected $fillable = ['name', 'location'];
@@ -584,20 +584,20 @@ class Employee extends Model
     }
 }
 
-// Использование
+// Uso
 $employee = Employee::with('department')->find(1);
 echo $employee->department->name;
 echo $employee->department->location;
 ```
 
-**Объяснение:** 3NF устраняет транзитивные зависимости. `department_name` и `department_location` зависят от `department_id`, а не от `employee.id` напрямую. Выносим в отдельную таблицу.
+**Pontos-chave:** 3NF elimina dependência transitiva. `department_name` e `department_location` dependem de `department_id`, não de `employee.id` direto. Extraímos para outra tabela.
 </details>
 
 ---
 
-### Задание 3: Найти аномалии
+### Exercício 3: Encontrar anomalias
 
-Имеется таблица:
+**Enunciado:** Temos esta tabela:
 
 ```sql
 CREATE TABLE student_courses (
@@ -612,18 +612,18 @@ CREATE TABLE student_courses (
 );
 ```
 
-Какие аномалии возможны? Как исправить?
+Quais anomalias podem aparecer? Como corrigir?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Аномалии:**
+**Anomalias:**
 
-1. **Insert Anomaly:** Нельзя добавить курс без студента
-2. **Update Anomaly:** Изменение email студента требует UPDATE всех его курсов
-3. **Delete Anomaly:** Удаление последней записи студента удаляет информацию о студенте
+1. **Insert Anomaly:** Não dá para cadastrar curso sem aluno
+2. **Update Anomaly:** Mudar o email do aluno exige UPDATE em todos os cursos dele
+3. **Delete Anomaly:** Apagar o último registro do aluno apaga os dados dele
 
-**Решение: нормализация до 3NF**
+**Solução: normalizar até 3NF**
 
 ```sql
 CREATE TABLE students (
@@ -646,7 +646,7 @@ CREATE TABLE enrollments (
 );
 ```
 
-**Laravel Models:**
+**Models no Laravel:**
 
 ```php
 class Student extends Model
@@ -667,25 +667,25 @@ class Course extends Model
     }
 }
 
-// Использование
+// Uso
 $student = Student::with('courses')->find(1);
 foreach ($student->courses as $course) {
     echo $course->name . ': ' . $course->pivot->grade;
 }
 ```
 
-**Преимущества:**
-- Можно добавить курс без студентов
-- Изменение email в одном месте
-- Удаление enrollment не удаляет студента/курс
+**Vantagens:**
+- Dá para cadastrar curso sem aluno
+- Email muda num lugar só
+- Apagar o enrollment não apaga aluno/curso
 </details>
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Нормализация — организация данных для уменьшения избыточности. Нормальные формы: 1NF (атомарные значения, нет массивов), 2NF (нет частичной зависимости от составного ключа), 3NF (нет транзитивной зависимости). На практике чаще всего 3NF. Преимущества: нет дублирования, consistency, проще UPDATE, нет anomalies (insert/update/delete). Недостатки: больше JOIN'ов, медленнее SELECT. Нормализация для OLTP (транзакции), денормализация для OLAP (аналитика). Laravel: relationships вместо JOIN'ов, foreign keys в migrations."
+> "Normalização é organizar os dados para reduzir redundância. Formas: 1NF (valores atômicos, sem array), 2NF (sem dependência parcial da chave composta), 3NF (sem dependência transitiva). Na prática, 3NF. Prós: sem duplicata, consistência, UPDATE simples, sem anomalias (insert/update/delete). Contras: mais JOIN, SELECT mais lento. Normaliza para OLTP (transação), desnormaliza para OLAP (analítica). No Laravel: relationships no lugar de JOIN, foreign keys nas migrations."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

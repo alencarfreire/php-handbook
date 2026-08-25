@@ -1,58 +1,58 @@
-# 9.2 Денормализация
+# 9.2 Desnormalização
 
 > **TL;DR**
-> Денормализация добавляет избыточность для ускорения чтения. Типы: дублирование колонок (избежать JOIN), counter cache (pre-computed агрегации), summary tables, JSONB. Trade-off: быстрее SELECT, медленнее UPDATE, риск inconsistency. Решения: Observers для автосинхронизации, scheduled jobs для проверки. Используй для read-heavy workload, избегай для write-heavy.
+> Desnormalização adiciona redundância para acelerar a leitura. Tipos: duplicar colunas (evitar JOIN), counter cache (agregações pré-computadas), summary tables, JSONB. Trade-off: SELECT mais rápido, UPDATE mais lento, risco de inconsistency. Solução: Observers para sincronizar sozinho, scheduled jobs para checar. Use em workload read-heavy. Evite em write-heavy.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы денормализации](#типы-денормализации)
-  - [1. Дублирование колонок](#1-дублирование-колонок)
-  - [2. Pre-computed агрегации](#2-pre-computed-агрегации)
-  - [3. Сводные таблицы (summary tables)](#3-сводные-таблицы-summary-tables)
+- [O que é](#o-que-é)
+- [Tipos de desnormalização](#tipos-de-desnormalização)
+  - [1. Duplicar colunas](#1-duplicar-colunas)
+  - [2. Agregações pré-computadas](#2-agregações-pré-computadas)
+  - [3. Tabelas resumo (summary tables)](#3-tabelas-resumo-summary-tables)
   - [4. Materialized Views](#4-materialized-views)
-  - [5. JSONB для flexible fields](#5-jsonb-для-flexible-fields)
-- [Практические примеры](#практические-примеры)
-- [Риски денормализации](#риски-денормализации)
-- [Когда денормализовать](#когда-денормализовать)
-- [Когда НЕ денормализовать](#когда-не-денормализовать)
+  - [5. JSONB para campos flexíveis](#5-jsonb-para-campos-flexíveis)
+- [Exemplos práticos](#exemplos-práticos)
+- [Riscos da desnormalização](#riscos-da-desnormalização)
+- [Quando desnormalizar](#quando-desnormalizar)
+- [Quando NÃO desnormalizar](#quando-não-desnormalizar)
 - [Best Practices](#best-practices)
-- [Проверка consistency](#проверка-consistency)
-- [Практические задания](#практические-задания)
+- [Verificar consistency](#verificar-consistency)
+- [Exercícios práticos](#exercícios-práticos)
 
-## Что это
+## O que é
 
-**Денормализация:**
-Намеренное добавление избыточности в нормализованную БД для улучшения производительности чтения.
+**Desnormalização:**
+Você adiciona redundância de propósito numa base já normalizada. Objetivo: leitura mais rápida.
 
-**Зачем:**
-- Уменьшить JOIN'ы (быстрее SELECT)
-- Pre-compute агрегации
-- Снизить нагрузку на БД
+**Para quê:**
+- Menos JOIN (SELECT mais rápido)
+- Agregações pré-computadas
+- Menos carga no banco
 
 **Trade-off:**
-- ✅ Быстрее SELECT
-- ❌ Медленнее INSERT/UPDATE
-- ❌ Риск inconsistency (нужна синхронизация)
+- ✅ SELECT mais rápido
+- ❌ INSERT/UPDATE mais lento
+- ❌ Risco de inconsistency (precisa sincronizar)
 
 ---
 
-## Типы денормализации
+## Tipos de desnormalização
 
-### 1. Дублирование колонок
+### 1. Duplicar colunas
 
-**Проблема: JOIN на каждый запрос**
+**Problema: JOIN em todo request**
 
 ```php
 // Normalized (3NF)
 $orders = Order::with('customer')->get();
 
 foreach ($orders as $order) {
-    echo $order->customer->name;  // JOIN каждый раз
+    echo $order->customer->name;  // JOIN toda vez
 }
 ```
 
-**Решение: дублировать customer_name**
+**Solução: duplicar customer_name**
 
 ```php
 // Migration
@@ -60,21 +60,21 @@ Schema::table('orders', function (Blueprint $table) {
     $table->string('customer_name')->after('customer_id');
 });
 
-// При создании заказа
+// Na criação do pedido
 Order::create([
     'customer_id' => $customer->id,
-    'customer_name' => $customer->name,  // дублирование
+    'customer_name' => $customer->name,  // duplicação
     'total' => 100,
 ]);
 
-// Запрос БЕЗ JOIN
+// Query SEM JOIN
 $orders = Order::all();
 foreach ($orders as $order) {
-    echo $order->customer_name;  // нет JOIN!
+    echo $order->customer_name;  // sem JOIN!
 }
 ```
 
-**Синхронизация при изменении:**
+**Sincronizar quando muda:**
 
 ```php
 class Customer extends Model
@@ -82,7 +82,7 @@ class Customer extends Model
     protected static function booted()
     {
         static::updated(function ($customer) {
-            // Обновить customer_name во всех заказах
+            // Atualiza customer_name em todos os pedidos
             Order::where('customer_id', $customer->id)
                 ->update(['customer_name' => $customer->name]);
         });
@@ -92,12 +92,12 @@ class Customer extends Model
 
 ---
 
-### 2. Pre-computed агрегации
+### 2. Agregações pré-computadas
 
-**Проблема: COUNT/SUM на каждый запрос**
+**Problema: COUNT/SUM em todo request**
 
 ```php
-// Normalized: считать каждый раз
+// Normalized: conta toda vez
 class User extends Model
 {
     public function getOrdersCountAttribute()
@@ -107,7 +107,7 @@ class User extends Model
 }
 ```
 
-**Решение: хранить counter**
+**Solução: guardar o counter**
 
 ```php
 // Migration
@@ -116,7 +116,7 @@ Schema::table('users', function (Blueprint $table) {
     $table->decimal('total_spent', 10, 2)->default(0);
 });
 
-// Observer для автоматического обновления
+// Observer para atualizar sozinho
 class OrderObserver
 {
     public function created(Order $order)
@@ -132,23 +132,23 @@ class OrderObserver
     }
 }
 
-// Регистрация observer
+// Registrar o observer
 Order::observe(OrderObserver::class);
 
-// Использование (БЕЗ запроса)
+// Uso (SEM query)
 $user = User::find(1);
-echo $user->orders_count;  // нет SELECT COUNT(*)!
+echo $user->orders_count;  // sem SELECT COUNT(*)!
 echo $user->total_spent;
 ```
 
 ---
 
-### 3. Сводные таблицы (summary tables)
+### 3. Tabelas resumo (summary tables)
 
-**Проблема: сложные агрегации**
+**Problema: agregações pesadas**
 
 ```sql
--- Каждый раз считать (медленно)
+-- Calcular toda vez (lento)
 SELECT
     DATE_TRUNC('day', created_at) as date,
     COUNT(*) as orders_count,
@@ -158,7 +158,7 @@ WHERE created_at >= NOW() - INTERVAL '30 days'
 GROUP BY DATE_TRUNC('day', created_at);
 ```
 
-**Решение: summary table**
+**Solução: summary table**
 
 ```php
 // Migration
@@ -169,7 +169,7 @@ Schema::create('daily_stats', function (Blueprint $table) {
     $table->timestamps();
 });
 
-// Job для обновления (hourly)
+// Job para atualizar (hourly)
 class UpdateDailyStats extends Command
 {
     public function handle()
@@ -193,7 +193,7 @@ class UpdateDailyStats extends Command
 // Scheduler
 $schedule->command('stats:update-daily')->hourly();
 
-// Использование (быстро!)
+// Uso (rápido!)
 $stats = DailyStat::where('date', '>=', now()->subDays(30))->get();
 ```
 
@@ -201,35 +201,35 @@ $stats = DailyStat::where('date', '>=', now()->subDays(30))->get();
 
 ### 4. Materialized Views
 
-**См. тему 9.7 Materialized Views**
+**Ver o tópico 9.7 Materialized Views**
 
 ---
 
-### 5. JSONB для flexible fields
+### 5. JSONB para campos flexíveis
 
-**Проблема: много optional полей**
+**Problema: muitos campos opcionais**
 
 ```sql
--- Normalized (много NULL)
+-- Normalized (muitos NULL)
 CREATE TABLE products (
     id INT PRIMARY KEY,
     name VARCHAR(255),
-    color VARCHAR(50),      -- NULL для не-clothing
-    size VARCHAR(10),       -- NULL для не-clothing
-    cpu VARCHAR(50),        -- NULL для не-electronics
-    ram VARCHAR(20),        -- NULL для не-electronics
-    storage VARCHAR(50)     -- NULL для не-electronics
+    color VARCHAR(50),      -- NULL se não for roupa
+    size VARCHAR(10),       -- NULL se não for roupa
+    cpu VARCHAR(50),        -- NULL se não for eletrônico
+    ram VARCHAR(20),        -- NULL se não for eletrônico
+    storage VARCHAR(50)     -- NULL se não for eletrônico
 );
 ```
 
-**Решение: JSONB**
+**Solução: JSONB**
 
 ```php
 Schema::create('products', function (Blueprint $table) {
     $table->id();
     $table->string('name');
     $table->decimal('price', 10, 2);
-    $table->jsonb('attributes');  // гибкие поля
+    $table->jsonb('attributes');  // campos flexíveis
 });
 
 // Clothing
@@ -255,14 +255,14 @@ Product::create([
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-### 1. Posts с counter кэшированием
+### 1. Posts com counter cache
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Каждый раз COUNT (медленно)
+// COUNT toda vez (lento)
 class Post extends Model
 {
     public function comments()
@@ -277,7 +277,7 @@ foreach ($posts as $post) {
 }
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 // Migration
@@ -299,7 +299,7 @@ class CommentObserver
     }
 }
 
-// Использование (БЕЗ queries)
+// Uso (SEM queries)
 $posts = Post::all();
 foreach ($posts as $post) {
     echo $post->comments_count;  // 0 queries!
@@ -308,12 +308,12 @@ foreach ($posts as $post) {
 
 ---
 
-### 2. E-commerce: order totals
+### 2. E-commerce: totais do pedido
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Считать total каждый раз
+// Calcular total toda vez
 class Order extends Model
 {
     public function getTotalAttribute()
@@ -323,7 +323,7 @@ class Order extends Model
 }
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 // Migration
@@ -359,19 +359,19 @@ class OrderItemObserver
     }
 }
 
-// Использование
+// Uso
 $order = Order::find(1);
-echo $order->total;  // нет SUM query!
+echo $order->total;  // sem SUM query!
 ```
 
 ---
 
-### 3. Full-text search с денормализацией
+### 3. Full-text search com desnormalização
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- Поиск по title + body + tags (JOIN + concat)
+-- Busca em title + body + tags (JOIN + concat)
 SELECT posts.*
 FROM posts
 LEFT JOIN tags ON posts.id = tags.post_id
@@ -381,12 +381,12 @@ WHERE
     tags.name ILIKE '%keyword%';
 ```
 
-**Решение: search_vector**
+**Solução: search_vector**
 
 ```php
 // Migration
 Schema::table('posts', function (Blueprint $table) {
-    $table->text('search_text');  // денормализованный поиск
+    $table->text('search_text');  // busca desnormalizada
     $table->index('search_text', null, 'gin');
 });
 
@@ -395,7 +395,7 @@ class PostObserver
 {
     public function saved(Post $post)
     {
-        // Объединить все searchable поля
+        // Junta todos os campos searchable
         $searchText = implode(' ', [
             $post->title,
             $post->body,
@@ -406,34 +406,34 @@ class PostObserver
     }
 }
 
-// Использование (быстрый поиск)
+// Uso (busca rápida)
 Post::whereRaw("search_text ILIKE ?", ["%$keyword%"])->get();
 ```
 
 ---
 
-## Риски денормализации
+## Riscos da desnormalização
 
 ### 1. Data Inconsistency
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Если забыть обновить денормализованное поле
+// Se esquecer de atualizar o campo desnormalizado
 Order::where('customer_id', 1)->update([
     'total' => 200,
-    // Забыли обновить customer.total_spent!
+    // Esqueceu de atualizar customer.total_spent!
 ]);
 ```
 
-**Решение: Observers**
+**Solução: Observers**
 
 ```php
 class OrderObserver
 {
     public function updated(Order $order)
     {
-        // Автоматически пересчитать
+        // Recalcula sozinho
         if ($order->isDirty('total')) {
             $this->recalculateCustomerTotalSpent($order->customer);
         }
@@ -443,25 +443,25 @@ class OrderObserver
 
 ---
 
-### 2. Медленные WRITE операции
+### 2. WRITE lento
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Каждый INSERT обновляет counter
+// Cada INSERT atualiza o counter
 Comment::create([...]);  // + UPDATE posts.comments_count
 ```
 
-**Решение: Queue для bulk updates**
+**Solução: Queue para bulk updates**
 
 ```php
-// Вместо immediate update
+// Em vez de update imediato
 class Comment extends Model
 {
     protected static function booted()
     {
         static::created(function ($comment) {
-            // Отложить обновление counter
+            // Adia o update do counter
             UpdatePostCommentsCount::dispatch($comment->post_id)->delay(60);
         });
     }
@@ -470,26 +470,26 @@ class Comment extends Model
 
 ---
 
-## Когда денормализовать
+## Quando desnormalizar
 
 ```
-✓ Read-heavy workload (SELECT >> INSERT/UPDATE)
-✓ Expensive JOIN'ы
-✓ Сложные агрегации (COUNT, SUM)
+✓ Workload read-heavy (SELECT >> INSERT/UPDATE)
+✓ JOIN caro
+✓ Agregações pesadas (COUNT, SUM)
 ✓ Dashboards, reports
 ✓ Full-text search
-✓ Performance критична
+✓ Performance crítica
 ```
 
 ---
 
-## Когда НЕ денормализовать
+## Quando NÃO desnormalizar
 
 ```
-❌ Write-heavy workload
-❌ Strong consistency критична
-❌ Данные часто изменяются
-❌ Небольшая БД (нет performance проблем)
+❌ Workload write-heavy
+❌ Strong consistency é crítica
+❌ Dados mudam o tempo todo
+❌ Banco pequeno (sem problema de performance)
 ```
 
 ---
@@ -497,21 +497,21 @@ class Comment extends Model
 ## Best Practices
 
 ```
-✓ Денормализация = trade-off (скорость vs consistency)
-✓ Используй Observers для автоматической синхронизации
-✓ Добавляй денормализацию ПОСЛЕ профилирования (не преждевременно)
-✓ Документируй денормализованные поля
-✓ Scheduled jobs для проверки consistency
-✓ Логируй расхождения (monitoring)
-✓ Materialized Views для сложных агрегаций
+✓ Desnormalização = trade-off (velocidade vs consistency)
+✓ Use Observers para sincronizar sozinho
+✓ Só desnormalize DEPOIS de perfilar (não cedo demais)
+✓ Documente os campos desnormalizados
+✓ Scheduled jobs para checar consistency
+✓ Logue divergência (monitoring)
+✓ Materialized Views para agregações pesadas
 ```
 
 ---
 
-## Проверка consistency
+## Verificar consistency
 
 ```php
-// Artisan команда для проверки
+// Comando Artisan para checar
 class CheckCountersConsistency extends Command
 {
     public function handle()
@@ -523,7 +523,7 @@ class CheckCountersConsistency extends Command
             $cachedCount = $user->orders_count;
 
             if ($actualCount !== $cachedCount) {
-                $this->error("User {$user->id}: expected {$actualCount}, got {$cachedCount}");
+                $this->error("User {$user->id}: esperado {$actualCount}, veio {$cachedCount}");
 
                 // Fix
                 $user->update(['orders_count' => $actualCount]);
@@ -532,29 +532,29 @@ class CheckCountersConsistency extends Command
     }
 }
 
-// Scheduler: проверять раз в день
+// Scheduler: checa uma vez por dia
 $schedule->command('check:counters-consistency')->daily();
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализовать counter cache
+### Exercício 1: Implementar counter cache
 
-Дана модель блога с постами и комментариями. Каждый раз при отображении списка постов выполняется N+1 запрос для подсчета комментариев. Оптимизируйте с помощью денормализации.
+**Enunciado:** Você tem um blog com posts e comentários. Toda vez que lista os posts, roda N+1 para contar comentários. Otimize com desnormalização.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Migration: добавить counter cache
+// Migration: adicionar counter cache
 Schema::table('posts', function (Blueprint $table) {
     $table->integer('comments_count')->default(0)->after('body');
     $table->index('comments_count');
 });
 
-// Observer для автоматического обновления
+// Observer para atualizar sozinho
 class CommentObserver
 {
     public function created(Comment $comment)
@@ -573,25 +573,25 @@ class CommentObserver
     }
 }
 
-// В AppServiceProvider
+// No AppServiceProvider
 public function boot()
 {
     Comment::observe(CommentObserver::class);
 }
 
-// БЫЛО: N+1 запросов
+// ANTES: N+1 queries
 $posts = Post::all();
 foreach ($posts as $post) {
     echo $post->comments()->count(); // SELECT COUNT(*)
 }
 
-// СТАЛО: 1 запрос
+// DEPOIS: 1 query
 $posts = Post::all();
 foreach ($posts as $post) {
     echo $post->comments_count; // 0 queries!
 }
 
-// Команда для пересчета (если рассинхронизация)
+// Comando para recalcular (se dessincronizar)
 class RecalculateCommentsCount extends Command
 {
     protected $signature = 'posts:recalculate-comments';
@@ -605,39 +605,39 @@ class RecalculateCommentsCount extends Command
             }
         });
 
-        $this->info('Comments count recalculated!');
+        $this->info('Contagem de comentários recalculada!');
     }
 }
 ```
 
-**Преимущества:**
-- Избежали N+1 проблему
-- Быстрое отображение списка постов
-- Можно сортировать по популярности
+**Pontos-chave:**
+- Evitou o N+1
+- Lista de posts rápida
+- Dá para ordenar por popularidade
 </details>
 
 ---
 
-### Задание 2: Денормализация для избежания JOIN
+### Exercício 2: Desnormalizar para evitar JOIN
 
-Имеется таблица заказов, которая всегда отображается с именем клиента. Каждый раз выполняется JOIN. Оптимизируйте.
+**Enunciado:** A tabela de pedidos sempre mostra o nome do cliente. Todo request faz JOIN. Otimize.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Migration: добавить customer_name
+// Migration: adicionar customer_name
 Schema::table('orders', function (Blueprint $table) {
     $table->string('customer_name')->after('customer_id');
     $table->index(['customer_id', 'customer_name']);
 });
 
-// Observer для синхронизации
+// Observer para sincronizar
 class CustomerObserver
 {
     public function updated(Customer $customer)
     {
-        // Если имя изменилось, обновить все заказы
+        // Se o nome mudou, atualiza todos os pedidos
         if ($customer->isDirty('name')) {
             Order::where('customer_id', $customer->id)
                 ->update(['customer_name' => $customer->name]);
@@ -645,55 +645,55 @@ class CustomerObserver
     }
 }
 
-// При создании заказа
+// Na criação do pedido
 class CreateOrderAction
 {
     public function execute(Customer $customer, array $items)
     {
         return Order::create([
             'customer_id' => $customer->id,
-            'customer_name' => $customer->name, // дублируем
+            'customer_name' => $customer->name, // duplicamos
             'total' => $this->calculateTotal($items),
         ]);
     }
 }
 
-// БЫЛО: JOIN на каждый запрос
+// ANTES: JOIN em todo request
 $orders = Order::with('customer')->get();
 foreach ($orders as $order) {
     echo $order->customer->name; // JOIN
 }
 
-// СТАЛО: без JOIN
+// DEPOIS: sem JOIN
 $orders = Order::all();
 foreach ($orders as $order) {
-    echo $order->customer_name; // нет JOIN!
+    echo $order->customer_name; // sem JOIN!
 }
 
-// API endpoint (быстрее)
+// Endpoint de API (mais rápido)
 Route::get('/orders', function () {
     return Order::select('id', 'customer_name', 'total', 'created_at')
         ->latest()
         ->paginate(20);
-    // Нет JOIN с customers!
+    // Sem JOIN com customers!
 });
 ```
 
 **Trade-offs:**
-- ✅ Быстрее SELECT (нет JOIN)
-- ✅ Меньше нагрузка на БД
-- ❌ Занимает больше места
-- ❌ Нужна синхронизация при UPDATE customer.name
+- ✅ SELECT mais rápido (sem JOIN)
+- ✅ Menos carga no banco
+- ❌ Ocupa mais espaço
+- ❌ Precisa sincronizar no UPDATE de customer.name
 </details>
 
 ---
 
-### Задание 3: Summary table для аналитики
+### Exercício 3: Summary table para analytics
 
-Нужно построить дашборд с ежедневной статистикой продаж за последний год. Каждый раз выполнять GROUP BY по миллионам заказов слишком медленно. Оптимизируйте.
+**Enunciado:** Você precisa de um dashboard com estatística diária de vendas do último ano. GROUP BY em milhões de pedidos toda vez é lento demais. Otimize.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration: summary table
@@ -706,14 +706,14 @@ Schema::create('daily_sales_stats', function (Blueprint $table) {
     $table->timestamps();
 });
 
-// Job для обновления статистики
+// Job para atualizar a estatística
 class UpdateDailySalesStats implements ShouldQueue
 {
     public function handle()
     {
         $yesterday = now()->subDay()->toDateString();
 
-        // Собрать статистику за вчера
+        // Junta a estatística de ontem
         $stats = Order::whereDate('created_at', $yesterday)
             ->selectRaw('
                 COUNT(*) as orders_count,
@@ -736,24 +736,24 @@ class UpdateDailySalesStats implements ShouldQueue
     }
 }
 
-// Scheduler: запускать каждую ночь
+// Scheduler: roda toda noite
 protected function schedule(Schedule $schedule)
 {
     $schedule->job(new UpdateDailySalesStats)->dailyAt('01:00');
 }
 
-// Controller: быстрый дашборд
+// Controller: dashboard rápido
 class DashboardController extends Controller
 {
     public function index()
     {
-        // БЫЛО: медленный запрос к миллионам заказов
+        // ANTES: query lenta em milhões de pedidos
         // $stats = Order::where('created_at', '>=', now()->subYear())
         //     ->groupBy(DB::raw('DATE(created_at)'))
         //     ->select(...)
         //     ->get();
 
-        // СТАЛО: быстрый запрос к summary table
+        // DEPOIS: query rápida na summary table
         $stats = DailySalesStat::where('date', '>=', now()->subYear())
             ->orderBy('date')
             ->get();
@@ -762,7 +762,7 @@ class DashboardController extends Controller
     }
 }
 
-// API endpoint
+// Endpoint de API
 Route::get('/api/stats/monthly', function () {
     return DailySalesStat::selectRaw('
             DATE_TRUNC(\'month\', date) as month,
@@ -772,23 +772,23 @@ Route::get('/api/stats/monthly', function () {
         ->where('date', '>=', now()->subYear())
         ->groupBy('month')
         ->get();
-    // Супер быстро!
+    // Super rápido!
 });
 ```
 
-**Преимущества:**
-- Дашборд загружается мгновенно
-- Нет нагрузки на основную таблицу orders
-- Можно добавлять дополнительные метрики
-- Исторические данные сохранены
+**Pontos-chave:**
+- Dashboard carrega na hora
+- Sem carga na tabela principal orders
+- Dá para acrescentar métricas
+- Histórico fica guardado
 </details>
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Денормализация — добавление избыточности для улучшения производительности чтения. Типы: дублирование колонок (избежать JOIN), pre-computed агрегации (counter cache), summary tables, JSONB для flexible fields. Trade-off: быстрее SELECT, медленнее INSERT/UPDATE, риск inconsistency. Решение: Observers для автоматической синхронизации, scheduled jobs для проверки consistency. Когда использовать: read-heavy workload, expensive JOIN'ы, dashboards. Когда нет: write-heavy, strong consistency критична. Best practices: профилировать перед денормализацией, документировать, мониторить consistency."
+> "Desnormalização é adicionar redundância para leitura mais rápida. Tipos: duplicar colunas (evitar JOIN), agregações pré-computadas (counter cache), summary tables, JSONB para campos flexíveis. Trade-off: SELECT mais rápido, INSERT/UPDATE mais lento, risco de inconsistency. Solução: Observers para sincronizar sozinho, scheduled jobs para checar consistency. Quando usar: workload read-heavy, JOIN caro, dashboards. Quando não: write-heavy, strong consistency crítica. Best practices: perfilar antes de desnormalizar, documentar, monitorar consistency."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
