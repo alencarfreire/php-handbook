@@ -1,67 +1,67 @@
 # 14.3 Memcached
 
-## Краткое резюме
+## Resumo
 
-> **Memcached** — распределённый in-memory cache для простого key-value хранения. Быстрее Redis, но без data structures, persistence, transactions.
+> **Memcached** — cache in-memory distribuído para key-value simples. Mais rápido que Redis, mas sem data structures, persistence, transactions.
 >
-> Multi-server setup с **consistent hashing** для horizontal scaling. Eviction: **LRU** (Least Recently Used) автоматически. Laravel: `Cache::store('memcached')->remember()`.
+> Setup multi-server com **consistent hashing** para horizontal scaling. Eviction: **LRU** (Least Recently Used) automático. Laravel: `Cache::store('memcached')->remember()`.
 >
-> **Redis vs Memcached:** Redis для data structures/persistence/pub-sub, Memcached для максимальной скорости простого cache. Обычно в Laravel используется Redis (больше функций).
+> **Redis vs Memcached:** Redis para data structures/persistence/pub-sub, Memcached para velocidade máxima no cache simples. No Laravel o usual é Redis (mais funções).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Когда использовать Memcached](#когда-использовать-memcached)
-- [Установка](#установка)
-- [Базовое использование](#базовое-использование)
-- [Multi-Server Setup](#multi-server-setup)
-- [Stats & Monitoring](#stats--monitoring)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Quando usar Memcached](#quando-usar-memcached)
+- [Instalação](#instalação)
+- [Uso básico](#uso-básico)
+- [Setup multi-server](#setup-multi-server)
+- [Stats e monitoramento](#stats-e-monitoramento)
+- [Boas práticas](#boas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Memcached:**
-Распределённый in-memory cache. Проще и быстрее Redis, но только key-value (без data structures).
+Cache in-memory distribuído. Mais simples e mais rápido que Redis, mas só key-value (sem data structures).
 
 **Redis vs Memcached:**
 
-| Критерий | Redis | Memcached |
+| Critério | Redis | Memcached |
 |----------|-------|-----------|
-| Data structures | ✅ Да (lists, sets, hashes) | ❌ Только strings |
-| Persistence | ✅ RDB, AOF | ❌ Нет |
-| Replication | ✅ Да | ❌ Нет (только client-side) |
-| Transactions | ✅ Да | ❌ Нет |
-| Pub/Sub | ✅ Да | ❌ Нет |
-| Скорость | Очень быстрый | Чуть быстрее |
-| Memory efficiency | Хорошая | Отличная |
-| Use case | Cache + больше | Только cache |
+| Data structures | ✅ Sim (lists, sets, hashes) | ❌ Só strings |
+| Persistence | ✅ RDB, AOF | ❌ Não |
+| Replication | ✅ Sim | ❌ Não (só client-side) |
+| Transactions | ✅ Sim | ❌ Não |
+| Pub/Sub | ✅ Sim | ❌ Não |
+| Velocidade | Muito rápido | Um pouco mais rápido |
+| Memory efficiency | Boa | Excelente |
+| Use case | Cache + mais | Só cache |
 
 ---
 
-## Когда использовать Memcached
+## Quando usar Memcached
 
-**Memcached для:**
-- ✅ Простой key-value cache
-- ✅ Максимальная скорость
+**Memcached para:**
+- ✅ Cache key-value simples
+- ✅ Velocidade máxima
 - ✅ Horizontal scaling (multi-server)
-- ✅ Меньше memory overhead
+- ✅ Menos memory overhead
 
-**Redis для:**
+**Redis para:**
 - ✅ Data structures (lists, sets, sorted sets)
 - ✅ Persistence
 - ✅ Pub/Sub
 - ✅ Transactions
-- ✅ Сложная логика
+- ✅ Lógica mais complexa
 
 ---
 
-## Установка
+## Instalação
 
 **Docker:**
 
@@ -91,36 +91,36 @@ MEMCACHED_HOST=127.0.0.1
 
 ---
 
-## Базовое использование
+## Uso básico
 
 ```php
-// Put
+// put
 Cache::store('memcached')->put('key', 'value', 3600);
 
-// Get
+// get
 $value = Cache::store('memcached')->get('key');
 
-// Remember
+// remember
 $users = Cache::store('memcached')->remember('users', 3600, function () {
     return User::all();
 });
 
-// Forget
+// forget
 Cache::store('memcached')->forget('key');
 
-// Flush
+// flush
 Cache::store('memcached')->flush();
 
-// Increment/Decrement
+// increment/decrement
 Cache::store('memcached')->increment('counter');
 Cache::store('memcached')->decrement('counter');
 ```
 
 ---
 
-## Multi-Server Setup
+## Setup multi-server
 
-**Consistent Hashing для распределения:**
+**Consistent hashing para distribuir:**
 
 ```php
 // config/cache.php
@@ -155,28 +155,28 @@ Cache::store('memcached')->decrement('counter');
 ```
 
 **Consistent Hashing:**
-- Ключи распределяются по серверам
-- Добавление/удаление сервера минимально влияет на распределение
+- As chaves se espalham pelos servidores
+- Adicionar/remover servidor mexe pouco na distribuição
 
 ---
 
-## Eviction Policy
+## Política de eviction
 
-**Memcached использует LRU (Least Recently Used):**
+**Memcached usa LRU (Least Recently Used):**
 
 ```
-Memory full → удалить least recently used keys
+Memória cheia → remove as keys least recently used
 ```
 
-**Laravel: нет контроля над eviction (automatic).**
+**Laravel: você não controla a eviction (é automática).**
 
 ---
 
-## Cache Stampede Protection
+## Proteção contra cache stampede
 
-**Проблема: cache miss → все requests к БД**
+**Problema: cache miss → todos os requests vão no banco**
 
-**Решение: Lock**
+**Solução: Lock**
 
 ```php
 $users = Cache::lock('users_list')->get(function () {
@@ -188,9 +188,9 @@ $users = Cache::lock('users_list')->get(function () {
 
 ---
 
-## Distributed Caching Pattern
+## Pattern de cache distribuído
 
-**Scenario: 3 web servers + 3 Memcached servers**
+**Cenário: 3 web servers + 3 servidores Memcached**
 
 ```
 Web Server 1 ──┐
@@ -199,26 +199,26 @@ Web Server 3 ──┘                        ├──→ Server 2
                                         └──→ Server 3
 ```
 
-**Consistent Hashing автоматически распределяет:**
+**Consistent hashing distribui sozinho:**
 
 ```php
-// На Web Server 1
+// No Web Server 1
 Cache::put('user:1', $user, 3600);
 // → Memcached Server 2 (consistent hash)
 
-// На Web Server 2
+// No Web Server 2
 Cache::get('user:1');
-// → Memcached Server 2 (тот же сервер!)
+// → Memcached Server 2 (o mesmo servidor!)
 ```
 
 ---
 
-## Stats & Monitoring
+## Stats e monitoramento
 
-**Memcached stats:**
+**Stats do Memcached:**
 
 ```bash
-# Connect
+# Conectar
 telnet localhost 11211
 
 # Stats
@@ -234,15 +234,15 @@ stats slabs
 **Laravel:**
 
 ```php
-// Laravel нет built-in stats для Memcached
-// Используй клиент напрямую
+// Laravel não tem stats built-in para Memcached
+// Use o client direto
 
 $memcached = Cache::store('memcached')->getMemcached();
 $stats = $memcached->getStats();
 
 foreach ($stats as $server => $stat) {
-    echo "Server: {$server}\n";
-    echo "Memory: {$stat['bytes']} / {$stat['limit_maxbytes']}\n";
+    echo "Servidor: {$server}\n";
+    echo "Memória: {$stat['bytes']} / {$stat['limit_maxbytes']}\n";
     echo "Items: {$stat['curr_items']}\n";
     echo "Hits: {$stat['get_hits']}\n";
     echo "Misses: {$stat['get_misses']}\n";
@@ -251,19 +251,19 @@ foreach ($stats as $server => $stat) {
 
 ---
 
-## Cache Key Namespacing
+## Namespacing das chaves
 
-**Проблема: разные приложения → conflicts**
+**Problema: apps diferentes → conflitos**
 
 ```php
 // App 1
 Cache::put('user:1', $user1);
 
 // App 2
-Cache::put('user:1', $user2);  // Конфликт!
+Cache::put('user:1', $user2);  // Conflito!
 ```
 
-**Решение: Prefix**
+**Solução: Prefix**
 
 ```php
 // config/cache.php
@@ -275,22 +275,22 @@ Cache::put('user:1', $user2);  // Конфликт!
 
 ---
 
-## Serialization
+## Serialização
 
-**Memcached автоматически serializes:**
+**Memcached serializa sozinho:**
 
 ```php
-// Laravel использует serialize/unserialize
+// Laravel usa serialize/unserialize
 Cache::put('user', $user, 3600);  // serialize($user)
 $user = Cache::get('user');       // unserialize(...)
 
-// Можно изменить serializer
+// Dá para trocar o serializer
 $memcached->setOption(Memcached::OPT_SERIALIZER, Memcached::SERIALIZER_JSON);
 ```
 
 ---
 
-## Session Storage
+## Storage de sessão
 
 ```php
 // config/session.php
@@ -298,80 +298,80 @@ $memcached->setOption(Memcached::OPT_SERIALIZER, Memcached::SERIALIZER_JSON);
 'connection' => 'default',
 ```
 
-**Преимущества:**
-- ✅ Сессии доступны на всех web servers
-- ✅ Быстро (in-memory)
+**Vantagens:**
+- ✅ Sessões disponíveis em todos os web servers
+- ✅ Rápido (in-memory)
 - ✅ Auto-expiration
 
-**Недостатки:**
-- ❌ Session может быть evicted (при нехватке памяти)
+**Desvantagens:**
+- ❌ A session pode ser evicted (se faltar memória)
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Multi-server для high availability
-✓ Consistent hashing для распределения
-✓ Prefix для namespacing
+✓ Multi-server para high availability
+✓ Consistent hashing para distribuir
+✓ Prefix para namespacing
 ✓ Monitoring: hit rate, memory usage
-✓ TTL для всех keys
-✓ Не хранить критичные данные (может быть evicted)
-✓ Cache только read-heavy данные
-✓ Для персистентности используй Redis
+✓ TTL em todas as keys
+✓ Não guardar dado crítico (pode ser evicted)
+✓ Cache só de dado read-heavy
+✓ Para persistência, use Redis
 ```
 
 ---
 
-## Memcached vs Redis для Laravel
+## Memcached vs Redis no Laravel
 
-**Memcached если:**
-- Нужен только простой key-value cache
-- Максимальная скорость критична
-- Multi-server setup
+**Memcached se:**
+- Você só precisa de cache key-value simples
+- Velocidade máxima é crítica
+- Setup multi-server
 
-**Redis если:**
-- Нужны data structures (lists, sets, hashes, sorted sets)
-- Нужен Pub/Sub (Laravel Broadcasting)
-- Нужна Persistence
-- Нужны Queues
-- Нужны Transactions
+**Redis se:**
+- Precisa de data structures (lists, sets, hashes, sorted sets)
+- Precisa de Pub/Sub (Laravel Broadcasting)
+- Precisa de Persistence
+- Precisa de Queues
+- Precisa de Transactions
 
-**Обычно в Laravel проектах используется Redis** (больше функций, примерно такая же скорость).
+**No Laravel o usual é Redis** (mais funções, velocidade quase igual).
 
 ---
 
-## Migration: Memcached → Redis
+## Migração: Memcached → Redis
 
 ```php
-// Было (Memcached)
+// Antes (Memcached)
 Cache::store('memcached')->put('key', 'value', 3600);
 
-// Стало (Redis)
+// Depois (Redis)
 Cache::store('redis')->put('key', 'value', 3600);
 
-// Или изменить driver
+// Ou mudar o driver
 CACHE_DRIVER=redis  # .env
 ```
 
-**Разница минимальная для простого cache.**
+**Para cache simples, a diferença é mínima.**
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Memcached — распределённый in-memory cache, проще и немного быстрее Redis. Только key-value (нет data structures, persistence, pub/sub). Multi-server с consistent hashing для horizontal scaling. Eviction: LRU автоматически. Use case: простой cache, максимальная скорость, distributed setup. Redis обычно предпочтительнее для Laravel (data structures, pub/sub, queues, persistence). Memcached хорош когда нужен только key-value cache с multi-server. Best practices: prefix для namespacing, monitoring hit rate, TTL, не хранить критичные данные."
+> "Memcached é cache in-memory distribuído, mais simples e um pouco mais rápido que Redis. Só key-value — sem data structures, persistence, pub/sub. Multi-server com consistent hashing para horizontal scaling. Eviction: LRU automático. Use case: cache simples, velocidade máxima, setup distribuído. No Laravel, Redis costuma ganhar (data structures, pub/sub, queues, persistence). Memcached entra quando você só precisa de cache key-value com multi-server. Boas práticas: prefix para namespacing, monitorar hit rate, TTL, não guardar dado crítico."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Multi-Server Memcached Setup
+### Exercício 1: Setup multi-server do Memcached
 
-Настрой Laravel приложение для работы с 3 Memcached серверами. Реализуй сервис для мониторинга статистики всех серверов.
+Configure o Laravel para trabalhar com 3 servidores Memcached. Implemente um service que monitora as stats de todos os servidores.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/cache.php
@@ -379,7 +379,7 @@ CACHE_DRIVER=redis  # .env
     'driver' => 'memcached',
     'persistent_id' => 'memcached_pool',
     'options' => [
-        // Использовать consistent hashing
+        // Usar consistent hashing
         Memcached::OPT_DISTRIBUTION => Memcached::DISTRIBUTION_CONSISTENT,
         Memcached::OPT_LIBKETAMA_COMPATIBLE => true,
     ],
@@ -402,7 +402,7 @@ CACHE_DRIVER=redis  # .env
     ],
 ],
 
-// Сервис для мониторинга
+// Service de monitoramento
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
@@ -504,7 +504,7 @@ class MemcachedMonitoringService
     }
 }
 
-// Контроллер
+// Controller
 class MemcachedStatsController extends Controller
 {
     public function index(MemcachedMonitoringService $service)
@@ -516,21 +516,21 @@ class MemcachedStatsController extends Controller
     }
 }
 
-// Command для мониторинга
+// Command de monitoramento
 class MonitorMemcachedCommand extends Command
 {
     protected $signature = 'memcached:monitor';
-    protected $description = 'Monitor Memcached servers';
+    protected $description = 'Monitorar servidores Memcached';
 
     public function handle(MemcachedMonitoringService $service)
     {
         $stats = $service->getStats();
 
-        $this->info('Memcached Servers Status:');
+        $this->info('Status dos servidores Memcached:');
         $this->newLine();
 
         foreach ($stats as $server => $stat) {
-            $this->line("Server: {$server}");
+            $this->line("Servidor: {$server}");
 
             if ($stat['status'] === 'offline') {
                 $this->error('  Status: OFFLINE');
@@ -539,7 +539,7 @@ class MonitorMemcachedCommand extends Command
             }
 
             $this->info('  Status: ONLINE');
-            $this->line("  Memory: {$stat['memory']['usage_percent']}%");
+            $this->line("  Memória: {$stat['memory']['usage_percent']}%");
             $this->line("  Items: {$stat['items']['current']}");
             $this->line("  Hit Rate: {$stat['operations']['hit_rate']}%");
             $this->line("  Evictions: {$stat['evictions']}");
@@ -547,22 +547,22 @@ class MonitorMemcachedCommand extends Command
         }
 
         $aggregated = $service->getAggregatedStats();
-        $this->info('Aggregated Stats:');
-        $this->line("  Servers Online: {$aggregated['servers_online']}/{$aggregated['servers_total']}");
-        $this->line("  Memory Usage: {$aggregated['memory_usage_percent']}%");
-        $this->line("  Total Items: {$aggregated['items_total']}");
+        $this->info('Stats agregadas:');
+        $this->line("  Servidores online: {$aggregated['servers_online']}/{$aggregated['servers_total']}");
+        $this->line("  Uso de memória: {$aggregated['memory_usage_percent']}%");
+        $this->line("  Total de items: {$aggregated['items_total']}");
         $this->line("  Hit Rate: {$aggregated['hit_rate']}%");
     }
 }
 ```
 </details>
 
-### Задание 2: Cache Stampede Protection для Memcached
+### Exercício 2: Proteção contra cache stampede no Memcached
 
-Реализуй защиту от Cache Stampede для Memcached используя probabilistic early expiration.
+Implemente proteção contra cache stampede no Memcached com probabilistic early expiration.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -572,12 +572,12 @@ use Illuminate\Support\Facades\Cache;
 class MemcachedStampedeProtection
 {
     /**
-     * Cache с защитой от stampede
+     * Cache com proteção contra stampede
      *
-     * @param string $key Ключ cache
-     * @param int $ttl TTL в секундах
-     * @param callable $callback Функция для получения данных
-     * @param float $beta Коэффициент early expiration (обычно 1.0)
+     * @param string $key Chave do cache
+     * @param int $ttl TTL em segundos
+     * @param callable $callback Função para buscar os dados
+     * @param float $beta Coeficiente de early expiration (geralmente 1.0)
      * @return mixed
      */
     public function remember(string $key, int $ttl, callable $callback, float $beta = 1.0)
@@ -593,18 +593,18 @@ class MemcachedStampedeProtection
             $timeLeft = $expiry - $now;
 
             // Probabilistic early expiration
-            // δ (delta) - время на пересчет (используем 1 сек)
+            // δ (delta) — tempo de recálculo (usamos 1s)
             $delta = 1;
             $xfetch = $delta * $beta * log(mt_rand() / mt_getrandmax());
 
-            // Если probability говорит что пора обновить
+            // Se a probability diz que é hora de atualizar
             if ($timeLeft - $xfetch <= 0) {
-                // Устанавливаем временный lock
+                // Coloca um lock temporário
                 $lockKey = "stampede:{$key}:lock";
 
                 if ($this->acquireLock($lockKey, 10)) {
                     try {
-                        // Пересчитать значение
+                        // Recalcular o valor
                         $newValue = $callback();
 
                         Cache::store('memcached')->put($cacheKey, $newValue, $ttl);
@@ -620,7 +620,7 @@ class MemcachedStampedeProtection
             return $value;
         }
 
-        // Cache miss - получить lock
+        // Cache miss — pegar o lock
         $lockKey = "stampede:{$key}:lock";
 
         if ($this->acquireLock($lockKey, 10)) {
@@ -631,7 +631,7 @@ class MemcachedStampedeProtection
                     return $value;
                 }
 
-                // Вычислить значение
+                // Calcular o valor
                 $value = $callback();
 
                 Cache::store('memcached')->put($cacheKey, $value, $ttl);
@@ -643,7 +643,7 @@ class MemcachedStampedeProtection
             }
         }
 
-        // Не смогли получить lock - ждем и пытаемся получить из cache
+        // Não pegou o lock — espera e tenta no cache
         usleep(100000); // 100ms
 
         $value = Cache::store('memcached')->get($cacheKey);
@@ -662,15 +662,15 @@ class MemcachedStampedeProtection
     }
 }
 
-// Использование
+// Uso
 $cache = new MemcachedStampedeProtection();
 
 $users = $cache->remember('users_list', 3600, function () {
-    // Дорогой запрос
+    // Query cara
     return User::with('roles', 'permissions')->get();
 }, beta: 1.0);
 
-// Альтернатива: простой Lock-based подход
+// Alternativa: abordagem simples com Lock
 class SimpleStampedeProtection
 {
     public function remember(string $key, int $ttl, callable $callback)
@@ -681,7 +681,7 @@ class SimpleStampedeProtection
             return $value;
         }
 
-        // Попытаться получить lock
+        // Tentar pegar o lock
         $lockKey = "{$key}:lock";
 
         if (Cache::store('memcached')->add($lockKey, 1, 10)) {
@@ -692,7 +692,7 @@ class SimpleStampedeProtection
                     return $value;
                 }
 
-                // Вычислить
+                // Calcular
                 $value = $callback();
                 Cache::store('memcached')->put($key, $value, $ttl);
 
@@ -702,9 +702,9 @@ class SimpleStampedeProtection
             }
         }
 
-        // Ждать и повторить
+        // Esperar e tentar de novo
         $attempts = 0;
-        while ($attempts < 50) { // max 5 секунд
+        while ($attempts < 50) { // max 5 segundos
             usleep(100000); // 100ms
 
             $value = Cache::store('memcached')->get($key);
@@ -715,19 +715,19 @@ class SimpleStampedeProtection
             $attempts++;
         }
 
-        // Fallback - вычислить без cache
+        // Fallback — calcular sem cache
         return $callback();
     }
 }
 ```
 </details>
 
-### Задание 3: Session Storage с Memcached и Monitoring
+### Exercício 3: Session storage com Memcached e monitoramento
 
-Настрой session storage через Memcached и создай middleware для мониторинга session hit rate.
+Configure session storage no Memcached e crie um middleware para monitorar o hit rate das sessions.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/session.php
@@ -735,7 +735,7 @@ class SimpleStampedeProtection
 'connection' => env('SESSION_CONNECTION', 'default'),
 'store' => env('SESSION_STORE', null),
 
-// Middleware для мониторинга sessions
+// Middleware para monitorar sessions
 namespace App\Http\Middleware;
 
 use Closure;
@@ -749,14 +749,14 @@ class SessionMonitoring
         $startTime = microtime(true);
         $sessionId = $request->session()->getId();
 
-        // Инкрементировать счетчик запросов
+        // Incrementar o contador de requests
         $this->incrementSessionRequests($sessionId);
 
         $response = $next($request);
 
         $duration = microtime(true) - $startTime;
 
-        // Логировать метрики
+        // Logar as métricas
         $this->logSessionMetrics($sessionId, $duration);
 
         return $response;
@@ -766,7 +766,7 @@ class SessionMonitoring
     {
         $key = "session:metrics:{$sessionId}:requests";
         Cache::increment($key);
-        Cache::expire($key, 3600); // 1 hour
+        Cache::expire($key, 3600); // 1 hora
     }
 
     private function logSessionMetrics(string $sessionId, float $duration): void
@@ -776,7 +776,7 @@ class SessionMonitoring
         $metrics = Cache::get($metricsKey, []);
         $metrics[] = $duration;
 
-        // Хранить только последние 100 запросов
+        // Guardar só os últimos 100 requests
         if (count($metrics) > 100) {
             array_shift($metrics);
         }
@@ -785,7 +785,7 @@ class SessionMonitoring
     }
 }
 
-// Сервис для анализа session метрик
+// Service para analisar métricas de session
 namespace App\Services;
 
 class SessionAnalyticsService
@@ -809,9 +809,9 @@ class SessionAnalyticsService
 
     public function getActiveSessionsCount(): int
     {
-        // Это требует кастомной реализации
-        // Memcached не поддерживает получение всех ключей
-        // Нужно отдельно tracking активных сессий
+        // Isso pede uma implementação custom
+        // Memcached não devolve todas as chaves
+        // Precisa de tracking separado das sessões ativas
         return Cache::get('active_sessions_count', 0);
     }
 
@@ -825,7 +825,7 @@ class SessionAnalyticsService
     }
 }
 
-// Tracker активных сессий
+// Tracker de sessões ativas
 namespace App\Http\Middleware;
 
 class TrackActiveSessions
@@ -835,14 +835,14 @@ class TrackActiveSessions
         $sessionId = $request->session()->getId();
         $activeSessionsKey = 'active_sessions';
 
-        // Добавить сессию в set активных (используем отдельный Redis для этого)
+        // Adicionar a sessão no set de ativas (usamos um Redis separado)
         Cache::store('redis')->put(
             "{$activeSessionsKey}:{$sessionId}",
             now()->timestamp,
-            1800 // 30 минут
+            1800 // 30 minutos
         );
 
-        // Обновить счетчик
+        // Atualizar o contador
         $this->updateActiveSessionsCount();
 
         return $next($request);
@@ -850,8 +850,8 @@ class TrackActiveSessions
 
     private function updateActiveSessionsCount(): void
     {
-        // Подсчитать активные сессии
-        // Примечание: для production лучше использовать Redis Sets
+        // Contar as sessões ativas
+        // Nota: em production é melhor usar Redis Sets
         $pattern = 'active_sessions:*';
         $keys = Cache::store('redis')->keys($pattern);
 
@@ -881,4 +881,4 @@ class SessionDashboardController extends Controller
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

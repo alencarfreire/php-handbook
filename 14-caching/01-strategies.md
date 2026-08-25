@@ -1,51 +1,51 @@
-# 14.1 Стратегии кэширования
+# 14.1 Estratégias de cache
 
-## Краткое резюме
+## Resumo
 
-> **Caching** — хранение данных в быстром хранилище (in-memory) для уменьшения latency и нагрузки на БД.
+> **Cache** — guardar dados num store rápido (in-memory) para baixar latência e carga no banco.
 >
-> Стратегии: **Cache-Aside** (lazy loading, `Cache::remember`), **Read/Write-Through** (cache управляет БД), **Write-Behind** (async запись в БД), **Refresh-Ahead** (обновление до expiration).
+> Estratégias: **Cache-Aside** (lazy loading, `Cache::remember`), **Read/Write-Through** (o cache gerencia o banco), **Write-Behind** (write async no banco), **Refresh-Ahead** (atualiza antes do expiration).
 >
-> Invalidation: **TTL** (auto-expire), **Manual** (forget при изменении), **Cache Tags** (группировка), **Event-based**. Проблемы: **Thundering Herd** (Lock или probabilistic expiration), stale data, cache pollution.
+> Invalidação: **TTL** (auto-expire), **Manual** (forget quando muda), **Cache Tags** (agrupar), **Event-based**. Problemas: **Thundering Herd** (Lock ou probabilistic expiration), stale data, cache pollution.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы кэширования](#типы-кэширования)
-- [Стратегии кэширования](#стратегии-кэширования)
-- [Cache Invalidation](#cache-invalidation)
+- [O que é](#o-que-é)
+- [Tipos de cache](#tipos-de-cache)
+- [Estratégias de cache](#estratégias-de-cache)
+- [Invalidação de cache](#invalidação-de-cache)
 - [Thundering Herd Problem](#thundering-herd-problem)
 - [Cache Warming](#cache-warming)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Boas práticas](#boas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Caching:**
-Хранение часто используемых данных в быстром хранилище для уменьшения latency и нагрузки на БД.
+**Cache:**
+Guardar dados usados com frequência num store rápido. Baixa latência e carga no banco.
 
 **Trade-off:**
-- ✅ Быстрее (in-memory vs disk)
-- ✅ Меньше нагрузка на БД
-- ❌ Stale data (могут быть устаревшие данные)
-- ❌ Memory usage
-- ❌ Cache invalidation сложность
+- ✅ Mais rápido (in-memory vs disco)
+- ✅ Menos carga no banco
+- ❌ Stale data (os dados podem ficar velhos)
+- ❌ Uso de memória
+- ❌ Invalidação de cache é difícil
 
 ---
 
-## Типы кэширования
+## Tipos de cache
 
 ### 1. Application-Level Cache
 
 **Laravel Cache:**
 
 ```php
-// Кэшировать на 1 час
+// Cachear por 1 hora
 $users = Cache::remember('users', 3600, function () {
     return User::all();
 });
@@ -55,13 +55,13 @@ $users = Cache::remember('users', 3600, function () {
 
 ### 2. Database Query Cache
 
-**MySQL Query Cache (deprecated в MySQL 8.0):**
+**MySQL Query Cache (deprecated no MySQL 8.0):**
 
 ```sql
 SELECT SQL_CACHE * FROM users;
 ```
 
-**Laravel: кэш результатов:**
+**Laravel: cache do resultado:**
 
 ```php
 $users = Cache::remember('users_list', 3600, function () {
@@ -91,18 +91,18 @@ opcache.memory_consumption=128
 
 ---
 
-## Стратегии кэширования
+## Estratégias de cache
 
 ### 1. Cache-Aside (Lazy Loading)
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
-1. Проверить cache
-2. Если HIT → вернуть
-3. Если MISS → запросить БД
-4. Положить в cache
-5. Вернуть данные
+1. Checar o cache
+2. Se HIT → devolver
+3. Se MISS → buscar no banco
+4. Colocar no cache
+5. Devolver os dados
 ```
 
 **Laravel:**
@@ -113,27 +113,27 @@ $user = Cache::remember("user:{$id}", 3600, function () use ($id) {
 });
 ```
 
-**Плюсы:**
-- ✅ Простая реализация
-- ✅ Кэш заполняется по мере необходимости
+**Prós:**
+- ✅ Implementação simples
+- ✅ O cache enche sob demanda
 
-**Минусы:**
-- ❌ Первый запрос медленный (cache miss)
+**Contras:**
+- ❌ Primeiro request é lento (cache miss)
 - ❌ Thundering herd problem
 
 ---
 
 ### 2. Read-Through Cache
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
-1. Приложение запрашивает cache
-2. Cache сам запрашивает БД если miss
-3. Cache возвращает данные
+1. O app pede ao cache
+2. O cache busca no banco se der miss
+3. O cache devolve os dados
 ```
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class UserRepository
@@ -142,7 +142,7 @@ class UserRepository
     {
         $cacheKey = "user:{$id}";
 
-        // Read-through: cache управляет загрузкой
+        // Read-through: o cache cuida do load
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
@@ -158,95 +158,95 @@ class UserRepository
 }
 ```
 
-**Плюсы:**
-- ✅ Абстракция (приложение не знает о cache miss)
+**Prós:**
+- ✅ Abstração (o app não vê o cache miss)
 
-**Минусы:**
-- ❌ Первый запрос медленный
+**Contras:**
+- ❌ Primeiro request é lento
 
 ---
 
 ### 3. Write-Through Cache
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
-1. Приложение пишет в cache
-2. Cache синхронно пишет в БД
-3. Возвращает success
+1. O app grava no cache
+2. O cache grava no banco de forma síncrona
+3. Devolve success
 ```
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class UserRepository
 {
     public function save(User $user): void
     {
-        // Write-through: пишем в cache и БД одновременно
-        $user->save();  // БД
+        // Write-through: grava no cache e no banco ao mesmo tempo
+        $user->save();  // Banco
 
         Cache::put("user:{$user->id}", $user, 3600);  // Cache
     }
 }
 ```
 
-**Плюсы:**
-- ✅ Cache всегда свежий
+**Prós:**
+- ✅ Cache sempre fresco
 - ✅ Consistency
 
-**Минусы:**
-- ❌ Медленнее (2 операции)
-- ❌ Cache pollution (кэшируется всё, даже редко используемое)
+**Contras:**
+- ❌ Mais lento (2 operações)
+- ❌ Cache pollution (cacheia tudo, até o que quase ninguém usa)
 
 ---
 
 ### 4. Write-Behind (Write-Back) Cache
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
-1. Приложение пишет в cache
-2. Cache возвращает success (быстро)
-3. Cache асинхронно пишет в БД (позже)
+1. O app grava no cache
+2. O cache devolve success (rápido)
+3. O cache grava no banco depois (async)
 ```
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class UserRepository
 {
     public function save(User $user): void
     {
-        // Write-behind: пишем в cache сразу
+        // Write-behind: grava no cache na hora
         Cache::put("user:{$user->id}", $user, 3600);
 
-        // БД асинхронно (job)
+        // Banco async (job)
         SaveUserToDatabaseJob::dispatch($user);
     }
 }
 ```
 
-**Плюсы:**
-- ✅ Очень быстро (write в memory)
-- ✅ Меньше нагрузка на БД (batch writes)
+**Prós:**
+- ✅ Muito rápido (write na memória)
+- ✅ Menos carga no banco (batch writes)
 
-**Минусы:**
-- ❌ Риск data loss (если cache упал до записи в БД)
+**Contras:**
+- ❌ Risco de data loss (se o cache cair antes de gravar no banco)
 - ❌ Eventual consistency
 
 ---
 
 ### 5. Refresh-Ahead
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
-1. Cache автоматически обновляет данные ДО истечения TTL
-2. Нет cache miss
+1. O cache atualiza os dados ANTES do TTL acabar
+2. Sem cache miss
 ```
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class RefreshAheadCache
@@ -256,13 +256,13 @@ class RefreshAheadCache
         $value = Cache::get($key);
         $expiresAt = Cache::get("{$key}:expires_at");
 
-        // Обновить заранее (80% от TTL)
+        // Atualizar antes (80% do TTL)
         if ($expiresAt && now()->timestamp > ($expiresAt - $ttl * 0.2)) {
-            // Асинхронно обновить
+            // Atualizar async
             RefreshCacheJob::dispatch($key, $callback);
         }
 
-        // Если cache miss
+        // Se cache miss
         if ($value === null) {
             $value = $callback();
             Cache::put($key, $value, $ttl);
@@ -274,41 +274,41 @@ class RefreshAheadCache
 }
 ```
 
-**Плюсы:**
-- ✅ Нет cache miss (всегда fresh)
+**Prós:**
+- ✅ Sem cache miss (sempre fresh)
 - ✅ Low latency
 
-**Минусы:**
-- ❌ Может обновлять неиспользуемые данные
+**Contras:**
+- ❌ Pode atualizar dado que ninguém usa
 
 ---
 
-## Cache Invalidation
+## Invalidação de cache
 
 > "There are only two hard things in Computer Science: cache invalidation and naming things" — Phil Karlton
 
 ### 1. TTL (Time To Live)
 
-**Простой подход:**
+**Abordagem simples:**
 
 ```php
-Cache::put('users', $users, 3600);  // 1 hour
+Cache::put('users', $users, 3600);  // 1 hora
 
-// Автоматически удалится через 1 час
+// Some sozinho em 1 hora
 ```
 
-**Плюсы:**
-- ✅ Просто
-- ✅ Нет stale data надолго
+**Prós:**
+- ✅ Simples
+- ✅ Não fica stale por muito tempo
 
-**Минусы:**
-- ❌ Может быть stale до истечения TTL
+**Contras:**
+- ❌ Pode ficar stale até o TTL acabar
 
 ---
 
 ### 2. Manual Invalidation
 
-**При изменении данных:**
+**Quando os dados mudam:**
 
 ```php
 class User extends Model
@@ -316,7 +316,7 @@ class User extends Model
     protected static function booted()
     {
         static::updated(function ($user) {
-            // Invalidate cache
+            // Invalidar o cache
             Cache::forget("user:{$user->id}");
             Cache::forget('users_list');
         });
@@ -329,27 +329,27 @@ class User extends Model
 }
 ```
 
-**Плюсы:**
-- ✅ Всегда свежие данные
+**Prós:**
+- ✅ Dados sempre frescos
 
-**Минусы:**
-- ❌ Нужно помнить invalidate во всех местах
+**Contras:**
+- ❌ Você precisa lembrar de invalidar em todo lugar
 
 ---
 
 ### 3. Cache Tags (Laravel)
 
-**Группировка cache keys:**
+**Agrupar cache keys:**
 
 ```php
-// Кэшировать с тэгами
+// Cachear com tags
 Cache::tags(['users', 'admins'])->put('admin_users', $users, 3600);
 
-// Invalidate всё с тэгом 'users'
+// Invalidar tudo com a tag 'users'
 Cache::tags(['users'])->flush();
 ```
 
-**Use case:**
+**Caso de uso:**
 
 ```php
 class UserService
@@ -372,7 +372,7 @@ class UserService
     {
         $user->save();
 
-        // Invalidate все кэши связанные с users
+        // Invalidar todos os caches ligados a users
         Cache::tags(['users'])->flush();
     }
 }
@@ -412,28 +412,28 @@ class User extends Model
 
 ## Thundering Herd Problem
 
-**Проблема:**
+**Problema:**
 
 ```
-Cache expires
+Cache expira
     ↓
-1000 requests одновременно
+1000 requests ao mesmo tempo
     ↓
-1000 queries к БД (перегрузка!)
+1000 queries no banco (sobrecarga!)
 ```
 
-**Решение 1: Lock (Laravel)**
+**Solução 1: Lock (Laravel)**
 
 ```php
 $users = Cache::lock('users_list')->get(function () {
-    // Только 1 процесс выполняет
+    // Só 1 processo executa
     return Cache::remember('users_list', 3600, function () {
         return User::all();
     });
 });
 ```
 
-**Решение 2: Probabilistic Early Expiration**
+**Solução 2: Probabilistic Early Expiration**
 
 ```php
 function cacheWithProbabilisticExpiration($key, $ttl, $callback)
@@ -445,11 +445,11 @@ function cacheWithProbabilisticExpiration($key, $ttl, $callback)
         $now = time();
         $timeLeft = $expiresAt - $now;
 
-        // Вероятность обновления растёт при приближении к expiration
+        // A chance de atualizar sobe perto do expiration
         $probability = 1 - ($timeLeft / $ttl);
 
         if (rand(0, 100) / 100 < $probability) {
-            // Обновить заранее
+            // Atualizar antes
             $value = $callback();
             Cache::put($key, $value, $ttl);
             Cache::put("{$key}:expires", $now + $ttl, $ttl);
@@ -468,29 +468,29 @@ function cacheWithProbabilisticExpiration($key, $ttl, $callback)
 
 ## Cache Warming
 
-**Предварительное заполнение cache:**
+**Preencher o cache antes (aquecer):**
 
 ```php
 class WarmCacheCommand extends Command
 {
     public function handle()
     {
-        // Warm популярные данные
+        // Aquecer dados populares
         Cache::put('popular_products', Product::popular()->get(), 3600);
         Cache::put('categories', Category::all(), 3600);
         Cache::put('featured_posts', Post::featured()->get(), 3600);
 
-        $this->info('Cache warmed successfully');
+        $this->info('Cache aquecido com sucesso');
     }
 }
 
-// Scheduler: warm cache каждый час
+// Scheduler: aquece o cache de hora em hora
 $schedule->command('cache:warm')->hourly();
 ```
 
 ---
 
-## Cache Levels (многоуровневый кэш)
+## Cache Levels (cache em camadas)
 
 ```php
 class MultiLevelCache
@@ -521,36 +521,36 @@ class MultiLevelCache
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Cache что дорого вычислять (DB queries, API calls)
-✓ TTL разумный (не слишком долго, не слишком коротко)
-✓ Cache Tags для группировки
+✓ Cachear o que é caro de calcular (DB queries, API calls)
+✓ TTL razoável (nem longo demais, nem curto demais)
+✓ Cache Tags para agrupar
 ✓ Event-based invalidation
-✓ Lock для thundering herd
+✓ Lock para thundering herd
 ✓ Monitoring: cache hit rate, memory usage
-✓ Cache Warming для популярных данных
-✓ Версионирование cache keys при изменении структуры
-✓ НЕ кэшировать персональные данные (security)
+✓ Cache Warming para dados populares
+✓ Versionar cache keys quando a estrutura muda
+✓ NÃO cachear dados pessoais (security)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Кэширование — хранение данных в быстром хранилище. Стратегии: Cache-Aside (lazy loading, Laravel remember), Read/Write-Through (cache управляет БД), Write-Behind (async write в БД), Refresh-Ahead (обновление до expiration). Invalidation: TTL, manual (observers), Cache Tags (группировка), event-based. Thundering Herd: Lock или probabilistic early expiration. Cache Warming: pre-populate популярные данные. Multi-level: L1 (APCu), L2 (Redis), L3 (DB). Best practices: cache дорогие операции, Tags, monitoring hit rate, не кэшировать персональные данные."
+> "Cache é guardar dados num store rápido. Estratégias: Cache-Aside (lazy loading, Laravel remember), Read/Write-Through (o cache gerencia o banco), Write-Behind (write async no banco), Refresh-Ahead (atualiza antes do expiration). Invalidação: TTL, manual (observers), Cache Tags (agrupar), event-based. Thundering Herd: Lock ou probabilistic early expiration. Cache Warming: preencher dados populares. Multi-level: L1 (APCu), L2 (Redis), L3 (DB). Boas práticas: cachear operação cara, Tags, monitorar hit rate, não cachear dado pessoal."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализовать Cache-Aside с защитой от Thundering Herd
+### Exercício 1: Cache-Aside com proteção contra Thundering Herd
 
-Создай метод `getCachedUsers()` который использует Cache-Aside стратегию и защиту от Thundering Herd через Lock.
+**Enunciado:** Crie o método `getCachedUsers()` com estratégia Cache-Aside e proteção contra Thundering Herd via Lock.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -565,36 +565,36 @@ class UserCacheService
         $cacheKey = 'users_list';
         $lockKey = 'users_list_lock';
 
-        // Попытаться получить из cache
+        // Tentar buscar no cache
         if ($users = Cache::get($cacheKey)) {
             return $users;
         }
 
-        // Защита от Thundering Herd через Lock
+        // Proteção contra Thundering Herd com Lock
         return Cache::lock($lockKey, 10)->block(5, function () use ($cacheKey) {
-            // Double-check: может другой процесс уже положил в cache
+            // Double-check: outro processo pode ter colocado no cache
             if ($users = Cache::get($cacheKey)) {
                 return $users;
             }
 
-            // Загрузить из БД
+            // Carregar do banco
             $users = User::active()->get();
 
-            // Положить в cache на 1 час
+            // Guardar no cache por 1 hora
             Cache::put($cacheKey, $users, 3600);
 
             return $users;
         });
     }
 
-    // Invalidation при изменении
+    // Invalidação quando muda
     public function invalidateCache(): void
     {
         Cache::forget('users_list');
     }
 }
 
-// В модели User
+// No model User
 class User extends Model
 {
     protected static function booted()
@@ -609,17 +609,17 @@ class User extends Model
     }
 }
 
-// Использование
+// Uso
 $users = app(UserCacheService::class)->getCachedUsers();
 ```
 </details>
 
-### Задание 2: Write-Through Cache с Event-Based Invalidation
+### Exercício 2: Write-Through Cache com invalidação event-based
 
-Реализуй UserRepository с Write-Through стратегией и event-based invalidation через Cache Tags.
+**Enunciado:** Implemente o UserRepository com estratégia Write-Through e invalidação event-based via Cache Tags.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Repositories;
@@ -629,12 +629,12 @@ use Illuminate\Support\Facades\Cache;
 
 class UserRepository
 {
-    private const CACHE_TTL = 3600; // 1 hour
+    private const CACHE_TTL = 3600; // 1 hora
     private const TAG = 'users';
 
     public function find(int $id): ?User
     {
-        // Read-Through: cache управляет загрузкой
+        // Read-Through: o cache cuida do load
         return Cache::tags([self::TAG])->remember(
             "user:{$id}",
             self::CACHE_TTL,
@@ -660,19 +660,19 @@ class UserRepository
         );
     }
 
-    // Write-Through: пишем в БД и cache одновременно
+    // Write-Through: grava no banco e no cache ao mesmo tempo
     public function save(User $user): User
     {
         $user->save();
 
-        // Обновить cache
+        // Atualizar o cache
         Cache::tags([self::TAG])->put(
             "user:{$user->id}",
             $user,
             self::CACHE_TTL
         );
 
-        // Invalidate списки
+        // Invalidar as listas
         Cache::tags([self::TAG])->forget('users:all');
 
         if ($user->is_admin) {
@@ -687,21 +687,21 @@ class UserRepository
         $id = $user->id;
         $result = $user->delete();
 
-        // Invalidate cache
+        // Invalidar o cache
         Cache::tags([self::TAG])->forget("user:{$id}");
-        Cache::tags([self::TAG])->flush(); // Очистить все связанные
+        Cache::tags([self::TAG])->flush(); // Limpar tudo relacionado
 
         return $result;
     }
 
-    // Flush всё связанное с пользователями
+    // Flush de tudo ligado a users
     public function flushCache(): void
     {
         Cache::tags([self::TAG])->flush();
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 public function index(UserRepository $repository)
 {
     return $repository->all();
@@ -715,12 +715,12 @@ public function store(Request $request, UserRepository $repository)
 ```
 </details>
 
-### Задание 3: Probabilistic Early Expiration для предотвращения Cache Miss
+### Exercício 3: Probabilistic Early Expiration para evitar cache miss
 
-Реализуй метод который использует probabilistic early expiration для обновления cache до истечения TTL.
+**Enunciado:** Implemente um método com probabilistic early expiration para atualizar o cache antes do TTL acabar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -730,12 +730,12 @@ use Illuminate\Support\Facades\Cache;
 class ProbabilisticCache
 {
     /**
-     * Получить из cache с probabilistic early expiration
+     * Busca no cache com probabilistic early expiration
      *
-     * @param string $key Ключ cache
-     * @param int $ttl TTL в секундах
-     * @param callable $callback Функция загрузки данных
-     * @param float $beta Коэффициент (обычно 1.0)
+     * @param string $key Chave do cache
+     * @param int $ttl TTL em segundos
+     * @param callable $callback Função que carrega os dados
+     * @param float $beta Coeficiente (geralmente 1.0)
      * @return mixed
      */
     public function remember(string $key, int $ttl, callable $callback, float $beta = 1.0)
@@ -750,13 +750,13 @@ class ProbabilisticCache
             // Probabilistic early expiration formula
             // probability = β * log(rand(0,1)) * δ
             // δ (delta) = time to recompute
-            $delta = 1; // Предполагаем 1 секунду на recompute
+            $delta = 1; // Assume 1 segundo para recompute
 
             $probability = -$beta * log(mt_rand() / mt_getrandmax()) * $delta;
 
-            // Обновить заранее если probability > time left
+            // Atualizar antes se probability > time left
             if ($probability >= $timeLeft) {
-                // Асинхронно обновить cache
+                // Atualizar o cache async
                 dispatch(function () use ($key, $ttl, $callback) {
                     $newValue = $callback();
                     Cache::put($key, $newValue, $ttl);
@@ -767,7 +767,7 @@ class ProbabilisticCache
             return $value;
         }
 
-        // Cache miss: загрузить и сохранить
+        // Cache miss: carregar e guardar
         $value = $callback();
         Cache::put($key, $value, $ttl);
         Cache::put("{$key}:expires", time() + $ttl, $ttl);
@@ -776,14 +776,14 @@ class ProbabilisticCache
     }
 }
 
-// Использование
+// Uso
 $cache = new ProbabilisticCache();
 
 $popularPosts = $cache->remember('popular_posts', 3600, function () {
     return Post::popular()->limit(10)->get();
 }, beta: 1.0);
 
-// Альтернатива: Refresh-Ahead
+// Alternativa: Refresh-Ahead
 class RefreshAheadCache
 {
     public function remember(string $key, int $ttl, callable $callback)
@@ -791,9 +791,9 @@ class RefreshAheadCache
         $value = Cache::get($key);
         $expiresAt = Cache::get("{$key}:expires_at");
 
-        // Обновить заранее (при 80% от TTL)
+        // Atualizar antes (aos 80% do TTL)
         if ($expiresAt && now()->timestamp > ($expiresAt - $ttl * 0.2)) {
-            // Асинхронно обновить
+            // Atualizar async
             dispatch(function () use ($key, $ttl, $callback) {
                 $newValue = $callback();
                 Cache::put($key, $newValue, $ttl);
@@ -812,7 +812,7 @@ class RefreshAheadCache
     }
 }
 
-// Использование Refresh-Ahead
+// Uso do Refresh-Ahead
 $cache = new RefreshAheadCache();
 $stats = $cache->remember('dashboard_stats', 300, function () {
     return [
@@ -826,4 +826,4 @@ $stats = $cache->remember('dashboard_stats', 300, function () {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

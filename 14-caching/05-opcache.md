@@ -1,61 +1,61 @@
 # 14.5 OPcache
 
-## Краткое резюме
+## Resumo
 
-> **OPcache** — PHP bytecode cache, кэширует скомпилированный PHP код. 2-3x performance boost.
+> **OPcache** — cache de bytecode do PHP. Guarda o PHP já compilado. 2-3x mais rápido.
 >
-> **Production:** `validate_timestamps=0` (не проверять изменения файлов), очищать после deploy (`php artisan opcache:clear`). **Development:** `validate_timestamps=1`, `revalidate_freq=0` (видеть изменения сразу).
+> **Production:** `validate_timestamps=0` (não checa se o arquivo mudou), limpa depois do deploy (`php artisan opcache:clear`). **Development:** `validate_timestamps=1`, `revalidate_freq=0` (vê a mudança na hora).
 >
-> **Preloading** (PHP 7.4+): загружать файлы в память при старте PHP-FPM. Monitoring: **hit rate > 99%**, достаточно memory (256-512MB). Laravel: `appstract/laravel-opcache` package.
+> **Preloading** (PHP 7.4+): carrega arquivos na memória quando o PHP-FPM sobe. Monitoring: **hit rate > 99%**, memória suficiente (256-512MB). Laravel: package `appstract/laravel-opcache`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Установка и конфигурация](#установка-и-конфигурация)
-- [Production Settings](#production-settings)
-- [Development Settings](#development-settings)
-- [Очистка OPcache](#очистка-opcache)
+- [O que é](#o-que-é)
+- [Instalação e configuração](#instalação-e-configuração)
+- [Configuração de production](#configuração-de-production)
+- [Configuração de development](#configuração-de-development)
+- [Limpar o OPcache](#limpar-o-opcache)
 - [Preloading](#preloading-php-74)
-- [Мониторинг OPcache](#мониторинг-opcache)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Monitorar o OPcache](#monitorar-o-opcache)
+- [Boas práticas](#boas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **OPcache:**
-PHP bytecode cache. Кэширует скомпилированный PHP код (bytecode), чтобы не компилировать на каждом запросе.
+Cache de bytecode do PHP. Guarda o PHP já compilado (bytecode), para não compilar de novo em todo request.
 
-**Зачем:**
-- Гораздо быстрее (не нужно парсить и компилировать PHP файлы)
-- Меньше CPU usage
-- 2-3x performance boost
+**Para quê:**
+- Bem mais rápido (não precisa parsear e compilar o arquivo PHP)
+- Menos uso de CPU
+- 2-3x de performance
 
-**Как работает:**
+**Como funciona:**
 
 ```
-Без OPcache:
-Request → PHP парсит файл → компилирует → выполняет → Response
+Sem OPcache:
+Request → PHP parseia o arquivo → compila → executa → Response
 
-С OPcache:
-Request → OPcache (bytecode cache) → выполняет → Response
-          ↑ если нет в cache
-          PHP парсит → компилирует → сохраняет в cache
+Com OPcache:
+Request → OPcache (bytecode cache) → executa → Response
+          ↑ se não está no cache
+          PHP parseia → compila → grava no cache
 ```
 
 ---
 
-## Установка и конфигурация
+## Instalação e configuração
 
-**Проверить установлен ли:**
+**Checar se está instalado:**
 
 ```bash
 php -v
-# Должно быть: with Zend OPcache
+# Tem que aparecer: with Zend OPcache
 
 php -m | grep opcache
 # opcache
@@ -65,10 +65,10 @@ php -m | grep opcache
 
 ```ini
 [opcache]
-; Включить OPcache
+; Ligar o OPcache
 opcache.enable=1
 
-; Включить для CLI (optional)
+; Ligar no CLI (opcional)
 opcache.enable_cli=0
 
 ; Memory (MB)
@@ -83,7 +83,7 @@ opcache.max_accelerated_files=10000
 ; Revalidate frequency (seconds)
 opcache.revalidate_freq=2
 
-; Validate timestamps (проверять изменения файлов)
+; Validate timestamps (checar se o arquivo mudou)
 opcache.validate_timestamps=1
 
 ; Fast shutdown
@@ -92,7 +92,7 @@ opcache.fast_shutdown=1
 
 ---
 
-## Production Settings
+## Configuração de production
 
 **php.ini (production):**
 
@@ -103,43 +103,43 @@ opcache.memory_consumption=256
 opcache.interned_strings_buffer=16
 opcache.max_accelerated_files=20000
 
-; ВАЖНО: отключить revalidate для максимальной производительности
-opcache.validate_timestamps=0  # не проверять изменения файлов
+; IMPORTANTE: desligar revalidate para performance máxima
+opcache.validate_timestamps=0  # não checar se o arquivo mudou
 opcache.revalidate_freq=0
 
 opcache.fast_shutdown=1
 opcache.enable_file_override=1
 ```
 
-**После deploy:**
+**Depois do deploy:**
 
 ```bash
-# Очистить OPcache
+# Limpar o OPcache
 php artisan opcache:clear  # Laravel
 
-# Или через nginx/apache
+# Ou via nginx/apache
 curl http://example.com/opcache-clear.php
 ```
 
 ---
 
-## Development Settings
+## Configuração de development
 
 **php.ini (development):**
 
 ```ini
 [opcache]
 opcache.enable=1
-opcache.validate_timestamps=1  # проверять изменения
-opcache.revalidate_freq=0       # проверять каждый раз
+opcache.validate_timestamps=1  # checar mudanças
+opcache.revalidate_freq=0       # checar toda vez
 ```
 
-**Почему:**
-- Изменения в коде видны сразу (не нужно перезагружать PHP-FPM)
+**Por quê:**
+- A mudança no código aparece na hora (não precisa recarregar o PHP-FPM)
 
 ---
 
-## Laravel OPcache Package
+## Package Laravel OPcache
 
 **Composer:**
 
@@ -150,7 +150,7 @@ composer require appstract/laravel-opcache
 **Routes:**
 
 ```php
-// Автоматически регистрируются
+// Registram sozinhas
 // /opcache/clear
 // /opcache/config
 // /opcache/status
@@ -159,7 +159,7 @@ composer require appstract/laravel-opcache
 **Artisan:**
 
 ```bash
-# Clear OPcache
+# Limpar o OPcache
 php artisan opcache:clear
 
 # Status
@@ -174,7 +174,7 @@ php artisan opcache:optimize
 
 ---
 
-## Очистка OPcache
+## Limpar o OPcache
 
 ### 1. CLI
 
@@ -184,7 +184,7 @@ php artisan opcache:clear
 
 ---
 
-### 2. HTTP Endpoint
+### 2. Endpoint HTTP
 
 **routes/web.php:**
 
@@ -192,36 +192,36 @@ php artisan opcache:clear
 Route::get('/opcache/clear', function () {
     if (function_exists('opcache_reset')) {
         opcache_reset();
-        return 'OPcache cleared';
+        return 'OPcache limpo';
     }
-    return 'OPcache not available';
-})->middleware('auth');  // Защитить!
+    return 'OPcache não disponível';
+})->middleware('auth');  // Proteja!
 ```
 
 ---
 
-### 3. Deployment
+### 3. Deploy
 
-**Deploy script:**
+**Script de deploy:**
 
 ```bash
 #!/bin/bash
 
-# Pull code
+# Puxar o código
 git pull
 
-# Install dependencies
+# Instalar as dependências
 composer install --no-dev --optimize-autoloader
 
-# Clear caches
+# Limpar os caches
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Clear OPcache
+# Limpar o OPcache
 php artisan opcache:clear
 
-# Reload PHP-FPM
+# Recarregar o PHP-FPM
 sudo systemctl reload php8.2-fpm
 ```
 
@@ -229,8 +229,8 @@ sudo systemctl reload php8.2-fpm
 
 ## Preloading (PHP 7.4+)
 
-**Что это:**
-Загрузить PHP файлы в память при старте PHP-FPM.
+**O que é:**
+Carregar arquivos PHP na memória quando o PHP-FPM sobe.
 
 **php.ini:**
 
@@ -244,41 +244,41 @@ opcache.preload_user=www-data
 ```php
 <?php
 
-// Laravel preload script
+// Script de preload do Laravel
 require __DIR__ . '/vendor/autoload.php';
 
 $app = require_once __DIR__ . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-// Preload Laravel core
+// Preload do core do Laravel
 opcache_compile_file(__DIR__ . '/vendor/laravel/framework/src/Illuminate/Foundation/Application.php');
 opcache_compile_file(__DIR__ . '/vendor/laravel/framework/src/Illuminate/Http/Request.php');
-// ... другие часто используемые файлы
+// ... outros arquivos usados com frequência
 ```
 
-**Laravel Automatic Preload:**
+**Preload automático no Laravel:**
 
 ```bash
-# Generate preload file
+# Gerar o arquivo de preload
 php artisan opcache:optimize
 
-# Создаст bootstrap/cache/opcache.php
+# Cria bootstrap/cache/opcache.php
 ```
 
 ---
 
-## Мониторинг OPcache
+## Monitorar o OPcache
 
-**PHP Code:**
+**Código PHP:**
 
 ```php
 $status = opcache_get_status();
 
-echo "Memory Used: " . $status['memory_usage']['used_memory'] / 1024 / 1024 . " MB\n";
-echo "Memory Free: " . $status['memory_usage']['free_memory'] / 1024 / 1024 . " MB\n";
+echo "Memória usada: " . $status['memory_usage']['used_memory'] / 1024 / 1024 . " MB\n";
+echo "Memória livre: " . $status['memory_usage']['free_memory'] / 1024 / 1024 . " MB\n";
 echo "Hit Rate: " . ($status['opcache_statistics']['opcache_hit_rate']) . "%\n";
-echo "Cached Scripts: " . $status['opcache_statistics']['num_cached_scripts'] . "\n";
-echo "Max Cached Scripts: " . $status['opcache_statistics']['max_cached_scripts'] . "\n";
+echo "Scripts em cache: " . $status['opcache_statistics']['num_cached_scripts'] . "\n";
+echo "Máximo de scripts em cache: " . $status['opcache_statistics']['max_cached_scripts'] . "\n";
 ```
 
 **Artisan:**
@@ -289,17 +289,17 @@ php artisan opcache:status
 
 ---
 
-## Metrics
+## Métricas
 
-**Важные метрики:**
+**Métricas importantes:**
 
 ### 1. Hit Rate
 
 ```
 opcache_hit_rate = (hits / (hits + misses)) * 100
 
-> 99% — отлично
-< 95% — нужно больше памяти или max_accelerated_files
+> 99% — ótimo
+< 95% — precisa de mais memória ou max_accelerated_files
 ```
 
 ---
@@ -307,8 +307,8 @@ opcache_hit_rate = (hits / (hits + misses)) * 100
 ### 2. Memory Usage
 
 ```
-Если used_memory близко к memory_consumption:
-→ увеличить opcache.memory_consumption
+Se used_memory está perto de memory_consumption:
+→ aumenta opcache.memory_consumption
 ```
 
 ---
@@ -316,26 +316,26 @@ opcache_hit_rate = (hits / (hits + misses)) * 100
 ### 3. Cached Scripts
 
 ```
-Если num_cached_scripts близко к max_accelerated_files:
-→ увеличить opcache.max_accelerated_files
+Se num_cached_scripts está perto de max_cached_scripts:
+→ aumenta opcache.max_accelerated_files
 ```
 
 ---
 
-## Проблемы и решения
+## Problemas e soluções
 
-### 1. Stale Code After Deploy
+### 1. Código velho depois do deploy
 
-**Проблема:**
-После deploy старый код в OPcache.
+**Problema:**
+Depois do deploy o código velho fica no OPcache.
 
-**Решение:**
+**Solução:**
 
 ```bash
-# Очистить OPcache
+# Limpar o OPcache
 php artisan opcache:clear
 
-# Или перезагрузить PHP-FPM
+# Ou recarregar o PHP-FPM
 sudo systemctl reload php8.2-fpm
 ```
 
@@ -343,64 +343,64 @@ sudo systemctl reload php8.2-fpm
 
 ### 2. Out of Memory
 
-**Проблема:**
-OPcache закончилась память.
+**Problema:**
+O OPcache ficou sem memória.
 
-**Решение:**
+**Solução:**
 
 ```ini
-; Увеличить memory
-opcache.memory_consumption=512  # было 256
+; Aumentar a memória
+opcache.memory_consumption=512  # era 256
 ```
 
 ---
 
-### 3. Too Many Files
+### 3. Arquivos demais
 
-**Проблема:**
-`max_accelerated_files` достигнут.
+**Problema:**
+Estourou o `max_accelerated_files`.
 
-**Решение:**
+**Solução:**
 
 ```ini
-opcache.max_accelerated_files=30000  # было 10000
+opcache.max_accelerated_files=30000  # era 10000
 ```
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Production: validate_timestamps=0 (максимальная производительность)
+✓ Production: validate_timestamps=0 (performance máxima)
 ✓ Development: validate_timestamps=1, revalidate_freq=0
-✓ Достаточно memory (256-512 MB)
-✓ max_accelerated_files > количество PHP файлов
-✓ Очищать OPcache после deploy
-✓ Preloading для часто используемых файлов (PHP 7.4+)
-✓ Мониторинг hit rate (> 99%)
-✓ Защитить /opcache/clear endpoint (auth)
+✓ Memória suficiente (256-512 MB)
+✓ max_accelerated_files > quantidade de arquivos PHP
+✓ Limpar o OPcache depois do deploy
+✓ Preloading nos arquivos usados com frequência (PHP 7.4+)
+✓ Monitorar hit rate (> 99%)
+✓ Proteger o endpoint /opcache/clear (auth)
 ```
 
 ---
 
-## Comparison с другими caches
+## Comparação com outros caches
 
-| Cache | Что кэширует | Scope |
-|-------|--------------|-------|
-| OPcache | PHP bytecode | Per PHP-FPM worker |
-| APCu | User data (key-value) | Per PHP-FPM worker |
-| Redis | Application data | Shared (все workers) |
-| Memcached | Application data | Shared (все workers) |
+| Cache | O que cacheia | Scope |
+|-------|---------------|-------|
+| OPcache | PHP bytecode | Por worker do PHP-FPM |
+| APCu | User data (key-value) | Por worker do PHP-FPM |
+| Redis | Application data | Shared (todos os workers) |
+| Memcached | Application data | Shared (todos os workers) |
 
-**OPcache — низкоуровневый cache (PHP bytecode).**
+**OPcache — cache de baixo nível (PHP bytecode).**
 
-**Redis/Memcached — высокоуровневый cache (application data).**
+**Redis/Memcached — cache de alto nível (application data).**
 
 ---
 
-## Автоматизация
+## Automação
 
-**Deploy Hook:**
+**Hook de deploy:**
 
 ```yaml
 # .gitlab-ci.yml
@@ -411,26 +411,26 @@ deploy:
     - php artisan config:cache
     - php artisan route:cache
     - php artisan view:cache
-    - php artisan opcache:clear  # Очистить OPcache
+    - php artisan opcache:clear  # Limpar o OPcache
     - sudo systemctl reload php8.2-fpm
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "OPcache — PHP bytecode cache, кэширует скомпилированный PHP код. 2-3x performance boost. Production: validate_timestamps=0 (не проверять изменения файлов), очищать после deploy. Development: validate_timestamps=1, revalidate_freq=0 (видеть изменения сразу). Preloading (PHP 7.4+): загружать файлы в память при старте. Monitoring: hit rate > 99%, достаточно memory. Laravel: appstract/laravel-opcache package, php artisan opcache:clear. Best practices: достаточно memory (256-512MB), max_accelerated_files > количество файлов, защитить clear endpoint, автоматизировать clear в deploy."
+> "OPcache é o cache de bytecode do PHP. Guarda o código já compilado. Dá 2-3x de performance. Em production: validate_timestamps=0, não checa se o arquivo mudou, limpa depois do deploy. Em development: validate_timestamps=1, revalidate_freq=0, você vê a mudança na hora. Preloading no PHP 7.4+: carrega arquivos na memória quando o PHP-FPM sobe. Monitoring: hit rate acima de 99%, memória suficiente. No Laravel: package appstract/laravel-opcache, php artisan opcache:clear. Boas práticas: 256-512MB de memória, max_accelerated_files maior que a quantidade de arquivos, proteger o endpoint de clear, automatizar o clear no deploy."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: OPcache Monitoring Dashboard
+### Exercício 1: Dashboard de monitoramento do OPcache
 
-Создай сервис для мониторинга OPcache с метриками: hit rate, memory usage, cached scripts. Добавь artisan command для вывода статистики.
+**Enunciado:** Crie um service para monitorar o OPcache com as métricas: hit rate, memory usage, cached scripts. Inclua um artisan command que imprime a estatística.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -438,7 +438,7 @@ namespace App\Services;
 class OPcacheMonitoringService
 {
     /**
-     * Получить статус OPcache
+     * Pegar o status do OPcache
      */
     public function getStatus(): array
     {
@@ -533,7 +533,7 @@ class OPcacheMonitoringService
     }
 
     /**
-     * Проверить здоровье OPcache
+     * Checar a saúde do OPcache
      */
     public function healthCheck(): array
     {
@@ -542,30 +542,30 @@ class OPcacheMonitoringService
         if (!$status['enabled']) {
             return [
                 'healthy' => false,
-                'issues' => ['OPcache is not enabled'],
+                'issues' => ['OPcache não está ligado'],
             ];
         }
 
         $issues = [];
 
-        // Проверить hit rate
+        // Checar hit rate
         if ($status['statistics']['hit_rate'] < 95) {
-            $issues[] = "Low hit rate: {$status['statistics']['hit_rate']}% (should be > 95%)";
+            $issues[] = "Hit rate baixo: {$status['statistics']['hit_rate']}% (tem que ser > 95%)";
         }
 
-        // Проверить memory usage
+        // Checar memory usage
         if ($status['memory']['usage_percent'] > 90) {
-            $issues[] = "High memory usage: {$status['memory']['usage_percent']}% (should be < 90%)";
+            $issues[] = "Uso de memória alto: {$status['memory']['usage_percent']}% (tem que ser < 90%)";
         }
 
-        // Проверить scripts usage
+        // Checar scripts usage
         if ($status['statistics']['scripts_usage_percent'] > 90) {
-            $issues[] = "High scripts usage: {$status['statistics']['scripts_usage_percent']}% (should be < 90%)";
+            $issues[] = "Uso de scripts alto: {$status['statistics']['scripts_usage_percent']}% (tem que ser < 90%)";
         }
 
-        // Проверить restarts
+        // Checar restarts
         if ($status['statistics']['oom_restarts'] > 0) {
-            $issues[] = "OOM restarts detected: {$status['statistics']['oom_restarts']}";
+            $issues[] = "Restarts por OOM detectados: {$status['statistics']['oom_restarts']}";
         }
 
         return [
@@ -583,8 +583,8 @@ use Illuminate\Console\Command;
 
 class OPcacheStatusCommand extends Command
 {
-    protected $signature = 'opcache:status {--health : Show health check only}';
-    protected $description = 'Show OPcache status and statistics';
+    protected $signature = 'opcache:status {--health : Mostrar só o health check}';
+    protected $description = 'Mostra status e estatísticas do OPcache';
 
     public function handle(OPcacheMonitoringService $service)
     {
@@ -592,9 +592,9 @@ class OPcacheStatusCommand extends Command
             $health = $service->healthCheck();
 
             if ($health['healthy']) {
-                $this->info('OPcache is healthy');
+                $this->info('OPcache está saudável');
             } else {
-                $this->error('OPcache has issues:');
+                $this->error('OPcache tem problemas:');
                 foreach ($health['issues'] as $issue) {
                     $this->line("  - {$issue}");
                 }
@@ -606,17 +606,17 @@ class OPcacheStatusCommand extends Command
         $status = $service->getStatus();
 
         if (!$status['enabled']) {
-            $this->error('OPcache is not enabled');
+            $this->error('OPcache não está ligado');
             return 1;
         }
 
-        $this->info('OPcache Status:');
+        $this->info('Status do OPcache:');
         $this->newLine();
 
-        // Memory
-        $this->line('<fg=yellow>Memory Usage:</>');
+        // Memória
+        $this->line('<fg=yellow>Uso de memória:</>');
         $this->table(
-            ['Metric', 'Value'],
+            ['Métrica', 'Valor'],
             [
                 ['Used', "{$status['memory']['used_mb']} MB"],
                 ['Free', "{$status['memory']['free_mb']} MB"],
@@ -626,10 +626,10 @@ class OPcacheStatusCommand extends Command
             ]
         );
 
-        // Statistics
-        $this->line('<fg=yellow>Statistics:</>');
+        // Estatísticas
+        $this->line('<fg=yellow>Estatísticas:</>');
         $this->table(
-            ['Metric', 'Value'],
+            ['Métrica', 'Valor'],
             [
                 ['Hits', number_format($status['statistics']['hits'])],
                 ['Misses', number_format($status['statistics']['misses'])],
@@ -643,7 +643,7 @@ class OPcacheStatusCommand extends Command
         if ($status['statistics']['oom_restarts'] > 0 || $status['statistics']['manual_restarts'] > 0) {
             $this->line('<fg=red>Restarts:</>');
             $this->table(
-                ['Type', 'Count'],
+                ['Tipo', 'Quantidade'],
                 [
                     ['OOM', $status['statistics']['oom_restarts']],
                     ['Manual', $status['statistics']['manual_restarts']],
@@ -657,9 +657,9 @@ class OPcacheStatusCommand extends Command
         $this->newLine();
 
         if ($health['healthy']) {
-            $this->info('✓ OPcache is healthy');
+            $this->info('✓ OPcache está saudável');
         } else {
-            $this->error('✗ OPcache has issues:');
+            $this->error('✗ OPcache tem problemas:');
             foreach ($health['issues'] as $issue) {
                 $this->line("  - {$issue}");
             }
@@ -669,7 +669,7 @@ class OPcacheStatusCommand extends Command
     }
 }
 
-// Controller для dashboard
+// Controller do dashboard
 namespace App\Http\Controllers;
 
 use App\Services\OPcacheMonitoringService;
@@ -694,21 +694,21 @@ class OPcacheController extends Controller
     {
         if (function_exists('opcache_reset')) {
             opcache_reset();
-            return response()->json(['message' => 'OPcache cleared']);
+            return response()->json(['message' => 'OPcache limpo']);
         }
 
-        return response()->json(['message' => 'OPcache not available'], 400);
+        return response()->json(['message' => 'OPcache não disponível'], 400);
     }
 }
 ```
 </details>
 
-### Задание 2: Smart OPcache Preloading Generator
+### Exercício 2: Gerador inteligente de preload do OPcache
 
-Создай сервис который автоматически генерирует preload.php файл на основе часто используемых классов.
+**Enunciado:** Crie um service que gera o arquivo preload.php sozinho, com base nas classes mais usadas.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -726,7 +726,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить класс для preload
+     * Adicionar classe no preload
      */
     public function addClass(string $class): self
     {
@@ -735,7 +735,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить все классы из директории
+     * Adicionar todas as classes de um diretório
      */
     public function addDirectory(string $directory): self
     {
@@ -751,7 +751,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить Laravel core классы
+     * Adicionar as classes core do Laravel
      */
     public function addLaravelCore(): self
     {
@@ -774,7 +774,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить модели приложения
+     * Adicionar os models do app
      */
     public function addModels(): self
     {
@@ -782,7 +782,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить контроллеры
+     * Adicionar os controllers
      */
     public function addControllers(): self
     {
@@ -790,7 +790,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Добавить middleware
+     * Adicionar o middleware
      */
     public function addMiddleware(): self
     {
@@ -798,7 +798,7 @@ class OPcachePreloadGenerator
     }
 
     /**
-     * Сгенерировать preload.php файл
+     * Gerar o arquivo preload.php
      */
     public function generate(string $outputPath = null): string
     {
@@ -816,18 +816,18 @@ class OPcachePreloadGenerator
         $files = $this->resolveFiles();
 
         $content = "<?php\n\n";
-        $content .= "// Auto-generated OPcache preload file\n";
-        $content .= "// Generated at: " . date('Y-m-d H:i:s') . "\n\n";
+        $content .= "// Arquivo de preload do OPcache gerado automaticamente\n";
+        $content .= "// Gerado em: " . date('Y-m-d H:i:s') . "\n\n";
 
-        $content .= "// Load Composer autoloader\n";
+        $content .= "// Carrega o autoloader do Composer\n";
         $content .= "require __DIR__ . '/../../vendor/autoload.php';\n\n";
 
-        $content .= "// Preload files\n";
+        $content .= "// Preload dos arquivos\n";
         foreach ($files as $file) {
             $content .= "opcache_compile_file('{$file}');\n";
         }
 
-        $content .= "\n// Total files preloaded: " . count($files) . "\n";
+        $content .= "\n// Total de arquivos no preload: " . count($files) . "\n";
 
         return $content;
     }
@@ -845,7 +845,7 @@ class OPcachePreloadGenerator
                     $files[] = $file;
                 }
             } catch (\ReflectionException $e) {
-                // Класс не найден
+                // Classe não encontrada
                 continue;
             }
         }
@@ -855,10 +855,10 @@ class OPcachePreloadGenerator
 
     private function addFileToPreload(string $filepath): void
     {
-        // Попытаться определить класс из файла
+        // Tentar descobrir a classe pelo arquivo
         $content = file_get_contents($filepath);
 
-        // Простой regex для namespace и class
+        // Regex simples de namespace e class
         if (preg_match('/namespace\s+([^;]+);/', $content, $namespaceMatch)) {
             $namespace = $namespaceMatch[1];
 
@@ -879,17 +879,17 @@ use Illuminate\Console\Command;
 class GenerateOPcachePreloadCommand extends Command
 {
     protected $signature = 'opcache:generate-preload
-                            {--core : Include Laravel core}
-                            {--models : Include models}
-                            {--controllers : Include controllers}
-                            {--middleware : Include middleware}
-                            {--all : Include everything}';
+                            {--core : Incluir o core do Laravel}
+                            {--models : Incluir models}
+                            {--controllers : Incluir controllers}
+                            {--middleware : Incluir middleware}
+                            {--all : Incluir tudo}';
 
-    protected $description = 'Generate OPcache preload file';
+    protected $description = 'Gera o arquivo de preload do OPcache';
 
     public function handle(OPcachePreloadGenerator $generator)
     {
-        $this->info('Generating OPcache preload file...');
+        $this->info('Gerando o arquivo de preload do OPcache...');
 
         if ($this->option('all')) {
             $generator->addLaravelCore()
@@ -899,30 +899,30 @@ class GenerateOPcachePreloadCommand extends Command
         } else {
             if ($this->option('core')) {
                 $generator->addLaravelCore();
-                $this->line('✓ Added Laravel core classes');
+                $this->line('✓ Classes core do Laravel adicionadas');
             }
 
             if ($this->option('models')) {
                 $generator->addModels();
-                $this->line('✓ Added models');
+                $this->line('✓ Models adicionados');
             }
 
             if ($this->option('controllers')) {
                 $generator->addControllers();
-                $this->line('✓ Added controllers');
+                $this->line('✓ Controllers adicionados');
             }
 
             if ($this->option('middleware')) {
                 $generator->addMiddleware();
-                $this->line('✓ Added middleware');
+                $this->line('✓ Middleware adicionado');
             }
         }
 
         $outputPath = $generator->generate();
 
-        $this->info("Preload file generated: {$outputPath}");
+        $this->info("Arquivo de preload gerado: {$outputPath}");
         $this->newLine();
-        $this->line('Add to php.ini:');
+        $this->line('Coloque no php.ini:');
         $this->line("opcache.preload={$outputPath}");
         $this->line('opcache.preload_user=www-data');
 
@@ -930,7 +930,7 @@ class GenerateOPcachePreloadCommand extends Command
     }
 }
 
-// Service Provider для регистрации
+// Service Provider para registrar
 namespace App\Providers;
 
 use App\Services\OPcachePreloadGenerator;
@@ -955,12 +955,12 @@ class OPcacheServiceProvider extends ServiceProvider
 ```
 </details>
 
-### Задание 3: Automated Deploy with OPcache Management
+### Exercício 3: Deploy automatizado com gestão de OPcache
 
-Создай deploy script который автоматически управляет OPcache: warm up после deploy, monitoring, rollback при проблемах.
+**Enunciado:** Crie um script de deploy que gerencia o OPcache sozinho: warm up (aquecer o cache) depois do deploy, monitoring, rollback se der problema.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -980,11 +980,11 @@ class DeployOPcacheManager
     }
 
     /**
-     * Pre-deploy: сохранить метрики
+     * Pre-deploy: guardar as métricas
      */
     public function preDeploy(): array
     {
-        $this->log('Starting pre-deploy OPcache check...');
+        $this->log('Começando a checagem de OPcache no pre-deploy...');
 
         $metrics = [];
 
@@ -995,18 +995,18 @@ class DeployOPcacheManager
             $this->log("Server {$server}: Hit Rate = {$status['hit_rate']}%");
         }
 
-        // Сохранить метрики для сравнения
+        // Guardar as métricas para comparar
         cache()->put('deploy:opcache:pre_metrics', $metrics, 3600);
 
         return $metrics;
     }
 
     /**
-     * Post-deploy: clear OPcache на всех серверах
+     * Post-deploy: limpar o OPcache em todos os servidores
      */
     public function postDeploy(): bool
     {
-        $this->log('Clearing OPcache on all servers...');
+        $this->log('Limpando o OPcache em todos os servidores...');
 
         $results = [];
 
@@ -1015,9 +1015,9 @@ class DeployOPcacheManager
             $results[$server] = $success;
 
             if ($success) {
-                $this->log("✓ OPcache cleared on {$server}");
+                $this->log("✓ OPcache limpo em {$server}");
             } else {
-                $this->log("✗ Failed to clear OPcache on {$server}", 'error');
+                $this->log("✗ Falha ao limpar o OPcache em {$server}", 'error');
             }
         }
 
@@ -1025,60 +1025,60 @@ class DeployOPcacheManager
     }
 
     /**
-     * Warm up: прогреть cache после deploy
+     * Warm up: aquecer o cache depois do deploy
      */
     public function warmUp(): bool
     {
-        $this->log('Warming up OPcache...');
+        $this->log('Aquecendo o OPcache...');
 
         $urls = $this->getWarmUpUrls();
 
         foreach ($urls as $url) {
             try {
                 Http::timeout(10)->get($url);
-                $this->log("✓ Warmed up: {$url}");
+                $this->log("✓ Warm up feito: {$url}");
             } catch (\Exception $e) {
-                $this->log("✗ Failed to warm up {$url}: {$e->getMessage()}", 'error');
+                $this->log("✗ Falha no warm up de {$url}: {$e->getMessage()}", 'error');
             }
 
-            usleep(100000); // 100ms delay between requests
+            usleep(100000); // delay de 100ms entre requests
         }
 
         return true;
     }
 
     /**
-     * Verify: проверить что deploy прошел успешно
+     * Verify: checar se o deploy deu certo
      */
     public function verify(): array
     {
-        $this->log('Verifying OPcache after deploy...');
+        $this->log('Verificando o OPcache depois do deploy...');
 
-        sleep(5); // Подождать немного для накопления метрик
+        sleep(5); // Esperar um pouco para as métricas acumularem
 
         $issues = [];
 
         foreach ($this->servers as $server) {
             $status = $this->getServerOPcacheStatus($server);
 
-            // Проверить hit rate
+            // Checar hit rate
             if ($status['hit_rate'] < 80) {
-                $issues[] = "Low hit rate on {$server}: {$status['hit_rate']}%";
+                $issues[] = "Hit rate baixo em {$server}: {$status['hit_rate']}%";
             }
 
-            // Проверить memory
+            // Checar memory
             if ($status['memory_usage'] > 95) {
-                $issues[] = "High memory usage on {$server}: {$status['memory_usage']}%";
+                $issues[] = "Uso de memória alto em {$server}: {$status['memory_usage']}%";
             }
 
-            // Проверить restarts
+            // Checar restarts
             if ($status['oom_restarts'] > 0) {
-                $issues[] = "OOM restarts detected on {$server}";
+                $issues[] = "Restarts por OOM em {$server}";
             }
         }
 
         if (empty($issues)) {
-            $this->log('✓ OPcache verification passed');
+            $this->log('✓ Verificação do OPcache ok');
         } else {
             foreach ($issues as $issue) {
                 $this->log("✗ {$issue}", 'error');
@@ -1092,13 +1092,13 @@ class DeployOPcacheManager
     }
 
     /**
-     * Rollback: восстановить предыдущее состояние
+     * Rollback: voltar ao estado anterior
      */
     public function rollback(): bool
     {
-        $this->log('Rolling back OPcache...');
+        $this->log('Fazendo rollback do OPcache...');
 
-        // Очистить cache для перезагрузки старого кода
+        // Limpar o cache para recarregar o código antigo
         return $this->postDeploy();
     }
 
@@ -1118,7 +1118,7 @@ class DeployOPcacheManager
                 ];
             }
         } catch (\Exception $e) {
-            $this->log("Failed to get OPcache status from {$server}: {$e->getMessage()}", 'error');
+            $this->log("Falha ao pegar o status do OPcache em {$server}: {$e->getMessage()}", 'error');
         }
 
         return [
@@ -1136,7 +1136,7 @@ class DeployOPcacheManager
 
             return $response->successful();
         } catch (\Exception $e) {
-            $this->log("Failed to clear OPcache on {$server}: {$e->getMessage()}", 'error');
+            $this->log("Falha ao limpar o OPcache em {$server}: {$e->getMessage()}", 'error');
             return false;
         }
     }
@@ -1147,7 +1147,7 @@ class DeployOPcacheManager
             $this->appUrl . '/',
             $this->appUrl . '/api/health',
             $this->appUrl . '/blog',
-            // Добавить другие важные URLs
+            // Coloque outras URLs importantes
         ];
     }
 
@@ -1157,7 +1157,7 @@ class DeployOPcacheManager
     }
 }
 
-// Artisan Command для deploy
+// Artisan Command para deploy
 namespace App\Console\Commands;
 
 use App\Services\DeployOPcacheManager;
@@ -1165,21 +1165,21 @@ use Illuminate\Console\Command;
 
 class DeployCommand extends Command
 {
-    protected $signature = 'deploy {--skip-opcache : Skip OPcache management}';
-    protected $description = 'Deploy application with OPcache management';
+    protected $signature = 'deploy {--skip-opcache : Pular a gestão do OPcache}';
+    protected $description = 'Faz deploy do app com gestão de OPcache';
 
     public function handle(DeployOPcacheManager $opcacheManager)
     {
-        $this->info('Starting deployment...');
+        $this->info('Começando o deploy...');
 
-        // Pre-deploy checks
+        // Checagens de pre-deploy
         if (!$this->option('skip-opcache')) {
-            $this->info('Running pre-deploy OPcache checks...');
+            $this->info('Rodando as checagens de OPcache no pre-deploy...');
             $opcacheManager->preDeploy();
         }
 
-        // Deploy code (git pull, composer install, etc.)
-        $this->info('Deploying code...');
+        // Deploy do código (git pull, composer install, etc.)
+        $this->info('Fazendo deploy do código...');
         $this->call('down');
 
         exec('git pull origin main');
@@ -1190,31 +1190,31 @@ class DeployCommand extends Command
         $this->call('route:cache');
         $this->call('view:cache');
 
-        // Post-deploy OPcache management
+        // Gestão do OPcache no post-deploy
         if (!$this->option('skip-opcache')) {
-            $this->info('Clearing OPcache...');
+            $this->info('Limpando o OPcache...');
             if (!$opcacheManager->postDeploy()) {
-                $this->error('Failed to clear OPcache on some servers');
+                $this->error('Falhou ao limpar o OPcache em alguns servidores');
 
-                if ($this->confirm('Rollback?', true)) {
+                if ($this->confirm('Fazer rollback?', true)) {
                     $this->call('deploy:rollback');
                     return 1;
                 }
             }
 
-            $this->info('Warming up OPcache...');
+            $this->info('Aquecendo o OPcache...');
             $opcacheManager->warmUp();
 
-            $this->info('Verifying deployment...');
+            $this->info('Verificando o deploy...');
             $result = $opcacheManager->verify();
 
             if (!$result['success']) {
-                $this->error('Deployment verification failed:');
+                $this->error('A verificação do deploy falhou:');
                 foreach ($result['issues'] as $issue) {
                     $this->line("  - {$issue}");
                 }
 
-                if ($this->confirm('Rollback?', true)) {
+                if ($this->confirm('Fazer rollback?', true)) {
                     $this->call('deploy:rollback');
                     return 1;
                 }
@@ -1222,13 +1222,13 @@ class DeployCommand extends Command
         }
 
         $this->call('up');
-        $this->info('Deployment completed successfully!');
+        $this->info('Deploy concluído com sucesso!');
 
         return 0;
     }
 }
 
-// Bash deploy script
+// Script bash de deploy
 /*
 #!/bin/bash
 
@@ -1236,40 +1236,40 @@ class DeployCommand extends Command
 
 set -e
 
-echo "Starting deployment..."
+echo "Começando o deploy..."
 
 # Pre-deploy
 php artisan deploy:pre-check
 
-# Pull code
+# Puxar o código
 git pull origin main
 
-# Install dependencies
+# Instalar as dependências
 composer install --no-dev --optimize-autoloader
 
-# Laravel optimizations
+# Otimizações do Laravel
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Clear OPcache
+# Limpar o OPcache
 php artisan opcache:clear
 
-# Reload PHP-FPM
+# Recarregar o PHP-FPM
 sudo systemctl reload php8.2-fpm
 
 # Warm up
 php artisan cache:warm
 php artisan opcache:warm
 
-# Verify
+# Verificar
 php artisan deploy:verify
 
-echo "Deployment completed!"
+echo "Deploy concluído!"
 */
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

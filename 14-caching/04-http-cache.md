@@ -1,41 +1,41 @@
 # 14.4 HTTP Cache
 
-## Краткое резюме
+## Resumo
 
-> **HTTP Cache** — кэширование на уровне browser/CDN/proxy через HTTP headers.
+> **HTTP Cache** — cache no nível de browser/CDN/proxy via HTTP headers.
 >
-> **Cache-Control:** `public` (везде), `private` (только browser), `max-age` (TTL), `no-cache` (revalidate), `no-store` (не кэшировать). **ETag** — fingerprint контента, 304 Not Modified если не изменился. **Last-Modified** — альтернатива ETag.
+> **Cache-Control:** `public` (em todo lugar), `private` (só no browser), `max-age` (TTL), `no-cache` (revalidate), `no-store` (não cacheia). **ETag** — fingerprint do conteúdo, 304 Not Modified se não mudou. **Last-Modified** — alternativa ao ETag.
 >
-> Static assets: `max-age=31536000, immutable` с hash в URL. Dynamic HTML: `private, no-cache`. CDN: `s-maxage` для CDN, `max-age` для browser. Vary: разные кэши для разных headers (language, user-agent).
+> Static assets: `max-age=31536000, immutable` com hash na URL. Dynamic HTML: `private, no-cache`. CDN: `s-maxage` para a CDN, `max-age` para o browser. Vary: caches diferentes para headers diferentes (language, user-agent).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Cache-Control Header](#cache-control-header)
-- [Примеры Cache-Control](#примеры-cache-control)
+- [Exemplos de Cache-Control](#exemplos-de-cache-control)
 - [ETag](#etag-entity-tag)
 - [Last-Modified](#last-modified)
 - [CDN Cache](#cdn-cache)
 - [Browser Cache Busting](#browser-cache-busting)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Boas práticas](#boas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **HTTP Cache:**
-Кэширование на уровне HTTP (browser, CDN, proxy).
+Cache no nível HTTP (browser, CDN, proxy).
 
-**Зачем:**
-- Уменьшить latency (не ходить на сервер)
-- Снизить bandwidth
-- Снизить нагрузку на сервер
+**Para quê:**
+- Diminuir latency (não ir no servidor)
+- Reduzir banda
+- Reduzir carga no servidor
 
-**Levels:**
+**Níveis:**
 1. Browser Cache
 2. CDN Cache
 3. Reverse Proxy Cache (Varnish, Nginx)
@@ -44,7 +44,7 @@
 
 ## Cache-Control Header
 
-**Базовые директивы:**
+**Diretivas básicas:**
 
 ```php
 // Laravel Response
@@ -52,31 +52,31 @@ return response($content)
     ->header('Cache-Control', 'public, max-age=3600');
 ```
 
-**Директивы:**
+**Diretivas:**
 
 ```
-public         — может кэшироваться везде (browser, CDN, proxy)
-private        — только browser (не CDN/proxy)
-no-cache       — проверить с сервером (revalidation)
-no-store       — не кэшировать вообще
-max-age=3600   — кэш на 3600 секунд
-s-maxage=7200  — для shared caches (CDN, proxy)
-must-revalidate — после expiration обязательно revalidate
-immutable      — не менялся (perfect для assets с hash)
+public         — pode cachear em todo lugar (browser, CDN, proxy)
+private        — só no browser (não CDN/proxy)
+no-cache       — checa com o servidor (revalidation)
+no-store       — não cacheia de jeito nenhum
+max-age=3600   — cache por 3600 segundos
+s-maxage=7200  — para shared caches (CDN, proxy)
+must-revalidate — depois de expirar, revalidate é obrigatório
+immutable      — não muda (perfeito para assets com hash)
 ```
 
 ---
 
-## Примеры Cache-Control
+## Exemplos de Cache-Control
 
 ### 1. Static Assets (CSS, JS, Images)
 
 ```php
-// Кэшировать навсегда (с hash в URL)
+// Cacheia para sempre (com hash na URL)
 return response()->file($path)
     ->header('Cache-Control', 'public, max-age=31536000, immutable');
 
-// URL: /css/app.abc123.css (hash меняется при изменении файла)
+// URL: /css/app.abc123.css (o hash muda quando o arquivo muda)
 ```
 
 **Vite/Laravel Mix:**
@@ -85,7 +85,7 @@ return response()->file($path)
 // resources/views/layouts/app.blade.php
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-// Генерирует: /build/assets/app-abc123.css
+// Gera: /build/assets/app-abc123.css
 ```
 
 ---
@@ -93,17 +93,17 @@ return response()->file($path)
 ### 2. Dynamic HTML
 
 ```php
-// Не кэшировать (данные пользователя)
+// Não cacheia (dado do usuário)
 return view('dashboard')
     ->header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 ```
 
 ---
 
-### 3. Public Pages
+### 3. Páginas públicas
 
 ```php
-// Кэшировать на 1 час
+// Cacheia por 1 hora
 return view('blog.post', ['post' => $post])
     ->header('Cache-Control', 'public, max-age=3600');
 ```
@@ -113,7 +113,7 @@ return view('blog.post', ['post' => $post])
 ### 4. API Responses
 
 ```php
-// Кэшировать на 5 минут
+// Cacheia por 5 minutos
 return response()->json($data)
     ->header('Cache-Control', 'public, max-age=300');
 ```
@@ -122,20 +122,20 @@ return response()->json($data)
 
 ## ETag (Entity Tag)
 
-**Что это:**
-Fingerprint контента. Если контент не изменился, возвращаем 304 Not Modified.
+**O que é:**
+Fingerprint do conteúdo. Se o conteúdo não mudou, devolve 304 Not Modified.
 
-**Алгоритм:**
+**Algoritmo:**
 
 ```
 1. Client → Server: GET /page
 2. Server → Client: 200 OK, ETag: "abc123"
-3. Client сохраняет ETag
+3. Client guarda o ETag
 
 4. Client → Server: GET /page, If-None-Match: "abc123"
-5. Server проверяет ETag
-   - Если тот же → 304 Not Modified (no body)
-   - Если изменился → 200 OK, ETag: "def456"
+5. Server checa o ETag
+   - Se for o mesmo → 304 Not Modified (sem body)
+   - Se mudou → 200 OK, ETag: "def456"
 ```
 
 **Laravel:**
@@ -157,7 +157,7 @@ return response($content)
 
 ## Last-Modified
 
-**Альтернатива ETag:**
+**Alternativa ao ETag:**
 
 ```php
 $post = Post::find($id);
@@ -199,21 +199,21 @@ protected $middlewareGroups = [
 // config/responsecache.php
 return [
     'enabled' => env('RESPONSE_CACHE_ENABLED', true),
-    'cache_lifetime_in_seconds' => 60 * 60 * 24 * 7,  // 1 week
+    'cache_lifetime_in_seconds' => 60 * 60 * 24 * 7,  // 1 semana
     'cache_profile' => CacheAllSuccessfulGetRequests::class,
 ];
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
-// Все GET requests кэшируются автоматически
+// Todo GET request entra no cache sozinho
 Route::get('/blog/{post}', [PostController::class, 'show']);
 
-// Вручную invalidate
+// Invalidate na mão
 ResponseCache::forget('/blog/post-1');
 
-// Или flush всё
+// Ou flush de tudo
 ResponseCache::flush();
 ```
 
@@ -224,15 +224,15 @@ ResponseCache::flush();
 **CloudFlare, AWS CloudFront, Fastly:**
 
 ```php
-// Кэшировать на CDN
+// Cacheia na CDN
 return response($content)
     ->header('Cache-Control', 'public, s-maxage=86400, max-age=3600');
 
-// s-maxage — для CDN (24 hours)
-// max-age — для browser (1 hour)
+// s-maxage — para a CDN (24 horas)
+// max-age — para o browser (1 hora)
 ```
 
-**Purge CDN cache:**
+**Purge do cache da CDN:**
 
 ```php
 // CloudFlare API
@@ -245,15 +245,15 @@ Http::post('https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache', [
 
 ## Vary Header
 
-**Кэш зависит от заголовка:**
+**O cache depende do header:**
 
 ```php
-// Разные кэши для разных Accept-Language
+// Caches diferentes por Accept-Language
 return response($content)
     ->header('Cache-Control', 'public, max-age=3600')
     ->header('Vary', 'Accept-Language');
 
-// Разные кэши для desktop/mobile
+// Caches diferentes para desktop/mobile
 return response($content)
     ->header('Vary', 'User-Agent');
 ```
@@ -262,16 +262,16 @@ return response($content)
 
 ## Browser Cache Busting
 
-**Проблема:**
-Обновили CSS/JS, но browser использует старый cache.
+**Problema:**
+Você atualizou o CSS/JS, mas o browser usa o cache antigo.
 
-**Решение: Hash в URL**
+**Solução: hash na URL**
 
 ```php
 // Laravel Mix/Vite
 mix('css/app.css')  // /css/app.css?id=abc123
 
-// При изменении файла → новый hash → новый URL → browser загрузит
+// Se o arquivo muda → hash novo → URL nova → o browser baixa de novo
 ```
 
 ---
@@ -290,7 +290,7 @@ server {
         proxy_cache_key "$scheme$request_method$host$request_uri";
         proxy_pass http://backend;
 
-        # Добавить header с cache status
+        # Adiciona header com o status do cache
         add_header X-Cache-Status $upstream_cache_status;
     }
 }
@@ -299,18 +299,18 @@ server {
 **Laravel Application:**
 
 ```php
-// Просто установить Cache-Control
+// Só setar o Cache-Control
 return response($content)
     ->header('Cache-Control', 'public, max-age=3600');
 
-// Nginx автоматически закэширует
+// O Nginx cacheia sozinho
 ```
 
 ---
 
 ## Cache Warming
 
-**Прогрев cache после deploy:**
+**Aquecer o cache depois do deploy:**
 
 ```php
 class WarmHttpCacheCommand extends Command
@@ -324,8 +324,8 @@ class WarmHttpCacheCommand extends Command
         ];
 
         foreach ($urls as $url) {
-            Http::get($url);  // Прогреть cache
-            $this->info("Warmed: {$url}");
+            Http::get($url);  // Aquecer o cache
+            $this->info("Aquecido: {$url}");
         }
     }
 }
@@ -336,56 +336,56 @@ php artisan cache:warm-http
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
 ✓ Static assets: public, max-age=31536000, immutable
 ✓ Dynamic HTML: private, no-cache
-✓ Public pages: public, max-age=3600
+✓ Páginas públicas: public, max-age=3600
 ✓ API: public, max-age=300
-✓ ETag или Last-Modified для revalidation
-✓ Hash в URL для cache busting (Laravel Mix/Vite)
-✓ CDN для static assets
-✓ Vary header для разных версий (language, user-agent)
+✓ ETag ou Last-Modified para revalidation
+✓ Hash na URL para cache busting (Laravel Mix/Vite)
+✓ CDN para static assets
+✓ Vary header para versões diferentes (language, user-agent)
 ✓ Monitoring: cache hit rate
-✓ Purge CDN после deploy
+✓ Purge da CDN depois do deploy
 ```
 
 ---
 
-## Security
+## Segurança
 
-**Не кэшировать:**
-- Персональные данные (private)
-- Sensitive pages (no-store)
+**Não cacheie:**
+- Dado pessoal (private)
+- Páginas sensíveis (no-store)
 - CSRF tokens (no-cache)
 
 ```php
-// Личные данные
+// Dado pessoal
 return view('profile')
     ->header('Cache-Control', 'private, no-store');
 
-// Страницы с формами
+// Páginas com formulário
 return view('checkout')
     ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "HTTP Cache — кэширование на browser/CDN/proxy уровне. Cache-Control: public (везде), private (только browser), max-age (TTL), no-cache (revalidate), no-store (не кэшировать). ETag: fingerprint контента, 304 Not Modified если не изменился. Last-Modified альтернатива. Static assets: max-age=31536000, immutable с hash в URL. Dynamic HTML: private, no-cache. CDN: s-maxage для CDN, max-age для browser. Vary: разные кэши для разных headers. Laravel: Response Cache package, Vite/Mix для cache busting. Best practices: разные стратегии для разных типов контента, не кэшировать персональные данные."
+> "HTTP Cache é cache no nível de browser/CDN/proxy. Cache-Control: public (em todo lugar), private (só no browser), max-age (TTL), no-cache (revalidate), no-store (não cacheia). ETag: fingerprint do conteúdo, 304 Not Modified se não mudou. Last-Modified é a alternativa. Static assets: max-age=31536000, immutable com hash na URL. Dynamic HTML: private, no-cache. CDN: s-maxage para a CDN, max-age para o browser. Vary: caches diferentes para headers diferentes. No Laravel: package Response Cache, Vite/Mix para cache busting. Boas práticas: estratégia diferente por tipo de conteúdo, não cacheia dado pessoal."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Middleware для ETag и Conditional Requests
+### Exercício 1: Middleware para ETag e Conditional Requests
 
-Создай middleware который генерирует ETag для responses и обрабатывает If-None-Match headers (304 Not Modified).
+**Enunciado:** Crie um middleware que gera ETag para as responses e trata os headers If-None-Match (304 Not Modified).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Http\Middleware;
@@ -397,13 +397,13 @@ use Illuminate\Http\Response;
 class ETagMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Processa o request.
      */
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
 
-        // Только для успешных GET/HEAD запросов
+        // Só GET/HEAD com sucesso
         if (!$request->isMethod('GET') && !$request->isMethod('HEAD')) {
             return $response;
         }
@@ -412,18 +412,18 @@ class ETagMiddleware
             return $response;
         }
 
-        // Генерировать ETag из контента
+        // Gera o ETag a partir do conteúdo
         $content = $response->getContent();
         $etag = md5($content);
 
-        // Установить ETag header
+        // Seta o ETag header
         $response->setEtag($etag);
 
-        // Проверить If-None-Match
+        // Checa If-None-Match
         $requestEtag = $request->header('If-None-Match');
 
         if ($requestEtag === $etag) {
-            // Контент не изменился - вернуть 304
+            // Conteúdo não mudou — devolve 304
             $response->setNotModified();
         }
 
@@ -431,18 +431,18 @@ class ETagMiddleware
     }
 }
 
-// Регистрация в Kernel.php
+// Registro no Kernel.php
 protected $middlewareGroups = [
     'web' => [
         \App\Http\Middleware\ETagMiddleware::class,
     ],
 ];
 
-// Продвинутая версия с weak ETags и исключениями
+// Versão avançada com weak ETags e exclusões
 class AdvancedETagMiddleware
 {
     /**
-     * Routes которые не должны использовать ETag
+     * Routes que não devem usar ETag
      */
     protected array $except = [
         'admin/*',
@@ -453,17 +453,17 @@ class AdvancedETagMiddleware
     {
         $response = $next($request);
 
-        // Проверить исключения
+        // Checa exclusões
         if ($this->shouldExclude($request)) {
             return $response;
         }
 
-        // Только для GET/HEAD
+        // Só GET/HEAD
         if (!$request->isMethodCacheable()) {
             return $response;
         }
 
-        // Только для успешных ответов
+        // Só responses de sucesso
         if (!$response->isSuccessful()) {
             return $response;
         }
@@ -474,20 +474,20 @@ class AdvancedETagMiddleware
             return $response;
         }
 
-        // Strong ETag (точное совпадение контента)
+        // Strong ETag (match exato do conteúdo)
         $etag = '"' . md5($content) . '"';
 
-        // Или Weak ETag (семантическое совпадение)
+        // Ou Weak ETag (match semântico)
         // $etag = 'W/"' . md5($content) . '"';
 
         $response->headers->set('ETag', $etag);
 
-        // Cache-Control для ETag
+        // Cache-Control para ETag
         if (!$response->headers->has('Cache-Control')) {
             $response->headers->set('Cache-Control', 'private, must-revalidate');
         }
 
-        // Проверить If-None-Match
+        // Checa If-None-Match
         $requestEtag = $request->header('If-None-Match');
 
         if ($requestEtag === $etag) {
@@ -509,7 +509,7 @@ class AdvancedETagMiddleware
     }
 }
 
-// Контроллер с явным ETag
+// Controller com ETag explícito
 class BlogController extends Controller
 {
     public function show(Post $post)
@@ -517,7 +517,7 @@ class BlogController extends Controller
         $content = view('blog.post', compact('post'))->render();
         $etag = md5($post->updated_at . $content);
 
-        // Проверить If-None-Match
+        // Checa If-None-Match
         if (request()->header('If-None-Match') === $etag) {
             return response('', 304)
                 ->header('ETag', $etag);
@@ -532,12 +532,12 @@ class BlogController extends Controller
 ```
 </details>
 
-### Задание 2: Response Cache Service с CDN Purge
+### Exercício 2: Response Cache Service com CDN Purge
 
-Реализуй сервис для кэширования responses с возможностью purge CDN cache (CloudFlare).
+**Enunciado:** Implemente um service que cacheia responses e consegue fazer purge do cache da CDN (CloudFlare).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -548,10 +548,10 @@ use Illuminate\Support\Facades\Http;
 class ResponseCacheService
 {
     private const CACHE_PREFIX = 'response_cache:';
-    private const DEFAULT_TTL = 3600; // 1 hour
+    private const DEFAULT_TTL = 3600; // 1 hora
 
     /**
-     * Получить закэшированный response или создать новый
+     * Pega o response do cache ou cria um novo
      */
     public function remember(string $url, callable $callback, int $ttl = null): string
     {
@@ -562,7 +562,7 @@ class ResponseCacheService
     }
 
     /**
-     * Сохранить response в cache
+     * Guarda o response no cache
      */
     public function put(string $url, string $content, int $ttl = null): void
     {
@@ -573,7 +573,7 @@ class ResponseCacheService
     }
 
     /**
-     * Invalidate cache для URL
+     * Invalida o cache da URL
      */
     public function forget(string $url): void
     {
@@ -582,16 +582,16 @@ class ResponseCacheService
     }
 
     /**
-     * Flush всего response cache
+     * Flush de todo o response cache
      */
     public function flush(): void
     {
-        // Для Redis с tags
+        // Para Redis com tags
         Cache::tags(['response_cache'])->flush();
     }
 
     /**
-     * Purge CloudFlare CDN cache
+     * Purge do cache da CDN CloudFlare
      */
     public function purgeCdn(array $urls): array
     {
@@ -599,10 +599,10 @@ class ResponseCacheService
         $apiToken = config('services.cloudflare.api_token');
 
         if (!$zoneId || !$apiToken) {
-            return ['success' => false, 'error' => 'CloudFlare not configured'];
+            return ['success' => false, 'error' => 'CloudFlare não configurada'];
         }
 
-        // Преобразовать относительные URLs в абсолютные
+        // Converte URLs relativas em absolutas
         $absoluteUrls = array_map(function ($url) {
             if (!str_starts_with($url, 'http')) {
                 $url = config('app.url') . $url;
@@ -624,7 +624,7 @@ class ResponseCacheService
 
             return [
                 'success' => false,
-                'error' => $response->json('errors.0.message', 'Unknown error'),
+                'error' => $response->json('errors.0.message', 'Erro desconhecido'),
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -632,7 +632,7 @@ class ResponseCacheService
     }
 
     /**
-     * Purge everything на CloudFlare
+     * Purge de tudo na CloudFlare
      */
     public function purgeAllCdn(): array
     {
@@ -659,7 +659,7 @@ class ResponseCacheService
     }
 }
 
-// Middleware для автоматического response caching
+// Middleware para cache automático da response
 namespace App\Http\Middleware;
 
 use App\Services\ResponseCacheService;
@@ -674,12 +674,12 @@ class CacheResponse
 
     public function handle(Request $request, Closure $next, int $ttl = 3600)
     {
-        // Только для GET requests
+        // Só GET requests
         if (!$request->isMethod('GET')) {
             return $next($request);
         }
 
-        // Только для гостей (не кэшировать персональные данные)
+        // Só para visitantes (não cacheia dado pessoal)
         if ($request->user()) {
             return $next($request);
         }
@@ -697,7 +697,7 @@ class CacheResponse
     }
 }
 
-// Observer для автоматического purge при изменении контента
+// Observer para purge automático quando o conteúdo muda
 namespace App\Observers;
 
 use App\Models\Post;
@@ -717,12 +717,12 @@ class PostObserver
             route('home'),
         ];
 
-        // Invalidate local cache
+        // Invalida o cache local
         foreach ($urls as $url) {
             $this->cacheService->forget($url);
         }
 
-        // Purge CDN
+        // Purge da CDN
         $this->cacheService->purgeCdn($urls);
     }
 
@@ -732,19 +732,19 @@ class PostObserver
     }
 }
 
-// Command для purge
+// Command de purge
 class PurgeCacheCommand extends Command
 {
     protected $signature = 'cache:purge {--cdn : Purge CDN cache} {--all : Purge all}';
-    protected $description = 'Purge response cache and optionally CDN';
+    protected $description = 'Limpa o response cache e, se quiser, a CDN';
 
     public function handle(ResponseCacheService $cacheService)
     {
-        // Purge local cache
+        // Purge do cache local
         $cacheService->flush();
-        $this->info('Local cache purged');
+        $this->info('Cache local limpo');
 
-        // Purge CDN
+        // Purge da CDN
         if ($this->option('cdn')) {
             if ($this->option('all')) {
                 $result = $cacheService->purgeAllCdn();
@@ -757,9 +757,9 @@ class PurgeCacheCommand extends Command
             }
 
             if ($result['success']) {
-                $this->info('CDN cache purged');
+                $this->info('Cache da CDN limpo');
             } else {
-                $this->error('CDN purge failed: ' . ($result['error'] ?? 'Unknown'));
+                $this->error('Falha no purge da CDN: ' . ($result['error'] ?? 'Desconhecido'));
             }
         }
     }
@@ -767,12 +767,12 @@ class PurgeCacheCommand extends Command
 ```
 </details>
 
-### Задание 3: Smart Cache Headers Manager
+### Exercício 3: Smart Cache Headers Manager
 
-Создай сервис который автоматически устанавливает правильные Cache-Control headers в зависимости от типа контента.
+**Enunciado:** Crie um service que coloca os Cache-Control headers certos conforme o tipo de conteúdo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -780,7 +780,7 @@ namespace App\Services;
 class CacheHeadersManager
 {
     /**
-     * Конфигурация cache headers для разных типов контента
+     * Config dos cache headers por tipo de conteúdo
      */
     private array $profiles = [
         'static_assets' => [
@@ -806,7 +806,7 @@ class CacheHeadersManager
     ];
 
     /**
-     * Применить cache headers к response
+     * Aplica os cache headers na response
      */
     public function apply($response, string $url): void
     {
@@ -815,7 +815,7 @@ class CacheHeadersManager
         if ($profile) {
             $response->header('Cache-Control', $profile['cache_control']);
 
-            // Vary header для разных версий
+            // Vary header para versões diferentes
             if ($this->shouldVary($url)) {
                 $response->header('Vary', 'Accept-Language, User-Agent');
             }
@@ -823,7 +823,7 @@ class CacheHeadersManager
     }
 
     /**
-     * Определить профиль для URL
+     * Detecta o perfil da URL
      */
     private function detectProfile(string $url): ?array
     {
@@ -840,14 +840,14 @@ class CacheHeadersManager
 
     private function matchesPattern(string $url, string $pattern): bool
     {
-        // Простая проверка wildcards
+        // Checagem simples de wildcards
         $regex = '#^' . str_replace('\*', '.*', preg_quote($pattern, '#')) . '$#';
         return preg_match($regex, $url) === 1;
     }
 
     private function shouldVary(string $url): bool
     {
-        // Vary для многоязычных страниц
+        // Vary para páginas multilíngues
         return str_starts_with($url, '/blog/') || str_starts_with($url, '/docs/');
     }
 }
@@ -869,14 +869,14 @@ class SetCacheHeaders
     {
         $response = $next($request);
 
-        // Применить cache headers
+        // Aplica os cache headers
         $this->cacheManager->apply($response, $request->path());
 
         return $response;
     }
 }
 
-// Response Macro для удобства
+// Response Macro para facilitar
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
@@ -886,27 +886,27 @@ class ResponseMacroServiceProvider extends ServiceProvider
 {
     public function boot()
     {
-        // Macro для static assets
+        // Macro para static assets
         Response::macro('cacheForever', function () {
             return $this->header('Cache-Control', 'public, max-age=31536000, immutable');
         });
 
-        // Macro для public pages
+        // Macro para páginas públicas
         Response::macro('cachePublic', function (int $seconds = 3600) {
             return $this->header('Cache-Control', "public, max-age={$seconds}");
         });
 
-        // Macro для private pages
+        // Macro para páginas privadas
         Response::macro('cachePrivate', function (int $seconds = 3600) {
             return $this->header('Cache-Control', "private, max-age={$seconds}");
         });
 
-        // Macro для no-cache
+        // Macro para no-cache
         Response::macro('noCache', function () {
             return $this->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         });
 
-        // Macro для CDN
+        // Macro para CDN
         Response::macro('cacheCdn', function (int $cdnSeconds = 86400, int $browserSeconds = 3600) {
             return $this->header(
                 'Cache-Control',
@@ -916,7 +916,7 @@ class ResponseMacroServiceProvider extends ServiceProvider
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 class AssetController extends Controller
 {
     public function css(string $filename)
@@ -962,4 +962,4 @@ class ApiController extends Controller
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

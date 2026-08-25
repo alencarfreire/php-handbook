@@ -1,46 +1,46 @@
 # 14.2 Redis Cache
 
-## Краткое резюме
+## Resumo
 
-> **Redis** — in-memory key-value store с rich data structures (strings, hashes, lists, sets, sorted sets).
+> **Redis** — in-memory key-value store com estruturas ricas (strings, hashes, lists, sets, sorted sets).
 >
-> Laravel: `Cache::store('redis')->remember()`. Data structures: **hashes** (objects), **lists** (queues), **sets** (tags, online users), **sorted sets** (leaderboards). **Pipeline** для batch operations, **Transactions** (MULTI/EXEC), **Lua scripts** для atomic operations.
+> Laravel: `Cache::store('redis')->remember()`. Estruturas: **hashes** (objetos), **lists** (queues), **sets** (tags, usuários online), **sorted sets** (leaderboards). **Pipeline** para batch, **Transactions** (MULTI/EXEC), **Lua scripts** para operações atômicas.
 >
-> Use cases: cache, sessions, rate limiting, distributed locks, leaderboards, pub/sub, queues. Persistence: RDB (snapshots), AOF (logs).
+> Casos de uso: cache, sessões, rate limiting, distributed locks, leaderboards, pub/sub, queues. Persistência: RDB (snapshots), AOF (logs).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Установка](#установка)
-- [Базовое использование](#базовое-использование)
-- [Data Structures](#data-structures)
-- [Pipeline](#pipeline-batch-operations)
-- [Transactions](#transactions)
-- [Cache Patterns](#cache-patterns)
-- [Best Practices](#best-practices)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Instalação](#instalação)
+- [Uso básico](#uso-básico)
+- [Estruturas de dados](#estruturas-de-dados)
+- [Pipeline](#pipeline-operações-em-batch)
+- [Transações](#transações)
+- [Padrões de cache](#padrões-de-cache)
+- [Boas práticas](#boas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Redis:**
-In-memory key-value store. Используется как cache, message broker, session store, leaderboard, и многое другое.
+In-memory key-value store. Serve como cache, message broker, session store, leaderboard e muito mais.
 
-**Зачем:**
-- Очень быстрый (in-memory)
-- Rich data structures (strings, lists, sets, hashes, sorted sets)
-- Persistence (optional)
+**Para quê:**
+- Muito rápido (in-memory)
+- Estruturas ricas (strings, lists, sets, hashes, sorted sets)
+- Persistência (opcional)
 - Pub/Sub
 - Transactions
 - Lua scripting
 
 ---
 
-## Установка
+## Instalação
 
 **Docker:**
 
@@ -53,7 +53,7 @@ docker run -d --name redis -p 6379:6379 redis:alpine
 ```php
 // config/database.php
 'redis' => [
-    'client' => 'phpredis',  // или 'predis'
+    'client' => 'phpredis',  // ou 'predis'
     'default' => [
         'host' => env('REDIS_HOST', '127.0.0.1'),
         'password' => env('REDIS_PASSWORD'),
@@ -64,52 +64,52 @@ docker run -d --name redis -p 6379:6379 redis:alpine
         'host' => env('REDIS_HOST', '127.0.0.1'),
         'password' => env('REDIS_PASSWORD'),
         'port' => env('REDIS_PORT', 6379),
-        'database' => 1,  // Отдельная БД для cache
+        'database' => 1,  // Database separado para cache
     ],
 ],
 ```
 
 ---
 
-## Базовое использование
+## Uso básico
 
 **Laravel Cache:**
 
 ```php
-// Put (set with TTL)
+// Put (set com TTL)
 Cache::store('redis')->put('key', 'value', 3600);
 
 // Get
 $value = Cache::store('redis')->get('key');
 
-// Remember (get or set)
+// Remember (get ou set)
 $users = Cache::store('redis')->remember('users', 3600, function () {
     return User::all();
 });
 
-// Forget (delete)
+// Forget (apagar)
 Cache::store('redis')->forget('key');
 
-// Flush (delete all)
+// Flush (apagar tudo)
 Cache::store('redis')->flush();
 ```
 
 ---
 
-## Data Structures
+## Estruturas de dados
 
 ### 1. Strings
 
-**Базовые операции:**
+**Operações básicas:**
 
 ```php
 // Set
-Redis::set('user:1:name', 'John');
+Redis::set('user:1:name', 'João');
 
 // Get
-$name = Redis::get('user:1:name');  // "John"
+$name = Redis::get('user:1:name');  // "João"
 
-// Set with expiration
+// Set com expiration
 Redis::setex('session:abc', 3600, json_encode($data));
 
 // Increment
@@ -122,26 +122,26 @@ Redis::decr('stock');
 
 ---
 
-### 2. Hashes (для объектов)
+### 2. Hashes (para objetos)
 
 ```php
 // Set hash fields
-Redis::hset('user:1', 'name', 'John');
-Redis::hset('user:1', 'email', 'john@example.com');
+Redis::hset('user:1', 'name', 'João');
+Redis::hset('user:1', 'email', 'joao@email.com');
 
-// Or batch
+// Ou em batch
 Redis::hmset('user:1', [
-    'name' => 'John',
-    'email' => 'john@example.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
     'age' => 30,
 ]);
 
 // Get field
-$name = Redis::hget('user:1', 'name');  // "John"
+$name = Redis::hget('user:1', 'name');  // "João"
 
 // Get all
 $user = Redis::hgetall('user:1');
-// ['name' => 'John', 'email' => 'john@example.com', 'age' => '30']
+// ['name' => 'João', 'email' => 'joao@email.com', 'age' => '30']
 
 // Increment field
 Redis::hincrby('user:1', 'age', 1);  // 31
@@ -149,27 +149,27 @@ Redis::hincrby('user:1', 'age', 1);  // 31
 
 ---
 
-### 3. Lists (для очередей)
+### 3. Lists (para queues)
 
 ```php
-// Push to list
+// Push na list
 Redis::lpush('queue', 'task1');
 Redis::lpush('queue', 'task2');  // ['task2', 'task1']
 
-// Pop from list
+// Pop da list
 $task = Redis::lpop('queue');  // 'task2'
 
-// Blocking pop (wait for item)
-$task = Redis::blpop('queue', 5);  // Wait 5 seconds
+// Blocking pop (espera o item)
+$task = Redis::blpop('queue', 5);  // Espera 5 segundos
 
-// Get range
-$tasks = Redis::lrange('queue', 0, -1);  // All items
+// Pegar o range
+$tasks = Redis::lrange('queue', 0, -1);  // Todos os itens
 
-// List length
+// Tamanho da list
 $count = Redis::llen('queue');
 ```
 
-**Use case: Job Queue**
+**Caso de uso: Job Queue**
 
 ```php
 // Producer
@@ -189,27 +189,27 @@ while (true) {
 
 ---
 
-### 4. Sets (уникальные элементы)
+### 4. Sets (elementos únicos)
 
 ```php
-// Add to set
+// Adicionar no set
 Redis::sadd('online_users', 1);
 Redis::sadd('online_users', 2);
-Redis::sadd('online_users', 1);  // Дубликат игнорируется
+Redis::sadd('online_users', 1);  // Duplicata é ignorada
 
-// Get members
+// Pegar os membros
 $users = Redis::smembers('online_users');  // [1, 2]
 
-// Check membership
+// Checar se está no set
 $isOnline = Redis::sismember('online_users', 1);  // true
 
-// Remove
+// Remover
 Redis::srem('online_users', 1);
 
-// Count
+// Contar
 $count = Redis::scard('online_users');
 
-// Set operations
+// Operações de set
 Redis::sadd('set1', 1, 2, 3);
 Redis::sadd('set2', 2, 3, 4);
 
@@ -218,13 +218,13 @@ $union = Redis::sunion('set1', 'set2');  // [1, 2, 3, 4]
 $diff = Redis::sdiff('set1', 'set2');  // [1]
 ```
 
-**Use case: Tags**
+**Caso de uso: Tags**
 
 ```php
-// Add tags to post
+// Adicionar tags no post
 Redis::sadd('post:1:tags', 'php', 'laravel', 'redis');
 
-// Get posts by tag
+// Pegar posts pela tag
 Redis::sadd('tag:php:posts', 1, 2, 3);
 Redis::sadd('tag:laravel:posts', 1, 4);
 
@@ -233,35 +233,35 @@ $posts = Redis::sinter('tag:php:posts', 'tag:laravel:posts');  // [1]
 
 ---
 
-### 5. Sorted Sets (для leaderboards)
+### 5. Sorted Sets (para leaderboards)
 
 ```php
-// Add with score
+// Adicionar com score
 Redis::zadd('leaderboard', 100, 'player1');
 Redis::zadd('leaderboard', 200, 'player2');
 Redis::zadd('leaderboard', 150, 'player3');
 
-// Get top N (highest scores)
+// Pegar o top N (maiores scores)
 $top = Redis::zrevrange('leaderboard', 0, 9);  // Top 10
 // ['player2', 'player3', 'player1']
 
-// Get rank (0-based)
-$rank = Redis::zrevrank('leaderboard', 'player2');  // 0 (first)
+// Pegar o rank (0-based)
+$rank = Redis::zrevrank('leaderboard', 'player2');  // 0 (primeiro)
 
-// Get score
+// Pegar o score
 $score = Redis::zscore('leaderboard', 'player1');  // 100
 
-// Increment score
+// Incrementar o score
 Redis::zincrby('leaderboard', 10, 'player1');  // 110
 
-// Count
+// Contar
 $count = Redis::zcard('leaderboard');
 
-// Get range by score
+// Pegar o range por score
 $players = Redis::zrangebyscore('leaderboard', 100, 200);
 ```
 
-**Use case: Leaderboard**
+**Caso de uso: Leaderboard**
 
 ```php
 class LeaderboardService
@@ -291,39 +291,39 @@ class LeaderboardService
 
 ---
 
-## Expiration (TTL)
+## Expiração (TTL)
 
 ```php
-// Set with TTL
-Redis::setex('key', 60, 'value');  // 60 seconds
+// Set com TTL
+Redis::setex('key', 60, 'value');  // 60 segundos
 
-// Set TTL on existing key
+// Setar TTL numa chave existente
 Redis::expire('key', 60);
 
-// Get TTL
-$ttl = Redis::ttl('key');  // seconds left
+// Pegar o TTL
+$ttl = Redis::ttl('key');  // segundos restantes
 
-// Remove TTL (persist forever)
+// Remover o TTL (fica para sempre)
 Redis::persist('key');
 ```
 
 ---
 
-## Pipeline (batch operations)
+## Pipeline (operações em batch)
 
-**Проблема: N network round-trips**
+**Problema: N network round-trips**
 
 ```php
-// Медленно: 100 round-trips
+// Lento: 100 round-trips
 for ($i = 0; $i < 100; $i++) {
     Redis::set("key:{$i}", $i);
 }
 ```
 
-**Решение: Pipeline**
+**Solução: Pipeline**
 
 ```php
-// Быстро: 1 round-trip
+// Rápido: 1 round-trip
 Redis::pipeline(function ($pipe) {
     for ($i = 0; $i < 100; $i++) {
         $pipe->set("key:{$i}", $i);
@@ -333,7 +333,7 @@ Redis::pipeline(function ($pipe) {
 
 ---
 
-## Transactions
+## Transações
 
 ```php
 Redis::multi();
@@ -342,10 +342,10 @@ Redis::set('key2', 'value2');
 Redis::incr('counter');
 Redis::exec();
 
-// Все команды выполняются атомарно
+// Todos os comandos rodam de forma atômica
 ```
 
-**Watch (optimistic locking):**
+**Watch (lock otimista):**
 
 ```php
 Redis::watch('balance');
@@ -359,7 +359,7 @@ if ($balance >= 100) {
     $result = Redis::exec();
 
     if ($result === null) {
-        // Transaction failed (balance changed)
+        // Transaction falhou (balance mudou)
     }
 } else {
     Redis::unwatch();
@@ -368,7 +368,7 @@ if ($balance >= 100) {
 
 ---
 
-## Lua Scripts (atomic operations)
+## Lua Scripts (operações atômicas)
 
 ```php
 $script = <<<'LUA'
@@ -384,17 +384,17 @@ LUA;
 $result = Redis::eval($script, 1, 'balance', 100);
 
 if ($result === 1) {
-    // Success
+    // Sucesso
 } else {
-    // Insufficient balance
+    // Saldo insuficiente
 }
 ```
 
 ---
 
-## Cache Patterns
+## Padrões de cache
 
-### 1. Cache User Data
+### 1. Cache de dados do usuário
 
 ```php
 class UserRepository
@@ -410,7 +410,7 @@ class UserRepository
     {
         $user->save();
 
-        // Invalidate cache
+        // Invalidar o cache
         Redis::forget("user:{$user->id}");
     }
 }
@@ -441,9 +441,9 @@ class RateLimiter
     }
 }
 
-// Использование
+// Uso
 if (!$rateLimiter->attempt("login:{$ip}", 5, 60)) {
-    return response('Too many attempts', 429);
+    return response('Muitas tentativas', 429);
 }
 ```
 
@@ -462,31 +462,31 @@ if (!$rateLimiter->attempt("login:{$ip}", 5, 60)) {
 ### 4. Distributed Lock
 
 ```php
-$lock = Cache::lock('process_orders', 10);  // 10 seconds
+$lock = Cache::lock('process_orders', 10);  // 10 segundos
 
 if ($lock->get()) {
     try {
-        // Critical section
+        // Seção crítica
         $this->processOrders();
     } finally {
         $lock->release();
     }
 } else {
-    // Could not acquire lock
+    // Não conseguiu o lock
 }
 ```
 
 ---
 
-## Persistence
+## Persistência
 
 **RDB (snapshot):**
 
 ```ini
 # redis.conf
-save 900 1     # After 900s if 1 key changed
-save 300 10    # After 300s if 10 keys changed
-save 60 10000  # After 60s if 10000 keys changed
+save 900 1     # Depois de 900s se 1 chave mudou
+save 300 10    # Depois de 300s se 10 chaves mudaram
+save 60 10000  # Depois de 60s se 10000 chaves mudaram
 ```
 
 **AOF (append-only file):**
@@ -494,12 +494,12 @@ save 60 10000  # After 60s if 10000 keys changed
 ```ini
 # redis.conf
 appendonly yes
-appendfsync everysec  # or always/no
+appendfsync everysec  # ou always/no
 ```
 
 ---
 
-## Monitoring
+## Monitoramento
 
 **Redis CLI:**
 
@@ -507,13 +507,13 @@ appendfsync everysec  # or always/no
 # Info
 redis-cli info
 
-# Memory usage
+# Uso de memória
 redis-cli info memory
 
-# Keys count
+# Quantidade de keys
 redis-cli dbsize
 
-# Monitor commands
+# Monitorar comandos
 redis-cli monitor
 
 # Slow log
@@ -523,48 +523,48 @@ redis-cli slowlog get 10
 **Laravel:**
 
 ```php
-// Get info
+// Pegar info
 $info = Redis::info();
 
-// Get memory
+// Pegar memória
 $memory = Redis::info('memory');
 
-// Get keys count
+// Contar as keys
 $count = Redis::dbsize();
 ```
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Отдельные Redis databases для разных целей (cache, sessions, queues)
-✓ Namespace keys (user:1:name)
-✓ TTL для всех cache keys
-✓ Pipeline для batch operations
-✓ Lua scripts для atomic operations
-✓ Monitor memory usage (eviction policy)
-✓ Persistence для критичных данных
-✓ Redis Sentinel/Cluster для HA
-✓ НЕ хранить огромные values (< 1MB)
+✓ Databases Redis separados para cada propósito (cache, sessions, queues)
+✓ Namespace nas keys (user:1:name)
+✓ TTL em todas as cache keys
+✓ Pipeline para batch
+✓ Lua scripts para operações atômicas
+✓ Monitorar o uso de memória (eviction policy)
+✓ Persistência para dados críticos
+✓ Redis Sentinel/Cluster para HA
+✓ NÃO guardar values enormes (< 1MB)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Redis — in-memory key-value store, очень быстрый. Data structures: strings (counters), hashes (objects), lists (queues), sets (tags, online users), sorted sets (leaderboards). Laravel Cache::remember для caching. Pipeline для batch operations (reduce round-trips). Transactions для atomic operations. Lua scripts для сложной atomic логики. Use cases: cache, sessions, rate limiting, distributed locks, leaderboards, queues. Persistence: RDB snapshots, AOF logs. Best practices: namespace keys, TTL, monitoring memory, eviction policy."
+> "Redis é um in-memory key-value store, muito rápido. Estruturas: strings (counters), hashes (objetos), lists (queues), sets (tags, usuários online), sorted sets (leaderboards). No Laravel, Cache::remember para cache. Pipeline para batch (menos round-trips). Transactions para operações atômicas. Lua scripts para lógica atômica mais complexa. Casos de uso: cache, sessões, rate limiting, distributed locks, leaderboards, queues. Persistência: RDB snapshots, AOF logs. Boas práticas: namespace nas keys, TTL, monitorar memória, eviction policy."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Leaderboard с Sorted Sets
+### Exercício 1: Leaderboard com Sorted Sets
 
-Реализуй сервис для игрового leaderboard с использованием Redis Sorted Sets. Должны быть методы: добавить очки, получить топ-10, получить ранг игрока.
+Implemente um serviço de leaderboard de jogo com Redis Sorted Sets. Métodos: adicionar pontos, pegar o top 10, pegar o rank do jogador.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -576,16 +576,16 @@ class LeaderboardService
     private const LEADERBOARD_KEY = 'game:leaderboard';
 
     /**
-     * Добавить очки игроку
+     * Adicionar pontos ao jogador
      */
     public function addScore(int $userId, int $score): void
     {
-        // Инкрементировать score в sorted set
+        // Incrementar o score no sorted set
         Redis::zincrby(self::LEADERBOARD_KEY, $score, $userId);
     }
 
     /**
-     * Установить абсолютное значение очков
+     * Definir o valor absoluto dos pontos
      */
     public function setScore(int $userId, int $score): void
     {
@@ -593,11 +593,11 @@ class LeaderboardService
     }
 
     /**
-     * Получить топ N игроков
+     * Pegar o top N de jogadores
      */
     public function getTop(int $limit = 10): array
     {
-        // ZREVRANGE - от большего к меньшему, WITHSCORES - включить scores
+        // ZREVRANGE — do maior para o menor, WITHSCORES — incluir os scores
         $data = Redis::zrevrange(self::LEADERBOARD_KEY, 0, $limit - 1, 'WITHSCORES');
 
         $result = [];
@@ -615,18 +615,18 @@ class LeaderboardService
     }
 
     /**
-     * Получить ранг игрока (1-based)
+     * Pegar o rank do jogador (1-based)
      */
     public function getUserRank(int $userId): ?int
     {
-        // ZREVRANK - 0-based rank
+        // ZREVRANK — rank 0-based
         $rank = Redis::zrevrank(self::LEADERBOARD_KEY, $userId);
 
         return $rank !== false ? $rank + 1 : null; // 1-based
     }
 
     /**
-     * Получить очки игрока
+     * Pegar os pontos do jogador
      */
     public function getUserScore(int $userId): int
     {
@@ -634,7 +634,7 @@ class LeaderboardService
     }
 
     /**
-     * Получить информацию об игроке (ранг + очки)
+     * Pegar as informações do jogador (rank + pontos)
      */
     public function getUserInfo(int $userId): ?array
     {
@@ -652,7 +652,7 @@ class LeaderboardService
     }
 
     /**
-     * Получить игроков в диапазоне рангов
+     * Pegar jogadores num intervalo de ranks
      */
     public function getRange(int $start, int $end): array
     {
@@ -679,7 +679,7 @@ class LeaderboardService
     }
 
     /**
-     * Удалить игрока из leaderboard
+     * Remover o jogador do leaderboard
      */
     public function removeUser(int $userId): void
     {
@@ -687,7 +687,7 @@ class LeaderboardService
     }
 
     /**
-     * Сбросить весь leaderboard
+     * Resetar o leaderboard inteiro
      */
     public function reset(): void
     {
@@ -695,7 +695,7 @@ class LeaderboardService
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 class LeaderboardController extends Controller
 {
     public function addScore(Request $request, LeaderboardService $leaderboard)
@@ -707,7 +707,7 @@ class LeaderboardController extends Controller
         $leaderboard->addScore($request->user()->id, $validated['score']);
 
         return response()->json([
-            'message' => 'Score added',
+            'message' => 'Pontos adicionados',
             'user_info' => $leaderboard->getUserInfo($request->user()->id),
         ]);
     }
@@ -729,12 +729,12 @@ class LeaderboardController extends Controller
 ```
 </details>
 
-### Задание 2: Rate Limiting с Redis
+### Exercício 2: Rate Limiting com Redis
 
-Создай middleware для rate limiting используя Redis. Ограничение: 60 запросов в минуту на IP адрес.
+Crie um middleware de rate limiting com Redis. Limite: 60 requests por minuto por IP.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Http\Middleware;
@@ -756,7 +756,7 @@ class RateLimitMiddleware
             $retryAfter = $this->availableIn($key);
 
             return response()->json([
-                'message' => 'Too many requests',
+                'message' => 'Muitas requisições',
                 'retry_after' => $retryAfter,
             ], 429)->header('Retry-After', $retryAfter);
         }
@@ -769,7 +769,7 @@ class RateLimitMiddleware
     }
 
     /**
-     * Получить уникальный ключ для запроса
+     * Montar a chave única do request
      */
     protected function resolveRequestSignature(Request $request): string
     {
@@ -783,7 +783,7 @@ class RateLimitMiddleware
     }
 
     /**
-     * Проверить превышен ли лимит
+     * Checar se o limite foi atingido
      */
     protected function tooManyAttempts(string $key): bool
     {
@@ -791,7 +791,7 @@ class RateLimitMiddleware
     }
 
     /**
-     * Получить количество попыток
+     * Pegar a quantidade de tentativas
      */
     protected function attempts(string $key): int
     {
@@ -799,23 +799,23 @@ class RateLimitMiddleware
     }
 
     /**
-     * Инкрементировать счетчик
+     * Incrementar o contador
      */
     protected function hit(string $key): void
     {
         $attempts = Redis::get($key);
 
         if ($attempts === null) {
-            // Первый запрос - установить TTL
+            // Primeiro request — setar o TTL
             Redis::setex($key, self::DECAY_SECONDS, 1);
         } else {
-            // Инкрементировать
+            // Incrementar
             Redis::incr($key);
         }
     }
 
     /**
-     * Через сколько секунд можно снова делать запросы
+     * Em quantos segundos pode tentar de novo
      */
     protected function availableIn(string $key): int
     {
@@ -823,7 +823,7 @@ class RateLimitMiddleware
     }
 
     /**
-     * Добавить headers с информацией о лимите
+     * Adicionar headers com a info do limite
      */
     protected function addHeaders($response, string $key)
     {
@@ -837,17 +837,17 @@ class RateLimitMiddleware
     }
 }
 
-// Регистрация в Kernel.php
+// Registro no Kernel.php
 protected $middlewareAliases = [
     'throttle.custom' => \App\Http\Middleware\RateLimitMiddleware::class,
 ];
 
-// Использование в routes
+// Uso nas routes
 Route::middleware('throttle.custom')->group(function () {
     Route::get('/api/posts', [PostController::class, 'index']);
 });
 
-// Продвинутая версия с разными лимитами
+// Versão avançada com limites diferentes
 class FlexibleRateLimiter
 {
     public function handle(Request $request, Closure $next, int $maxAttempts = 60, int $decaySeconds = 60)
@@ -858,22 +858,22 @@ class FlexibleRateLimiter
         $now = time();
         $windowStart = $now - $decaySeconds;
 
-        // Удалить старые записи
+        // Remover registros antigos
         Redis::zremrangebyscore($key, 0, $windowStart);
 
-        // Подсчитать текущие запросы в окне
+        // Contar os requests na janela
         $currentAttempts = Redis::zcard($key);
 
         if ($currentAttempts >= $maxAttempts) {
             return response()->json([
-                'message' => 'Too many requests',
+                'message' => 'Muitas requisições',
             ], 429);
         }
 
-        // Добавить текущий запрос
+        // Adicionar o request atual
         Redis::zadd($key, $now, $now . ':' . uniqid());
 
-        // Установить TTL на ключ
+        // Setar TTL na chave
         Redis::expire($key, $decaySeconds);
 
         return $next($request);
@@ -882,12 +882,12 @@ class FlexibleRateLimiter
 ```
 </details>
 
-### Задание 3: Distributed Lock для критической секции
+### Exercício 3: Distributed Lock para seção crítica
 
-Реализуй сервис для обработки платежей с distributed lock чтобы избежать двойного списания.
+Implemente um serviço de pagamento com distributed lock para evitar cobrança em dobro.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Services;
@@ -900,32 +900,32 @@ use Illuminate\Support\Facades\DB;
 class PaymentService
 {
     /**
-     * Обработать платеж с distributed lock
+     * Processar o pagamento com distributed lock
      */
     public function processPayment(Order $order, array $paymentData): Payment
     {
         $lockKey = "payment:order:{$order->id}";
 
-        // Получить lock на 10 секунд, ждать до 5 секунд
+        // Pegar o lock por 10 segundos, esperar até 5 segundos
         $lock = Cache::lock($lockKey, 10);
 
         if (!$lock->get()) {
-            throw new \Exception('Payment is already being processed');
+            throw new \Exception('O pagamento já está em processamento');
         }
 
         try {
-            // Критическая секция
+            // Seção crítica
             $payment = $this->processPaymentInternal($order, $paymentData);
 
             return $payment;
         } finally {
-            // Обязательно освободить lock
+            // Sempre liberar o lock
             $lock->release();
         }
     }
 
     /**
-     * Альтернатива с block() - автоматически ждать lock
+     * Alternativa com block() — espera o lock automaticamente
      */
     public function processPaymentWithBlock(Order $order, array $paymentData): Payment
     {
@@ -938,13 +938,13 @@ class PaymentService
 
     private function processPaymentInternal(Order $order, array $paymentData): Payment
     {
-        // Проверить что заказ еще не оплачен
+        // Checar se o pedido ainda não foi pago
         if ($order->status === 'paid') {
-            throw new \Exception('Order is already paid');
+            throw new \Exception('O pedido já está pago');
         }
 
         return DB::transaction(function () use ($order, $paymentData) {
-            // Создать платеж
+            // Criar o pagamento
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'amount' => $order->total,
@@ -952,7 +952,7 @@ class PaymentService
                 'status' => 'processing',
             ]);
 
-            // Обратиться к платежному шлюзу
+            // Chamar o gateway de pagamento
             $result = $this->chargePaymentGateway($paymentData);
 
             if ($result['success']) {
@@ -964,7 +964,7 @@ class PaymentService
                 $order->update(['status' => 'paid']);
             } else {
                 $payment->update(['status' => 'failed']);
-                throw new \Exception('Payment failed: ' . $result['error']);
+                throw new \Exception('Pagamento falhou: ' . $result['error']);
             }
 
             return $payment;
@@ -973,7 +973,7 @@ class PaymentService
 
     private function chargePaymentGateway(array $paymentData): array
     {
-        // Симуляция обращения к платежному шлюзу
+        // Simulação da chamada ao gateway
         sleep(1);
 
         return [
@@ -983,7 +983,7 @@ class PaymentService
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 class PaymentController extends Controller
 {
     public function process(Request $request, Order $order, PaymentService $paymentService)
@@ -998,7 +998,7 @@ class PaymentController extends Controller
             $payment = $paymentService->processPayment($order, $validated);
 
             return response()->json([
-                'message' => 'Payment processed successfully',
+                'message' => 'Pagamento processado com sucesso',
                 'payment' => $payment,
             ]);
         } catch (\Exception $e) {
@@ -1009,7 +1009,7 @@ class PaymentController extends Controller
     }
 }
 
-// Custom Lock Implementation
+// Implementação custom de Lock
 class RedisLock
 {
     private string $key;
@@ -1027,8 +1027,8 @@ class RedisLock
         $this->owner = uniqid();
 
         // SET key owner NX EX seconds
-        // NX - только если не существует
-        // EX - expiration
+        // NX — só se a chave não existir
+        // EX — expiration
         $result = Redis::set(
             $this->key,
             $this->owner,
@@ -1042,7 +1042,7 @@ class RedisLock
 
     public function release(): bool
     {
-        // Lua script для atomic check-and-delete
+        // Lua script para check-and-delete atômico
         $script = <<<'LUA'
 if redis.call("get", KEYS[1]) == ARGV[1] then
     return redis.call("del", KEYS[1])
@@ -1059,4 +1059,4 @@ LUA;
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

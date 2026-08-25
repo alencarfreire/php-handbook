@@ -1,18 +1,18 @@
 # 10.2 GRASP (General Responsibility Assignment Software Patterns)
 
-## Краткое резюме
+## Resumo
 
-> **GRASP** — 9 принципов для присвоения ответственности классам в ООП.
+> **GRASP** — 9 princípios para atribuir responsabilidade às classes no OOP.
 >
-> **Основные:** Information Expert (Order считает total), Creator (Order создаёт items), Controller (thin), Low Coupling (DI).
+> **Principais:** Information Expert (Order calcula o total), Creator (Order cria os items), Controller (thin), Low Coupling (DI).
 >
-> **Дополнительно:** High Cohesion (одна ответственность), Polymorphism (вместо if), Indirection (посредники), Protected Variations (стабильные интерфейсы).
+> **Além disso:** High Cohesion (uma responsabilidade), Polymorphism (no lugar do if), Indirection (intermediários), Protected Variations (interfaces estáveis).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [1. Information Expert](#1-information-expert)
 - [2. Creator](#2-creator)
 - [3. Controller](#3-controller)
@@ -22,23 +22,23 @@
 - [7. Pure Fabrication](#7-pure-fabrication)
 - [8. Indirection](#8-indirection)
 - [9. Protected Variations](#9-protected-variations)
-- [Применение в Laravel](#применение-в-laravel)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [No Laravel](#no-laravel)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **GRASP:**
-9 принципов для присвоения ответственности классам и объектам в ООП.
+9 princípios para atribuir responsabilidade a classes e objetos no OOP.
 
-**Зачем:**
-- Распределить ответственность правильно
-- Создать maintainable код
-- Слабое coupling, сильное cohesion
+**Para quê:**
+- Distribuir responsabilidade do jeito certo
+- Código fácil de manter
+- Low coupling, high cohesion
 
-**9 принципов:**
+**9 princípios:**
 1. Information Expert
 2. Creator
 3. Controller
@@ -53,10 +53,10 @@
 
 ## 1. Information Expert
 
-**Принцип:**
-Присвой ответственность классу, у которого есть информация для её выполнения.
+**Princípio:**
+A responsabilidade vai para a classe que tem a informação para cumprir.
 
-**❌ Плохо:**
+**❌ Ruim:**
 
 ```php
 class OrderController
@@ -65,7 +65,7 @@ class OrderController
     {
         $order = Order::with('items')->find($id);
 
-        // Controller считает total (не его ответственность!)
+        // Controller calcula o total (não é responsabilidade dele!)
         $total = 0;
         foreach ($order->items as $item) {
             $total += $item->price * $item->quantity;
@@ -76,12 +76,12 @@ class OrderController
 }
 ```
 
-**✅ Хорошо (Information Expert):**
+**✅ Bom (Information Expert):**
 
 ```php
 class Order extends Model
 {
-    // Order знает о своих items → он должен считать total
+    // Order conhece os items → ele calcula o total
     public function getTotalAttribute(): float
     {
         return $this->items->sum(fn($item) => $item->price * $item->quantity);
@@ -98,7 +98,7 @@ class OrderController
     }
 }
 
-// В view
+// Na view
 {{ $order->total }}
 ```
 
@@ -106,13 +106,13 @@ class OrderController
 
 ## 2. Creator
 
-**Принцип:**
-Класс B должен создавать A, если:
-- B содержит A
-- B агрегирует A
-- B имеет данные для инициализации A
+**Princípio:**
+A classe B cria A se:
+- B contém A
+- B agrega A
+- B tem os dados para inicializar A
 
-**❌ Плохо:**
+**❌ Ruim:**
 
 ```php
 class OrderController
@@ -121,7 +121,7 @@ class OrderController
     {
         $order = Order::create([...]);
 
-        // Controller создаёт items (не его ответственность!)
+        // Controller cria items (não é responsabilidade dele!)
         foreach ($request->items as $itemData) {
             OrderItem::create([
                 'order_id' => $order->id,
@@ -134,12 +134,12 @@ class OrderController
 }
 ```
 
-**✅ Хорошо (Creator):**
+**✅ Bom (Creator):**
 
 ```php
 class Order extends Model
 {
-    // Order содержит items → Order должен создавать items
+    // Order contém items → Order cria os items
     public function addItem(int $productId, int $quantity): OrderItem
     {
         $product = Product::find($productId);
@@ -169,20 +169,20 @@ class OrderController
 
 ## 3. Controller
 
-**Принцип:**
-Контроллер обрабатывает системные события (HTTP requests) и делегирует бизнес-логику другим объектам.
+**Princípio:**
+O Controller trata eventos do sistema (HTTP requests) e delega a lógica de negócio para outros objetos.
 
-**❌ Плохо (Fat Controller):**
+**❌ Ruim (Fat Controller):**
 
 ```php
 class OrderController extends Controller
 {
     public function store(Request $request)
     {
-        // Валидация
+        // Validação
         $validated = $request->validate([...]);
 
-        // Бизнес-логика
+        // Lógica de negócio
         $order = Order::create([...]);
 
         foreach ($validated['items'] as $item) {
@@ -198,15 +198,15 @@ class OrderController extends Controller
         // Email
         Mail::to($order->user)->send(new OrderCreated($order));
 
-        // Логирование
-        Log::info("Order created", ['order_id' => $order->id]);
+        // Log
+        Log::info("Pedido criado", ['order_id' => $order->id]);
 
         return response()->json($order);
     }
 }
 ```
 
-**✅ Хорошо (Thin Controller):**
+**✅ Bom (Thin Controller):**
 
 ```php
 class OrderController extends Controller
@@ -215,7 +215,7 @@ class OrderController extends Controller
         StoreOrderRequest $request,
         OrderService $orderService
     ) {
-        // Controller только координирует
+        // Controller só coordena
         $order = $orderService->create($request->validated());
 
         return response()->json($order);
@@ -262,8 +262,8 @@ class OrderService
 
 ## 4. Low Coupling
 
-**Принцип:**
-Минимизировать зависимости между классами.
+**Princípio:**
+Minimizar dependências entre classes.
 
 **❌ High Coupling:**
 
@@ -274,12 +274,12 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Прямая зависимость от конкретного класса
+        // Dependência direta de uma classe concreta
         $mailer = new SmtpMailer();
         $mailer->sendOrderConfirmation($order);
 
         $logger = new FileLogger();
-        $logger->log("Order created");
+        $logger->log("Pedido criado");
 
         return $order;
     }
@@ -300,9 +300,9 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Зависимость от интерфейса
+        // Dependência da interface
         $this->mailer->sendOrderConfirmation($order);
-        $this->logger->info("Order created");
+        $this->logger->info("Pedido criado");
 
         return $order;
     }
@@ -313,15 +313,15 @@ class OrderService
 
 ## 5. High Cohesion
 
-**Принцип:**
-Класс должен иметь одну чёткую ответственность. Методы класса должны быть связаны.
+**Princípio:**
+A classe tem uma responsabilidade clara. Os métodos da classe se relacionam.
 
 **❌ Low Cohesion:**
 
 ```php
 class UserService
 {
-    // Всё в одном классе (разные ответственности!)
+    // Tudo numa classe só (responsabilidades diferentes!)
     public function register(array $data) { }
     public function login(string $email, string $password) { }
     public function sendPasswordReset(string $email) { }
@@ -335,7 +335,7 @@ class UserService
 **✅ High Cohesion:**
 
 ```php
-// Разделить на cohesive классы
+// Separar em classes coesas
 class AuthService
 {
     public function register(array $data) { }
@@ -364,10 +364,10 @@ class UserStatisticsService
 
 ## 6. Polymorphism
 
-**Принцип:**
-Использовать полиморфизм вместо if/switch.
+**Princípio:**
+Use polimorfismo no lugar de if/switch.
 
-**❌ Без полиморфизма:**
+**❌ Sem polimorfismo:**
 
 ```php
 class OrderProcessor
@@ -385,7 +385,7 @@ class OrderProcessor
 }
 ```
 
-**✅ С полиморфизмом:**
+**✅ Com polimorfismo:**
 
 ```php
 interface PaymentGateway
@@ -416,7 +416,7 @@ class OrderProcessor
     }
 }
 
-// Использование
+// Uso
 $gateway = match ($order->payment_method) {
     'credit_card' => new CreditCardGateway(),
     'paypal' => new PayPalGateway(),
@@ -430,19 +430,19 @@ $processor->process($order, $gateway);
 
 ## 7. Pure Fabrication
 
-**Принцип:**
-Создать искусственный класс для ответственности, которая не подходит ни одному domain объекту.
+**Princípio:**
+Crie uma classe artificial para uma responsabilidade que não cabe em nenhum objeto de domain.
 
-**Пример:**
-Логирование не относится к domain, но нужно.
+**Exemplo:**
+Log não é domain, mas você precisa.
 
 ```php
-// Pure Fabrication: класс для технической ответственности
+// Pure Fabrication: classe para responsabilidade técnica
 class Logger
 {
     public function log(string $message): void
     {
-        // Техническая ответственность (не domain)
+        // Responsabilidade técnica (não é domain)
     }
 }
 
@@ -454,16 +454,16 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Используем Pure Fabrication
-        $this->logger->log("Order {$order->id} created");
+        // Usamos Pure Fabrication
+        $this->logger->log("Pedido {$order->id} criado");
 
         return $order;
     }
 }
 ```
 
-**Другие примеры Pure Fabrication:**
-- Repository (для доступа к БД)
+**Outros exemplos de Pure Fabrication:**
+- Repository (acesso ao banco)
 - Cache
 - EventDispatcher
 - Validator
@@ -472,10 +472,10 @@ class OrderService
 
 ## 8. Indirection
 
-**Принцип:**
-Использовать посредника для снижения coupling.
+**Princípio:**
+Use um intermediário para baixar o coupling.
 
-**❌ Прямая зависимость:**
+**❌ Dependência direta:**
 
 ```php
 class OrderService
@@ -484,43 +484,43 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Прямая зависимость от SMTP
+        // Dependência direta do SMTP
         $mailer = new SmtpMailer();
-        $mailer->send($order->user->email, 'Order Created', '...');
+        $mailer->send($order->user->email, 'Pedido criado', '...');
 
         return $order;
     }
 }
 ```
 
-**✅ Indirection (посредник):**
+**✅ Indirection (intermediário):**
 
 ```php
-// Посредник: Laravel Mail facade
+// Intermediário: Laravel Mail facade
 class OrderService
 {
     public function create(array $data): Order
     {
         $order = Order::create([...]);
 
-        // Indirection через Mail facade
+        // Indirection via Mail facade
         Mail::to($order->user)->send(new OrderCreated($order));
 
         return $order;
     }
 }
 
-// Mail facade — посредник между OrderService и SMTP
+// Mail facade — intermediário entre OrderService e SMTP
 ```
 
 ---
 
 ## 9. Protected Variations
 
-**Принцип:**
-Защитить систему от изменений с помощью стабильных интерфейсов.
+**Princípio:**
+Proteja o sistema de mudanças com interfaces estáveis.
 
-**❌ Без защиты:**
+**❌ Sem proteção:**
 
 ```php
 class OrderService
@@ -529,24 +529,24 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Прямая зависимость от Stripe API
+        // Dependência direta da Stripe API
         $stripe = new StripeClient(config('stripe.key'));
         $stripe->charges->create([
             'amount' => $order->total * 100,
-            'currency' => 'usd',
+            'currency' => 'brl',
         ]);
 
         return $order;
     }
 }
 
-// Если нужно сменить Stripe на PayPal → переписывать OrderService
+// Se precisar trocar Stripe por PayPal → reescreve o OrderService
 ```
 
 **✅ Protected Variations:**
 
 ```php
-// Стабильный интерфейс
+// Interface estável
 interface PaymentGateway
 {
     public function charge(int $amount, string $currency): Payment;
@@ -577,31 +577,31 @@ class OrderService
     {
         $order = Order::create([...]);
 
-        // Защищены от изменений payment gateway
-        $this->gateway->charge($order->total, 'usd');
+        // Protegidos de mudança no payment gateway
+        $this->gateway->charge($order->total, 'brl');
 
         return $order;
     }
 }
 
-// Можем менять gateway без изменения OrderService
+// Dá para trocar o gateway sem mexer no OrderService
 ```
 
 ---
 
-## Применение в Laravel
+## No Laravel
 
 ```php
 // Information Expert
 class Order extends Model
 {
-    public function getTotalAttribute() { /* Order знает о своих items */ }
+    public function getTotalAttribute() { /* Order conhece os items */ }
 }
 
 // Creator
 class Order extends Model
 {
-    public function addItem($productId, $quantity) { /* Order создаёт items */ }
+    public function addItem($productId, $quantity) { /* Order cria os items */ }
 }
 
 // Controller (thin)
@@ -623,39 +623,39 @@ class OrderService
 }
 
 // High Cohesion (Single Responsibility)
-class AuthService { /* только auth */ }
-class ProfileService { /* только profile */ }
+class AuthService { /* só auth */ }
+class ProfileService { /* só profile */ }
 
 // Polymorphism
 interface PaymentGateway { }
 class StripeGateway implements PaymentGateway { }
 
 // Pure Fabrication
-class OrderRepository { /* техническая ответственность */ }
+class OrderRepository { /* responsabilidade técnica */ }
 
 // Indirection
 Mail::to($user)->send(new OrderCreated($order));
 
 // Protected Variations
-interface PaymentGateway { /* стабильный интерфейс */ }
+interface PaymentGateway { /* interface estável */ }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "GRASP — 9 принципов для присвоения ответственности. Information Expert: ответственность классу с информацией (Order считает total). Creator: класс создаёт то, что содержит (Order создаёт items). Controller: thin, делегирует в Service. Low Coupling: зависимости через интерфейсы (DI). High Cohesion: одна чёткая ответственность (AuthService отдельно от ProfileService). Polymorphism: вместо if/switch. Pure Fabrication: искусственные классы для технической ответственности (Logger, Repository). Indirection: посредники (Mail facade). Protected Variations: стабильные интерфейсы для защиты от изменений (PaymentGateway)."
+> "GRASP — 9 princípios para atribuir responsabilidade. Information Expert: a responsabilidade vai para quem tem a informação (Order calcula o total). Creator: a classe cria o que ela contém (Order cria os items). Controller: thin, delega para o Service. Low Coupling: dependências via interface (DI). High Cohesion: uma responsabilidade clara (AuthService separado de ProfileService). Polymorphism: no lugar de if/switch. Pure Fabrication: classes artificiais para responsabilidade técnica (Logger, Repository). Indirection: intermediários (Mail facade). Protected Variations: interfaces estáveis para proteger de mudança (PaymentGateway)."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Information Expert + Creator
+### Exercício 1: Information Expert + Creator
 
-Перепиши код применяя принципы Information Expert и Creator.
+Reescreva o código aplicando Information Expert e Creator.
 
 ```php
-// Плохо: Controller делает всё
+// Ruim: Controller faz tudo
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -665,14 +665,14 @@ class OrderController extends Controller
             'status' => 'pending',
         ]);
 
-        // Controller считает total (не его дело!)
+        // Controller calcula o total (não é com ele!)
         $total = 0;
         foreach ($request->items as $itemData) {
             $product = Product::find($itemData['product_id']);
             $price = $product->price;
             $quantity = $itemData['quantity'];
 
-            // Controller создаёт items (не его дело!)
+            // Controller cria items (não é com ele!)
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $product->id,
@@ -691,12 +691,12 @@ class OrderController extends Controller
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // ✅ Information Expert + Creator
 
-// Order знает о своих items → Order считает total (Information Expert)
+// Order conhece os items → Order calcula o total (Information Expert)
 class Order extends Model
 {
     public function getTotalAttribute(): float
@@ -704,7 +704,7 @@ class Order extends Model
         return $this->items->sum(fn($item) => $item->subtotal);
     }
 
-    // Order содержит items → Order создаёт items (Creator)
+    // Order contém items → Order cria os items (Creator)
     public function addItem(int $productId, int $quantity): OrderItem
     {
         $product = Product::findOrFail($productId);
@@ -722,7 +722,7 @@ class Order extends Model
     }
 }
 
-// OrderItem знает свой subtotal (Information Expert)
+// OrderItem conhece o próprio subtotal (Information Expert)
 class OrderItem extends Model
 {
     public function getSubtotalAttribute(): float
@@ -736,7 +736,7 @@ class OrderItem extends Model
     }
 }
 
-// Service координирует процесс
+// Service coordena o processo
 class OrderService
 {
     public function create(int $userId, array $items): Order
@@ -751,13 +751,13 @@ class OrderService
                 $order->addItem($item['product_id'], $item['quantity']);
             }
 
-            // total вычисляется автоматически через accessor
+            // total é calculado sozinho via accessor
             return $order->fresh(['items']);
         });
     }
 }
 
-// Controller только координирует (Controller принцип)
+// Controller só coordena (princípio Controller)
 class OrderController extends Controller
 {
     public function store(Request $request, OrderService $orderService)
@@ -769,68 +769,68 @@ class OrderController extends Controller
 
         return response()->json([
             'order' => $order,
-            'total' => $order->total,  // Вычисляется Order
+            'total' => $order->total,  // Calculado pelo Order
         ]);
     }
 }
 
-// Преимущества:
-// - Order отвечает за свою логику
-// - Легко тестировать
-// - Переиспользуемый код
-// - Понятная ответственность
+// Vantagens:
+// - Order responde pela própria lógica
+// - Fácil de testar
+// - Código reutilizável
+// - Responsabilidade clara
 ```
 </details>
 
-### Задание 2: Low Coupling + Protected Variations
+### Exercício 2: Low Coupling + Protected Variations
 
-Рефактори код для уменьшения coupling и защиты от изменений.
+Refatore o código para baixar o coupling e proteger de mudanças.
 
 ```php
-// Плохо: High Coupling
+// Ruim: High Coupling
 class OrderService
 {
     public function create(array $data): Order
     {
         $order = Order::create($data);
 
-        // Прямая зависимость от Stripe
+        // Dependência direta do Stripe
         $stripe = new \Stripe\StripeClient(config('services.stripe.key'));
         $charge = $stripe->charges->create([
             'amount' => $order->total * 100,
-            'currency' => 'usd',
+            'currency' => 'brl',
             'source' => $data['card_token'],
         ]);
 
         $order->update(['payment_id' => $charge->id]);
 
-        // Прямая зависимость от SMTP
+        // Dependência direta do SMTP
         $mailer = new \Swift_Mailer(
             new \Swift_SmtpTransport('smtp.gmail.com', 587)
         );
-        $message = (new \Swift_Message('Order Confirmation'))
+        $message = (new \Swift_Message('Confirmação de pedido'))
             ->setFrom('noreply@example.com')
             ->setTo($order->user->email)
-            ->setBody('Your order has been confirmed');
+            ->setBody('Seu pedido foi confirmado');
         $mailer->send($message);
 
         return $order;
     }
 }
 
-// Проблемы:
-// - Нельзя сменить Stripe на PayPal
-// - Нельзя сменить SMTP на другой transport
-// - Сложно тестировать
+// Problemas:
+// - Não dá para trocar Stripe por PayPal
+// - Não dá para trocar SMTP por outro transport
+// - Difícil de testar
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // ✅ Low Coupling + Protected Variations
 
-// Стабильный интерфейс (Protected Variations)
+// Interface estável (Protected Variations)
 interface PaymentGateway
 {
     public function charge(float $amount, string $token): Payment;
@@ -846,7 +846,7 @@ class StripeGateway implements PaymentGateway
 
         $charge = $stripe->charges->create([
             'amount' => $amount * 100,
-            'currency' => 'usd',
+            'currency' => 'brl',
             'source' => $token,
         ]);
 
@@ -862,7 +862,7 @@ class PayPalGateway implements PaymentGateway
 {
     public function charge(float $amount, string $token): Payment
     {
-        // PayPal implementation
+        // Implementação do PayPal
     }
 }
 
@@ -884,11 +884,11 @@ class SmsNotifier implements Notifier
 {
     public function send(User $user, string $message): void
     {
-        // SMS implementation
+        // Implementação de SMS
     }
 }
 
-// Service с Low Coupling (через DI)
+// Service com Low Coupling (via DI)
 class OrderService
 {
     public function __construct(
@@ -901,7 +901,7 @@ class OrderService
         return DB::transaction(function () use ($data) {
             $order = Order::create($data);
 
-            // Не важно какой gateway (Low Coupling)
+            // Não importa qual gateway (Low Coupling)
             $payment = $this->paymentGateway->charge(
                 $order->total,
                 $data['card_token']
@@ -909,10 +909,10 @@ class OrderService
 
             $order->update(['payment_id' => $payment->id]);
 
-            // Не важно какой notifier (Low Coupling)
+            // Não importa qual notifier (Low Coupling)
             $this->notifier->send(
                 $order->user,
-                "Your order #{$order->id} has been confirmed"
+                "Seu pedido #{$order->id} foi confirmado"
             );
 
             return $order;
@@ -920,27 +920,27 @@ class OrderService
     }
 }
 
-// Service Provider для binding
+// Service Provider para o binding
 class AppServiceProvider extends ServiceProvider
 {
     public function register()
     {
-        // Можем легко сменить на PayPalGateway
+        // Dá para trocar fácil por PayPalGateway
         $this->app->bind(PaymentGateway::class, function () {
             return new StripeGateway(config('services.stripe.key'));
         });
 
-        // Можем легко сменить на SmsNotifier
+        // Dá para trocar fácil por SmsNotifier
         $this->app->bind(Notifier::class, EmailNotifier::class);
     }
 }
 
-// Тестирование (легко!)
+// Teste (fácil!)
 class OrderServiceTest extends TestCase
 {
     public function test_creates_order_with_payment()
     {
-        // Mock dependencies
+        // Mock das dependências
         $gateway = Mockery::mock(PaymentGateway::class);
         $gateway->shouldReceive('charge')
             ->once()
@@ -957,20 +957,20 @@ class OrderServiceTest extends TestCase
     }
 }
 
-// Преимущества:
-// - Легко сменить gateway/notifier
-// - Легко тестировать
-// - Защищены от изменений API
+// Vantagens:
+// - Troca gateway/notifier sem dor
+// - Fácil de testar
+// - Protegido de mudança na API
 // - Low coupling
 ```
 </details>
 
-### Задание 3: High Cohesion + Polymorphism
+### Exercício 3: High Cohesion + Polymorphism
 
-Рефактори Fat Service применяя High Cohesion и Polymorphism.
+Refatore o Fat Service aplicando High Cohesion e Polymorphism.
 
 ```php
-// Плохо: Low Cohesion (всё в одном классе)
+// Ruim: Low Cohesion (tudo numa classe só)
 class UserService
 {
     public function register(array $data) { /* ... */ }
@@ -981,7 +981,7 @@ class UserService
     public function deleteAccount(User $user) { /* ... */ }
     public function sendNotification(User $user, string $message, string $type)
     {
-        // Плохо: switch вместо polymorphism
+        // Ruim: switch no lugar de polymorphism
         switch ($type) {
             case 'email':
                 Mail::to($user->email)->send(new GenericEmail($message));
@@ -998,12 +998,12 @@ class UserService
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ✅ High Cohesion: разделить на cohesive классы
+// ✅ High Cohesion: separar em classes coesas
 
-// 1. Аутентификация (cohesive)
+// 1. Autenticação (coesa)
 class AuthService
 {
     public function register(array $data): User
@@ -1034,7 +1034,7 @@ class AuthService
     }
 }
 
-// 2. Профиль (cohesive)
+// 2. Perfil (coeso)
 class ProfileService
 {
     public function update(User $user, array $data): User
@@ -1063,15 +1063,15 @@ class ProfileService
     }
 }
 
-// 3. Polymorphism для уведомлений
+// 3. Polymorphism para notificações
 
-// Интерфейс
+// Interface
 interface NotificationChannel
 {
     public function send(User $user, string $message): void;
 }
 
-// Реализации
+// Implementações
 class EmailChannel implements NotificationChannel
 {
     public function send(User $user, string $message): void
@@ -1113,7 +1113,7 @@ class NotificationService
     public function send(User $user, string $message, string $channelName): void
     {
         $channel = $this->channels[$channelName]
-            ?? throw new InvalidArgumentException("Unknown channel: $channelName");
+            ?? throw new InvalidArgumentException("Canal desconhecido: $channelName");
 
         $channel->send($user, $message);
     }
@@ -1126,26 +1126,26 @@ class NotificationService
     }
 }
 
-// Использование
+// Uso
 $notificationService = new NotificationService();
 $notificationService->addChannel('email', new EmailChannel());
 $notificationService->addChannel('sms', new SmsChannel($smsProvider));
 $notificationService->addChannel('push', new PushChannel($pushProvider));
 
-// Отправить в один канал
-$notificationService->send($user, 'Hello!', 'email');
+// Enviar em um canal
+$notificationService->send($user, 'Olá!', 'email');
 
-// Broadcast в несколько каналов
-$notificationService->broadcast($user, 'Important message', ['email', 'sms', 'push']);
+// Broadcast em vários canais
+$notificationService->broadcast($user, 'Mensagem importante', ['email', 'sms', 'push']);
 
-// Преимущества:
-// - Каждый класс имеет одну ответственность (High Cohesion)
-// - Легко добавить новый канал (Open/Closed)
-// - Нет switch/if (Polymorphism)
-// - Легко тестировать каждый компонент
+// Vantagens:
+// - Cada classe tem uma responsabilidade (High Cohesion)
+// - Fácil adicionar canal novo (Open/Closed)
+// - Sem switch/if (Polymorphism)
+// - Fácil testar cada componente
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
