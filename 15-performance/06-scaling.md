@@ -1,18 +1,18 @@
-# 13.6 Scaling и Load Balancing
+# 13.6 Scaling e Load Balancing
 
-## Краткое резюме
+## Resumo
 
-> **Scaling** — увеличение мощности системы. Vertical (больше ресурсов) vs Horizontal (больше серверов).
+> **Scaling** — aumentar a capacidade do sistema. Vertical (mais recurso) vs Horizontal (mais servidores).
 >
-> **Load Balancer** — распределяет нагрузку между серверами (Nginx). Стратегии: round-robin, least_conn, ip_hash.
+> **Load Balancer** — distribui a carga entre os servidores (Nginx). Estratégias: round-robin, least_conn, ip_hash.
 >
-> **Проблемы:** сессии (решение: Redis), cache (Redis), files (S3, NFS). Database: read replicas, master-slave.
+> **Problemas:** sessões (solução: Redis), cache (Redis), files (S3, NFS). Database: read replicas, master-slave.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Vertical vs Horizontal Scaling](#vertical-vs-horizontal-scaling)
 - [Load Balancer](#load-balancer)
 - [Session management](#session-management)
@@ -20,70 +20,70 @@
 - [File storage synchronization](#file-storage-synchronization)
 - [Database scaling](#database-scaling)
 - [Queue workers scaling](#queue-workers-scaling)
-- [Практические примеры](#практические-примеры)
-- [CDN для scaling](#cdn-для-scaling)
-- [Monitoring при scaling](#monitoring-при-scaling)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Exemplos práticos](#exemplos-práticos)
+- [CDN para scaling](#cdn-para-scaling)
+- [Monitoring no scaling](#monitoring-no-scaling)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Масштабирование — увеличение мощности системы для обработки растущей нагрузки.
+**O que é:**
+Scaling — aumentar a capacidade do sistema para aguentar mais carga.
 
-**Типы:**
-- **Vertical scaling** (увеличить ресурсы сервера)
-- **Horizontal scaling** (добавить серверы)
+**Tipos:**
+- **Vertical scaling** (mais recurso no servidor)
+- **Horizontal scaling** (mais servidores)
 
 **Load Balancing:**
-Распределение нагрузки между серверами.
+Distribui a carga entre os servidores.
 
 ---
 
 ## Vertical vs Horizontal Scaling
 
-**Vertical (вертикальное):**
+**Vertical:**
 
 ```
-Было:
+Antes:
 Server: 2 CPU, 4GB RAM
 
-Стало:
+Depois:
 Server: 8 CPU, 16GB RAM
 ```
 
-**Плюсы:**
-- ✅ Проще (нет изменений в архитектуре)
-- ✅ Не нужна синхронизация
+**Prós:**
+- ✅ Mais simples (não muda a arquitetura)
+- ✅ Não precisa sincronizar
 
-**Минусы:**
-- ❌ Предел (нельзя бесконечно увеличивать)
+**Contras:**
+- ❌ Tem teto (não dá para aumentar pra sempre)
 - ❌ Single point of failure
-- ❌ Downtime при upgrade
+- ❌ Downtime no upgrade
 
-**Horizontal (горизонтальное):**
+**Horizontal:**
 
 ```
-Было:
-Server 1 (100% нагрузки)
+Antes:
+Server 1 (100% da carga)
 
-Стало:
+Depois:
 Load Balancer
 ├─ Server 1 (33%)
 ├─ Server 2 (33%)
 └─ Server 3 (33%)
 ```
 
-**Плюсы:**
-- ✅ Почти бесконечное масштабирование
+**Prós:**
+- ✅ Scaling quase sem teto
 - ✅ High availability
 - ✅ Zero downtime deploy
 
-**Минусы:**
-- ❌ Сложнее архитектура
-- ❌ Нужна синхронизация (sessions, cache, files)
+**Contras:**
+- ❌ Arquitetura mais complexa
+- ❌ Precisa sincronizar (sessions, cache, files)
 
 ---
 
@@ -95,7 +95,7 @@ Load Balancer
 # /etc/nginx/conf.d/load-balancer.conf
 
 upstream backend {
-    # Round-robin (по умолчанию)
+    # Round-robin (padrão)
     server 192.168.1.10:80;
     server 192.168.1.11:80;
     server 192.168.1.12:80;
@@ -114,31 +114,31 @@ server {
 }
 ```
 
-**Стратегии балансировки:**
+**Estratégias de balanceamento:**
 
 ```nginx
 upstream backend {
-    # 1. Round-robin (по очереди)
+    # 1. Round-robin (na vez)
     server server1.com;
     server server2.com;
 
-    # 2. Least connections (на сервер с меньшим количеством соединений)
+    # 2. Least connections (servidor com menos conexões)
     least_conn;
     server server1.com;
     server server2.com;
 
-    # 3. IP hash (один клиент → один сервер)
+    # 3. IP hash (um cliente → um servidor)
     ip_hash;
     server server1.com;
     server server2.com;
 
-    # 4. Weighted (с весами)
-    server server1.com weight=3;  # 3x больше трафика
+    # 4. Weighted (com pesos)
+    server server1.com weight=3;  # 3x mais tráfego
     server server2.com weight=1;
 
     # Health checks
     server server1.com max_fails=3 fail_timeout=30s;
-    server server2.com backup;  # Используется если остальные недоступны
+    server server2.com backup;  # Entra se os outros estiverem fora
 }
 ```
 
@@ -146,20 +146,20 @@ upstream backend {
 
 ## Session management
 
-**Проблема:**
-На Server 1 сессия пользователя, но следующий request попал на Server 2.
+**Problema:**
+A sessão está no Server 1, mas o próximo request cai no Server 2.
 
-**Решение 1: Sticky sessions**
+**Solução 1: Sticky sessions**
 
 ```nginx
 upstream backend {
-    ip_hash;  # Один IP → один сервер
+    ip_hash;  # Um IP → um servidor
     server server1.com;
     server server2.com;
 }
 ```
 
-**Решение 2: Centralized sessions (Redis)**
+**Solução 2: Centralized sessions (Redis)**
 
 ```env
 # .env
@@ -183,48 +183,48 @@ SESSION_DRIVER=redis
 ],
 ```
 
-Теперь все серверы читают сессии из одного Redis.
+Agora todos os servidores leem as sessões no mesmo Redis.
 
 ---
 
 ## Cache synchronization
 
-**Проблема:**
-Cache на Server 1 не синхронизирован с Server 2.
+**Problema:**
+O cache do Server 1 não está sincronizado com o Server 2.
 
-**Решение: Centralized cache (Redis)**
+**Solução: Centralized cache (Redis)**
 
 ```env
 CACHE_DRIVER=redis
 ```
 
 ```php
-// Все серверы используют один Redis
-Cache::put('key', 'value', 3600);  // Доступно на всех серверах
+// Todos os servidores usam o mesmo Redis
+Cache::put('key', 'value', 3600);  // Disponível em todos os servidores
 ```
 
 ---
 
 ## File storage synchronization
 
-**Проблема:**
-Файл загружен на Server 1, но недоступен на Server 2.
+**Problema:**
+O arquivo foi enviado no Server 1, mas não existe no Server 2.
 
-**Решение 1: Shared storage (NFS, GlusterFS)**
+**Solução 1: Shared storage (NFS, GlusterFS)**
 
 ```bash
-# Монтировать shared storage на всех серверах
+# Montar shared storage em todos os servidores
 mount -t nfs storage-server:/shared /var/www/html/storage
 ```
 
-**Решение 2: Cloud storage (S3)**
+**Solução 2: Cloud storage (S3)**
 
 ```env
 FILESYSTEM_DISK=s3
 ```
 
 ```php
-// Файлы хранятся в S3, доступны всем серверам
+// Arquivos ficam no S3, acessíveis a todos os servidores
 Storage::disk('s3')->put('avatars/1.jpg', $file);
 $url = Storage::disk('s3')->url('avatars/1.jpg');
 ```
@@ -247,24 +247,24 @@ $url = Storage::disk('s3')->url('avatars/1.jpg');
     'write' => [
         'host' => ['192.168.1.10'],  // Master
     ],
-    'sticky' => true,  // После записи читать с master
+    'sticky' => true,  // Depois de escrever, lê no master
 ],
 ```
 
 ```php
-// Laravel автоматически роутит запросы
+// Laravel roteia as queries sozinho
 User::create($data);  // → write (master)
 User::all();          // → read (replica)
 
-// Принудительно использовать write connection
+// Forçar write connection
 DB::connection('mysql')->useWriteConnection()->select(...);
 ```
 
 **Database sharding:**
 
 ```php
-// Разделить данных по шардам (по user_id)
-$shard = $userId % 4;  // 4 шарда
+// Dividir os dados em shards (por user_id)
+$shard = $userId % 4;  // 4 shards
 
 DB::connection("mysql_shard_$shard")->table('orders')
     ->where('user_id', $userId)
@@ -275,7 +275,7 @@ DB::connection("mysql_shard_$shard")->table('orders')
 
 ## Queue workers scaling
 
-**Supervisor для нескольких workers:**
+**Supervisor com vários workers:**
 
 ```ini
 ; /etc/supervisor/conf.d/laravel-worker.conf
@@ -284,11 +284,11 @@ process_name=%(program_name)s_%(process_num)02d
 command=php /var/www/html/artisan queue:work redis --sleep=3 --tries=3
 autostart=true
 autorestart=true
-numprocs=8  ; 8 параллельных workers
+numprocs=8  ; 8 workers em paralelo
 user=www-data
 ```
 
-**Horizontal scaling workers:**
+**Horizontal scaling de workers:**
 
 ```
 Server 1: 8 workers
@@ -298,13 +298,13 @@ Server 3: 8 workers
 Shared Redis Queue
 ```
 
-Все workers работают с одной очередью в Redis.
+Todos os workers consomem a mesma queue no Redis.
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Laravel Octane (для высокой нагрузки):**
+**Laravel Octane (carga alta):**
 
 ```bash
 composer require laravel/octane
@@ -313,11 +313,11 @@ composer require laravel/octane
 pecl install swoole
 php artisan octane:install --server=swoole
 
-# Запуск
+# Iniciar
 php artisan octane:start --workers=8 --task-workers=4
 ```
 
-**Производительность:**
+**Performance:**
 
 ```
 Apache + mod_php: 100 req/sec
@@ -325,7 +325,7 @@ PHP-FPM: 500 req/sec
 Octane (Swoole): 2000+ req/sec
 ```
 
-**Auto-scaling на AWS:**
+**Auto-scaling na AWS:**
 
 ```yaml
 # aws-autoscaling.yml
@@ -341,7 +341,7 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
 
-      # Scale up когда CPU > 70%
+      # Scale up quando CPU > 70%
       ScalingPolicies:
         - PolicyName: scale-up
           ScalingAdjustment: 2
@@ -353,10 +353,10 @@ Resources:
 **Docker Swarm:**
 
 ```bash
-# Инициализация
+# Inicializar
 docker swarm init
 
-# Deploy с 3 репликами
+# Deploy com 3 réplicas
 docker stack deploy -c docker-compose.yml myapp
 
 # docker-compose.yml
@@ -426,19 +426,19 @@ spec:
 
 ---
 
-## CDN для scaling
+## CDN para scaling
 
 **CloudFlare:**
 
 ```
 Users → CloudFlare CDN → Origin Server
-        (cache статики)
+        (cache de estáticos)
 ```
 
-**Кеширование страниц:**
+**Cache de páginas:**
 
 ```php
-// Добавить cache headers
+// Adicionar cache headers
 return response()->view('home')
     ->header('Cache-Control', 'public, max-age=3600')
     ->header('CDN-Cache-Control', 'max-age=86400');
@@ -446,9 +446,9 @@ return response()->view('home')
 
 ---
 
-## Monitoring при scaling
+## Monitoring no scaling
 
-**Metrics для каждого сервера:**
+**Metrics por servidor:**
 
 ```php
 // app/Http/Middleware/MetricsMiddleware.php
@@ -460,7 +460,7 @@ public function handle($request, Closure $next)
 
     $duration = microtime(true) - $start;
 
-    // Отправить метрики
+    // Enviar métricas
     Cache::increment('server.' . gethostname() . '.requests');
     Cache::set('server.' . gethostname() . '.response_time', $duration);
 
@@ -470,45 +470,45 @@ public function handle($request, Closure $next)
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Scaling: vertical (больше ресурсов) vs horizontal (больше серверов). Load Balancer (Nginx) распределяет запросы: round-robin, least_conn, ip_hash. Проблемы: сессии (решение: Redis), cache (Redis), files (S3, NFS). Database: read replicas для чтения, master для записи. Queue workers: supervisor с numprocs, shared Redis queue. Laravel Octane для высокой производительности. Auto-scaling в облаке (AWS, K8s HPA). CDN для статики."
+> "Scaling: vertical (mais recurso) vs horizontal (mais servidores). Load Balancer (Nginx) distribui as requests: round-robin, least_conn, ip_hash. Problemas: sessões (solução: Redis), cache (Redis), files (S3, NFS). Database: read replicas para leitura, master para escrita. Queue workers: supervisor com numprocs, Redis queue compartilhada. Laravel Octane para performance alta. Auto-scaling na nuvem (AWS, K8s HPA). CDN para estático."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой Nginx Load Balancer
+### Exercício 1: Configure o Nginx Load Balancer
 
-Настрой Nginx как load balancer для 3 Laravel серверов с health checks и sticky sessions.
+Configure o Nginx como load balancer para 3 servidores Laravel, com health checks e sticky sessions.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```nginx
 # /etc/nginx/conf.d/load-balancer.conf
 
 upstream laravel_backend {
-    # Стратегия балансировки
-    least_conn;  # Наименьшее количество соединений
+    # Estratégia de balanceamento
+    least_conn;  # Menor quantidade de conexões
 
-    # Серверы
+    # Servidores
     server 192.168.1.10:80 weight=3 max_fails=3 fail_timeout=30s;
     server 192.168.1.11:80 weight=2 max_fails=3 fail_timeout=30s;
     server 192.168.1.12:80 weight=1 max_fails=3 fail_timeout=30s backup;
 
-    # Health check (требует nginx-plus или модуль)
+    # Health check (precisa de nginx-plus ou módulo)
     # health_check interval=5s fails=3 passes=2;
 
-    # Sticky sessions (для stateful приложений)
-    # ip_hash;  # Один IP → один сервер
+    # Sticky sessions (para apps stateful)
+    # ip_hash;  # Um IP → um servidor
 }
 
 server {
     listen 80;
     server_name example.com;
 
-    # Логи
+    # Logs
     access_log /var/log/nginx/loadbalancer-access.log;
     error_log /var/log/nginx/loadbalancer-error.log;
 
@@ -521,12 +521,12 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # Таймауты
+        # Timeouts
         proxy_connect_timeout 30s;
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
 
-        # Буферизация
+        # Buffer
         proxy_buffering on;
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
@@ -540,43 +540,43 @@ server {
     }
 }
 
-# Тестирование
+# Testar
 # sudo nginx -t
 # sudo systemctl reload nginx
 
-# Проверка балансировки
+# Checar o balanceamento
 # for i in {1..10}; do curl -s http://example.com | grep "Server"; done
 ```
 </details>
 
-### Задание 2: Настрой centralized sessions с Redis
+### Exercício 2: Configure sessões centralizadas no Redis
 
-Настрой Laravel для работы с несколькими серверами используя Redis для сессий.
+Configure o Laravel para vários servidores usando Redis para sessões.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Установить Redis на отдельный сервер
+# 1. Instalar Redis num servidor separado
 sudo apt-get install redis-server
 
 # /etc/redis/redis.conf
-bind 0.0.0.0  # Слушать все интерфейсы
+bind 0.0.0.0  # Escutar em todas as interfaces
 requirepass your_strong_password
 maxmemory 2gb
-maxmemory-policy allkeys-lru  # Удалять старые ключи
+maxmemory-policy allkeys-lru  # Remove as chaves antigas
 
-# Запустить
+# Iniciar
 sudo systemctl start redis
 sudo systemctl enable redis
 ```
 
 ```env
-# .env на всех Laravel серверах
+# .env em todos os servidores Laravel
 SESSION_DRIVER=redis
 SESSION_LIFETIME=120
 
-REDIS_HOST=192.168.1.100  # IP Redis сервера
+REDIS_HOST=192.168.1.100  # IP do servidor Redis
 REDIS_PASSWORD=your_strong_password
 REDIS_PORT=6379
 
@@ -597,43 +597,43 @@ QUEUE_CONNECTION=redis
         'host' => env('REDIS_HOST', '127.0.0.1'),
         'password' => env('REDIS_PASSWORD'),
         'port' => env('REDIS_PORT', 6379),
-        'database' => 2,  # Отдельная БД для сессий
+        'database' => 2,  # DB separado para sessões
     ],
 
     'cache' => [
         'host' => env('REDIS_HOST', '127.0.0.1'),
         'password' => env('REDIS_PASSWORD'),
         'port' => env('REDIS_PORT', 6379),
-        'database' => 1,  # Отдельная БД для кеша
+        'database' => 1,  # DB separado para cache
     ],
 
     'queue' => [
         'host' => env('REDIS_HOST', '127.0.0.1'),
         'password' => env('REDIS_PASSWORD'),
         'port' => env('REDIS_PORT', 6379),
-        'database' => 0,  # Отдельная БД для queue
+        'database' => 0,  # DB separado para queue
     ],
 ],
 
-// Тестирование
+// Testar
 // routes/web.php
 Route::get('/test-session', function () {
     session(['test_key' => 'Server: ' . gethostname()]);
     return session('test_key');
 });
 
-// Запросить несколько раз через load balancer
+// Chamar várias vezes pelo load balancer
 // curl http://example.com/test-session
-// Должен возвращать одинаковое значение независимо от сервера
+// Tem que devolver o mesmo valor, independente do servidor
 ```
 </details>
 
-### Задание 3: Auto-scaling с Docker Swarm
+### Exercício 3: Auto-scaling com Docker Swarm
 
-Настрой auto-scaling для Laravel приложения используя Docker Swarm.
+Configure auto-scaling da app Laravel com Docker Swarm.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.yml
@@ -649,7 +649,7 @@ services:
       - DB_HOST=mysql
       - REDIS_HOST=redis
     deploy:
-      replicas: 3  # Начальное количество
+      replicas: 3  # Quantidade inicial
       update_config:
         parallelism: 1
         delay: 10s
@@ -716,33 +716,33 @@ configs:
 ```
 
 ```bash
-# Инициализация Swarm
+# Inicializar o Swarm
 docker swarm init
 
 # Deploy stack
 docker stack deploy -c docker-compose.yml myapp
 
-# Посмотреть сервисы
+# Listar services
 docker service ls
 
-# Масштабировать вручную
+# Escalar na mão
 docker service scale myapp_app=5
 
-# Auto-scaling (через внешний сервис)
-# Использовать Prometheus + Alertmanager + Custom script
+# Auto-scaling (via serviço externo)
+# Usar Prometheus + Alertmanager + script customizado
 
-# Мониторинг
+# Monitoring
 docker service ps myapp_app
 
 # Rolling update
 docker service update --image myapp:v2 myapp_app
 
-# Логи
+# Logs
 docker service logs myapp_app -f
 ```
 
 ```nginx
-# nginx.conf для load balancing
+# nginx.conf para load balancing
 upstream app_backend {
     least_conn;
     server app:9000;  # Docker Swarm DNS round-robin
@@ -761,7 +761,7 @@ server {
 ```
 
 ```bash
-# Метрики для auto-scaling
+# Métricas para auto-scaling
 # docker-compose.metrics.yml
 version: '3.8'
 
@@ -796,4 +796,4 @@ scrape_configs:
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

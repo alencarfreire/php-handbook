@@ -1,37 +1,37 @@
 # 13.1 Caching
 
-## Краткое резюме
+## Resumo
 
-> **Caching** — сохранение результатов вычислений для повторного использования. Ускоряет приложение в разы.
+> **Caching** — guardar resultados de cálculos para reusar. Acelera o app várias vezes.
 >
-> **Типы:** Application cache (данные), Route/Config/View cache, OPcache (PHP bytecode), Redis (sessions, queue).
+> **Tipos:** Application cache (dados), Route/Config/View cache, OPcache (PHP bytecode), Redis (sessões, queue).
 >
-> **Команды:** `Cache::remember`, `Cache::tags`, `php artisan optimize`, `Cache::forget` для инвалидации.
+> **Comandos:** `Cache::remember`, `Cache::tags`, `php artisan optimize`, `Cache::forget` para invalidar.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Application Cache](#application-cache)
-- [Кеширование запросов](#кеширование-запросов)
-- [Инвалидация кеша](#инвалидация-кеша)
+- [Cache de queries](#cache-de-queries)
+- [Invalidação do cache](#invalidação-do-cache)
 - [Laravel Cache Commands](#laravel-cache-commands)
 - [Redis](#redis)
 - [HTTP Cache](#http-cache)
-- [Практические примеры](#практические-примеры)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Exemplos práticos](#exemplos-práticos)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Кеширование — сохранение результатов вычислений для повторного использования. Ускоряет приложение.
+**O que é:**
+Cache — guardar resultados de cálculos para reusar. Acelera o app.
 
-**Типы кеша:**
-- Application cache (данные)
+**Tipos de cache:**
+- Application cache (dados)
 - Route cache
 - Config cache
 - View cache
@@ -41,27 +41,27 @@
 
 ## Application Cache
 
-**Базовое использование:**
+**Uso básico:**
 
 ```php
 use Illuminate\Support\Facades\Cache;
 
-// Получить из кеша
+// Buscar no cache
 $value = Cache::get('key');
 
-// С default значением
+// Com valor default
 $value = Cache::get('key', 'default');
 
-// Сохранить на 60 секунд
+// Guardar por 60 segundos
 Cache::put('key', 'value', 60);
 
-// Сохранить навсегда
+// Guardar para sempre
 Cache::forever('key', 'value');
 
-// Удалить
+// Remover
 Cache::forget('key');
 
-// Проверить существование
+// Checar se existe
 if (Cache::has('key')) {
     // ...
 }
@@ -70,7 +70,7 @@ if (Cache::has('key')) {
 **Cache::remember:**
 
 ```php
-// Получить или вычислить и закешировать
+// Buscar ou calcular e cachear
 $users = Cache::remember('users.all', 3600, function () {
     return User::all();
 });
@@ -81,33 +81,33 @@ $settings = Cache::rememberForever('settings', function () {
 });
 ```
 
-**Tagging (для Redis/Memcached):**
+**Tagging (Redis/Memcached):**
 
 ```php
-// Сохранить с тегами
-Cache::tags(['users', 'posts'])->put('john', $user, 600);
+// Guardar com tags
+Cache::tags(['users', 'posts'])->put('joao', $user, 600);
 
-// Получить
-$user = Cache::tags(['users', 'posts'])->get('john');
+// Buscar
+$user = Cache::tags(['users', 'posts'])->get('joao');
 
-// Очистить все с тегом
+// Limpar tudo com a tag
 Cache::tags(['users'])->flush();
 ```
 
 ---
 
-## Кеширование запросов
+## Cache de queries
 
 **Eloquent:**
 
 ```php
-// ❌ ПЛОХО: запрос на каждый вызов
+// ❌ RUIM: query a cada chamada
 public function getUsers()
 {
     return User::all();
 }
 
-// ✅ ХОРОШО: закешировать
+// ✅ BOM: cachear
 public function getUsers()
 {
     return Cache::remember('users.all', 3600, function () {
@@ -128,7 +128,7 @@ $posts = Cache::remember('posts.published', 3600, function () {
 });
 ```
 
-**Кеш для конкретного пользователя:**
+**Cache por usuário:**
 
 ```php
 public function getUserOrders(User $user)
@@ -141,7 +141,7 @@ public function getUserOrders(User $user)
 
 ---
 
-## Инвалидация кеша
+## Invalidação do cache
 
 **Model Observer:**
 
@@ -170,7 +170,7 @@ class UserObserver
 }
 ```
 
-**События:**
+**Events:**
 
 ```php
 // app/Listeners/ClearUserCache.php
@@ -190,55 +190,55 @@ class ClearUserCache
 **Route cache:**
 
 ```bash
-# Кешировать routes (только для closure-free routes)
+# Cachear as routes (só sem Closure)
 php artisan route:cache
 
-# Очистить
+# Limpar
 php artisan route:clear
 ```
 
 **Config cache:**
 
 ```bash
-# Кешировать конфиг (нельзя использовать env() в коде!)
+# Cachear o config (não use env() no código!)
 php artisan config:cache
 
-# Очистить
+# Limpar
 php artisan config:clear
 ```
 
 **View cache:**
 
 ```bash
-# Прекомпилировать Blade views
+# Pré-compilar as views Blade
 php artisan view:cache
 
-# Очистить
+# Limpar
 php artisan view:clear
 ```
 
 **Event cache:**
 
 ```bash
-# Кешировать event listeners
+# Cachear os event listeners
 php artisan event:cache
 
-# Очистить
+# Limpar
 php artisan event:clear
 ```
 
-**Оптимизация для production:**
+**Otimização para production:**
 
 ```bash
-# Всё в одной команде
+# Tudo em um comando
 php artisan optimize
 
-# Включает:
+# Inclui:
 # - config:cache
 # - route:cache
 # - view:cache
 
-# Очистить всё
+# Limpar tudo
 php artisan optimize:clear
 ```
 
@@ -246,7 +246,7 @@ php artisan optimize:clear
 
 ## Redis
 
-**Конфигурация (.env):**
+**Config (.env):**
 
 ```
 CACHE_DRIVER=redis
@@ -258,13 +258,13 @@ REDIS_PASSWORD=null
 REDIS_PORT=6379
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 use Illuminate\Support\Facades\Redis;
 
-// Базовые операции
-Redis::set('name', 'John');
+// Operações básicas
+Redis::set('name', 'João');
 $name = Redis::get('name');
 
 // Expire
@@ -280,7 +280,7 @@ Redis::sadd('users:online', $userId);
 Redis::srem('users:online', $userId);
 $online = Redis::smembers('users:online');
 
-// Sorted Sets (для leaderboards)
+// Sorted Sets (para leaderboards)
 Redis::zadd('scores', $score, $userId);
 $top = Redis::zrevrange('scores', 0, 9);  // Top 10
 ```
@@ -289,10 +289,10 @@ $top = Redis::zrevrange('scores', 0, 9);  // Top 10
 
 ## HTTP Cache
 
-**Response caching:**
+**Cache de response:**
 
 ```php
-// Cache response на 60 секунд
+// Cachear a response por 60 segundos
 Route::get('/posts', function () {
     return Cache::remember('posts.all', 60, function () {
         return Post::all();
@@ -337,9 +337,9 @@ public function handle($request, Closure $next)
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Кеш для dashboard:**
+**Cache do dashboard:**
 
 ```php
 public function dashboard()
@@ -360,7 +360,7 @@ public function dashboard()
 }
 ```
 
-**Кеш с автоинвалидацией:**
+**Cache com invalidação automática:**
 
 ```php
 // app/Services/CachedUserService.php
@@ -378,7 +378,7 @@ class CachedUserService
         $user = User::findOrFail($id);
         $user->update($data);
 
-        // Инвалидировать кеш
+        // Invalidar o cache
         Cache::forget("user.$id");
 
         return $user;
@@ -386,7 +386,7 @@ class CachedUserService
 }
 ```
 
-**Leaderboard с Redis:**
+**Leaderboard com Redis:**
 
 ```php
 class LeaderboardService
@@ -416,20 +416,20 @@ class LeaderboardService
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Кеширование ускоряет приложение. Cache::remember для данных, инвалидация через Model Observer или события. Laravel cache commands: route:cache, config:cache, view:cache, optimize. Redis для сессий, queue, cache. Tagging для группового удаления. HTTP cache с ETags. Cache::tags для группировки. Кешировать тяжёлые запросы (JOIN, COUNT, агрегаты). Инвалидация при изменении данных."
+> "Cache acelera o app. Cache::remember para dados, invalidação via Model Observer ou events. Comandos do Laravel: route:cache, config:cache, view:cache, optimize. Redis para sessões, queue, cache. Tagging para apagar em grupo. HTTP cache com ETags. Cache::tags para agrupar. Cachear queries pesadas (JOIN, COUNT, agregados). Invalidar quando os dados mudam."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Кеширование с автоинвалидацией
+### Exercício 1: Cache com invalidação automática
 
-Реализуй кеширование списка популярных продуктов (с количеством заказов > 10), которое автоматически инвалидируется при создании нового заказа.
+Implemente o cache da lista de produtos populares (com mais de 10 pedidos). Invalide automaticamente quando um pedido novo for criado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/ProductService.php
@@ -459,7 +459,7 @@ class OrderObserver
 
     public function created(Order $order)
     {
-        // Инвалидировать кеш популярных продуктов
+        // Invalidar o cache de produtos populares
         $this->productService->invalidatePopularCache();
     }
 }
@@ -472,12 +472,12 @@ public function boot()
 ```
 </details>
 
-### Задание 2: Cache Tags для группового удаления
+### Exercício 2: Cache Tags para exclusão em grupo
 
-Реализуй кеширование постов пользователя с использованием tags. При обновлении пользователя или создании нового поста — очистить все связанные кеши.
+Implemente o cache dos posts do usuário com tags. Ao atualizar o usuário ou criar um post novo, limpe todos os caches ligados.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/PostService.php
@@ -510,7 +510,7 @@ class UserObserver
 {
     public function updated(User $user)
     {
-        // Очистить все кеши связанные с пользователем
+        // Limpar todos os caches ligados ao usuário
         Cache::tags(["user:{$user->id}"])->flush();
     }
 }
@@ -520,25 +520,25 @@ class PostObserver
 {
     public function created(Post $post)
     {
-        // Очистить кеш постов пользователя
+        // Limpar o cache de posts do usuário
         Cache::tags(["user:{$post->user_id}"])->flush();
     }
 
     public function updated(Post $post)
     {
-        // Очистить кеш конкретного поста
+        // Limpar o cache do post
         Cache::tags(["post:{$post->id}"])->flush();
     }
 }
 ```
 </details>
 
-### Задание 3: Redis для Leaderboard
+### Exercício 3: Redis para Leaderboard
 
-Реализуй систему рейтинга игроков используя Redis Sorted Sets. Добавь методы для добавления очков и получения топ-10.
+Implemente um ranking de jogadores com Redis Sorted Sets. Métodos para somar pontos e buscar o top 10.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/LeaderboardService.php
@@ -547,14 +547,14 @@ use Illuminate\Support\Facades\Redis;
 class LeaderboardService
 {
     private const LEADERBOARD_KEY = 'game:leaderboard';
-    private const CACHE_TTL = 60; // 1 минута
+    private const CACHE_TTL = 60; // 1 minuto
 
     public function addScore(int $userId, int $score): void
     {
-        // Добавить или обновить score
+        // Adicionar ou atualizar o score
         Redis::zadd(self::LEADERBOARD_KEY, $score, $userId);
 
-        // Инвалидировать кеш топа
+        // Invalidar o cache do top
         Cache::forget('leaderboard.top.10');
         Cache::forget('leaderboard.top.100');
     }
@@ -576,7 +576,7 @@ class LeaderboardService
     public function getTop(int $limit = 10): array
     {
         return Cache::remember("leaderboard.top.$limit", self::CACHE_TTL, function () use ($limit) {
-            // Получить топ игроков с scores
+            // Buscar o top de jogadores com scores
             $userIds = Redis::zrevrange(
                 self::LEADERBOARD_KEY,
                 0,
@@ -584,16 +584,16 @@ class LeaderboardService
                 'WITHSCORES'
             );
 
-            // Преобразовать в массив [user_id => score]
+            // Converter em array [user_id => score]
             $scores = [];
             for ($i = 0; $i < count($userIds); $i += 2) {
                 $scores[$userIds[$i]] = (int) $userIds[$i + 1];
             }
 
-            // Загрузить пользователей
+            // Carregar os usuários
             $users = User::whereIn('id', array_keys($scores))->get()->keyBy('id');
 
-            // Сформировать результат
+            // Montar o resultado
             return collect($scores)->map(function ($score, $userId) use ($users) {
                 return [
                     'user' => $users[$userId] ?? null,
@@ -606,7 +606,7 @@ class LeaderboardService
 
     public function getRank(int $userId): int
     {
-        // Позиция в рейтинге (0-based → 1-based)
+        // Posição no ranking (0-based → 1-based)
         $rank = Redis::zrevrank(self::LEADERBOARD_KEY, $userId);
 
         return $rank !== null ? $rank + 1 : 0;
@@ -630,26 +630,26 @@ class LeaderboardService
             'WITHSCORES'
         );
 
-        // Аналогично getTop
+        // Igual ao getTop
         // ...
     }
 }
 
-// Использование
+// Uso
 $leaderboard = new LeaderboardService();
 
-// Добавить очки
+// Adicionar pontos
 $leaderboard->addScore(1, 100);
-$leaderboard->incrementScore(1, 50); // Теперь 150
+$leaderboard->incrementScore(1, 50); // Agora 150
 
-// Получить топ
+// Buscar o top
 $top10 = $leaderboard->getTop(10);
 
-// Получить позицию игрока
+// Buscar a posição do jogador
 $rank = $leaderboard->getRank(1); // 5
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

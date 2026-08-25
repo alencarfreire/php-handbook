@@ -1,47 +1,47 @@
-# 13.3 Query Optimization
+# 13.3 Otimização de queries
 
-## Краткое резюме
+## Resumo
 
-> **Query Optimization** — оптимизация SQL запросов для ускорения работы с БД. EXPLAIN показывает план выполнения.
+> **Otimização de queries** — deixar o SQL mais rápido. EXPLAIN mostra o plano de execução.
 >
-> **Инструменты:** EXPLAIN (анализ), Laravel Debugbar (отладка N+1), Query Log (мониторинг медленных запросов).
+> **Ferramentas:** EXPLAIN (análise), Laravel Debugbar (debug de N+1), Query Log (monitorar query lenta).
 >
-> **Методы:** Индексы на WHERE/ORDER BY, covering index, избегать функций в WHERE, cursor pagination для больших offset.
+> **Métodos:** Índice em WHERE/ORDER BY, covering index, sem função no WHERE, cursor pagination quando o offset é grande.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [EXPLAIN](#explain)
 - [Laravel Debugbar](#laravel-debugbar)
-- [Оптимизация WHERE](#оптимизация-where)
-- [Оптимизация JOIN](#оптимизация-join)
-- [Оптимизация сортировки](#оптимизация-сортировки)
-- [Оптимизация COUNT](#оптимизация-count)
-- [Оптимизация UPDATE/DELETE](#оптимизация-updatedelete)
-- [Практические примеры](#практические-примеры)
-- [Database Profiling](#database-profiling)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Otimização do WHERE](#otimização-do-where)
+- [Otimização do JOIN](#otimização-do-join)
+- [Otimização da ordenação](#otimização-da-ordenação)
+- [Otimização do COUNT](#otimização-do-count)
+- [Otimização de UPDATE/DELETE](#otimização-de-updatedelete)
+- [Exemplos práticos](#exemplos-práticos)
+- [Profiling do banco](#profiling-do-banco)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Оптимизация SQL запросов для ускорения работы с БД. EXPLAIN, профилирование, избежание медленных операций.
+**O que é:**
+Deixar o SQL mais rápido. EXPLAIN, profiling, fugir de operação lenta.
 
-**Инструменты:**
-- EXPLAIN — план выполнения запроса
-- Laravel Debugbar — отладка запросов
-- Query Log — логирование запросов
+**Ferramentas:**
+- EXPLAIN — plano de execução da query
+- Laravel Debugbar — debug das queries
+- Query Log — log das queries
 
 ---
 
 ## EXPLAIN
 
-**Анализ запроса:**
+**Análise da query:**
 
 ```sql
 EXPLAIN SELECT * FROM posts
@@ -49,7 +49,7 @@ WHERE user_id = 1
 AND published = 1
 ORDER BY created_at DESC;
 
--- Результат:
+-- Resultado:
 -- +----+-------------+-------+------------+------+---------------+-------------+---------+-------+------+----------+-------------+
 -- | id | select_type | table | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra       |
 -- +----+-------------+-------+------------+------+---------------+-------------+---------+-------+------+----------+-------------+
@@ -57,24 +57,24 @@ ORDER BY created_at DESC;
 -- +----+-------------+-------+------------+------+---------------+-------------+---------+-------+------+----------+-------------+
 ```
 
-**Важные колонки:**
+**Colunas importantes:**
 
 ```
-type: тип доступа
-  - ALL: полное сканирование (медленно)
-  - index: сканирование индекса
-  - range: диапазон
-  - ref: по ключу
-  - const: константа (быстро)
+type: tipo de acesso
+  - ALL: varredura completa (lento)
+  - index: varredura do índice
+  - range: intervalo
+  - ref: pela chave
+  - const: constante (rápido)
 
-possible_keys: возможные индексы
-key: использованный индекс
-rows: количество сканируемых строк
+possible_keys: índices possíveis
+key: índice usado
+rows: quantidade de linhas varridas
 Extra:
-  - Using index: используется covering index (быстро)
-  - Using where: фильтрация после чтения
-  - Using filesort: сортировка (медленно)
-  - Using temporary: временная таблица (медленно)
+  - Using index: usa covering index (rápido)
+  - Using where: filtra depois de ler
+  - Using filesort: ordenação (lento)
+  - Using temporary: tabela temporária (lento)
 ```
 
 **Laravel EXPLAIN:**
@@ -84,10 +84,10 @@ $query = Post::where('user_id', 1)
     ->where('published', true)
     ->orderBy('created_at', 'desc');
 
-// Получить SQL
+// Pegar o SQL
 dd($query->toSql(), $query->getBindings());
 
-// Или вручную через DB
+// Ou na mão via DB
 DB::select('EXPLAIN ' . $query->toSql(), $query->getBindings());
 ```
 
@@ -95,78 +95,78 @@ DB::select('EXPLAIN ' . $query->toSql(), $query->getBindings());
 
 ## Laravel Debugbar
 
-**Установка:**
+**Instalação:**
 
 ```bash
 composer require barryvdh/laravel-debugbar --dev
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
-// Автоматически показывает:
-// - Все queries
-// - Время выполнения
-// - Дублирующиеся queries
-// - N+1 проблемы
+// Mostra automaticamente:
+// - Todas as queries
+// - Tempo de execução
+// - Queries duplicadas
+// - Problemas de N+1
 
-// http://localhost:8000 → внизу панель
+// http://localhost:8000 → painel embaixo
 ```
 
 **Query Log:**
 
 ```php
-// Включить логирование
+// Ligar o log
 DB::enableQueryLog();
 
-// Ваш код
+// Seu código
 $users = User::with('posts')->get();
 
-// Посмотреть queries
+// Ver as queries
 dd(DB::getQueryLog());
 
-// Отключить
+// Desligar
 DB::disableQueryLog();
 ```
 
 ---
 
-## Оптимизация WHERE
+## Otimização do WHERE
 
-**Использовать индексы:**
+**Usar índices:**
 
 ```php
-// ❌ МЕДЛЕННО: не использует индекс
+// ❌ LENTO: não usa o índice
 Post::whereRaw('YEAR(created_at) = 2024')->get();
 // SELECT * FROM posts WHERE YEAR(created_at) = 2024
 
-// ✅ БЫСТРО: использует индекс на created_at
+// ✅ RÁPIDO: usa o índice em created_at
 Post::whereBetween('created_at', ['2024-01-01', '2024-12-31'])->get();
 // SELECT * FROM posts WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31'
 
-// ❌ МЕДЛЕННО: функция в WHERE
+// ❌ LENTO: função no WHERE
 User::whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
 
-// ✅ БЫСТРО
+// ✅ RÁPIDO
 User::where('email', strtolower($email))->first();
 ```
 
 **Composite index:**
 
 ```php
-// Миграция
+// Migration
 Schema::table('posts', function (Blueprint $table) {
     $table->index(['user_id', 'published', 'created_at']);
 });
 
-// Использование (порядок важен!)
-// ✅ Использует индекс
+// Uso (a ordem importa!)
+// ✅ Usa o índice
 Post::where('user_id', 1)
     ->where('published', true)
     ->orderBy('created_at', 'desc')
     ->get();
 
-// ⚠️ Не использует индекс полностью (пропущен user_id)
+// ⚠️ Não usa o índice inteiro (pulou user_id)
 Post::where('published', true)
     ->orderBy('created_at', 'desc')
     ->get();
@@ -174,27 +174,27 @@ Post::where('published', true)
 
 ---
 
-## Оптимизация JOIN
+## Otimização do JOIN
 
 **INNER JOIN vs LEFT JOIN:**
 
 ```php
-// INNER JOIN (быстрее, если нужны только связанные)
+// INNER JOIN (mais rápido se só precisa dos relacionados)
 $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
     ->select('posts.*', 'users.name')
     ->get();
 
-// LEFT JOIN (если могут быть NULL)
+// LEFT JOIN (quando pode ter NULL)
 $posts = Post::leftJoin('comments', 'posts.id', '=', 'comments.post_id')
     ->select('posts.*', DB::raw('COUNT(comments.id) as comments_count'))
     ->groupBy('posts.id')
     ->get();
 ```
 
-**Избегать subqueries в SELECT:**
+**Evitar subquery no SELECT:**
 
 ```php
-// ❌ МЕДЛЕННО: subquery для каждой строки
+// ❌ LENTO: subquery em cada linha
 $posts = DB::table('posts')
     ->select([
         'posts.*',
@@ -202,122 +202,122 @@ $posts = DB::table('posts')
     ])
     ->get();
 
-// ✅ БЫСТРО: LEFT JOIN
+// ✅ RÁPIDO: LEFT JOIN
 $posts = DB::table('posts')
     ->leftJoin('comments', 'posts.id', '=', 'comments.post_id')
     ->select('posts.*', DB::raw('COUNT(comments.id) as comments_count'))
     ->groupBy('posts.id')
     ->get();
 
-// ✅ ИЛИ: withCount
+// ✅ OU: withCount
 $posts = Post::withCount('comments')->get();
 ```
 
 ---
 
-## Оптимизация сортировки
+## Otimização da ordenação
 
-**Индекс на ORDER BY:**
+**Índice no ORDER BY:**
 
 ```php
-// Миграция
+// Migration
 Schema::table('posts', function (Blueprint $table) {
     $table->index('created_at');
 });
 
-// ✅ Использует индекс
+// ✅ Usa o índice
 Post::orderBy('created_at', 'desc')->get();
 
-// ❌ Не использует индекс (функция)
+// ❌ Não usa o índice (função)
 Post::orderByRaw('RAND()')->get();
 
-// ✅ Альтернатива: inRandomOrder (лучше для малых выборок)
+// ✅ Alternativa: inRandomOrder (melhor em amostra pequena)
 Post::inRandomOrder()->limit(10)->get();
 ```
 
 **Covering index:**
 
 ```php
-// Миграция: индекс включает все нужные колонки
+// Migration: o índice inclui todas as colunas necessárias
 Schema::table('posts', function (Blueprint $table) {
     $table->index(['user_id', 'created_at', 'title']);
 });
 
-// ✅ Запрос использует только индекс (не читает таблицу)
+// ✅ A query usa só o índice (não lê a tabela)
 Post::where('user_id', 1)
     ->select(['user_id', 'created_at', 'title'])
     ->orderBy('created_at', 'desc')
     ->get();
 
-// EXPLAIN покажет "Using index"
+// EXPLAIN mostra "Using index"
 ```
 
 ---
 
-## Оптимизация COUNT
+## Otimização do COUNT
 
-**Избегать COUNT(*):**
+**Evitar COUNT(*):**
 
 ```php
-// ❌ МЕДЛЕННО: полное сканирование
+// ❌ LENTO: varredura completa
 $count = Post::count();
 
-// ✅ Кешировать
+// ✅ Colocar em cache
 $count = Cache::remember('posts.count', 3600, function () {
     return Post::count();
 });
 
-// ✅ Или хранить в отдельной таблице (counter cache)
-// posts_count в таблице users
+// ✅ Ou guardar em tabela separada (counter cache)
+// posts_count na tabela users
 ```
 
-**Пагинация без COUNT:**
+**Paginação sem COUNT:**
 
 ```php
-// ❌ МЕДЛЕННО: делает COUNT(*) для total
+// ❌ LENTO: faz COUNT(*) do total
 $posts = Post::paginate(20);
 
-// ✅ БЫСТРО: без COUNT
+// ✅ RÁPIDO: sem COUNT
 $posts = Post::simplePaginate(20);
 
-// ✅ Ещё быстрее: cursor pagination
+// ✅ Ainda mais rápido: cursor pagination
 $posts = Post::orderBy('id')->cursorPaginate(20);
 ```
 
 ---
 
-## Оптимизация UPDATE/DELETE
+## Otimização de UPDATE/DELETE
 
-**Batch операции:**
+**Operações em batch:**
 
 ```php
-// ❌ МЕДЛЕННО: N queries
+// ❌ LENTO: N queries
 foreach ($userIds as $id) {
     User::where('id', $id)->update(['active' => false]);
 }
 
-// ✅ БЫСТРО: 1 query
+// ✅ RÁPIDO: 1 query
 User::whereIn('id', $userIds)->update(['active' => false]);
 ```
 
-**Избегать UPDATE без WHERE:**
+**Evitar UPDATE sem WHERE:**
 
 ```php
-// ⚠️ ОПАСНО и медленно
+// ⚠️ PERIGOSO e lento
 User::update(['last_seen_at' => now()]);
 
-// ✅ С условием
+// ✅ Com condição
 User::where('active', true)->update(['last_seen_at' => now()]);
 ```
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Оптимизация поиска:**
+**Otimização da busca:**
 
 ```php
-// ❌ МЕДЛЕННО
+// ❌ LENTO
 public function search($query)
 {
     return Product::where('name', 'like', "%$query%")
@@ -338,10 +338,10 @@ public function search($query)
 }
 ```
 
-**Оптимизация pagination:**
+**Otimização da paginação:**
 
 ```php
-// ❌ МЕДЛЕННО для больших offset
+// ❌ LENTO com offset grande
 Product::orderBy('id')->offset(10000)->limit(20)->get();
 // SELECT * FROM products ORDER BY id LIMIT 20 OFFSET 10000
 
@@ -350,21 +350,21 @@ Product::where('id', '>', $lastId)->orderBy('id')->limit(20)->get();
 // SELECT * FROM products WHERE id > 10000 ORDER BY id LIMIT 20
 ```
 
-**Денормализация для производительности:**
+**Desnormalização para performance:**
 
 ```php
-// ❌ МЕДЛЕННО: COUNT на каждый запрос
+// ❌ LENTO: COUNT em cada request
 public function getPosts()
 {
     return Post::withCount('comments')->get();
 }
 
-// ✅ Хранить comments_count в posts таблице
+// ✅ Guardar comments_count na tabela posts
 Schema::table('posts', function (Blueprint $table) {
     $table->integer('comments_count')->default(0);
 });
 
-// Observer для обновления счётчика
+// Observer para atualizar o contador
 class CommentObserver
 {
     public function created(Comment $comment)
@@ -381,7 +381,7 @@ class CommentObserver
 
 ---
 
-## Database Profiling
+## Profiling do banco
 
 **MySQL slow query log:**
 
@@ -389,13 +389,13 @@ class CommentObserver
 -- my.cnf
 slow_query_log = 1
 slow_query_log_file = /var/log/mysql/slow.log
-long_query_time = 1  -- Логировать запросы > 1 секунды
+long_query_time = 1  -- Logar queries > 1 segundo
 
--- Анализ
+-- Análise
 mysqldumpslow -s t -t 10 /var/log/mysql/slow.log
 ```
 
-**Laravel query monitoring:**
+**Monitoramento de query no Laravel:**
 
 ```php
 // app/Providers/AppServiceProvider.php
@@ -403,7 +403,7 @@ public function boot()
 {
     if (app()->environment('local')) {
         DB::listen(function ($query) {
-            if ($query->time > 1000) {  // > 1 секунды
+            if ($query->time > 1000) {  // > 1 segundo
                 Log::warning('Slow query', [
                     'sql' => $query->sql,
                     'bindings' => $query->bindings,
@@ -417,20 +417,20 @@ public function boot()
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Query optimization: EXPLAIN для анализа плана. Laravel Debugbar показывает N+1. Индексы на WHERE, ORDER BY, JOIN колонки. Covering index включает все SELECT поля. Composite index: порядок колонок важен. Избегать функций в WHERE. simplePaginate без COUNT. Cursor pagination для больших offset. Fulltext index для поиска. Batch операции вместо N queries. Денормализация для COUNT. Slow query log для мониторинга."
+> "Otimização de queries: EXPLAIN para ver o plano. Laravel Debugbar mostra N+1. Índice em WHERE, ORDER BY, JOIN. Covering index cobre todos os campos do SELECT. Composite index: a ordem das colunas importa. Sem função no WHERE. simplePaginate sem COUNT. Cursor pagination quando o offset é grande. Fulltext index para busca. Batch no lugar de N queries. Desnormalização para COUNT. Slow query log para monitorar."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Оптимизация запроса с EXPLAIN
+### Exercício 1: Otimizar a query com EXPLAIN
 
-Проанализируй и оптимизируй запрос используя EXPLAIN.
+Analise e otimize a query com EXPLAIN.
 
 ```php
-// Медленный запрос
+// Query lenta
 $users = DB::table('users')
     ->whereRaw('YEAR(created_at) = 2024')
     ->where('status', 'active')
@@ -439,35 +439,35 @@ $users = DB::table('users')
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: YEAR(created_at) не использует индекс
-// EXPLAIN покажет: type = ALL (полное сканирование)
+// ❌ RUIM: YEAR(created_at) não usa o índice
+// EXPLAIN mostra: type = ALL (varredura completa)
 
-// ✅ ХОРОШО: убрать функцию из WHERE
+// ✅ BOM: tira a função do WHERE
 $users = DB::table('users')
     ->whereBetween('created_at', ['2024-01-01', '2024-12-31 23:59:59'])
     ->where('status', 'active')
     ->orderBy('created_at', 'desc')
     ->get();
 
-// Миграция: composite index
+// Migration: composite index
 Schema::table('users', function (Blueprint $table) {
     $table->index(['status', 'created_at']);
 });
 
-// EXPLAIN теперь покажет:
-// type = range (использует индекс)
+// EXPLAIN agora mostra:
+// type = range (usa o índice)
 // key = status_created_at_index
-// rows = ~100 (вместо 10000)
+// rows = ~100 (em vez de 10000)
 
-// Проверка в Laravel
+// Checagem no Laravel
 DB::enableQueryLog();
-// ... запрос ...
+// ... query ...
 dd(DB::getQueryLog());
 
-// SQL для EXPLAIN
+// SQL do EXPLAIN
 EXPLAIN SELECT * FROM users
 WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31'
 AND status = 'active'
@@ -475,33 +475,33 @@ ORDER BY created_at DESC;
 ```
 </details>
 
-### Задание 2: Cursor Pagination
+### Exercício 2: Cursor Pagination
 
-Реализуй эффективную пагинацию для большой таблицы (1 млн строк) без использования OFFSET.
+Implemente paginação eficiente numa tabela grande (1 milhão de linhas) sem OFFSET.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: OFFSET медленный для больших значений
+// ❌ RUIM: OFFSET fica lento com valor grande
 public function index(Request $request)
 {
     $page = $request->get('page', 1);
     $perPage = 20;
 
     // SELECT * FROM posts ORDER BY id LIMIT 20 OFFSET 100000
-    // Сканирует 100020 строк!
+    // Varre 100020 linhas!
     return Post::orderBy('id')->paginate($perPage);
 }
 
-// ✅ ХОРОШО: Cursor pagination (keyset)
+// ✅ BOM: Cursor pagination (keyset)
 public function index(Request $request)
 {
     $lastId = $request->get('last_id', 0);
     $perPage = 20;
 
     // SELECT * FROM posts WHERE id > 100000 ORDER BY id LIMIT 20
-    // Сканирует только 20 строк!
+    // Varre só 20 linhas!
     $posts = Post::where('id', '>', $lastId)
         ->orderBy('id')
         ->limit($perPage)
@@ -516,7 +516,7 @@ public function index(Request $request)
     ]);
 }
 
-// ✅ Laravel встроенный cursor pagination
+// ✅ Cursor pagination nativo do Laravel
 public function index()
 {
     return Post::orderBy('id')->cursorPaginate(20);
@@ -529,35 +529,35 @@ public function index()
 //   "prev_cursor": null
 // }
 
-// Производительность:
+// Performance:
 // OFFSET 100000: ~500ms
 // Cursor (WHERE id > 100000): ~5ms
 ```
 </details>
 
-### Задание 3: Denormalization для производительности
+### Exercício 3: Desnormalização para performance
 
-Оптимизируй подсчёт комментариев для постов используя денормализацию.
+Otimize a contagem de comentários dos posts com desnormalização.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: COUNT на каждый запрос
+// ❌ RUIM: COUNT em cada request
 public function index()
 {
     return Post::withCount('comments')->get();
     // SELECT *, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as comments_count
 }
 
-// ✅ ХОРОШО: Денормализация - хранить счётчик в таблице
-// Миграция
+// ✅ BOM: Desnormalização — guarda o contador na tabela
+// Migration
 Schema::table('posts', function (Blueprint $table) {
     $table->integer('comments_count')->default(0)->after('content');
-    $table->index('comments_count'); // Для сортировки по популярности
+    $table->index('comments_count'); // Para ordenar por popularidade
 });
 
-// Заполнить существующие
+// Preencher os existentes
 DB::statement('
     UPDATE posts
     SET comments_count = (
@@ -567,7 +567,7 @@ DB::statement('
     )
 ');
 
-// Observer для автообновления
+// Observer para atualizar sozinho
 class CommentObserver
 {
     public function created(Comment $comment)
@@ -583,7 +583,7 @@ class CommentObserver
     }
 }
 
-// Теперь простой запрос
+// Agora a query é simples
 public function index()
 {
     return Post::select(['id', 'title', 'comments_count'])
@@ -592,12 +592,12 @@ public function index()
     // SELECT id, title, comments_count FROM posts ORDER BY comments_count DESC
 }
 
-// Производительность:
-// withCount(): ~200ms для 10k постов
+// Performance:
+// withCount(): ~200ms para 10k posts
 // denormalized: ~10ms
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

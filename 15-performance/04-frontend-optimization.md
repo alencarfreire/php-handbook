@@ -1,41 +1,41 @@
-# 13.4 Frontend Optimization
+# 13.4 Otimização de frontend
 
-## Краткое резюме
+## Resumo
 
-> **Frontend Optimization** — ускорение загрузки страниц через минификацию, сжатие, CDN, lazy loading.
+> **Otimização de frontend** — acelerar o carregamento da página com minificação, compressão, CDN e lazy loading.
 >
-> **Метрики:** FCP (First Contentful Paint), LCP (Largest Contentful Paint), TTI (Time to Interactive), CLS (Layout Shift).
+> **Métricas:** FCP (First Contentful Paint), LCP (Largest Contentful Paint), TTI (Time to Interactive), CLS (Layout Shift).
 >
-> **Методы:** Vite для сборки, Gzip/Brotli, lazy loading изображений, CDN для статики, code splitting, defer/async скрипты.
+> **Métodos:** Vite no build, Gzip/Brotli, lazy loading de imagens, CDN para estáticos, code splitting, scripts com defer/async.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Laravel Mix / Vite](#laravel-mix--vite)
-- [Минификация и сжатие](#минификация-и-сжатие)
-- [Оптимизация изображений](#оптимизация-изображений)
+- [Minificação e compressão](#minificação-e-compressão)
+- [Otimização de imagens](#otimização-de-imagens)
 - [CDN](#cdn)
-- [Кеширование фронтенда](#кеширование-фронтенда)
+- [Cache do frontend](#cache-do-frontend)
 - [Code Splitting](#code-splitting)
-- [Практические примеры](#практические-примеры)
-- [Performance monitoring](#performance-monitoring)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Exemplos práticos](#exemplos-práticos)
+- [Monitoramento de performance](#monitoramento-de-performance)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Оптимизация фронтенда для быстрой загрузки страниц. Минификация, сжатие, CDN, lazy loading.
+**O que é:**
+Otimizar o frontend para a página carregar rápido. Minificação, compressão, CDN, lazy loading.
 
-**Метрики:**
-- **FCP** (First Contentful Paint) — первый контент
-- **LCP** (Largest Contentful Paint) — основной контент
-- **TTI** (Time to Interactive) — интерактивность
-- **CLS** (Cumulative Layout Shift) — стабильность
+**Métricas:**
+- **FCP** (First Contentful Paint) — primeiro conteúdo
+- **LCP** (Largest Contentful Paint) — conteúdo principal
+- **TTI** (Time to Interactive) — interatividade
+- **CLS** (Cumulative Layout Shift) — estabilidade
 
 ---
 
@@ -67,18 +67,18 @@ export default defineConfig({
 });
 ```
 
-**Build для production:**
+**Build de production:**
 
 ```bash
-# Сборка с минификацией
+# Build com minificação
 npm run build
 
-# Результат в public/build/
+# Resultado em public/build/
 # - assets/app-[hash].js
 # - assets/app-[hash].css
 ```
 
-**В Blade:**
+**No Blade:**
 
 ```blade
 {{-- resources/views/layouts/app.blade.php --}}
@@ -95,7 +95,7 @@ npm run build
 
 ---
 
-## Минификация и сжатие
+## Minificação e compressão
 
 **Gzip/Brotli (Nginx):**
 
@@ -109,34 +109,34 @@ http {
     gzip_min_length 1000;
     gzip_comp_level 6;
 
-    # Brotli (если установлен модуль)
+    # Brotli (se o módulo estiver instalado)
     brotli on;
     brotli_types text/plain text/css application/json application/javascript text/xml application/xml;
     brotli_comp_level 6;
 }
 ```
 
-**Проверка:**
+**Checagem:**
 
 ```bash
-# Проверить gzip
+# Checar gzip
 curl -H "Accept-Encoding: gzip" -I http://example.com/app.js
 
-# Должен вернуть:
+# Deve devolver:
 # Content-Encoding: gzip
 ```
 
 ---
 
-## Оптимизация изображений
+## Otimização de imagens
 
 **Lazy loading:**
 
 ```blade
-{{-- Native lazy loading --}}
-<img src="/images/photo.jpg" loading="lazy" alt="Photo">
+{{-- Lazy loading nativo --}}
+<img src="/images/photo.jpg" loading="lazy" alt="Foto">
 
-{{-- Для фонового изображения --}}
+{{-- Para imagem de fundo --}}
 <div class="lazy-bg" data-bg="/images/hero.jpg"></div>
 
 <script>
@@ -163,16 +163,16 @@ document.addEventListener('DOMContentLoaded', function() {
 <picture>
     <source srcset="/images/photo.webp" type="image/webp">
     <source srcset="/images/photo.jpg" type="image/jpeg">
-    <img src="/images/photo.jpg" alt="Photo">
+    <img src="/images/photo.jpg" alt="Foto">
 </picture>
 
-{{-- Разные размеры --}}
+{{-- Tamanhos diferentes --}}
 <img srcset="/images/photo-320.jpg 320w,
              /images/photo-640.jpg 640w,
              /images/photo-1280.jpg 1280w"
      sizes="(max-width: 640px) 100vw, 640px"
      src="/images/photo-640.jpg"
-     alt="Photo">
+     alt="Foto">
 ```
 
 **Image optimization package:**
@@ -192,7 +192,7 @@ $optimizerChain->optimize($pathToImage);
 
 ## CDN
 
-**Конфигурация:**
+**Configuração:**
 
 ```env
 # .env
@@ -214,13 +214,13 @@ ASSET_URL=https://cdn.example.com
 ],
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
-// Загрузить на CDN
+// Enviar para o CDN
 Storage::disk('s3')->put('avatars/1.jpg', $file);
 
-// URL с CDN
+// URL do CDN
 $url = Storage::disk('s3')->url('avatars/1.jpg');
 // https://cdn.example.com/avatars/1.jpg
 ```
@@ -228,14 +228,14 @@ $url = Storage::disk('s3')->url('avatars/1.jpg');
 **Blade helper:**
 
 ```blade
-{{-- Автоматически использует ASSET_URL --}}
+{{-- Usa ASSET_URL automaticamente --}}
 <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 <script src="{{ asset('js/app.js') }}"></script>
 ```
 
 ---
 
-## Кеширование фронтенда
+## Cache do frontend
 
 **HTTP Cache headers:**
 
@@ -245,7 +245,7 @@ Route::get('/images/{file}', function ($file) {
     $path = storage_path("app/public/images/$file");
 
     return response()->file($path, [
-        'Cache-Control' => 'public, max-age=31536000',  // 1 год
+        'Cache-Control' => 'public, max-age=31536000',  // 1 ano
         'Expires' => now()->addYear()->toRfc7231String(),
     ]);
 });
@@ -281,18 +281,18 @@ self.addEventListener('fetch', event => {
 
 ## Code Splitting
 
-**Динамический import:**
+**Import dinâmico:**
 
 ```js
 // resources/js/app.js
 
-// ❌ ПЛОХО: загружает всё сразу
+// ❌ RUIM: carrega tudo de uma vez
 import Chart from 'chart.js';
 
-// ✅ ХОРОШО: загружает когда нужно
+// ✅ BOM: carrega quando precisa
 document.getElementById('show-chart').addEventListener('click', async () => {
     const { Chart } = await import('chart.js');
-    // Используем Chart
+    // Usa o Chart
 });
 ```
 
@@ -303,12 +303,12 @@ document.getElementById('show-chart').addEventListener('click', async () => {
 const routes = [
     {
         path: '/dashboard',
-        // ❌ ПЛОХО
+        // ❌ RUIM
         component: require('./views/Dashboard.vue').default
     },
     {
         path: '/admin',
-        // ✅ ХОРОШО: lazy load
+        // ✅ BOM: lazy load
         component: () => import('./views/Admin.vue')
     }
 ];
@@ -316,12 +316,12 @@ const routes = [
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Оптимизация fonts:**
+**Otimização de fontes:**
 
 ```blade
-{{-- Preload критичных шрифтов --}}
+{{-- Preload das fontes críticas --}}
 <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 
 {{-- CSS --}}
@@ -329,7 +329,7 @@ const routes = [
 @font-face {
     font-family: 'Inter';
     src: url('/fonts/inter.woff2') format('woff2');
-    font-display: swap;  /* Показывать fallback пока грузится */
+    font-display: swap;  /* Mostra o fallback enquanto carrega */
 }
 </style>
 ```
@@ -337,39 +337,39 @@ const routes = [
 **Critical CSS:**
 
 ```blade
-{{-- Инлайн критичный CSS --}}
+{{-- Critical CSS inline --}}
 <style>
-    /* Стили для above-the-fold контента */
+    /* Estilos do conteúdo above-the-fold */
     body { font-family: sans-serif; }
     .header { background: #fff; }
 </style>
 
-{{-- Остальной CSS асинхронно --}}
+{{-- Resto do CSS de forma assíncrona --}}
 <link rel="preload" href="{{ asset('css/app.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="{{ asset('css/app.css') }}"></noscript>
 ```
 
-**Defer/Async скрипты:**
+**Scripts defer/async:**
 
 ```blade
-{{-- Async: загружается параллельно, выполняется сразу --}}
+{{-- Async: carrega em paralelo, executa na hora --}}
 <script async src="https://www.google-analytics.com/analytics.js"></script>
 
-{{-- Defer: загружается параллельно, выполняется после DOM --}}
+{{-- Defer: carrega em paralelo, executa depois do DOM --}}
 <script defer src="{{ asset('js/app.js') }}"></script>
 
-{{-- Обычный: блокирует парсинг --}}
+{{-- Normal: bloqueia o parse --}}
 <script src="{{ asset('js/app.js') }}"></script>
 ```
 
 **Prefetch/Preload:**
 
 ```blade
-{{-- Preload: загрузить сейчас (высокий приоритет) --}}
+{{-- Preload: carrega agora (prioridade alta) --}}
 <link rel="preload" href="/js/app.js" as="script">
 <link rel="preload" href="/fonts/font.woff2" as="font" type="font/woff2" crossorigin>
 
-{{-- Prefetch: загрузить когда браузер свободен (низкий приоритет) --}}
+{{-- Prefetch: carrega quando o browser estiver livre (prioridade baixa) --}}
 <link rel="prefetch" href="/admin/dashboard.js">
 
 {{-- DNS prefetch --}}
@@ -381,7 +381,7 @@ const routes = [
 
 ---
 
-## Performance monitoring
+## Monitoramento de performance
 
 **Lighthouse:**
 
@@ -390,8 +390,8 @@ const routes = [
 npm install -g lighthouse
 lighthouse https://example.com --view
 
-# В Chrome DevTools
-# Lighthouse tab → Generate report
+# No Chrome DevTools
+# Aba Lighthouse → Generate report
 ```
 
 **Web Vitals:**
@@ -416,20 +416,20 @@ getTTFB(sendToAnalytics);
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Frontend optimization: Vite для сборки с минификацией. Gzip/Brotli сжатие. Lazy loading изображений (loading=lazy). Responsive images (srcset). CDN для статики. HTTP cache headers. Code splitting (динамический import). Critical CSS inline. Defer/async скрипты. Preload для критичных ресурсов. Service Worker для PWA. Web Vitals для мониторинга. Lighthouse для аудита."
+> "Otimização de frontend: Vite no build com minificação. Compressão Gzip/Brotli. Lazy loading de imagens (loading=lazy). Responsive images (srcset). CDN para estáticos. HTTP cache headers. Code splitting (import dinâmico). Critical CSS inline. Scripts com defer/async. Preload nos recursos críticos. Service Worker para PWA. Web Vitals no monitoramento. Lighthouse para auditar."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой Vite с code splitting
+### Exercício 1: Configure o Vite com code splitting
 
-Настрой Vite для автоматического разделения vendor кода и async chunks.
+**Enunciado:** Configure o Vite para separar automaticamente o código vendor e os async chunks.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```js
 // vite.config.js
@@ -451,7 +451,7 @@ export default defineConfig({
     build: {
         rollupOptions: {
             output: {
-                // Разделить vendor код
+                // Separar o código vendor
                 manualChunks: {
                     'vendor': ['vue', 'axios'],
                     'ui': ['primevue', '@headlessui/vue'],
@@ -459,7 +459,7 @@ export default defineConfig({
                 },
             },
         },
-        // Размер chunk для split
+        // Tamanho do chunk para o split
         chunkSizeWarningLimit: 1000,
     },
 });
@@ -469,28 +469,28 @@ import { createApp } from 'vue';
 
 const app = createApp({});
 
-// Lazy load компонентов
+// Lazy load dos componentes
 app.component('UserDashboard', () => import('./components/UserDashboard.vue'));
 app.component('AdminPanel', () => import('./components/AdminPanel.vue'));
 
 app.mount('#app');
 
-// Результат после build:
+// Resultado depois do build:
 // public/build/assets/
-// ├── app-[hash].js          (основной код)
+// ├── app-[hash].js          (código principal)
 // ├── vendor-[hash].js       (vue, axios)
-// ├── ui-[hash].js           (UI библиотеки)
-// ├── charts-[hash].js       (графики)
+// ├── ui-[hash].js           (libs de UI)
+// ├── charts-[hash].js       (gráficos)
 // └── UserDashboard-[hash].js (lazy chunk)
 ```
 </details>
 
-### Задание 2: Оптимизация изображений с lazy loading
+### Exercício 2: Otimize imagens com lazy loading
 
-Реализуй компонент для оптимизированной загрузки изображений с WebP, responsive sizes, и lazy loading.
+**Enunciado:** Implemente um componente para carregar imagens otimizadas com WebP, responsive sizes e lazy loading.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```blade
 {{-- resources/views/components/optimized-image.blade.php --}}
@@ -509,7 +509,7 @@ app.mount('#app');
 @endphp
 
 <picture>
-    {{-- WebP для современных браузеров --}}
+    {{-- WebP para browsers modernos --}}
     <source
         type="image/webp"
         srcset="{{ $srcWithoutExt }}-320.webp 320w,
@@ -518,7 +518,7 @@ app.mount('#app');
         sizes="{{ $sizes }}"
     >
 
-    {{-- Fallback для старых браузеров --}}
+    {{-- Fallback para browsers antigos --}}
     <source
         type="image/{{ $ext }}"
         srcset="{{ $srcWithoutExt }}-320.{{ $ext }} 320w,
@@ -527,7 +527,7 @@ app.mount('#app');
         sizes="{{ $sizes }}"
     >
 
-    {{-- Основное изображение --}}
+    {{-- Imagem principal --}}
     <img
         src="{{ $src }}"
         alt="{{ $alt }}"
@@ -538,15 +538,15 @@ app.mount('#app');
     >
 </picture>
 
-{{-- Использование --}}
+{{-- Uso --}}
 <x-optimized-image
     src="/images/hero.jpg"
-    alt="Hero image"
+    alt="Imagem hero"
     sizes="(max-width: 640px) 100vw, 50vw"
     class="rounded-lg"
 />
 
-{{-- Service для генерации оптимизированных версий --}}
+{{-- Service para gerar as versões otimizadas --}}
 // app/Services/ImageOptimizationService.php
 use Intervention\Image\Facades\Image;
 
@@ -566,11 +566,11 @@ class ImageOptimizationService
                 $constraint->upsize();
             });
 
-            // Save as WebP
+            // Salva como WebP
             $webpPath = "{$pathInfo['dirname']}/{$pathInfo['filename']}-{$width}.webp";
             $resized->save($webpPath, 80, 'webp');
 
-            // Save as original format
+            // Salva no formato original
             $originalPath = "{$pathInfo['dirname']}/{$pathInfo['filename']}-{$width}.{$pathInfo['extension']}";
             $resized->save($originalPath, 80);
         }
@@ -579,25 +579,25 @@ class ImageOptimizationService
 ```
 </details>
 
-### Задание 3: Critical CSS и async loading
+### Exercício 3: Critical CSS e carregamento async
 
-Реализуй загрузку критичного CSS inline, а остального асинхронно.
+**Enunciado:** Coloque o critical CSS inline e carregue o resto de forma assíncrona.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```blade
 {{-- resources/views/layouts/app.blade.php --}}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'My App')</title>
+    <title>@yield('title', 'Meu App')</title>
 
-    {{-- Critical CSS inline для above-the-fold контента --}}
+    {{-- Critical CSS inline do conteúdo above-the-fold --}}
     <style>
-        /* Минимальные стили для первого экрана */
+        /* Estilos mínimos da primeira tela */
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -615,26 +615,26 @@ class ImageOptimizationService
         }
     </style>
 
-    {{-- Preload критичных ресурсов --}}
+    {{-- Preload dos recursos críticos --}}
     <link rel="preload" href="{{ asset('fonts/inter.woff2') }}" as="font" type="font/woff2" crossorigin>
 
-    {{-- Async загрузка основного CSS --}}
+    {{-- CSS principal em async --}}
     <link rel="preload" href="{{ mix('css/app.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ mix('css/app.css') }}"></noscript>
 
-    {{-- Inline скрипт для async CSS (polyfill) --}}
+    {{-- Script inline para CSS async (polyfill) --}}
     <script>
         !function(e){"use strict";var t=function(t,n,r){var o,i=e.document,c=i.createElement("link");if(n)o=n;else{var a=(i.body||i.getElementsByTagName("head")[0]).childNodes;o=a[a.length-1]}var d=i.styleSheets;c.rel="stylesheet",c.href=t,c.media="only x",function e(t){if(i.body)return t();setTimeout(function(){e(t)})}(function(){o.parentNode.insertBefore(c,n?o:o.nextSibling)});var f=function(e){for(var t=c.href,n=d.length;n--;)if(d[n].href===t)return e();setTimeout(function(){f(e)})};return c.addEventListener&&c.addEventListener("load",r),c.onloadcssdefined=f,f(r),c};"undefined"!=typeof exports?exports.loadCSS=t:e.loadCSS=t}("undefined"!=typeof global?global:this);
     </script>
 
-    {{-- DNS prefetch для внешних ресурсов --}}
+    {{-- DNS prefetch de recursos externos --}}
     <link rel="dns-prefetch" href="//cdn.example.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            {{-- Header content --}}
+            {{-- Conteúdo do header --}}
         </div>
     </header>
 
@@ -642,15 +642,15 @@ class ImageOptimizationService
         @yield('content')
     </main>
 
-    {{-- Defer скрипты --}}
+    {{-- Scripts com defer --}}
     <script src="{{ mix('js/app.js') }}" defer></script>
 
-    {{-- Analytics async --}}
+    {{-- Analytics em async --}}
     <script async src="https://www.google-analytics.com/analytics.js"></script>
 </body>
 </html>
 
-{{-- Команда для генерации critical CSS --}}
+{{-- Comando para gerar o critical CSS --}}
 // npm install --save-dev critical
 
 // package.json
@@ -660,13 +660,13 @@ class ImageOptimizationService
     }
 }
 
-// Результат:
-// - FCP улучшен на 40%
-// - LCP улучшен на 30%
+// Resultado:
+// - FCP melhorou 40%
+// - LCP melhorou 30%
 // - Lighthouse score: 95+
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

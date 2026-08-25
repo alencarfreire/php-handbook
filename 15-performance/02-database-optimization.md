@@ -1,79 +1,79 @@
-# 13.2 Database Optimization
+# 13.2 Otimização de banco
 
-## Краткое резюме
+## Resumo
 
-> **Database Optimization** — ускорение работы с БД через индексы, избежание N+1, оптимизацию JOIN.
+> **Otimização de banco** — acelerar o acesso ao banco com índices, evitar N+1 e otimizar JOIN.
 >
-> **Проблемы:** N+1 queries (решение: `with()`), отсутствие индексов, `SELECT *`, медленные JOIN.
+> **Problemas:** N+1 queries (solução: `with()`), falta de índices, `SELECT *`, JOIN lento.
 >
-> **Методы:** Eager Loading, пагинация вместо `all()`, `chunk/lazy` для больших объёмов, `withCount` для агрегатов.
+> **Métodos:** Eager Loading, paginação no lugar de `all()`, `chunk/lazy` para volume grande, `withCount` para agregados.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [N+1 Problem](#n1-problem)
-- [Индексы](#индексы)
-- [Оптимизация запросов](#оптимизация-запросов)
-- [Оптимизация JOIN](#оптимизация-join)
-- [Агрегаты](#агрегаты)
-- [Кеширование запросов](#кеширование-запросов)
-- [Практические примеры](#практические-примеры)
+- [O que é](#o-que-é)
+- [Problema N+1](#problema-n1)
+- [Índices](#índices)
+- [Otimização de queries](#otimização-de-queries)
+- [Otimização de JOIN](#otimização-de-join)
+- [Agregados](#agregados)
+- [Cache de queries](#cache-de-queries)
+- [Exemplos práticos](#exemplos-práticos)
 - [Database Connection Pool](#database-connection-pool)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Оптимизация запросов к БД для ускорения приложения. Индексы, избежание N+1, оптимизация JOIN.
+**O que é:**
+Otimizar queries no banco para o app ficar mais rápido. Índices, evitar N+1, otimizar JOIN.
 
-**Основные проблемы:**
+**Problemas principais:**
 - N+1 queries
-- Отсутствие индексов
+- Falta de índices
 - SELECT *
-- Медленные JOIN
+- JOIN lento
 
 ---
 
-## N+1 Problem
+## Problema N+1
 
-**Проблема:**
+**Problema:**
 
 ```php
-// ❌ ПЛОХО: 1 + N queries
+// ❌ RUIM: 1 + N queries
 $posts = Post::all();  // 1 query
 
 foreach ($posts as $post) {
     echo $post->user->name;  // N queries
 }
-// Итого: 1 + 100 = 101 query для 100 постов
+// Total: 1 + 100 = 101 queries para 100 posts
 ```
 
-**Решение: Eager Loading:**
+**Solução: Eager Loading:**
 
 ```php
-// ✅ ХОРОШО: 2 queries
+// ✅ BOM: 2 queries
 $posts = Post::with('user')->get();  // 2 queries: posts + users
 
 foreach ($posts as $post) {
-    echo $post->user->name;  // Без запроса
+    echo $post->user->name;  // Sem query extra
 }
 ```
 
 **Nested relationships:**
 
 ```php
-// Загрузить несколько связей
+// Carregar várias relationships
 $posts = Post::with(['user', 'comments', 'tags'])->get();
 
-// Вложенные связи
+// Relationships aninhadas
 $posts = Post::with('comments.user')->get();
 
-// Условия для eager loading
+// Condições no eager loading
 $posts = Post::with(['comments' => function ($query) {
     $query->where('approved', true)
           ->orderBy('created_at', 'desc')
@@ -86,7 +86,7 @@ $posts = Post::with(['comments' => function ($query) {
 ```php
 $posts = Post::all();
 
-// Загрузить связь позже
+// Carregar a relationship depois
 if ($needUsers) {
     $posts->load('user');
 }
@@ -94,47 +94,47 @@ if ($needUsers) {
 
 ---
 
-## Индексы
+## Índices
 
-**Создание индексов:**
+**Criar índices:**
 
 ```php
 Schema::table('posts', function (Blueprint $table) {
-    // Простой индекс
+    // Índice simples
     $table->index('user_id');
 
-    // Составной индекс
+    // Índice composto
     $table->index(['user_id', 'published']);
 
-    // Уникальный индекс
+    // Índice único
     $table->unique('email');
 
-    // Полнотекстовый индекс (MySQL)
+    // Índice full-text (MySQL)
     $table->fullText('title');
 });
 ```
 
-**Когда использовать:**
+**Quando usar:**
 
 ```php
-// ✅ Индекс нужен для:
+// ✅ Índice entra em:
 // - WHERE clause
-Post::where('user_id', 1)->get();  // Индекс на user_id
+Post::where('user_id', 1)->get();  // Índice em user_id
 
 // - ORDER BY
-Post::orderBy('created_at', 'desc')->get();  // Индекс на created_at
+Post::orderBy('created_at', 'desc')->get();  // Índice em created_at
 
 // - JOIN
-Post::join('users', 'posts.user_id', '=', 'users.id');  // Индексы на обе колонки
+Post::join('users', 'posts.user_id', '=', 'users.id');  // Índices nas duas colunas
 
 // - FOREIGN KEY
-$table->foreign('user_id')->references('id')->on('users');  // Автоматический индекс
+$table->foreign('user_id')->references('id')->on('users');  // Índice automático
 ```
 
-**Проверить использование индексов:**
+**Checar se o índice entra:**
 
 ```php
-// EXPLAIN для анализа
+// EXPLAIN para analisar
 DB::enableQueryLog();
 
 Post::where('user_id', 1)
@@ -144,59 +144,59 @@ Post::where('user_id', 1)
 
 dd(DB::getQueryLog());
 
-// Или напрямую SQL:
+// Ou SQL direto:
 // EXPLAIN SELECT * FROM posts WHERE user_id = 1 AND published = 1 ORDER BY created_at DESC;
 ```
 
 ---
 
-## Оптимизация запросов
+## Otimização de queries
 
-**Избегать SELECT *:**
+**Evitar SELECT *:**
 
 ```php
-// ❌ ПЛОХО: выбирает всё
+// ❌ RUIM: pega tudo
 $users = User::all();
 
-// ✅ ХОРОШО: только нужные колонки
+// ✅ BOM: só as colunas que precisa
 $users = User::select(['id', 'name', 'email'])->get();
 
-// С relationships
+// Com relationships
 $posts = Post::with('user:id,name')->get();
 ```
 
-**Пагинация:**
+**Paginação:**
 
 ```php
-// ❌ ПЛОХО: загружает всё в память
+// ❌ RUIM: carrega tudo na memória
 $posts = Post::all();
 
-// ✅ ХОРОШО: пагинация
+// ✅ BOM: paginação
 $posts = Post::paginate(20);
 
-// Для API: простая пагинация (без total count)
+// Para API: paginação simples (sem total count)
 $posts = Post::simplePaginate(20);
 
-// Курсорная пагинация (для больших данных)
+// Paginação por cursor (volume grande)
 $posts = Post::orderBy('id')->cursorPaginate(20);
 ```
 
-**Chunk для больших объёмов:**
+**Chunk para volume grande:**
 
 ```php
-// ❌ ПЛОХО: вся таблица в памяти
+// ❌ RUIM: tabela inteira na memória
 User::all()->each(function ($user) {
     $this->processUser($user);
 });
 
-// ✅ ХОРОШО: по частям
+// ✅ BOM: em pedaços
 User::chunk(100, function ($users) {
     foreach ($users as $user) {
         $this->processUser($user);
     }
 });
 
-// Lazy для итерации
+// Lazy para iterar
 User::lazy()->each(function ($user) {
     $this->processUser($user);
 });
@@ -204,7 +204,7 @@ User::lazy()->each(function ($user) {
 
 ---
 
-## Оптимизация JOIN
+## Otimização de JOIN
 
 **Eager Loading vs JOIN:**
 
@@ -212,36 +212,36 @@ User::lazy()->each(function ($user) {
 // Eager Loading (2 queries)
 $posts = Post::with('user')->get();
 
-// JOIN (1 query, но дублирование данных)
+// JOIN (1 query, mas duplica dados)
 $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
     ->select('posts.*', 'users.name as user_name')
     ->get();
 ```
 
-**LEFT JOIN для подсчёта:**
+**LEFT JOIN para contar:**
 
 ```php
-// Количество комментариев для каждого поста
+// Quantidade de comments de cada post
 $posts = Post::leftJoin('comments', 'posts.id', '=', 'comments.post_id')
     ->select('posts.*', DB::raw('COUNT(comments.id) as comments_count'))
     ->groupBy('posts.id')
     ->get();
 
-// Или через withCount (проще)
+// Ou withCount (mais simples)
 $posts = Post::withCount('comments')->get();
 ```
 
 ---
 
-## Агрегаты
+## Agregados
 
 **COUNT, SUM, AVG:**
 
 ```php
-// Общее количество
+// Total
 $count = User::count();
 
-// С условием
+// Com condição
 $activeUsers = User::where('active', true)->count();
 
 // SUM
@@ -256,15 +256,15 @@ $minPrice = Product::min('price');
 $maxPrice = Product::max('price');
 ```
 
-**Группировка:**
+**Agrupamento:**
 
 ```php
-// Заказы по пользователям
+// Pedidos por usuário
 $orders = Order::select('user_id', DB::raw('COUNT(*) as total'))
     ->groupBy('user_id')
     ->get();
 
-// С HAVING
+// Com HAVING
 $bigSpenders = Order::select('user_id', DB::raw('SUM(total) as spent'))
     ->groupBy('user_id')
     ->having('spent', '>', 1000)
@@ -273,12 +273,12 @@ $bigSpenders = Order::select('user_id', DB::raw('SUM(total) as spent'))
 
 ---
 
-## Кеширование запросов
+## Cache de queries
 
-**Кеш для агрегатов:**
+**Cache para agregados:**
 
 ```php
-// ❌ ПЛОХО: запрос на каждый request
+// ❌ RUIM: query em todo request
 public function dashboard()
 {
     return [
@@ -288,7 +288,7 @@ public function dashboard()
     ];
 }
 
-// ✅ ХОРОШО: кешировать
+// ✅ BOM: cache
 public function dashboard()
 {
     return Cache::remember('dashboard.stats', 600, function () {
@@ -303,12 +303,12 @@ public function dashboard()
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Оптимизация сложного запроса:**
+**Otimizar query complexa:**
 
 ```php
-// ❌ ПЛОХО
+// ❌ RUIM
 public function getPopularPosts()
 {
     $posts = Post::all();  // N+1
@@ -324,7 +324,7 @@ public function getPopularPosts()
     });
 }
 
-// ✅ ХОРОШО
+// ✅ BOM
 public function getPopularPosts()
 {
     return Cache::remember('posts.popular', 3600, function () {
@@ -344,10 +344,10 @@ public function getPopularPosts()
 }
 ```
 
-**Оптимизация поиска:**
+**Otimizar busca:**
 
 ```php
-// ❌ ПЛОХО
+// ❌ RUIM
 public function search($query)
 {
     return Product::where('name', 'like', "%$query%")
@@ -355,7 +355,7 @@ public function search($query)
         ->get();
 }
 
-// ✅ ХОРОШО: fulltext index
+// ✅ BOM: fulltext index
 Schema::table('products', function (Blueprint $table) {
     $table->fullText(['name', 'description']);
 });
@@ -367,22 +367,22 @@ public function search($query)
         ->get();
 }
 
-// Или Scout (Algolia, Meilisearch)
+// Ou Scout (Algolia, Meilisearch)
 return Product::search($query)->get();
 ```
 
-**Batch вставка:**
+**Batch insert:**
 
 ```php
-// ❌ ПЛОХО: N queries
+// ❌ RUIM: N queries
 foreach ($data as $item) {
     Product::create($item);  // N insert queries
 }
 
-// ✅ ХОРОШО: 1 query
+// ✅ BOM: 1 query
 Product::insert($data);
 
-// Или с timestamps
+// Ou com timestamps
 $now = now();
 $data = array_map(function ($item) use ($now) {
     return array_merge($item, [
@@ -409,7 +409,7 @@ Product::insert($data);
     'username' => env('DB_USERNAME'),
     'password' => env('DB_PASSWORD'),
     'options' => [
-        PDO::ATTR_PERSISTENT => true,  // Persistent connection
+        PDO::ATTR_PERSISTENT => true,  // Conexão persistente
     ],
 ],
 ```
@@ -424,26 +424,26 @@ Product::insert($data);
     'write' => [
         'host' => ['192.168.1.3'],  // Master
     ],
-    'sticky' => true,  // Читать с write после записи
+    'sticky' => true,  // Ler do write depois de gravar
 ],
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Database optimization: избегать N+1 через eager loading (with). Индексы на WHERE, ORDER BY, JOIN колонки. SELECT только нужные поля. Пагинация вместо all(). Chunk/lazy для больших объёмов. withCount для COUNT. Кешировать агрегаты. Fulltext index для поиска. Batch insert вместо N queries. EXPLAIN для анализа. Read/write replicas для масштабирования."
+> "Otimização de banco: evito N+1 com eager loading (with). Índice em WHERE, ORDER BY, JOIN. SELECT só os campos que precisa. Paginação no lugar de all(). Chunk/lazy para volume grande. withCount para COUNT. Cache de agregados. Fulltext index para busca. Batch insert no lugar de N queries. EXPLAIN para analisar. Read/write replicas para escalar."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Исправь N+1 проблему
+### Exercício 1: Corrija o N+1
 
-Найди и исправь N+1 проблему в коде.
+**Enunciado:** Encontre e corrija o N+1 no código.
 
 ```php
-// Контроллер
+// Controller
 public function index()
 {
     $posts = Post::where('published', true)->get();
@@ -454,35 +454,35 @@ public function index()
 // View
 @foreach($posts as $post)
     <h2>{{ $post->title }}</h2>
-    <p>Автор: {{ $post->user->name }}</p>
-    <p>Комментариев: {{ $post->comments->count() }}</p>
-    <p>Категория: {{ $post->category->name }}</p>
+    <p>Autor: {{ $post->user->name }}</p>
+    <p>Comentários: {{ $post->comments->count() }}</p>
+    <p>Categoria: {{ $post->category->name }}</p>
 @endforeach
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: 1 + N (users) + N (comments) + N (categories) queries
+// ❌ RUIM: 1 + N (users) + N (comments) + N (categories) queries
 
-// ✅ ХОРОШО: 4 queries total
+// ✅ BOM: 4 queries no total
 public function index()
 {
     $posts = Post::where('published', true)
-        ->with(['user', 'category'])  // Eager load relationships
-        ->withCount('comments')        // COUNT в одном запросе
+        ->with(['user', 'category'])  // Eager load das relationships
+        ->withCount('comments')        // COUNT numa query só
         ->get();
 
     return view('posts.index', compact('posts'));
 }
 
-// View (без изменений)
+// View (sem mudanças)
 @foreach($posts as $post)
     <h2>{{ $post->title }}</h2>
-    <p>Автор: {{ $post->user->name }}</p>
-    <p>Комментариев: {{ $post->comments_count }}</p>
-    <p>Категория: {{ $post->category->name }}</p>
+    <p>Autor: {{ $post->user->name }}</p>
+    <p>Comentários: {{ $post->comments_count }}</p>
+    <p>Categoria: {{ $post->category->name }}</p>
 @endforeach
 
 // Queries:
@@ -493,12 +493,12 @@ public function index()
 ```
 </details>
 
-### Задание 2: Оптимизация с индексами
+### Exercício 2: Otimização com índices
 
-Создай миграцию с правильными индексами для таблицы `products`. Запросы: фильтр по category_id, поиск по name, сортировка по price.
+**Enunciado:** Crie uma migration com os índices certos para a tabela `products`. Queries: filtro por category_id, busca por name, ordenação por price.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/xxxx_create_products_table.php
@@ -513,41 +513,41 @@ Schema::create('products', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
     $table->timestamps();
 
-    // Индексы для оптимизации запросов
+    // Índices para otimizar as queries
     $table->index('category_id');           // WHERE category_id
     $table->index('name');                  // WHERE name LIKE / ORDER BY name
     $table->index('price');                 // ORDER BY price
 
-    // Composite index для частых запросов
+    // Composite index para queries frequentes
     $table->index(['category_id', 'is_active', 'price']);  // WHERE category_id AND is_active ORDER BY price
 
-    // Fulltext для поиска
+    // Fulltext para busca
     $table->fullText(['name', 'description']);
 });
 
-// Использование
-// ✅ Использует composite index
+// Uso
+// ✅ Usa o composite index
 Product::where('category_id', 1)
     ->where('is_active', true)
     ->orderBy('price', 'asc')
     ->get();
 
-// ✅ Использует fulltext index
+// ✅ Usa o fulltext index
 Product::whereFullText(['name', 'description'], 'laptop')
     ->limit(20)
     ->get();
 ```
 </details>
 
-### Задание 3: Оптимизация batch операций
+### Exercício 3: Otimização de batch
 
-Оптимизируй импорт 10000 продуктов из CSV файла.
+**Enunciado:** Otimize o import de 10000 produtos de um arquivo CSV.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: 10000 INSERT queries
+// ❌ RUIM: 10000 INSERT queries
 public function import(string $csvPath)
 {
     $rows = $this->parseCsv($csvPath);
@@ -561,12 +561,12 @@ public function import(string $csvPath)
     }
 }
 
-// ✅ ХОРОШО: Batch insert + chunk
+// ✅ BOM: Batch insert + chunk
 public function import(string $csvPath)
 {
     $rows = $this->parseCsv($csvPath);
 
-    // Разбить на chunks по 1000
+    // Quebrar em chunks de 1000
     collect($rows)->chunk(1000)->each(function ($chunk) {
         $data = $chunk->map(function ($row) {
             return [
@@ -578,12 +578,12 @@ public function import(string $csvPath)
             ];
         })->toArray();
 
-        // 1 INSERT для 1000 строк
+        // 1 INSERT para 1000 linhas
         Product::insert($data);
     });
 }
 
-// ✅ ЕЩЁ ЛУЧШЕ: Используем DB transaction + отключаем events
+// ✅ AINDA MELHOR: DB transaction + desliga events
 public function import(string $csvPath)
 {
     Product::withoutEvents(function () use ($csvPath) {
@@ -607,13 +607,13 @@ public function import(string $csvPath)
     });
 }
 
-// Производительность:
-// ❌ create() в цикле: ~30 сек для 10k строк
-// ✅ batch insert: ~2 сек
-// ✅ + без events + transaction: ~1 сек
+// Performance:
+// ❌ create() no loop: ~30 s para 10k linhas
+// ✅ batch insert: ~2 s
+// ✅ + sem events + transaction: ~1 s
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
