@@ -1,53 +1,53 @@
 # 11.3 Rebase vs Merge
 
-## Краткое резюме
+## Resumo
 
-> **Merge** — объединяет ветки, создавая merge commit. Сохраняет историю.
+> **Merge** — junta branches e cria um merge commit. Preserva o histórico.
 >
-> **Rebase** — переносит коммиты на новую базу. Линейная история.
+> **Rebase** — move os commits para uma base nova. Histórico linear.
 >
-> **Правило:** НИКОГДА не rebase public ветки (main, develop). Только для личных веток.
+> **Regra:** NUNCA faça rebase de branch pública (main, develop). Só em branch pessoal.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
 - [Merge](#merge)
 - [Rebase](#rebase)
 - [Interactive Rebase](#interactive-rebase)
-- [Когда использовать](#когда-использовать)
-- [Практические примеры](#практические-примеры)
+- [Quando usar](#quando-usar)
+- [Exemplos práticos](#exemplos-práticos)
 - [Force push](#force-push)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Merge:**
-Объединяет ветки, создавая merge commit. Сохраняет всю историю.
+Junta as branches e cria um merge commit. Preserva o histórico inteiro.
 
 **Rebase:**
-Переносит коммиты на новую базу. Переписывает историю для линейности.
+Move os commits para uma base nova. Reescreve o histórico para ficar linear.
 
 ---
 
-## Как работает
+## Como funciona
 
 **Merge:**
 
 ```bash
-# До merge:
+# Antes do merge:
 # main:    A---B---C
 # feature:      \---D---E
 
 git checkout main
 git merge feature
 
-# После merge:
+# Depois do merge:
 # main:    A---B---C-------M
 #               \         /
 #                \---D---E
@@ -57,50 +57,50 @@ git merge feature
 **Rebase:**
 
 ```bash
-# До rebase:
+# Antes do rebase:
 # main:    A---B---C
 # feature:      \---D---E
 
 git checkout feature
 git rebase main
 
-# После rebase:
+# Depois do rebase:
 # main:    A---B---C
 # feature:            \---D'---E'
-# D', E' — новые коммиты (перебазированные)
+# D', E' — commits novos (rebased)
 
-# Затем merge будет fast-forward:
+# Depois o merge será fast-forward:
 git checkout main
 git merge feature
 
-# Результат:
-# main:    A---B---C---D'---E' (прямая линия)
+# Resultado:
+# main:    A---B---C---D'---E' (linha reta)
 ```
 
 ---
 
 ## Merge
 
-**Плюсы:**
-- Сохраняет полную историю
-- Безопасно (не переписывает коммиты)
-- Показывает когда были слияния
+**Prós:**
+- Preserva o histórico completo
+- Seguro (não reescreve commits)
+- Mostra quando houve merge
 
-**Минусы:**
-- Много merge commits (грязная история)
-- Сложный граф
+**Contras:**
+- Muitos merge commits (histórico sujo)
+- Grafo complicado
 
-**Использование:**
+**Uso:**
 
 ```bash
-# Обычный merge
+# Merge comum
 git checkout main
 git merge feature
 
-# Merge без fast-forward (всегда создавать merge commit)
+# Merge sem fast-forward (sempre cria merge commit)
 git merge --no-ff feature
 
-# Squash merge (все коммиты в один)
+# Squash merge (todos os commits em um)
 git merge --squash feature
 git commit -m "Add feature X"
 ```
@@ -109,33 +109,33 @@ git commit -m "Add feature X"
 
 ## Rebase
 
-**Плюсы:**
-- Линейная история (чистая)
-- Легко читать git log
-- Нет лишних merge commits
+**Prós:**
+- Histórico linear (limpo)
+- git log fácil de ler
+- Sem merge commit extra
 
-**Минусы:**
-- Переписывает историю (опасно для shared веток)
-- Может потерять контекст
+**Contras:**
+- Reescreve o histórico (perigoso em branch compartilhada)
+- Pode perder contexto
 
-**Использование:**
+**Uso:**
 
 ```bash
-# Rebase на main
+# Rebase em main
 git checkout feature
 git rebase main
 
-# Interactive rebase (редактировать коммиты)
+# Interactive rebase (editar commits)
 git rebase -i HEAD~3
 
-# Continue после исправления конфликтов
+# Continue depois de resolver os conflitos
 git add .
 git rebase --continue
 
-# Отменить rebase
+# Cancelar o rebase
 git rebase --abort
 
-# Force push (нужен после rebase)
+# Force push (precisa depois do rebase)
 git push --force-with-lease origin feature
 ```
 
@@ -143,37 +143,37 @@ git push --force-with-lease origin feature
 
 ## Interactive Rebase
 
-**Редактирование коммитов:**
+**Editar commits:**
 
 ```bash
 git rebase -i HEAD~3
 
-# Откроется редактор:
+# Abre o editor:
 pick abc123 Add login
 pick def456 Fix typo
 pick ghi789 Update tests
 
-# Команды:
-# pick   — оставить как есть
-# reword — изменить commit message
-# edit   — изменить commit
-# squash — объединить с предыдущим
-# fixup  — squash без сохранения message
-# drop   — удалить commit
+# Comandos:
+# pick   — deixar como está
+# reword — mudar a commit message
+# edit   — alterar o commit
+# squash — juntar com o anterior
+# fixup  — squash sem guardar a message
+# drop   — apagar o commit
 
-# Пример: squash 3 коммита в один
+# Exemplo: squash de 3 commits em um
 pick abc123 Add login
 squash def456 Fix typo
 squash ghi789 Update tests
 
-# Сохранить и выйти
-# Откроется редактор для нового commit message
+# Salvar e sair
+# Abre o editor da nova commit message
 ```
 
-**Практический пример:**
+**Exemplo prático:**
 
 ```bash
-# У тебя 5 коммитов:
+# Você tem 5 commits:
 # - Add user model
 # - Fix typo
 # - Add tests
@@ -182,69 +182,69 @@ squash ghi789 Update tests
 
 git rebase -i HEAD~5
 
-# Сжать в 3 осмысленных:
+# Compactar em 3 com sentido:
 pick abc123 Add user model
 fixup def456 Fix typo
 pick ghi789 Add tests
 fixup jkl012 Fix test
 pick mno345 Update readme
 
-# Результат:
-# - Add user model (с исправленной опечаткой)
-# - Add tests (с исправлением)
+# Resultado:
+# - Add user model (com o typo corrigido)
+# - Add tests (com a correção)
 # - Update readme
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Merge для:**
-- Public/shared ветки (main, develop)
-- Сохранение полной истории
-- Feature ветки в команде
+**Merge para:**
+- Branch pública/compartilhada (main, develop)
+- Preservar o histórico completo
+- Feature branch no time
 
-**Rebase для:**
-- Личные ветки (до push)
-- Чистка истории перед PR
-- Обновление feature ветки из main
+**Rebase para:**
+- Branch pessoal (antes do push)
+- Limpar o histórico antes do PR
+- Atualizar a feature branch com o main
 
-**Правило золотое:**
-❌ **НИКОГДА не делай rebase public веток (main, develop)**
-✅ Rebase только для своих локальных веток
+**Regra de ouro:**
+❌ **NUNCA faça rebase de branch pública (main, develop)**
+✅ Rebase só na sua branch local
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Обновить feature из main (merge):**
+**Atualizar a feature a partir do main (merge):**
 
 ```bash
 git checkout feature
 git merge main
 
-# Плюсы: безопасно, сохраняет историю
-# Минусы: merge commit в feature
+# Prós: seguro, preserva o histórico
+# Contras: merge commit na feature
 ```
 
-**Обновить feature из main (rebase):**
+**Atualizar a feature a partir do main (rebase):**
 
 ```bash
 git checkout feature
 git rebase main
 
-# Плюсы: линейная история
-# Минусы: нужен force push если уже был push
+# Prós: histórico linear
+# Contras: precisa de force push se já deu push
 ```
 
-**Очистить историю перед PR:**
+**Limpar o histórico antes do PR:**
 
 ```bash
-# У тебя 10 commits: "WIP", "fix", "typo", etc.
+# Você tem 10 commits: "WIP", "fix", "typo", etc.
 
 git rebase -i HEAD~10
 
-# Squash в 2-3 осмысленных коммита:
+# Squash em 2-3 commits com sentido:
 pick abc123 Add user authentication
 fixup def456 WIP
 fixup ghi789 fix
@@ -252,23 +252,23 @@ fixup jkl012 typo
 pick mno345 Add tests
 fixup pqr678 fix tests
 
-# Результат: 2 чистых коммита
+# Resultado: 2 commits limpos
 git push --force-with-lease origin feature
 ```
 
-**Rebase с конфликтами:**
+**Rebase com conflitos:**
 
 ```bash
 git rebase main
 
-# CONFLICT в app/Controller.php
-# ... исправить конфликты ...
+# CONFLICT em app/Controller.php
+# ... resolver os conflitos ...
 
 git add app/Controller.php
 git rebase --continue
 
-# Если ещё конфликты — повторить
-# Если хочешь отменить
+# Se ainda tiver conflito — repetir
+# Se quiser cancelar
 git rebase --abort
 ```
 
@@ -276,122 +276,122 @@ git rebase --abort
 
 ## Force push
 
-**После rebase нужен force push:**
+**Depois do rebase precisa de force push:**
 
 ```bash
-# ❌ Опасно (может перезаписать чужие изменения)
+# ❌ Perigoso (pode sobrescrever mudança de outra pessoa)
 git push --force origin feature
 
-# ✅ Безопаснее (не перезапишет если кто-то уже push-нул)
+# ✅ Mais seguro (não sobrescreve se alguém já deu push)
 git push --force-with-lease origin feature
 
-# --force-with-lease проверяет что remote ветка не изменилась
+# --force-with-lease checa se a branch remota não mudou
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
 **Merge:**
-- Объединяет ветки, создаёт merge commit
-- Сохраняет всю историю изменений
-- Безопасно для shared веток
-- Может создать сложный граф коммитов
+- Junta as branches e cria um merge commit
+- Preserva o histórico inteiro
+- Seguro em branch compartilhada
+- Pode deixar o grafo de commits complicado
 
 **Rebase:**
-- Переносит коммиты на новую базу
-- Создаёт линейную историю
-- Переписывает историю (меняет commit hashes)
-- Опасно для public веток
+- Move os commits para uma base nova
+- Deixa o histórico linear
+- Reescreve o histórico (muda os hashes dos commits)
+- Perigoso em branch pública
 
-**Когда использовать:**
-- **Merge** — для shared веток (main, develop), сохранения истории
-- **Rebase** — для личных веток, чистки истории перед PR
+**Quando usar:**
+- **Merge** — branch compartilhada (main, develop), preservar histórico
+- **Rebase** — branch pessoal, limpar histórico antes do PR
 
 **Interactive rebase:**
-- `git rebase -i HEAD~N` для редактирования коммитов
-- **pick** — оставить, **squash** — объединить, **reword** — изменить message
-- **fixup** — squash без сохранения message, **drop** — удалить
+- `git rebase -i HEAD~N` para editar commits
+- **pick** — deixar, **squash** — juntar, **reword** — mudar a message
+- **fixup** — squash sem guardar a message, **drop** — apagar
 
 **Force push:**
-- После rebase нужен force push
-- `--force-with-lease` безопаснее чем `--force`
-- Проверяет что remote не изменился
+- Depois do rebase precisa de force push
+- `--force-with-lease` é mais seguro que `--force`
+- Checa se o remote não mudou
 
-**Золотое правило:**
-- НИКОГДА не rebase public/shared ветки
-- Только для личных веток до merge в main
+**Regra de ouro:**
+- NUNCA faça rebase de branch pública/compartilhada
+- Só na branch pessoal, antes do merge em main
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Rebase feature ветки на main
+### Exercício 1: Rebase da feature branch no main
 
-У тебя feature ветка с 5 коммитами. Main ушёл вперёд. Rebase feature на main для линейной истории.
+Você tem uma feature branch com 5 commits. O main andou. Faça rebase da feature no main para o histórico ficar linear.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Текущее состояние:
-# main:    A---B---C---D (origin изменился)
-# feature:      \---E---F---G---H---I (твои коммиты)
+# Estado atual:
+# main:    A---B---C---D (origin mudou)
+# feature:      \---E---F---G---H---I (seus commits)
 
-# 1. Обновить main
+# 1. Atualizar o main
 git checkout main
 git pull origin main
 
-# 2. Переключиться на feature
+# 2. Mudar para feature
 git checkout feature
 
-# 3. Rebase на main
+# 3. Rebase em main
 git rebase main
 
-# Если нет конфликтов:
+# Se não tiver conflito:
 # feature:                D---E'---F'---G'---H'---I'
-# (коммиты перенесены на актуальный main)
+# (commits movidos para o main atual)
 
-# 4. Force push (т.к. переписали историю)
+# 4. Force push (porque reescreveu o histórico)
 git push --force-with-lease origin feature
 
-# Если есть конфликты:
-# CONFLICT в app/Controller.php
+# Se tiver conflito:
+# CONFLICT em app/Controller.php
 
-# Открыть файл, исправить конфликты
+# Abra o arquivo e resolva os conflitos
 # <<<<<<< HEAD
-# код из main
+# código do main
 # =======
-# твой код
+# seu código
 # >>>>>>>
 
-# Разрешить конфликт
+# Resolver o conflito
 git add app/Controller.php
 git rebase --continue
 
-# Если конфликты в следующих коммитах — повторить
-# Отменить rebase если запутался
+# Se o próximo commit também tiver conflito — repetir
+# Cancele o rebase se você se perder
 git rebase --abort
 
-# После успешного rebase
+# Depois do rebase ok
 git push --force-with-lease origin feature
 
-# Проверить результат
+# Conferir o resultado
 git log --graph --oneline --all
 ```
 </details>
 
-### Задание 2: Squash commits через interactive rebase
+### Exercício 2: Squash de commits com interactive rebase
 
-У тебя 7 коммитов в feature ветке. Нужно squash их в 2 логических коммита перед PR.
+Você tem 7 commits na feature branch. Precisa fazer squash em 2 commits lógicos antes do PR.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Текущие коммиты:
+# Commits atuais:
 git log --oneline
 # abc123 Update readme
 # def456 Fix test typo
@@ -401,14 +401,14 @@ git log --oneline
 # pqr678 Fix user model
 # stu901 Add user model
 
-# Цель: 2 коммита
+# Meta: 2 commits
 # 1. Add user model with validation
 # 2. Add tests and update readme
 
-# 1. Запустить interactive rebase
+# 1. Abrir o interactive rebase
 git rebase -i HEAD~7
 
-# 2. Откроется редактор:
+# 2. Abre o editor:
 pick stu901 Add user model
 fixup pqr678 Fix user model
 pick mno345 Add validation
@@ -417,7 +417,7 @@ pick ghi789 Add tests
 fixup def456 Fix test typo
 pick abc123 Update readme
 
-# 3. Изменить на:
+# 3. Mudar para:
 pick stu901 Add user model
 squash pqr678 Fix user model
 squash mno345 Add validation
@@ -426,10 +426,10 @@ pick ghi789 Add tests
 squash def456 Fix test typo
 squash abc123 Update readme
 
-# Сохранить и выйти
+# Salvar e sair
 
-# 4. Откроется редактор для первого commit message:
-# Удалить весь текст и написать:
+# 4. Abre o editor da primeira commit message:
+# Apague o texto e escreva:
 Add user model with validation
 
 - Implement User model
@@ -438,9 +438,9 @@ Add user model with validation
 
 Refs: FEAT-456
 
-# Сохранить и выйти
+# Salvar e sair
 
-# 5. Откроется редактор для второго commit message:
+# 5. Abre o editor da segunda commit message:
 Add tests and documentation
 
 - Add user model tests
@@ -449,7 +449,7 @@ Add tests and documentation
 
 Refs: FEAT-456
 
-# 6. Результат:
+# 6. Resultado:
 git log --oneline
 # xyz789 Add tests and documentation
 # abc456 Add user model with validation
@@ -457,9 +457,9 @@ git log --oneline
 # 7. Force push
 git push --force-with-lease origin feature
 
-# Альтернатива: одной командой с reword
+# Alternativa: uma passada com reword
 git rebase -i HEAD~7
-# В редакторе:
+# No editor:
 pick stu901 Add user model
 fixup pqr678 Fix user model
 fixup mno345 Add validation
@@ -470,58 +470,58 @@ fixup abc123 Update readme
 ```
 </details>
 
-### Задание 3: Отмени rebase и восстанови ветку
+### Exercício 3: Cancele o rebase e restaure a branch
 
-Ты сделал rebase, запутался в конфликтах, всё сломалось. Отмени rebase и восстанови ветку.
+Você fez rebase, se perdeu nos conflitos, quebrou tudo. Cancele o rebase e restaure a branch.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация: в процессе rebase, много конфликтов
+# Situação: rebase no meio, vários conflitos
 
-# Вариант 1: Отменить текущий rebase
+# Opção 1: Cancelar o rebase atual
 git rebase --abort
 
-# Ветка вернётся в состояние до rebase
+# A branch volta ao estado de antes do rebase
 git log --oneline
-# Всё как было
+# Tudo como estava
 
-# Вариант 2: Если уже завершил rebase и push, но всё сломалось
-# (и хочешь вернуться к старому состоянию)
+# Opção 2: Se o rebase e o push já foram, mas quebrou tudo
+# (e você quer voltar ao estado antigo)
 
-# 1. Найти commit до rebase через reflog
+# 1. Achar o commit de antes do rebase no reflog
 git reflog
 # abc123 HEAD@{0}: rebase finished: ...
 # def456 HEAD@{1}: rebase: ...
 # ghi789 HEAD@{2}: checkout: moving from feature to main
 # jkl012 HEAD@{3}: commit: My last good commit
 
-# 2. Сбросить ветку на последний хороший commit
+# 2. Resetar a branch no último commit bom
 git reset --hard HEAD@{3}
-# или
+# ou
 git reset --hard jkl012
 
-# 3. Force push восстановленную ветку
+# 3. Force push da branch restaurada
 git push --force-with-lease origin feature
 
-# Вариант 3: Если remote ветка ещё хорошая
+# Opção 3: Se a branch remota ainda está ok
 git reset --hard origin/feature
 git log --oneline
-# Ветка восстановлена из remote
+# Branch restaurada a partir do remote
 
-# Полезные команды для отладки:
-# Посмотреть все изменения в reflog
+# Comandos úteis para debug:
+# Ver todas as mudanças no reflog
 git reflog --date=relative
 
-# Посмотреть конкретный commit из reflog
+# Ver um commit específico do reflog
 git show HEAD@{5}
 
-# Создать backup ветку перед опасными операциями
+# Criar uma branch de backup antes de operação perigosa
 git branch backup-feature
-# Теперь можно смело экспериментировать, backup сохранён
+# Agora pode experimentar à vontade, o backup está salvo
 
-# Восстановить из backup
+# Restaurar do backup
 git checkout backup-feature
 git branch -D feature
 git checkout -b feature
@@ -531,4 +531,4 @@ git push --force-with-lease origin feature
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,33 +1,33 @@
-# 2.4 Абстрактные классы
+# 2.4 Classes abstratas
 
-## Краткое резюме
+## Resumo
 
-> **Абстрактный класс** — класс, который нельзя создать напрямую, только наследовать. Может содержать как обычные методы (с реализацией), так и абстрактные (без).
+> **Classe abstrata** — classe que você não instancia direto, só herda. Pode ter método comum (com implementação) e método abstrato (sem).
 >
-> **Ключевые концепции:** abstract методы (наследники обязаны реализовать), Template Method Pattern, комбинация с интерфейсами.
+> **Conceitos-chave:** métodos abstract (as classes filhas são obrigadas a implementar), Template Method Pattern, combinação com interfaces.
 >
-> **Важно:** Абстрактный класс для общей логики (КАК делать), интерфейс для контракта (ЧТО делать). Можно комбинировать: интерфейс + abstract класс.
+> **Importante:** Classe abstrata é para lógica comum (COMO fazer), interface é para contrato (O QUÊ fazer). Dá para combinar: interface + classe abstract.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое абстрактный класс](#что-такое-абстрактный-класс)
-- [Абстрактные методы](#абстрактные-методы)
-- [Абстрактный класс vs Интерфейс](#абстрактный-класс-vs-интерфейс)
-- [protected в абстрактных классах](#protected-в-абстрактных-классах)
+- [O que é classe abstrata](#o-que-é-classe-abstrata)
+- [Métodos abstratos](#métodos-abstratos)
+- [Classe abstrata vs Interface](#classe-abstrata-vs-interface)
+- [protected em classes abstratas](#protected-em-classes-abstratas)
 - [Template Method Pattern](#template-method-pattern)
-- [Резюме](#резюме-абстрактных-классов)
-- [Практические задания](#практические-задания)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое абстрактный класс
+## O que é classe abstrata
 
-**Что это:**
-Класс, который нельзя создать напрямую (только наследовать). Может содержать как обычные методы (с реализацией), так и абстрактные (без реализации).
+**O que é:**
+Classe que você não instancia direto (só herda). Pode ter método comum (com implementação) e método abstrato (sem implementação).
 
-**Как работает:**
+**Como funciona:**
 ```php
 abstract class Animal
 {
@@ -38,22 +38,22 @@ abstract class Animal
         $this->name = $name;
     }
 
-    // Обычный метод (с реализацией)
+    // Método comum (com implementação)
     public function eat(): string
     {
-        return "{$this->name} ест";
+        return "{$this->name} come";
     }
 
-    // Абстрактный метод (БЕЗ реализации)
+    // Método abstrato (SEM implementação)
     abstract public function makeSound(): string;
 }
 
 class Dog extends Animal
 {
-    // ОБЯЗАТЕЛЬНО реализовать абстрактный метод
+    // OBRIGATÓRIO implementar o método abstrato
     public function makeSound(): string
     {
-        return "{$this->name} лает: Гав!";
+        return "{$this->name} late: Au au!";
     }
 }
 
@@ -61,26 +61,26 @@ class Cat extends Animal
 {
     public function makeSound(): string
     {
-        return "{$this->name} мяукает: Мяу!";
+        return "{$this->name} mia: Miau!";
     }
 }
 
-// $animal = new Animal('Животное');  // ❌ Cannot instantiate abstract class
+// $animal = new Animal('Animal');  // ❌ Cannot instantiate abstract class
 
-$dog = new Dog('Шарик');
-echo $dog->eat();        // "Шарик ест" (унаследовано)
-echo $dog->makeSound();  // "Шарик лает: Гав!" (реализовано в Dog)
+$dog = new Dog('Rex');
+echo $dog->eat();        // "Rex come" (herdado)
+echo $dog->makeSound();  // "Rex late: Au au!" (implementado em Dog)
 
-$cat = new Cat('Мурка');
-echo $cat->makeSound();  // "Мурка мяукает: Мяу!"
+$cat = new Cat('Mimi');
+echo $cat->makeSound();  // "Mimi mia: Miau!"
 ```
 
-**Когда использовать:**
-Когда есть общая логика для группы классов, но часть методов должна быть реализована в наследниках.
+**Quando usar:**
+Quando um grupo de classes compartilha lógica, mas parte dos métodos cada filha implementa do seu jeito.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый репозиторий
+// Repository base
 abstract class BaseRepository
 {
     protected Model $model;
@@ -90,7 +90,7 @@ abstract class BaseRepository
         $this->model = $model;
     }
 
-    // Общие методы (с реализацией)
+    // Métodos comuns (com implementação)
     public function find(int $id): ?Model
     {
         return $this->model->find($id);
@@ -106,7 +106,7 @@ abstract class BaseRepository
         return $this->model->create($data);
     }
 
-    // Абстрактные методы (каждый репозиторий реализует сам)
+    // Métodos abstratos (cada repository implementa o seu)
     abstract public function findByCustomCriteria(array $criteria): Collection;
 }
 
@@ -133,23 +133,23 @@ class UserRepository extends BaseRepository
     }
 }
 
-// Использование
+// Uso
 $repository = new UserRepository();
-$user = $repository->find(1);  // Унаследованный метод
+$user = $repository->find(1);  // Método herdado
 $users = $repository->findByCustomCriteria(['is_active' => true]);
 ```
 
-**На собеседовании скажешь:**
-> "Абстрактный класс нельзя создать напрямую, только наследовать. Может содержать обычные методы (с реализацией) и abstract методы (без). Наследники обязаны реализовать все abstract методы. Использую для базовых классов с общей логикой."
+**Na entrevista:**
+> "Classe abstrata você não instancia direto, só herda. Pode ter método comum (com implementação) e método abstract (sem). As filhas são obrigadas a implementar todos os abstract. Uso para classe base com lógica comum."
 
 ---
 
-## Абстрактные методы
+## Métodos abstratos
 
-**Что это:**
-Методы без реализации (только объявление). Наследники **обязаны** реализовать.
+**O que é:**
+Métodos sem implementação (só a declaração). As classes filhas **são obrigadas** a implementar.
 
-**Как работает:**
+**Como funciona:**
 ```php
 abstract class Shape
 {
@@ -160,13 +160,13 @@ abstract class Shape
         $this->color = $color;
     }
 
-    // Обычный метод
+    // Método comum
     public function getColor(): string
     {
         return $this->color;
     }
 
-    // Абстрактные методы (БЕЗ реализации)
+    // Métodos abstratos (SEM implementação)
     abstract public function calculateArea(): float;
     abstract public function calculatePerimeter(): float;
 }
@@ -181,7 +181,7 @@ class Circle extends Shape
         $this->radius = $radius;
     }
 
-    // ОБЯЗАТЕЛЬНО реализовать
+    // OBRIGATÓRIO implementar
     public function calculateArea(): float
     {
         return pi() * $this->radius ** 2;
@@ -216,25 +216,25 @@ class Rectangle extends Shape
     }
 }
 
-// Полиморфизм
+// Polimorfismo
 function printShapeInfo(Shape $shape): void
 {
-    echo "Цвет: {$shape->getColor()}\n";
-    echo "Площадь: {$shape->calculateArea()}\n";
-    echo "Периметр: {$shape->calculatePerimeter()}\n";
+    echo "Cor: {$shape->getColor()}\n";
+    echo "Área: {$shape->calculateArea()}\n";
+    echo "Perímetro: {$shape->calculatePerimeter()}\n";
 }
 
-$circle = new Circle('red', 5);
-$rectangle = new Rectangle('blue', 4, 6);
+$circle = new Circle('vermelho', 5);
+$rectangle = new Rectangle('azul', 4, 6);
 
 printShapeInfo($circle);
 printShapeInfo($rectangle);
 ```
 
-**Когда использовать:**
-Когда алгоритм известен, но реализация зависит от конкретного класса.
+**Quando usar:**
+Quando o algoritmo é o mesmo, mas a implementação muda em cada classe.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Payment Gateway
 abstract class PaymentGateway
@@ -248,7 +248,7 @@ abstract class PaymentGateway
         $this->apiUrl = $apiUrl;
     }
 
-    // Общая логика (с реализацией)
+    // Lógica comum (com implementação)
     protected function logTransaction(string $type, int $amount): void
     {
         Log::info("Payment {$type}: {$amount}", [
@@ -268,7 +268,7 @@ abstract class PaymentGateway
         }
     }
 
-    // Абстрактные методы (каждый gateway реализует сам)
+    // Métodos abstratos (cada gateway implementa o seu)
     abstract protected function charge(int $amount, string $currency): bool;
     abstract public function refund(string $transactionId, int $amount): bool;
     abstract public function getBalance(): int;
@@ -326,73 +326,73 @@ class PayPalGateway extends PaymentGateway
 class OrderService
 {
     public function __construct(
-        private PaymentGateway $gateway,  // Любой gateway
+        private PaymentGateway $gateway,  // Qualquer gateway
     ) {}
 
     public function charge(Order $order): bool
     {
-        return $this->gateway->processPayment($order->amount, 'RUB');
+        return $this->gateway->processPayment($order->amount, 'BRL');
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "Абстрактные методы — без реализации, только объявление. Наследники обязаны реализовать. Использую для определения "скелета" алгоритма: базовый класс задаёт структуру, наследники реализуют детали."
+**Na entrevista:**
+> "Método abstrato não tem implementação, só a assinatura. As filhas são obrigadas a implementar. Uso para definir o esqueleto do algoritmo: a classe base monta a estrutura, as filhas implementam o detalhe."
 
 ---
 
-## Абстрактный класс vs Интерфейс
+## Classe abstrata vs Interface
 
-**Сравнение:**
+**Comparação:**
 
-| Абстрактный класс | Интерфейс |
+| Classe abstrata | Interface |
 |-------------------|-----------|
-| Может содержать реализацию | Только объявление методов |
-| Может иметь свойства | Только константы |
-| Только одиночное наследование | Можно реализовать несколько |
-| Может иметь конструктор | Нет конструктора |
-| Методы: public, protected, private | Методы: только public |
-| Для общей логики ("КАК") | Для контракта ("ЧТО") |
+| Pode ter implementação | Só declaração de métodos |
+| Pode ter propriedades | Só constantes |
+| Só herança simples | Pode implementar várias |
+| Pode ter construtor | Sem construtor |
+| Métodos: public, protected, private | Métodos: só public |
+| Para lógica comum ("COMO") | Para contrato ("O QUÊ") |
 
-**Абстрактный класс:**
+**Classe abstrata:**
 ```php
 abstract class PaymentGateway
 {
-    protected string $apiKey;  // Свойства
+    protected string $apiKey;  // Propriedades
 
-    public function __construct(string $apiKey)  // Конструктор
+    public function __construct(string $apiKey)  // Construtor
     {
         $this->apiKey = $apiKey;
     }
 
-    // Метод с реализацией
+    // Método com implementação
     protected function log(string $message): void
     {
         Log::info($message);
     }
 
-    // Абстрактный метод
+    // Método abstrato
     abstract public function charge(int $amount): bool;
 }
 ```
 
-**Интерфейс:**
+**Interface:**
 ```php
 interface PaymentGatewayInterface
 {
-    public const STATUS_SUCCESS = 'success';  // Константа
+    public const STATUS_SUCCESS = 'success';  // Constante
 
-    // Только объявление
+    // Só declaração
     public function charge(int $amount): bool;
     public function refund(string $id): bool;
 }
 ```
 
-**Когда использовать:**
-- **Абстрактный класс** — когда есть общая логика для группы классов
-- **Интерфейс** — для контракта, полиморфизма, DI
+**Quando usar:**
+- **Classe abstrata** — quando há lógica comum para um grupo de classes
+- **Interface** — para contrato, polimorfismo, DI
 
-**Можно комбинировать:**
+**Dá para combinar:**
 ```php
 interface PaymentGatewayInterface
 {
@@ -414,7 +414,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
         Log::info($message);
     }
 
-    // Общий метод для всех gateway
+    // Método comum para todo gateway
     public function processPayment(int $amount): bool
     {
         $this->log("Processing payment: {$amount}");
@@ -427,7 +427,7 @@ abstract class BasePaymentGateway implements PaymentGatewayInterface
         }
     }
 
-    // Абстрактный метод (каждый gateway реализует сам)
+    // Método abstrato (cada gateway implementa o seu)
     abstract public function charge(int $amount): bool;
 }
 
@@ -446,7 +446,7 @@ class StripeGateway extends BasePaymentGateway
     }
 }
 
-// DI через интерфейс
+// DI pela interface
 function pay(PaymentGatewayInterface $gateway, int $amount): bool
 {
     return $gateway->charge($amount);
@@ -456,15 +456,15 @@ $stripe = new StripeGateway('api_key');
 pay($stripe, 1000);
 ```
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Job
-interface ShouldQueue  // Интерфейс (контракт)
+interface ShouldQueue  // Interface (contrato)
 {
     public function handle(): void;
 }
 
-abstract class Job implements ShouldQueue  // Абстрактный класс (общая логика)
+abstract class Job implements ShouldQueue  // Classe abstrata (lógica comum)
 {
     public int $tries = 3;
     public int $timeout = 60;
@@ -474,7 +474,7 @@ abstract class Job implements ShouldQueue  // Абстрактный класс 
         Log::info($message);
     }
 
-    // Абстрактный метод
+    // Método abstrato
     abstract public function handle(): void;
 }
 
@@ -492,25 +492,25 @@ class SendEmailJob extends Job
     }
 }
 
-// Можем использовать как ShouldQueue или Job
-dispatch(new SendEmailJob($user, 'Hello'));
+// Dá para usar como ShouldQueue ou Job
+dispatch(new SendEmailJob($user, 'Olá'));
 ```
 
-**На собеседовании скажешь:**
-> "Абстрактный класс — для общей логики (КАК), может содержать реализацию. Интерфейс — для контракта (ЧТО), только объявление. Абстрактный класс — один родитель, интерфейсов — много. Часто комбинирую: интерфейс + абстрактный класс."
+**Na entrevista:**
+> "Classe abstrata é para lógica comum (COMO), pode ter implementação. Interface é para contrato (O QUÊ), só declaração. Classe abstrata tem um pai só, interface você implementa várias. Muitas vezes eu combino: interface + classe abstrata."
 
 ---
 
-## protected в абстрактных классах
+## protected em classes abstratas
 
-**Что это:**
-Абстрактные методы могут быть protected — доступны только наследникам.
+**O que é:**
+Métodos abstratos podem ser protected — só as classes filhas enxergam.
 
-**Как работает:**
+**Como funciona:**
 ```php
 abstract class BaseController
 {
-    // protected абстрактный метод
+    // Método abstrato protected
     abstract protected function authorize(): bool;
 
     public function index()
@@ -522,7 +522,7 @@ abstract class BaseController
         return $this->getData();
     }
 
-    // Наследники реализуют этот метод
+    // As filhas implementam este método
     abstract protected function getData(): array;
 }
 
@@ -553,12 +553,12 @@ class UserController extends BaseController
 }
 ```
 
-**Когда использовать:**
-Для методов, которые используются только внутри иерархии классов.
+**Quando usar:**
+Para método que só existe dentro da hierarquia.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый сервис
+// Service base
 abstract class BaseService
 {
     protected LoggerInterface $logger;
@@ -568,11 +568,11 @@ abstract class BaseService
         $this->logger = $logger;
     }
 
-    // protected — только для наследников
+    // protected — só para as classes filhas
     abstract protected function validate(array $data): bool;
     abstract protected function process(array $data): mixed;
 
-    // public — внешний API
+    // public — API externa
     public function execute(array $data): mixed
     {
         $this->logger->info('Executing service', ['data' => $data]);
@@ -602,26 +602,26 @@ class OrderService extends BaseService
     }
 }
 
-// Клиент видит только execute()
+// O cliente só vê execute()
 $service = new OrderService($logger);
 $order = $service->execute(['user_id' => 1, 'amount' => 1000]);
 ```
 
-**На собеседовании скажешь:**
-> "Абстрактные методы могут быть protected — доступны только наследникам. Использую для методов, которые — часть внутренней логики иерархии классов. public методы — внешний API, protected — внутренняя реализация."
+**Na entrevista:**
+> "Método abstrato pode ser protected — só as filhas enxergam. Uso para lógica interna da hierarquia. public é API externa, protected é implementação interna."
 
 ---
 
 ## Template Method Pattern
 
-**Что это:**
-Паттерн проектирования: базовый класс определяет алгоритм, наследники реализуют шаги.
+**O que é:**
+Padrão de projeto: a classe base define o algoritmo, as filhas implementam os passos.
 
-**Как работает:**
+**Como funciona:**
 ```php
 abstract class DataImporter
 {
-    // Template method (определяет алгоритм)
+    // Template method (define o algoritmo)
     final public function import(string $file): void
     {
         $this->validate($file);
@@ -631,16 +631,16 @@ abstract class DataImporter
         $this->cleanup();
     }
 
-    // Шаги алгоритма (абстрактные)
+    // Passos do algoritmo (abstratos)
     abstract protected function validate(string $file): void;
     abstract protected function parse(string $file): array;
     abstract protected function transform(array &$data): void;
     abstract protected function save(array $data): void;
 
-    // Опциональный шаг (с реализацией по умолчанию)
+    // Passo opcional (com implementação padrão)
     protected function cleanup(): void
     {
-        // По умолчанию ничего не делаем
+        // Por padrão, não faz nada
     }
 }
 
@@ -649,7 +649,7 @@ class CsvImporter extends DataImporter
     protected function validate(string $file): void
     {
         if (!str_ends_with($file, '.csv')) {
-            throw new \InvalidArgumentException('Not a CSV file');
+            throw new \InvalidArgumentException('Não é um arquivo CSV');
         }
     }
 
@@ -668,7 +668,7 @@ class CsvImporter extends DataImporter
 
     protected function transform(array &$data): void
     {
-        // Преобразование данных CSV
+        // Transformação dos dados CSV
     }
 
     protected function save(array $data): void
@@ -680,7 +680,7 @@ class CsvImporter extends DataImporter
 
     protected function cleanup(): void
     {
-        // Удаление временного файла
+        // Remove o arquivo temporário
         unlink($this->file);
     }
 }
@@ -690,7 +690,7 @@ class JsonImporter extends DataImporter
     protected function validate(string $file): void
     {
         if (!str_ends_with($file, '.json')) {
-            throw new \InvalidArgumentException('Not a JSON file');
+            throw new \InvalidArgumentException('Não é um arquivo JSON');
         }
     }
 
@@ -701,7 +701,7 @@ class JsonImporter extends DataImporter
 
     protected function transform(array &$data): void
     {
-        // Преобразование данных JSON
+        // Transformação dos dados JSON
     }
 
     protected function save(array $data): void
@@ -710,7 +710,7 @@ class JsonImporter extends DataImporter
     }
 }
 
-// Использование
+// Uso
 $importer = new CsvImporter();
 $importer->import('users.csv');
 
@@ -718,37 +718,37 @@ $importer = new JsonImporter();
 $importer->import('users.json');
 ```
 
-**Когда использовать:**
-Когда есть общий алгоритм с вариативными шагами.
+**Quando usar:**
+Quando o algoritmo é o mesmo, mas os passos variam.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel: Middleware pipeline
 abstract class BaseMiddleware
 {
     final public function handle($request, Closure $next)
     {
-        // Шаг 1: Before (перед обработкой)
+        // Passo 1: Before (antes de processar)
         $this->before($request);
 
-        // Шаг 2: Основная обработка (можно прервать)
+        // Passo 2: Processamento principal (pode interromper)
         if (!$this->authorize($request)) {
             return $this->deny($request);
         }
 
-        // Шаг 3: Передача дальше
+        // Passo 3: Passa adiante
         $response = $next($request);
 
-        // Шаг 4: After (после обработки)
+        // Passo 4: After (depois de processar)
         $this->after($request, $response);
 
         return $response;
     }
 
-    // Шаги (абстрактные)
+    // Passos (abstratos)
     abstract protected function authorize($request): bool;
 
-    // Опциональные шаги (с реализацией по умолчанию)
+    // Passos opcionais (com implementação padrão)
     protected function before($request): void {}
     protected function after($request, $response): void {}
 
@@ -772,48 +772,48 @@ class AdminMiddleware extends BaseMiddleware
 }
 ```
 
-**На собеседовании скажешь:**
-> "Template Method Pattern: базовый класс определяет алгоритм (template method), наследники реализуют шаги. final template method нельзя переопределить. Использую для стандартизации процессов с вариативными шагами."
+**Na entrevista:**
+> "Template Method Pattern: a classe base define o algoritmo (template method), as filhas implementam os passos. O template method é final, não pode sobrescrever. Uso para padronizar processo com passos que variam."
 
 ---
 
-## Резюме абстрактных классов
+## Recapitulando
 
-**Основное:**
-- `abstract class` — нельзя создать напрямую, только наследовать
-- Может содержать обычные методы (с реализацией) и abstract (без)
-- abstract методы — наследники обязаны реализовать
-- Можно иметь свойства, конструктор, protected/private методы
-- Только одиночное наследование (один родитель)
-- Для общей логики группы классов
+**O essencial:**
+- `abstract class` — você não instancia direto, só herda
+- Pode ter método comum (com implementação) e abstract (sem)
+- Métodos abstract — as filhas são obrigadas a implementar
+- Pode ter propriedade, construtor, métodos protected/private
+- Só herança simples (um pai)
+- Para lógica comum de um grupo de classes
 
-**Абстрактный класс vs Интерфейс:**
-- Абстрактный — общая логика (КАК делать), может содержать реализацию
-- Интерфейс — контракт (ЧТО делать), только объявление
-- Часто комбинирую: interface + abstract class
+**Classe abstrata vs Interface:**
+- Abstrata — lógica comum (COMO fazer), pode ter implementação
+- Interface — contrato (O QUÊ fazer), só declaração
+- Muitas vezes eu combino: interface + abstract class
 
 **Template Method Pattern:**
-- final метод определяет алгоритм
-- abstract методы — шаги алгоритма
-- Наследники реализуют шаги
+- Método final define o algoritmo
+- Métodos abstract — passos do algoritmo
+- As filhas implementam os passos
 
-**Важно на собесе:**
-- abstract class vs interface: реализация vs контракт
-- abstract методы обязательно реализовать в наследниках
-- protected abstract методы — для внутренней иерархии
-- Template Method Pattern — стандартизация алгоритмов
-- В Laravel: BaseController, BaseMiddleware, Job
+**Importante na entrevista:**
+- abstract class vs interface: implementação vs contrato
+- Métodos abstract as filhas são obrigadas a implementar
+- protected abstract — para hierarquia interna
+- Template Method Pattern — padronizar algoritmos
+- No Laravel: BaseController, BaseMiddleware, Job
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Template Method Pattern для импорта данных
+### Exercício 1: Template Method Pattern para importar dados
 
-Создай абстрактный `DataImporter` с шагами: validate, parse, transform, save. Реализуй `CsvImporter` и `JsonImporter`.
+**Enunciado:** Crie um `DataImporter` abstrato com os passos: validate, parse, transform, save. Implemente `CsvImporter` e `JsonImporter`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class DataImporter
@@ -821,12 +821,12 @@ abstract class DataImporter
     protected array $errors = [];
     protected array $imported = [];
 
-    // Template method (final — нельзя переопределить)
+    // Template method (final — não pode sobrescrever)
     final public function import(string $file): array
     {
         $this->reset();
 
-        // Шаг 1: Валидация файла
+        // Passo 1: Validação do arquivo
         if (!$this->validate($file)) {
             return [
                 'success' => false,
@@ -834,21 +834,21 @@ abstract class DataImporter
             ];
         }
 
-        // Шаг 2: Парсинг
+        // Passo 2: Parse
         $data = $this->parse($file);
 
         if (empty($data)) {
-            $this->errors[] = 'No data found in file';
+            $this->errors[] = 'Nenhum dado encontrado no arquivo';
             return ['success' => false, 'errors' => $this->errors];
         }
 
-        // Шаг 3: Трансформация
+        // Passo 3: Transformação
         $transformed = $this->transform($data);
 
-        // Шаг 4: Сохранение
+        // Passo 4: Persistência
         $this->save($transformed);
 
-        // Шаг 5: Очистка (опциональная)
+        // Passo 5: Limpeza (opcional)
         $this->cleanup($file);
 
         return [
@@ -858,21 +858,21 @@ abstract class DataImporter
         ];
     }
 
-    // Абстрактные методы (наследники обязаны реализовать)
+    // Métodos abstratos (as filhas são obrigadas a implementar)
     abstract protected function validate(string $file): bool;
     abstract protected function parse(string $file): array;
     abstract protected function save(array $data): void;
 
-    // Методы с реализацией по умолчанию (можно переопределить)
+    // Métodos com implementação padrão (pode sobrescrever)
     protected function transform(array $data): array
     {
-        // По умолчанию — без трансформации
+        // Por padrão — sem transformação
         return $data;
     }
 
     protected function cleanup(string $file): void
     {
-        // По умолчанию — ничего не делаем
+        // Por padrão — não faz nada
     }
 
     protected function reset(): void
@@ -892,12 +892,12 @@ class CsvImporter extends DataImporter
     protected function validate(string $file): bool
     {
         if (!file_exists($file)) {
-            $this->addError('File not found');
+            $this->addError('Arquivo não encontrado');
             return false;
         }
 
         if (!str_ends_with($file, '.csv')) {
-            $this->addError('File must be CSV');
+            $this->addError('O arquivo precisa ser CSV');
             return false;
         }
 
@@ -909,7 +909,7 @@ class CsvImporter extends DataImporter
         $data = [];
         $handle = fopen($file, 'r');
 
-        // Первая строка — заголовки
+        // Primeira linha — cabeçalhos
         $headers = fgetcsv($handle);
 
         while (($row = fgetcsv($handle)) !== false) {
@@ -923,7 +923,7 @@ class CsvImporter extends DataImporter
     protected function transform(array $data): array
     {
         return array_map(function ($row) {
-            // Очистка данных
+            // Limpeza dos dados
             return array_map('trim', $row);
         }, $data);
     }
@@ -931,7 +931,7 @@ class CsvImporter extends DataImporter
     protected function save(array $data): void
     {
         foreach ($data as $row) {
-            // Сохранение в БД (упрощённо)
+            // Salva no banco (simplificado)
             echo "INSERT INTO users: {$row['name']}, {$row['email']}\n";
             $this->imported[] = $row;
         }
@@ -939,8 +939,8 @@ class CsvImporter extends DataImporter
 
     protected function cleanup(string $file): void
     {
-        // Удаление временного файла
-        echo "Deleting temp file: {$file}\n";
+        // Remove o arquivo temporário
+        echo "Removendo arquivo temporário: {$file}\n";
     }
 }
 
@@ -949,12 +949,12 @@ class JsonImporter extends DataImporter
     protected function validate(string $file): bool
     {
         if (!file_exists($file)) {
-            $this->addError('File not found');
+            $this->addError('Arquivo não encontrado');
             return false;
         }
 
         if (!str_ends_with($file, '.json')) {
-            $this->addError('File must be JSON');
+            $this->addError('O arquivo precisa ser JSON');
             return false;
         }
 
@@ -967,7 +967,7 @@ class JsonImporter extends DataImporter
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            $this->addError('Invalid JSON: ' . json_last_error_msg());
+            $this->addError('JSON inválido: ' . json_last_error_msg());
             return [];
         }
 
@@ -977,7 +977,7 @@ class JsonImporter extends DataImporter
     protected function transform(array $data): array
     {
         return array_map(function ($row) {
-            // Преобразование дат
+            // Conversão de datas
             if (isset($row['created_at'])) {
                 $row['created_at'] = date('Y-m-d H:i:s', strtotime($row['created_at']));
             }
@@ -988,12 +988,12 @@ class JsonImporter extends DataImporter
     protected function save(array $data): void
     {
         // Batch insert
-        echo "Batch INSERT INTO users (" . count($data) . " rows)\n";
+        echo "Batch INSERT INTO users (" . count($data) . " linhas)\n";
         $this->imported = $data;
     }
 }
 
-// Использование
+// Uso
 $csvImporter = new CsvImporter();
 $result = $csvImporter->import('users.csv');
 print_r($result);
@@ -1004,12 +1004,12 @@ print_r($result);
 ```
 </details>
 
-### Задание 2: Абстрактный Payment Gateway
+### Exercício 2: Payment Gateway abstrato
 
-Создай абстрактный `PaymentGateway` с общей логикой логирования и абстрактными методами charge, refund.
+**Enunciado:** Crie um `PaymentGateway` abstrato com lógica comum de log e métodos abstratos charge e refund.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class PaymentGateway
@@ -1021,7 +1021,7 @@ abstract class PaymentGateway
         protected bool $isProduction = false,
     ) {}
 
-    // Общая логика (реализовано в базовом классе)
+    // Lógica comum (implementada na classe base)
     protected function log(string $type, string $message, array $context = []): void
     {
         $log = [
@@ -1039,29 +1039,29 @@ abstract class PaymentGateway
 
     public function processPayment(int $amount, string $currency, array $metadata = []): array
     {
-        $this->log('info', "Processing payment", [
+        $this->log('info', "Processando pagamento", [
             'amount' => $amount,
             'currency' => $currency,
         ]);
 
         try {
-            // Вызов абстрактного метода
+            // Chama o método abstrato
             $result = $this->charge($amount, $currency, $metadata);
 
-            $this->log('success', "Payment successful", [
+            $this->log('success', "Pagamento concluído", [
                 'transaction_id' => $result['transaction_id'],
             ]);
 
             return $result;
         } catch (\Exception $e) {
-            $this->log('error', "Payment failed: {$e->getMessage()}");
+            $this->log('error', "Pagamento falhou: {$e->getMessage()}");
             throw $e;
         }
     }
 
     public function processRefund(string $transactionId, int $amount): array
     {
-        $this->log('info', "Processing refund", [
+        $this->log('info', "Processando reembolso", [
             'transaction_id' => $transactionId,
             'amount' => $amount,
         ]);
@@ -1069,29 +1069,29 @@ abstract class PaymentGateway
         try {
             $result = $this->refund($transactionId, $amount);
 
-            $this->log('success', "Refund successful", [
+            $this->log('success', "Reembolso concluído", [
                 'refund_id' => $result['refund_id'],
             ]);
 
             return $result;
         } catch (\Exception $e) {
-            $this->log('error', "Refund failed: {$e->getMessage()}");
+            $this->log('error', "Reembolso falhou: {$e->getMessage()}");
             throw $e;
         }
     }
 
-    // Абстрактные методы (каждый gateway реализует по-своему)
+    // Métodos abstratos (cada gateway implementa do seu jeito)
     abstract protected function charge(int $amount, string $currency, array $metadata): array;
     abstract protected function refund(string $transactionId, int $amount): array;
     abstract public function getBalance(): int;
 
-    // Геттер для логов
+    // Getter dos logs
     public function getLogs(): array
     {
         return $this->logs;
     }
 
-    // Helper метод
+    // Método helper
     protected function buildApiUrl(string $endpoint): string
     {
         $baseUrl = $this->isProduction
@@ -1196,23 +1196,23 @@ class YooKassaGateway extends PaymentGateway
     }
 }
 
-// Использование
+// Uso
 $stripe = new StripeGateway('sk_test_xxx', false);
-$payment = $stripe->processPayment(100000, 'RUB', ['order_id' => 123]);
+$payment = $stripe->processPayment(100000, 'BRL', ['order_id' => 123]);
 print_r($payment);
 print_r($stripe->getLogs());
 
 $yookassa = new YooKassaGateway('shop_xxx', false);
-$payment = $yookassa->processPayment(100000, 'RUB', ['order_id' => 456]);
+$payment = $yookassa->processPayment(100000, 'BRL', ['order_id' => 456]);
 ```
 </details>
 
-### Задание 3: Абстрактный Validator с Template Method
+### Exercício 3: Validator abstrato com Template Method
 
-Создай абстрактный `Validator` с методом `validate()`. Реализуй `UserValidator` и `OrderValidator`.
+**Enunciado:** Crie um `Validator` abstrato com o método `validate()`. Implemente `UserValidator` e `OrderValidator`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Validator
@@ -1225,29 +1225,29 @@ abstract class Validator
         $this->reset();
         $this->data = $data;
 
-        // Шаг 1: Базовая валидация
+        // Passo 1: Validação básica
         $this->validateRequired();
 
-        // Шаг 2: Валидация типов
+        // Passo 2: Validação de tipos
         $this->validateTypes();
 
-        // Шаг 3: Кастомная валидация (реализуется в наследниках)
+        // Passo 3: Validação custom (implementada nas filhas)
         $this->validateCustom();
 
         return empty($this->errors);
     }
 
-    // Абстрактные методы
+    // Métodos abstratos
     abstract protected function getRequiredFields(): array;
     abstract protected function getFieldTypes(): array;
     abstract protected function validateCustom(): void;
 
-    // Общие методы
+    // Métodos comuns
     protected function validateRequired(): void
     {
         foreach ($this->getRequiredFields() as $field) {
             if (!isset($this->data[$field]) || $this->data[$field] === '') {
-                $this->addError($field, "Field {$field} is required");
+                $this->addError($field, "Campo {$field} é obrigatório");
             }
         }
     }
@@ -1270,7 +1270,7 @@ abstract class Validator
             };
 
             if (!$isValid) {
-                $this->addError($field, "Field {$field} must be {$type}");
+                $this->addError($field, "Campo {$field} precisa ser {$type}");
             }
         }
     }
@@ -1320,19 +1320,19 @@ class UserValidator extends Validator
 
     protected function validateCustom(): void
     {
-        // Валидация длины пароля
+        // Valida o tamanho da senha
         if (isset($this->data['password']) && strlen($this->data['password']) < 8) {
-            $this->addError('password', 'Password must be at least 8 characters');
+            $this->addError('password', 'A senha precisa ter pelo menos 8 caracteres');
         }
 
-        // Валидация возраста
+        // Valida a idade
         if (isset($this->data['age']) && $this->data['age'] < 18) {
-            $this->addError('age', 'User must be 18 or older');
+            $this->addError('age', 'O usuário precisa ter 18 anos ou mais');
         }
 
-        // Валидация уникальности email (упрощённо)
-        if (isset($this->data['email']) && $this->data['email'] === 'taken@example.com') {
-            $this->addError('email', 'Email already exists');
+        // Valida email único (simplificado)
+        if (isset($this->data['email']) && $this->data['email'] === 'ocupado@email.com') {
+            $this->addError('email', 'Email já cadastrado');
         }
     }
 }
@@ -1355,55 +1355,55 @@ class OrderValidator extends Validator
 
     protected function validateCustom(): void
     {
-        // Валидация суммы
+        // Valida o valor
         if (isset($this->data['amount']) && $this->data['amount'] < 100) {
-            $this->addError('amount', 'Minimum order amount is 100');
+            $this->addError('amount', 'Valor mínimo do pedido é 100');
         }
 
-        // Валидация items
+        // Valida items
         if (isset($this->data['items']) && count($this->data['items']) === 0) {
-            $this->addError('items', 'Order must contain at least one item');
+            $this->addError('items', 'O pedido precisa ter pelo menos um item');
         }
 
-        // Валидация каждого item
+        // Valida cada item
         if (isset($this->data['items'])) {
             foreach ($this->data['items'] as $index => $item) {
                 if (!isset($item['product_id'])) {
-                    $this->addError("items.{$index}", "Product ID is required");
+                    $this->addError("items.{$index}", "Product ID é obrigatório");
                 }
 
                 if (!isset($item['quantity']) || $item['quantity'] < 1) {
-                    $this->addError("items.{$index}", "Quantity must be at least 1");
+                    $this->addError("items.{$index}", "A quantidade precisa ser pelo menos 1");
                 }
             }
         }
     }
 }
 
-// Использование
+// Uso
 $userValidator = new UserValidator();
 
 $isValid = $userValidator->validate([
-    'name' => 'Иван',
-    'email' => 'ivan@example.com',
-    'password' => '12345',  // Короткий
-    'age' => 16,  // Меньше 18
+    'name' => 'João',
+    'email' => 'joao@email.com',
+    'password' => '12345',  // Curta
+    'age' => 16,  // Menor de 18
 ]);
 
-echo "Valid: " . ($isValid ? 'Yes' : 'No') . "\n";
+echo "Válido: " . ($isValid ? 'Sim' : 'Não') . "\n";
 print_r($userValidator->getErrors());
 // [
-//   'password' => ['Password must be at least 8 characters'],
-//   'age' => ['User must be 18 or older']
+//   'password' => ['A senha precisa ter pelo menos 8 caracteres'],
+//   'age' => ['O usuário precisa ter 18 anos ou mais']
 // ]
 
 $orderValidator = new OrderValidator();
 $isValid = $orderValidator->validate([
     'user_id' => 1,
-    'amount' => 50,  // Меньше минимума
+    'amount' => 50,  // Abaixo do mínimo
     'items' => [
         ['product_id' => 10, 'quantity' => 2],
-        ['quantity' => 1],  // Нет product_id
+        ['quantity' => 1],  // Sem product_id
     ],
 ]);
 
@@ -1413,4 +1413,4 @@ print_r($orderValidator->getErrors());
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

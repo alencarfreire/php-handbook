@@ -1,6 +1,6 @@
-# 3.7 Новые возможности PHP 8.x
+# 3.7 Novidades do PHP 8.x
 
-## Краткое резюме
+## Resumo
 
 > **PHP 8.x** — Named Arguments, Union Types, Match, Nullsafe ?->, Property Promotion, readonly, Enums.
 >
@@ -10,7 +10,7 @@
 
 ---
 
-## Содержание
+## Conteúdo
 
 - [Named Arguments (PHP 8.0)](#named-arguments-php-80)
 - [Union Types (PHP 8.0)](#union-types-php-80)
@@ -19,56 +19,56 @@
 - [Constructor Property Promotion (PHP 8.0)](#constructor-property-promotion-php-80)
 - [Readonly Properties (PHP 8.1)](#readonly-properties-php-81)
 - [Enums (PHP 8.1)](#enums-php-81)
-- [Другие новшества PHP 8.x](#другие-новшества-php-8x)
-- [Резюме PHP 8.x](#резюме-php-8x)
-- [Практические задания](#практические-задания)
+- [Outras novidades do PHP 8.x](#outras-novidades-do-php-8x)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
 ## Named Arguments (PHP 8.0)
 
-**Что это:**
-Передача аргументов по имени (не по порядку).
+**O que é:**
+Passar argumento pelo nome (não pela ordem).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// До PHP 8.0
+// Antes do PHP 8.0
 function createUser(string $name, string $email, bool $isActive = true, ?string $role = null)
 {
     // ...
 }
 
-createUser('Иван', 'ivan@mail.com', true, 'admin');
+createUser('João', 'joao@email.com', true, 'admin');
 
-// Чтобы пропустить $isActive, нужно передать null
-createUser('Иван', 'ivan@mail.com', true, null);
+// Para pular $isActive, ainda precisa passar true
+createUser('João', 'joao@email.com', true, null);
 
-// PHP 8.0: именованные аргументы
+// PHP 8.0: named arguments
 createUser(
-    name: 'Иван',
-    email: 'ivan@mail.com',
-    role: 'admin'  // Пропустили $isActive
+    name: 'João',
+    email: 'joao@email.com',
+    role: 'admin'  // Pulamos $isActive
 );
 
-// Порядок не важен
+// A ordem não importa
 createUser(
-    email: 'ivan@mail.com',
-    name: 'Иван',
+    email: 'joao@email.com',
+    name: 'João',
     isActive: false
 );
 ```
 
-**Когда использовать:**
-Для функций с множеством опциональных параметров, улучшения читаемости.
+**Quando usar:**
+Função com vários parâmetros opcionais. Melhora a leitura.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Route
 Route::get('/users', [UserController::class, 'index'])
     ->middleware('auth')
     ->name('users.index');
 
-// С именованными аргументами (PHP 8.0+)
+// Com named arguments (PHP 8.0+)
 response()->json(
     data: $users,
     status: 200,
@@ -78,31 +78,31 @@ response()->json(
 // Eloquent
 User::create(
     attributes: [
-        'name' => 'Иван',
-        'email' => 'ivan@mail.com',
+        'name' => 'João',
+        'email' => 'joao@email.com',
     ]
 );
 
-// В тестах (очень читаемо)
+// Em testes (bem legível)
 $this->assertDatabaseHas(
     table: 'users',
-    data: ['email' => 'ivan@mail.com']
+    data: ['email' => 'joao@email.com']
 );
 ```
 
-**На собеседовании скажешь:**
-> "Named Arguments (PHP 8.0) — передача по имени, порядок не важен. Улучшает читаемость, позволяет пропускать опциональные параметры. В Laravel использую для routes, responses, тестов."
+**Na entrevista:**
+> "Named Arguments (PHP 8.0) — você passa pelo nome, a ordem não importa. Melhora a leitura e deixa pular parâmetro opcional. No Laravel eu uso em route, response e teste."
 
 ---
 
 ## Union Types (PHP 8.0)
 
-**Что это:**
-Указание нескольких возможных типов для параметра/возврата.
+**O que é:**
+Vários tipos possíveis no parâmetro ou no retorno.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// До PHP 8.0 (через PHPDoc)
+// Antes do PHP 8.0 (via PHPDoc)
 /**
  * @param int|string $id
  * @return User|null
@@ -122,23 +122,23 @@ function findUser(int|string $id): User|null
     return User::where('email', $id)->first();
 }
 
-// Несколько типов
+// Vários tipos
 function process(int|float|string $value): int|float
 {
     return is_string($value) ? (int) $value : $value;
 }
 
-// С массивом
+// Com array
 function save(array|object $data): void
 {
     // ...
 }
 ```
 
-**Когда использовать:**
-Когда параметр может быть разных типов.
+**Quando usar:**
+Quando o parâmetro pode ter mais de um tipo.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Response
 function respond(array|Collection $data, int $status = 200): JsonResponse
@@ -156,10 +156,10 @@ class UserRepository
     public function find(int|string $id): User|null
     {
         if (is_int($id)) {
-            return User::find($id);  // Поиск по ID
+            return User::find($id);  // Busca por ID
         }
 
-        return User::where('email', $id)->first();  // Поиск по email
+        return User::where('email', $id)->first();  // Busca por email
     }
 }
 
@@ -175,47 +175,47 @@ class CacheService
     }
 }
 
-// Никогда не используй с null (используй nullable)
-// ПЛОХО
+// Nunca use com null (use nullable)
+// RUIM
 function bad(int|null $value): void {}  // ❌
 
-// ХОРОШО
+// BOM
 function good(?int $value): void {}  // ✅
 ```
 
-**На собеседовании скажешь:**
-> "Union Types (PHP 8.0) — несколько типов через |. int|string|null или int|float. Не использую с null (есть ?int). В Laravel для гибких методов (find по ID или email)."
+**Na entrevista:**
+> "Union Types (PHP 8.0) — vários tipos com |. int|string ou int|float. Não misturo com null (uso ?int). No Laravel, em método flexível: find por ID ou email."
 
 ---
 
 ## Match Expression (PHP 8.0)
 
-**Что это:**
-Улучшенный switch с возвратом значения и строгим сравнением.
+**O que é:**
+Switch melhorado: devolve valor e compara com ===.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// До PHP 8.0 (switch)
+// Antes do PHP 8.0 (switch)
 $message = '';
 switch ($status) {
     case 'pending':
-        $message = 'В ожидании';
+        $message = 'Aguardando';
         break;
     case 'paid':
-        $message = 'Оплачено';
+        $message = 'Pago';
         break;
     default:
-        $message = 'Неизвестно';
+        $message = 'Desconhecido';
 }
 
 // PHP 8.0: match
 $message = match($status) {
-    'pending' => 'В ожидании',
-    'paid' => 'Оплачено',
-    default => 'Неизвестно',
+    'pending' => 'Aguardando',
+    'paid' => 'Pago',
+    default => 'Desconhecido',
 };
 
-// Несколько значений
+// Vários valores
 $type = match($code) {
     200, 201, 204 => 'success',
     400, 404 => 'client_error',
@@ -223,20 +223,20 @@ $type = match($code) {
     default => 'unknown',
 };
 
-// Строгое сравнение (===)
+// Comparação estrita (===)
 $result = match($value) {
     0 => 'zero',
-    '0' => 'string zero',  // Не совпадёт с 0
+    '0' => 'string zero',  // Não casa com 0
     default => 'other',
 };
 ```
 
-**Когда использовать:**
-Вместо switch, когда нужно вернуть значение.
+**Quando usar:**
+No lugar de switch, quando você precisa devolver um valor.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// HTTP статусы
+// Status HTTP
 $message = match($response->status()) {
     200 => 'OK',
     201 => 'Created',
@@ -261,7 +261,7 @@ $badge = match($order->status) {
     Status::Shipped => 'badge-success',
 };
 
-// Условия
+// Condições
 $discount = match(true) {
     $amount > 10000 => 0.15,
     $amount > 5000 => 0.10,
@@ -270,19 +270,19 @@ $discount = match(true) {
 };
 ```
 
-**На собеседовании скажешь:**
-> "Match (PHP 8.0) — улучшенный switch. Возвращает значение, строгое сравнение (===), не нужен break. Выбрасывает ошибку без default. Использую вместо switch для возврата значений."
+**Na entrevista:**
+> "Match (PHP 8.0) — switch melhorado. Devolve valor, compara com ===, não precisa de break. Sem default e sem match, lança erro. Uso no lugar de switch quando preciso devolver valor."
 
 ---
 
 ## Nullsafe Operator ?-> (PHP 8.0)
 
-**Что это:**
-Безопасный доступ к свойствам/методам (если объект null → вернёт null).
+**O que é:**
+Acesso seguro a propriedade/método (se o objeto é null → devolve null).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// До PHP 8.0
+// Antes do PHP 8.0
 $country = null;
 if ($user !== null && $user->address !== null) {
     $country = $user->address->country;
@@ -290,22 +290,22 @@ if ($user !== null && $user->address !== null) {
 
 // PHP 8.0: nullsafe operator
 $country = $user?->address?->country;
-// Если $user или $address = null → вернёт null (без ошибки)
+// Se $user ou $address = null → devolve null (sem erro)
 
-// С методами
+// Com métodos
 $city = $user?->getAddress()?->getCity();
 
-// Цепочка
-$street = $user?->address?->street ?? 'Не указана';
+// Em cadeia
+$street = $user?->address?->street ?? 'Não informado';
 ```
 
-**Когда использовать:**
-Для безопасного доступа к вложенным объектам.
+**Quando usar:**
+Acesso seguro a objeto aninhado.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent отношения
-$departmentName = $user?->department?->name ?? 'Без департамента';
+// Relacionamentos Eloquent
+$departmentName = $user?->department?->name ?? 'Sem departamento';
 
 $managerEmail = $user?->department?->manager?->email;
 
@@ -313,7 +313,7 @@ $managerEmail = $user?->department?->manager?->email;
 $data = json_decode($response->body());
 $userId = $data?->user?->id;
 
-// Blade шаблон
+// Template Blade
 {{ $user?->profile?->avatar ?? '/default-avatar.png' }}
 
 // Service
@@ -325,19 +325,19 @@ public function process(?User $user): void
 }
 ```
 
-**На собеседовании скажешь:**
-> "Nullsafe ?-> (PHP 8.0) — безопасный доступ. Если объект null → вернёт null без ошибки. $user?->address?->city. Удобно для Eloquent отношений, API responses."
+**Na entrevista:**
+> "Nullsafe ?-> (PHP 8.0) — acesso seguro. Se o objeto é null, devolve null sem erro. $user?->address?->city. Uso em relacionamento Eloquent e response de API."
 
 ---
 
 ## Constructor Property Promotion (PHP 8.0)
 
-**Что это:**
-Короткий синтаксис объявления свойств в конструкторе.
+**O que é:**
+Sintaxe curta para declarar propriedade no construtor.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// До PHP 8.0
+// Antes do PHP 8.0
 class User
 {
     private string $name;
@@ -359,10 +359,10 @@ class User
         private string $name,
         private string $email,
         private int $age,
-    ) {}  // Короче!
+    ) {}  // Mais curto!
 }
 
-// Смешанный стиль (можно)
+// Estilo misto (pode misturar)
 class User
 {
     private string $createdAt;
@@ -376,10 +376,10 @@ class User
 }
 ```
 
-**Когда использовать:**
-**Всегда** для простых конструкторов (DTO, Value Objects, Services).
+**Quando usar:**
+**Sempre** em construtor simples (DTO, Value Object, Service).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // DTO
 readonly class CreateUserDTO
@@ -405,7 +405,7 @@ class Money
     }
 }
 
-// Service с DI
+// Service com DI
 class OrderService
 {
     public function __construct(
@@ -416,23 +416,23 @@ class OrderService
 
     public function create(array $data): Order
     {
-        $this->logger->info('Creating order');
+        $this->logger->info('Criando pedido');
         return $this->repository->create($data);
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "Constructor Property Promotion (PHP 8.0) — короткий синтаксис. Объявление свойства в параметрах конструктора: private string $name. Удобно для DTO, Value Objects, Services с DI."
+**Na entrevista:**
+> "Constructor Property Promotion (PHP 8.0) — sintaxe curta. Você declara a propriedade no parâmetro do construtor: private string $name. Uso em DTO, Value Object e Service com DI."
 
 ---
 
 ## Readonly Properties (PHP 8.1)
 
-**Что это:**
-Свойства, которые можно установить только один раз.
+**O que é:**
+Propriedade que só recebe valor uma vez.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -442,9 +442,9 @@ class User
     ) {}
 }
 
-$user = new User('Иван', 1);
-echo $user->name;  // "Иван"
-$user->name = 'Пётр';  // ❌ Error: Cannot modify readonly property
+$user = new User('João', 1);
+echo $user->name;  // "João"
+$user->name = 'Pedro';  // ❌ Error: Cannot modify readonly property
 
 // readonly class (PHP 8.2)
 readonly class Money
@@ -454,13 +454,13 @@ readonly class Money
         public string $currency,
     ) {}
 }
-// Все свойства автоматически readonly
+// Todas as propriedades ficam readonly automaticamente
 ```
 
-**Когда использовать:**
-Для неизменяемых данных (DTO, Value Objects, Events).
+**Quando usar:**
+Dado imutável (DTO, Value Object, Event).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Event
 readonly class OrderCreated
@@ -489,7 +489,7 @@ readonly class Email
     public function __construct(string $email)
     {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Invalid email');
+            throw new \InvalidArgumentException('Email inválido');
         }
 
         $this->value = strtolower($email);
@@ -497,17 +497,17 @@ readonly class Email
 }
 ```
 
-**На собеседовании скажешь:**
-> "readonly (PHP 8.1) — свойство устанавливается один раз. readonly class (PHP 8.2) — все свойства readonly. Использую для DTO, Value Objects, Events. Гарантия иммутабельности."
+**Na entrevista:**
+> "readonly (PHP 8.1) — a propriedade só recebe valor uma vez. readonly class (PHP 8.2) deixa todas readonly. Uso em DTO, Value Object e Event. Garante imutabilidade."
 
 ---
 
 ## Enums (PHP 8.1)
 
-**Что это:**
-Перечисления — набор фиксированных значений.
+**O que é:**
+Conjunto fechado de valores.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // PHP 8.1: Enum
 enum Status
@@ -520,7 +520,7 @@ enum Status
 
 $status = Status::Pending;
 
-// С backing value (string/int)
+// Com backing value (string/int)
 enum Status: string
 {
     case Pending = 'pending';
@@ -533,12 +533,12 @@ $status = Status::Paid;
 echo $status->value;  // "paid"
 echo $status->name;   // "Paid"
 
-// Сравнение
+// Comparação
 if ($order->status === Status::Paid) {
-    // Оплачен
+    // Pago
 }
 
-// match с Enum
+// match com Enum
 $badge = match($order->status) {
     Status::Pending => 'badge-warning',
     Status::Paid => 'badge-info',
@@ -546,7 +546,7 @@ $badge = match($order->status) {
     Status::Delivered => 'badge-success',
 };
 
-// Методы в Enum
+// Métodos no Enum
 enum Status: string
 {
     case Pending = 'pending';
@@ -555,8 +555,8 @@ enum Status: string
     public function label(): string
     {
         return match($this) {
-            self::Pending => 'В ожидании',
-            self::Paid => 'Оплачено',
+            self::Pending => 'Aguardando',
+            self::Paid => 'Pago',
         };
     }
 
@@ -569,14 +569,14 @@ enum Status: string
     }
 }
 
-echo Status::Paid->label();  // "Оплачено"
+echo Status::Paid->label();  // "Pago"
 echo Status::Paid->color();  // "green"
 ```
 
-**Когда использовать:**
-Для статусов, типов, режимов вместо констант класса.
+**Quando usar:**
+Status, tipo, modo — no lugar de constante de classe.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Model
 enum OrderStatus: string
@@ -590,11 +590,11 @@ enum OrderStatus: string
     public function label(): string
     {
         return match($this) {
-            self::Pending => 'В ожидании',
-            self::Paid => 'Оплачено',
-            self::Shipped => 'Отправлено',
-            self::Delivered => 'Доставлено',
-            self::Cancelled => 'Отменено',
+            self::Pending => 'Aguardando',
+            self::Paid => 'Pago',
+            self::Shipped => 'Enviado',
+            self::Delivered => 'Entregue',
+            self::Cancelled => 'Cancelado',
         };
     }
 }
@@ -602,65 +602,65 @@ enum OrderStatus: string
 class Order extends Model
 {
     protected $casts = [
-        'status' => OrderStatus::class,  // Автоматический cast
+        'status' => OrderStatus::class,  // Cast automático
     ];
 }
 
 $order = Order::find(1);
 if ($order->status === OrderStatus::Paid) {
-    // Оплачен
+    // Pago
 }
 
-echo $order->status->label();  // "Оплачено"
+echo $order->status->label();  // "Pago"
 
 // Blade
 <span class="badge-{{ $order->status->value }}">
     {{ $order->status->label() }}
 </span>
 
-// Миграция
+// Migration
 $table->enum('status', ['pending', 'paid', 'shipped', 'delivered', 'cancelled']);
 
 // Validation
 'status' => ['required', Rule::enum(OrderStatus::class)],
 ```
 
-**На собеседовании скажешь:**
-> "Enum (PHP 8.1) — набор фиксированных значений. Backed Enum с string/int. Методы в Enum. В Laravel использую для статусов, типов. Casting в моделях, Rule::enum для валидации."
+**Na entrevista:**
+> "Enum (PHP 8.1) — conjunto fechado de valores. Backed Enum com string/int. Dá para ter método no Enum. No Laravel uso para status e tipo. Cast no model, Rule::enum na validação."
 
 ---
 
-## Другие новшества PHP 8.x
+## Outras novidades do PHP 8.x
 
 **PHP 8.0:**
-- **throw в выражениях**: `$value = $data['key'] ?? throw new Exception();`
+- **throw em expressão**: `$value = $data['key'] ?? throw new Exception();`
 - **str_contains()**, **str_starts_with()**, **str_ends_with()**
-- **fdiv()** — деление с плавающей точкой (не ошибка при делении на 0)
-- **get_debug_type()** — лучше gettype()
+- **fdiv()** — divisão de ponto flutuante (não dá erro ao dividir por 0)
+- **get_debug_type()** — melhor que gettype()
 
 **PHP 8.1:**
 - **Intersection Types**: `function save(Countable&Iterator $collection)`
 - **never type**: `function redirect(): never { exit; }`
-- **Final константы класса**
-- **Fibers** — легковесные потоки (для async)
+- **constantes final de classe**
+- **Fibers** — threads leves (para async)
 
 **PHP 8.2:**
-- **readonly class** — все свойства readonly
+- **readonly class** — todas as propriedades readonly
 - **Disjunctive Normal Form (DNF)** types: `(A&B)|C`
-- **true type** — только true (не bool)
+- **true type** — só true (não bool)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// throw в выражении
-$user = User::find($id) ?? throw new NotFoundException("User {$id} not found");
+// throw em expressão
+$user = User::find($id) ?? throw new NotFoundException("Usuário {$id} não encontrado");
 
-// str_* функции
+// Funções str_*
 if (str_contains($email, '@gmail.com')) {
     // Gmail
 }
 
 if (str_starts_with($url, 'https://')) {
-    // Безопасное соединение
+    // Conexão segura
 }
 
 // never type (PHP 8.1)
@@ -685,51 +685,51 @@ readonly class UserDTO
 }
 ```
 
-**На собеседовании скажешь:**
-> "PHP 8.0: named arguments, union types, match, ?->, property promotion. PHP 8.1: readonly, enum, never type. PHP 8.2: readonly class, DNF types. В Laravel активно использую все эти возможности."
+**Na entrevista:**
+> "PHP 8.0: named arguments, union types, match, ?->, property promotion. PHP 8.1: readonly, enum, never. PHP 8.2: readonly class, DNF types. No Laravel eu uso tudo isso no dia a dia."
 
 ---
 
-## Резюме PHP 8.x
+## Recapitulando
 
 **PHP 8.0:**
-- **Named Arguments** — передача по имени
+- **Named Arguments** — passa pelo nome
 - **Union Types** — int|string|null
-- **Match** — улучшенный switch
-- **Nullsafe ?->** — безопасный доступ
-- **Property Promotion** — короткий синтаксис конструктора
-- **Attributes** — метаданные (#[Attr])
+- **Match** — switch melhorado
+- **Nullsafe ?->** — acesso seguro
+- **Property Promotion** — sintaxe curta do construtor
+- **Attributes** — metadados (#[Attr])
 
 **PHP 8.1:**
-- **readonly** — неизменяемые свойства
-- **Enum** — перечисления
-- **never** — никогда не возвращает
+- **readonly** — propriedades imutáveis
+- **Enum** — conjunto fechado de valores
+- **never** — nunca devolve
 - **Intersection Types** — A&B
 - **Fibers** — async
 
 **PHP 8.2:**
-- **readonly class** — все свойства readonly
+- **readonly class** — todas as propriedades readonly
 - **DNF types** — (A&B)|C
 - **true type**
 
-**Важно на собесе:**
-- Property Promotion + readonly — стандарт для DTO
-- Enum вместо констант класса
-- Match вместо switch
-- ?-> для безопасного доступа
-- Named Arguments для читаемости
-- Laravel активно использует все возможности PHP 8.x
+**Importante na entrevista:**
+- Property Promotion + readonly — padrão para DTO
+- Enum no lugar de constante de classe
+- Match no lugar de switch
+- ?-> para acesso seguro
+- Named Arguments para leitura
+- Laravel usa tudo isso do PHP 8.x
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай DTO с PHP 8 возможностями
+### Exercício 1: Crie um DTO com recursos do PHP 8
 
-Создай readonly DTO для регистрации пользователя, используя Property Promotion, Union Types и Named Arguments.
+**Enunciado:** Crie um DTO readonly para cadastro de usuário, com Property Promotion, Union Types e Named Arguments.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -784,7 +784,7 @@ readonly class RegisterUserDTO
     }
 }
 
-// Использование
+// Uso
 class UserService
 {
     public function register(RegisterUserDTO $dto): User
@@ -815,18 +815,18 @@ public function register(Request $request)
     return response()->json($user, 201);
 }
 
-// Нельзя изменить readonly свойства
-$dto = new RegisterUserDTO('John', 'john@mail.com', 'password');
-$dto->name = 'Jane';  // ❌ Error: Cannot modify readonly property
+// Não dá para alterar propriedade readonly
+$dto = new RegisterUserDTO('João', 'joao@email.com', 'password');
+$dto->name = 'Ana';  // ❌ Error: Cannot modify readonly property
 ```
 </details>
 
-### Задание 2: Реализуй State Machine через Enum
+### Exercício 2: Implemente uma State Machine com Enum
 
-Создай систему управления статусами заказа, используя Enum с методами и Match expression.
+**Enunciado:** Crie o controle de status do pedido com Enum, métodos e match.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -846,13 +846,13 @@ enum OrderStatus: string
     public function label(): string
     {
         return match($this) {
-            self::Pending => 'В ожидании',
-            self::Confirmed => 'Подтверждён',
-            self::Processing => 'Обрабатывается',
-            self::Shipped => 'Отправлен',
-            self::Delivered => 'Доставлен',
-            self::Cancelled => 'Отменён',
-            self::Refunded => 'Возврат средств',
+            self::Pending => 'Aguardando',
+            self::Confirmed => 'Confirmado',
+            self::Processing => 'Em processamento',
+            self::Shipped => 'Enviado',
+            self::Delivered => 'Entregue',
+            self::Cancelled => 'Cancelado',
+            self::Refunded => 'Reembolsado',
         };
     }
 
@@ -932,7 +932,7 @@ class Order extends Model
     {
         if (!$this->status->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException(
-                "Cannot transition from {$this->status->value} to {$newStatus->value}"
+                "Não dá para ir de {$this->status->value} para {$newStatus->value}"
             );
         }
 
@@ -952,7 +952,7 @@ class OrderService
     {
         $order->transitionTo(OrderStatus::Confirmed);
 
-        // Отправить уведомление
+        // Enviar notificação
         Notification::send($order->user, new OrderConfirmed($order));
     }
 
@@ -969,7 +969,7 @@ class OrderService
         $order->transitionTo(OrderStatus::Cancelled);
         $order->update(['cancellation_reason' => $reason]);
 
-        // Возврат средств если оплачен
+        // Reembolsa se já pagou
         if ($order->isPaid()) {
             $this->refundPayment($order);
         }
@@ -983,7 +983,7 @@ public function updateStatus(Request $request, Order $order)
 
     if (!$order->status->canTransitionTo($newStatus)) {
         return response()->json([
-            'error' => 'Invalid status transition',
+            'error' => 'Transição de status inválida',
             'current' => $order->status->value,
             'requested' => $newStatus->value,
             'allowed' => array_map(
@@ -996,7 +996,7 @@ public function updateStatus(Request $request, Order $order)
     $order->transitionTo($newStatus);
 
     return response()->json([
-        'message' => 'Status updated successfully',
+        'message' => 'Status atualizado com sucesso',
         'order' => $order,
     ]);
 }
@@ -1018,12 +1018,12 @@ public function updateStatus(Request $request, Order $order)
 ```
 </details>
 
-### Задание 3: Создай гибкий Query Builder с Named Arguments и Union Types
+### Exercício 3: Crie um Query Builder flexível com Named Arguments e Union Types
 
-Реализуй Builder pattern с использованием Named Arguments и Union Types для гибких параметров.
+**Enunciado:** Implemente o padrão Builder com Named Arguments e Union Types para parâmetros flexíveis.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -1184,7 +1184,7 @@ public function index(Request $request)
     return response()->json($posts);
 }
 
-// Или с Named Arguments напрямую
+// Ou com Named Arguments direto
 $posts = (new FluentQueryBuilder(Post::query()))
     ->filter(
         search: 'Laravel',
@@ -1198,4 +1198,4 @@ $posts = (new FluentQueryBuilder(Post::query()))
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

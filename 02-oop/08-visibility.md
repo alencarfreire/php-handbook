@@ -1,41 +1,41 @@
-# 2.8 Область видимости (Visibility)
+# 2.8 Visibilidade (Visibility)
 
-## Краткое резюме
+## Resumo
 
-> **Область видимости** — модификаторы доступа, определяющие видимость свойств и методов: public (везде), protected (класс + наследники), private (только класс).
+> **Visibilidade** — modificadores de acesso que definem a visibilidade de propriedades e métodos: public (em qualquer lugar), protected (classe + filhas), private (só a classe).
 >
-> **Ключевые концепции:** инкапсуляция (сокрытие реализации), readonly свойства (PHP 8.1+), readonly класс (PHP 8.2+), константы класса с модификаторами (PHP 7.1+).
+> **Conceitos-chave:** encapsulamento (esconder a implementação), propriedades readonly (PHP 8.1+), classe readonly (PHP 8.2+), constantes de classe com modificadores (PHP 7.1+).
 >
-> **Важно:** Инкапсуляция — основной принцип ООП. Можно расширить видимость (protected → public), но нельзя сузить.
+> **Importante:** Encapsulamento é o princípio central de OOP. Dá para ampliar a visibilidade (protected → public), mas não dá para reduzir.
 
 ---
 
-## Содержание
+## Conteúdo
 
 - [public, protected, private](#public-protected-private)
-- [Области видимости в наследовании](#области-видимости-в-наследовании)
-- [Изменение видимости при переопределении](#изменение-видимости-при-переопределении)
-- [readonly свойства (PHP 8.1+)](#readonly-свойства-php-81)
-- [readonly класс (PHP 8.2+)](#readonly-класс-php-82)
-- [Константы класса и видимость](#константы-класса-и-видимость)
-- [Инкапсуляция — принцип ООП](#инкапсуляция--принцип-ооп)
-- [Резюме](#резюме-области-видимости)
-- [Практические задания](#практические-задания)
+- [Visibilidade na herança](#visibilidade-na-herança)
+- [Mudança de visibilidade na sobrescrita](#mudança-de-visibilidade-na-sobrescrita)
+- [Propriedades readonly (PHP 8.1+)](#propriedades-readonly-php-81)
+- [Classe readonly (PHP 8.2+)](#classe-readonly-php-82)
+- [Constantes de classe e visibilidade](#constantes-de-classe-e-visibilidade)
+- [Encapsulamento — princípio de OOP](#encapsulamento--princípio-de-oop)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
 ## public, protected, private
 
-**Что это:**
-Модификаторы доступа, определяющие видимость свойств и методов.
+**O que é:**
+Modificadores de acesso que definem a visibilidade de propriedades e métodos.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
-    public string $name;          // Доступно везде
-    protected string $email;      // Доступно в классе и наследниках
-    private string $password;     // Доступно ТОЛЬКО в этом классе
+    public string $name;          // Acessível em qualquer lugar
+    protected string $email;      // Acessível na classe e nas filhas
+    private string $password;     // Acessível SÓ nesta classe
 
     public function __construct(string $name, string $email, string $password)
     {
@@ -44,63 +44,63 @@ class User
         $this->password = $password;
     }
 
-    public function getEmail(): string  // public метод
+    public function getEmail(): string  // método public
     {
         return $this->email;
     }
 
-    protected function hashPassword(string $password): string  // protected метод
+    protected function hashPassword(string $password): string  // método protected
     {
         return password_hash($password, PASSWORD_DEFAULT);
     }
 
-    private function validatePassword(string $password): bool  // private метод
+    private function validatePassword(string $password): bool  // método private
     {
         return strlen($password) >= 8;
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com', 'secret');
+$user = new User('João', 'joao@email.com', 'secret');
 
 echo $user->name;                // ✅ OK (public)
 echo $user->email;               // ❌ Error (protected)
 echo $user->password;            // ❌ Error (private)
 
-echo $user->getEmail();          // ✅ OK (public метод)
+echo $user->getEmail();          // ✅ OK (método public)
 $user->hashPassword('pass');     // ❌ Error (protected)
 $user->validatePassword('pass'); // ❌ Error (private)
 ```
 
-**Когда использовать:**
-- `public` — для внешнего API класса
-- `protected` — для методов, доступных наследникам
-- `private` — для внутренней реализации
+**Quando usar:**
+- `public` — API externa da classe
+- `protected` — métodos que as filhas podem usar
+- `private` — implementação interna
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 class Model
 {
-    protected array $attributes = [];  // protected — для наследников
-    private array $original = [];      // private — только для Model
+    protected array $attributes = [];  // protected — para as filhas
+    private array $original = [];      // private — só para Model
 
     public function getAttribute(string $key): mixed  // public API
     {
         return $this->attributes[$key] ?? null;
     }
 
-    protected function setAttribute(string $key, mixed $value): void  // Для наследников
+    protected function setAttribute(string $key, mixed $value): void  // Para as filhas
     {
         $this->attributes[$key] = $value;
     }
 
-    private function syncOriginal(): void  // Внутренняя логика
+    private function syncOriginal(): void  // Lógica interna
     {
         $this->original = $this->attributes;
     }
 
     public function save(): bool
     {
-        // Используем private метод
+        // Usa o método private
         $this->syncOriginal();
         return true;
     }
@@ -111,22 +111,22 @@ class User extends Model
     public function setName(string $name): void
     {
         $this->setAttribute('name', $name);  // ✅ OK (protected)
-        // $this->syncOriginal();  // ❌ Error (private, не доступен в наследнике)
+        // $this->syncOriginal();  // ❌ Error (private, não acessível na filha)
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "public — доступно везде, protected — в классе и наследниках, private — только в текущем классе. Инкапсуляция: скрываю реализацию (private), открываю API (public), даю доступ наследникам (protected)."
+**Na entrevista:**
+> "public vale em qualquer lugar, protected na classe e nas filhas, private só na classe atual. Encapsulamento: escondo a implementação (private), abro a API (public), libero acesso para as filhas (protected)."
 
 ---
 
-## Области видимости в наследовании
+## Visibilidade na herança
 
-**Что это:**
-Как работают модификаторы при наследовании.
+**O que é:**
+Como os modificadores se comportam na herança.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
@@ -141,7 +141,7 @@ class Animal
 
     protected function calculateYears(): int
     {
-        return $this->age * 7;  // Для собак
+        return $this->age * 7;  // Para cachorros
     }
 
     private function getSecret(): string
@@ -154,64 +154,64 @@ class Dog extends Animal
 {
     public function info(): string
     {
-        $info = "Name: {$this->name}\n";       // ✅ public
-        $info .= "Age: {$this->age}\n";        // ✅ protected (доступен)
-        // $info .= $this->secret;             // ❌ private (НЕ доступен)
+        $info = "Nome: {$this->name}\n";       // ✅ public
+        $info .= "Idade: {$this->age}\n";      // ✅ protected (acessível)
+        // $info .= $this->secret;             // ❌ private (NÃO acessível)
 
-        $info .= $this->calculateYears();      // ✅ protected метод
-        // $info .= $this->getSecret();        // ❌ private метод
+        $info .= $this->calculateYears();      // ✅ método protected
+        // $info .= $this->getSecret();        // ❌ método private
 
         return $info;
     }
 
-    // Можно переопределить protected
+    // Dá para sobrescrever protected
     protected function calculateYears(): int
     {
-        return $this->age * 10;  // Для собак по-другому
+        return $this->age * 10;  // Para cachorros é diferente
     }
 
-    // Нельзя переопределить private (это новый метод)
+    // Não dá para sobrescrever private (isso é um método novo)
     private function getSecret(): string
     {
-        return "Dog's secret";  // Это НОВЫЙ метод, не переопределение
+        return "Segredo do cachorro";  // Isso é um método NOVO, não é sobrescrita
     }
 }
 ```
 
-**Когда использовать:**
-- `protected` для методов, которые должны быть доступны наследникам
-- `private` для методов, которые не должны переопределяться
+**Quando usar:**
+- `protected` para métodos que as filhas precisam acessar
+- `private` para métodos que não devem ser sobrescritos
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Eloquent Model
 abstract class Model
 {
-    protected array $attributes = [];  // Наследники имеют доступ
+    protected array $attributes = [];  // As filhas têm acesso
 
-    // public — внешний API
+    // public — API externa
     public function getAttribute(string $key): mixed
     {
         return $this->attributes[$key] ?? null;
     }
 
-    // protected — для переопределения в наследниках
+    // protected — para sobrescrever nas filhas
     protected function castAttribute(string $key, mixed $value): mixed
     {
-        // Приведение типов
+        // Cast de tipos
         return $value;
     }
 
-    // private — нельзя изменить в наследниках
+    // private — não pode mudar nas filhas
     private function syncOriginalAttributes(): void
     {
-        // Критичная логика, не должна изменяться
+        // Lógica crítica, não pode mudar
     }
 }
 
 class User extends Model
 {
-    // Переопределяем protected метод
+    // Sobrescreve o método protected
     protected function castAttribute(string $key, mixed $value): mixed
     {
         if ($key === 'birth_date' && is_string($value)) {
@@ -221,60 +221,60 @@ class User extends Model
         return parent::castAttribute($key, $value);
     }
 
-    // Не можем переопределить private syncOriginalAttributes()
+    // Não dá para sobrescrever o private syncOriginalAttributes()
 }
 ```
 
-**На собеседовании скажешь:**
-> "Наследник имеет доступ к public и protected, но не к private. protected используется для методов, которые можно переопределить. private — для методов, которые не должны изменяться в наследниках."
+**Na entrevista:**
+> "A filha vê public e protected, mas não vê private. protected é para método que dá para sobrescrever. private é para método que não pode mudar nas filhas."
 
 ---
 
-## Изменение видимости при переопределении
+## Mudança de visibilidade na sobrescrita
 
-**Что это:**
-Можно расширить видимость (protected → public), но нельзя сузить (public → protected).
+**O que é:**
+Dá para ampliar a visibilidade (protected → public), mas não dá para reduzir (public → protected).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
     protected function eat(): string
     {
-        return "Eating";
+        return "Comendo";
     }
 
     public function sleep(): string
     {
-        return "Sleeping";
+        return "Dormindo";
     }
 }
 
 class Dog extends Animal
 {
-    // ✅ OK: расширение (protected → public)
+    // ✅ OK: amplia (protected → public)
     public function eat(): string
     {
-        return "Dog eating";
+        return "Cachorro comendo";
     }
 
-    // ❌ Fatal error: сужение (public → protected)
+    // ❌ Fatal error: reduz (public → protected)
     protected function sleep(): string
     {
-        return "Dog sleeping";
+        return "Cachorro dormindo";
     }
 }
 
-// Правило: можно только расширять видимость
-// private → protected → public (можно только вправо)
+// Regra: só dá para ampliar a visibilidade
+// private → protected → public (só para a direita)
 ```
 
-**Когда использовать:**
-Редко нужно изменять видимость. Обычно проектируй API сразу правильно.
+**Quando usar:**
+Raro precisar mudar visibilidade. Em geral, desenhe a API certa de primeira.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый контроллер
+// Controller base
 class Controller
 {
     protected function authorize(string $ability, mixed $model): void
@@ -285,35 +285,35 @@ class Controller
     }
 }
 
-// Конкретный контроллер
+// Controller concreto
 class PostController extends Controller
 {
-    // Расширяем видимость для использования в middleware
+    // Amplia a visibilidade para usar no middleware
     public function authorize(string $ability, mixed $model): void
     {
         parent::authorize($ability, $model);
-        Log::info("Authorization check", ['ability' => $ability]);
+        Log::info("Checagem de autorização", ['ability' => $ability]);
     }
 }
 
-// Middleware может вызвать
+// O middleware pode chamar
 Route::post('/posts/{post}', function (Post $post) {
     app(PostController::class)->authorize('update', $post);
     // ...
 });
 ```
 
-**На собеседовании скажешь:**
-> "Можно расширить видимость (protected → public), но нельзя сузить (public → protected). Это нарушает принцип подстановки Барбары Лисков (LSP). Проектируй API сразу с правильной видимостью."
+**Na entrevista:**
+> "Dá para ampliar a visibilidade (protected → public), mas não dá para reduzir (public → protected). Isso quebra o LSP (substituição de Liskov). Desenhe a API já com a visibilidade certa."
 
 ---
 
-## readonly свойства (PHP 8.1+)
+## Propriedades readonly (PHP 8.1+)
 
-**Что это:**
-Свойства, которые можно установить только один раз (в конструкторе или при объявлении).
+**O que é:**
+Propriedades que só podem ser atribuídas uma vez (no construtor ou na declaração).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -324,32 +324,32 @@ class User
     ) {}
 }
 
-$user = new User('Иван', 'ivan@mail.com', 1);
+$user = new User('João', 'joao@email.com', 1);
 
-echo $user->name;  // "Иван" ✅
-$user->name = 'Пётр';  // ❌ Error: Cannot modify readonly property
+echo $user->name;  // "João" ✅
+$user->name = 'Pedro';  // ❌ Error: Cannot modify readonly property
 
-// Или
+// Ou
 class Post
 {
     public readonly string $slug;
 
     public function __construct(string $title)
     {
-        $this->slug = Str::slug($title);  // ✅ OK (первая установка)
+        $this->slug = Str::slug($title);  // ✅ OK (primeira atribuição)
     }
 
     public function updateSlug(string $slug): void
     {
-        $this->slug = $slug;  // ❌ Error (нельзя изменить)
+        $this->slug = $slug;  // ❌ Error (não dá para alterar)
     }
 }
 ```
 
-**Когда использовать:**
-Для неизменяемых свойств (ID, slug, timestamps при создании), Value Objects.
+**Quando usar:**
+Propriedade imutável (ID, slug, timestamps na criação), Value Objects.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Value Object
 class Money
@@ -369,12 +369,12 @@ class Money
             throw new \Exception('Currency mismatch');
         }
 
-        // Создаём новый объект (иммутабельность)
+        // Cria um objeto novo (imutabilidade)
         return new Money($this->amount + $other->amount, $this->currency);
     }
 }
 
-$price = new Money(1000, 'RUB');
+$price = new Money(1000, 'BRL');
 // $price->amount = 2000;  // ❌ Error (readonly)
 
 // DTO (Data Transfer Object)
@@ -387,8 +387,8 @@ readonly class CreateUserDTO
     ) {}
 }
 
-$dto = new CreateUserDTO('Иван', 'ivan@mail.com', 'secret');
-// Все свойства readonly (нельзя изменить)
+$dto = new CreateUserDTO('João', 'joao@email.com', 'secret');
+// Todas as propriedades são readonly (não dá para alterar)
 
 // Event
 class OrderCreated
@@ -403,17 +403,17 @@ $event = new OrderCreated($order, new \DateTimeImmutable());
 // $event->order = $anotherOrder;  // ❌ Error
 ```
 
-**На собеседовании скажешь:**
-> "readonly (PHP 8.1+) — свойство можно установить только один раз (в конструкторе). Использую для Value Objects (Money), DTO, Events. Обеспечивает иммутабельность данных."
+**Na entrevista:**
+> "readonly (PHP 8.1+) — a propriedade só pode ser atribuída uma vez (no construtor). Uso em Value Objects (Money), DTO, Events. Garante imutabilidade dos dados."
 
 ---
 
-## readonly класс (PHP 8.2+)
+## Classe readonly (PHP 8.2+)
 
-**Что это:**
-Все свойства класса автоматически readonly.
+**O que é:**
+Todas as propriedades da classe viram readonly automaticamente.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // PHP 8.2+
 readonly class User
@@ -425,7 +425,7 @@ readonly class User
     ) {}
 }
 
-// Эквивалентно:
+// Equivale a:
 class UserManual
 {
     public function __construct(
@@ -435,14 +435,14 @@ class UserManual
     ) {}
 }
 
-$user = new User('Иван', 'ivan@mail.com', 1);
-// $user->name = 'Пётр';  // ❌ Error (все свойства readonly)
+$user = new User('João', 'joao@email.com', 1);
+// $user->name = 'Pedro';  // ❌ Error (todas as propriedades são readonly)
 ```
 
-**Когда использовать:**
-Для иммутабельных классов (DTO, Value Objects, Events).
+**Quando usar:**
+Classes imutáveis (DTO, Value Objects, Events).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // DTO
 readonly class RegisterUserRequest
@@ -464,7 +464,7 @@ readonly class RegisterUserRequest
 }
 
 $request = RegisterUserRequest::fromArray($requestData);
-// Гарантия: данные не изменятся
+// Garantia: os dados não mudam
 
 // Value Object
 readonly class Email
@@ -486,7 +486,7 @@ readonly class Email
     }
 }
 
-$email = new Email('IVAN@MAIL.COM');
+$email = new Email('JOAO@EMAIL.COM');
 // $email->value = 'changed';  // ❌ Error
 
 // Event
@@ -500,17 +500,17 @@ readonly class UserRegistered
 }
 ```
 
-**На собеседовании скажешь:**
-> "readonly class (PHP 8.2+) — все свойства автоматически readonly. Короче, чем писать readonly на каждом свойстве. Использую для DTO, Value Objects, Events — гарантия иммутабельности."
+**Na entrevista:**
+> "readonly class (PHP 8.2+) — todas as propriedades já nascem readonly. Mais curto do que escrever readonly em cada uma. Uso em DTO, Value Objects, Events — garantia de imutabilidade."
 
 ---
 
-## Константы класса и видимость
+## Constantes de classe e visibilidade
 
-**Что это:**
-Константы класса могут иметь модификаторы (PHP 7.1+).
+**O que é:**
+Constantes de classe podem ter modificadores (PHP 7.1+).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Config
 {
@@ -520,7 +520,7 @@ class Config
 
     public function getPrivateConst(): string
     {
-        return self::PRIVATE_CONST;  // ✅ OK (внутри класса)
+        return self::PRIVATE_CONST;  // ✅ OK (dentro da classe)
     }
 }
 
@@ -532,30 +532,30 @@ class ExtendedConfig extends Config
 {
     public function getProtectedConst(): string
     {
-        return self::PROTECTED_CONST;  // ✅ OK (наследник)
-        // return self::PRIVATE_CONST;  // ❌ Error (private не доступен)
+        return self::PROTECTED_CONST;  // ✅ OK (classe filha)
+        // return self::PRIVATE_CONST;  // ❌ Error (private não acessível)
     }
 }
 ```
 
-**Когда использовать:**
-- `public` — для констант, используемых извне
-- `protected` — для констант, используемых в иерархии
-- `private` — для констант, используемых только в классе
+**Quando usar:**
+- `public` — constante usada de fora
+- `protected` — constante usada na hierarquia
+- `private` — constante usada só na classe
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 class Order
 {
-    // public — клиент может использовать
+    // public — o cliente pode usar
     public const STATUS_PENDING = 'pending';
     public const STATUS_PAID = 'paid';
     public const STATUS_SHIPPED = 'shipped';
 
-    // protected — только для наследников
+    // protected — só para as filhas
     protected const INTERNAL_STATUS_PROCESSING = 'processing';
 
-    // private — только для Order
+    // private — só para Order
     private const DB_TABLE = 'orders';
 
     private string $status;
@@ -563,17 +563,17 @@ class Order
     public function markAsPaid(): void
     {
         $this->status = self::STATUS_PAID;
-        // Используем private константу
+        // Usa a constante private
         DB::table(self::DB_TABLE)->update([...]);
     }
 }
 
-// Клиент может использовать public
+// O cliente pode usar public
 if ($order->status === Order::STATUS_PAID) {
     // ...
 }
 
-// HTTP статусы
+// Status HTTP
 class Response
 {
     public const HTTP_OK = 200;
@@ -586,50 +586,50 @@ class Response
 
     public function send(int $status = self::DEFAULT_STATUS): void
     {
-        // Используем protected константу
+        // Usa a constante protected
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "Константы класса (PHP 7.1+) могут быть public, protected, private. public — для внешнего использования, protected — для иерархии, private — для класса. По умолчанию public."
+**Na entrevista:**
+> "Constante de classe (PHP 7.1+) pode ser public, protected, private. public para uso externo, protected para a hierarquia, private para a classe. O default é public."
 
 ---
 
-## Инкапсуляция — принцип ООП
+## Encapsulamento — princípio de OOP
 
-**Что это:**
-Сокрытие внутренней реализации, предоставление публичного API.
+**O que é:**
+Esconder a implementação interna e expor uma API pública.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// ПЛОХО: нарушение инкапсуляции
+// RUIM: quebra o encapsulamento
 class UserBad
 {
     public string $name;
     public string $email;
-    public string $password;  // Открытый доступ к паролю! ❌
+    public string $password;  // Acesso aberto à senha! ❌
 }
 
 $user = new UserBad();
-$user->password = 'plain_password';  // Хранится открытым текстом ❌
-echo $user->password;  // Можно прочитать ❌
+$user->password = 'plain_password';  // Guarda em texto puro ❌
+echo $user->password;  // Dá para ler ❌
 
-// ХОРОШО: инкапсуляция
+// BOM: encapsulamento
 class User
 {
     private string $name;
     private string $email;
-    private string $passwordHash;  // Хеш, не пароль
+    private string $passwordHash;  // Hash, não a senha
 
     public function __construct(string $name, string $email, string $password)
     {
         $this->name = $name;
         $this->email = $email;
-        $this->setPassword($password);  // Используем метод
+        $this->setPassword($password);  // Usa o método
     }
 
-    // Геттеры (контролируемый доступ)
+    // Getters (acesso controlado)
     public function getName(): string
     {
         return $this->name;
@@ -640,7 +640,7 @@ class User
         return $this->email;
     }
 
-    // Пароль не открываем наружу!
+    // A senha não sai para fora!
     public function setPassword(string $password): void
     {
         if (strlen($password) < 8) {
@@ -656,45 +656,45 @@ class User
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com', 'secret123');
-// $user->password = 'plain';  // ❌ Нельзя (private)
-echo $user->getName();  // ✅ OK (через getter)
+$user = new User('João', 'joao@email.com', 'secret123');
+// $user->password = 'plain';  // ❌ Não dá (private)
+echo $user->getName();  // ✅ OK (via getter)
 $user->checkPassword('secret123');  // ✅ OK
 ```
 
-**Когда использовать:**
-**Всегда**. Скрывай реализацию, открывай только API.
+**Quando usar:**
+**Sempre**. Esconda a implementação, abra só a API.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent Model (инкапсуляция $attributes)
+// Eloquent Model (encapsula $attributes)
 class User extends Model
 {
-    private array $attributes = [];  // Скрыто
+    private array $attributes = [];  // Escondido
 
-    // Контролируемый доступ
+    // Acesso controlado
     public function __get(string $key): mixed
     {
-        // Можем добавить логику (cast, mutators)
+        // Dá para colocar lógica (cast, mutators)
         return $this->attributes[$key] ?? null;
     }
 
     public function __set(string $key, mixed $value): void
     {
-        // Валидация, преобразование
+        // Validação, transformação
         $this->attributes[$key] = $value;
     }
 
     protected function castAttribute(string $key): mixed
     {
-        // Приведение типов
+        // Cast de tipos
     }
 }
 
-// Payment Service (инкапсуляция API ключей)
+// Payment Service (encapsula as API keys)
 class PaymentService
 {
-    private const API_KEY = 'secret_key';  // Скрыто
+    private const API_KEY = 'secret_key';  // Escondido
     private string $apiUrl;
 
     public function __construct(string $apiUrl)
@@ -702,65 +702,65 @@ class PaymentService
         $this->apiUrl = $apiUrl;
     }
 
-    // Публичный API
+    // API pública
     public function charge(int $amount): bool
     {
         return $this->sendRequest('/charge', ['amount' => $amount]);
     }
 
-    // Внутренняя реализация (скрыта)
+    // Implementação interna (escondida)
     private function sendRequest(string $endpoint, array $data): bool
     {
-        // Используем self::API_KEY
-        // Клиент не знает про детали реализации
+        // Usa self::API_KEY
+        // O cliente não vê o detalhe da implementação
         return true;
     }
 }
 
 $service = new PaymentService('https://api.example.com');
-$service->charge(1000);  // Простой API
-// $service->sendRequest();  // ❌ Нельзя (private)
+$service->charge(1000);  // API simples
+// $service->sendRequest();  // ❌ Não dá (private)
 ```
 
-**На собеседовании скажешь:**
-> "Инкапсуляция — сокрытие реализации, предоставление публичного API. Делай свойства private, доступ через геттеры/сеттеры. Скрывай детали реализации (API ключи, алгоритмы), открывай только нужное."
+**Na entrevista:**
+> "Encapsulamento é esconder a implementação e expor uma API pública. Propriedade private, acesso via getter/setter. Escondo detalhe (API keys, algoritmo), abro só o que o cliente precisa."
 
 ---
 
-## Резюме области видимости
+## Recapitulando
 
-**Основное:**
-- `public` — доступно везде (внешний API)
-- `protected` — доступно в классе и наследниках
-- `private` — доступно только в текущем классе
-- Наследник видит public и protected, но не private
-- Можно расширить видимость (protected → public), но нельзя сузить
-- `readonly` (PHP 8.1+) — свойство устанавливается один раз
-- `readonly class` (PHP 8.2+) — все свойства readonly
-- Константы класса (PHP 7.1+) могут быть public/protected/private
+**O essencial:**
+- `public` — acessível em qualquer lugar (API externa)
+- `protected` — acessível na classe e nas filhas
+- `private` — acessível só na classe atual
+- A filha vê public e protected, mas não vê private
+- Dá para ampliar a visibilidade (protected → public), mas não dá para reduzir
+- `readonly` (PHP 8.1+) — a propriedade é atribuída uma vez
+- `readonly class` (PHP 8.2+) — todas as propriedades são readonly
+- Constantes de classe (PHP 7.1+) podem ser public/protected/private
 
-**Инкапсуляция:**
-- Скрывай реализацию (private)
-- Открывай API (public)
-- Для наследников — protected
+**Encapsulamento:**
+- Esconda a implementação (private)
+- Abra a API (public)
+- Para as filhas — protected
 
-**Важно на собесе:**
-- Инкапсуляция — основной принцип ООП
-- readonly для Value Objects, DTO, Events
-- private для внутренней логики, public для API
-- Константы класса могут иметь модификаторы (PHP 7.1+)
-- PHP 8.2: readonly class для иммутабельных классов
+**Importante na entrevista:**
+- Encapsulamento é o princípio central de OOP
+- readonly para Value Objects, DTO, Events
+- private para lógica interna, public para API
+- Constantes de classe podem ter modificadores (PHP 7.1+)
+- PHP 8.2: readonly class para classes imutáveis
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Инкапсуляция в User модели
+### Exercício 1: Encapsulamento no model User
 
-Создай класс `User` с инкапсулированным паролем (хранится как хеш, доступ только через метод checkPassword).
+**Enunciado:** Crie a classe `User` com senha encapsulada (guarda o hash, acesso só via checkPassword).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class User
@@ -820,7 +820,7 @@ class User
 
     private function logPasswordChange(): void
     {
-        echo "Password changed at " . date('Y-m-d H:i:s') . "\n";
+        echo "Senha alterada em " . date('Y-m-d H:i:s') . "\n";
     }
 
     private function recordLoginAttempt(): void
@@ -830,7 +830,7 @@ class User
 
     private function isTooManyAttempts(): bool
     {
-        // Последние 5 попыток за последние 15 минут
+        // Últimas 5 tentativas nos últimos 15 minutos
         $recent = array_filter($this->loginAttempts, fn($time) => $time > time() - 900);
         return count($recent) >= 5;
     }
@@ -845,38 +845,38 @@ class User
         return [
             'name' => $this->name,
             'email' => $this->email,
-            // password НЕ включается в toArray (инкапсуляция)
+            // password NÃO entra no toArray (encapsulamento)
         ];
     }
 }
 
-// Использование
-$user = new User('Иван', 'ivan@example.com', 'secret123');
+// Uso
+$user = new User('João', 'joao@email.com', 'secret123');
 
 // ✅ OK
-echo $user->getName();  // "Иван"
-echo $user->getEmail(); // "ivan@example.com"
+echo $user->getName();  // "João"
+echo $user->getEmail(); // "joao@email.com"
 
 // ✅ OK
 if ($user->checkPassword('secret123')) {
-    echo "Login successful\n";
+    echo "Login ok\n";
 }
 
-// ❌ Нельзя получить пароль напрямую
+// ❌ Não dá para pegar a senha direto
 // echo $user->password;  // Error
 // echo $user->passwordHash;  // Error (private)
 
-// ✅ Можно изменить через метод (с валидацией)
+// ✅ Dá para alterar pelo método (com validação)
 $user->setPassword('newpassword123');
 ```
 </details>
 
-### Задание 2: readonly DTO и Value Object
+### Exercício 2: DTO readonly e Value Object
 
-Создай `OrderDTO` (readonly class) и `Money` (readonly properties) для иммутабельных данных.
+**Enunciado:** Crie `OrderDTO` (readonly class) e `Money` (propriedades readonly) para dados imutáveis.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // PHP 8.2+ readonly class
@@ -928,7 +928,7 @@ class Money
 {
     public function __construct(
         public readonly int $amount,
-        public readonly string $currency = 'RUB',
+        public readonly string $currency = 'BRL',
     ) {
         if ($amount < 0) {
             throw new \InvalidArgumentException('Amount cannot be negative');
@@ -941,7 +941,7 @@ class Money
             throw new \InvalidArgumentException('Currency mismatch');
         }
 
-        // Создаём НОВЫЙ объект (иммутабельность)
+        // Cria um objeto NOVO (imutabilidade)
         return new Money($this->amount + $other->amount, $this->currency);
     }
 
@@ -952,11 +952,11 @@ class Money
 
     public function format(): string
     {
-        return number_format($this->amount / 100, 2) . ' ' . $this->currency;
+        return 'R$ ' . number_format($this->amount / 100, 2, ',', '.');
     }
 }
 
-// Использование
+// Uso
 $dto = CreateOrderDTO::fromArray([
     'user_id' => 1,
     'items' => [
@@ -969,41 +969,41 @@ $dto = CreateOrderDTO::fromArray([
 echo $dto->userId;  // 1
 // $dto->userId = 2;  // ❌ Error: Cannot modify readonly property
 
-$price = new Money(100000, 'RUB');  // 1000.00 RUB
-$tax = new Money(20000, 'RUB');     // 200.00 RUB
+$price = new Money(100000, 'BRL');  // R$ 1.000,00
+$tax = new Money(20000, 'BRL');     // R$ 200,00
 
-$total = $price->add($tax);  // 1200.00 RUB
+$total = $price->add($tax);  // R$ 1.200,00
 echo $total->format();
 
-// $price не изменился (иммутабельность)
-echo $price->format();  // 1000.00 RUB
+// $price não mudou (imutabilidade)
+echo $price->format();  // R$ 1.000,00
 
 // $price->amount = 50000;  // ❌ Error: Cannot modify readonly property
 ```
 </details>
 
-### Задание 3: Константы класса с модификаторами
+### Exercício 3: Constantes de classe com modificadores
 
-Создай класс `OrderStatus` с public, protected и private константами.
+**Enunciado:** Crie a classe `OrderStatus` com constantes public, protected e private.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class OrderStatus
 {
-    // public — доступны везде
+    // public — acessíveis em qualquer lugar
     public const PENDING = 'pending';
     public const PAID = 'paid';
     public const SHIPPED = 'shipped';
     public const DELIVERED = 'delivered';
     public const CANCELLED = 'cancelled';
 
-    // protected — только в иерархии классов
+    // protected — só na hierarquia de classes
     protected const INTERNAL_PROCESSING = 'processing';
     protected const INTERNAL_REFUNDING = 'refunding';
 
-    // private — только в этом классе
+    // private — só nesta classe
     private const DB_TABLE = 'orders';
     private const CACHE_PREFIX = 'order:';
 
@@ -1047,17 +1047,17 @@ class OrderStatus
 
     private function logStatusChange(string $newStatus): void
     {
-        // Используем private константу
+        // Usa a constante private
         $cacheKey = self::CACHE_PREFIX . $this->getId();
-        echo "Status changed to {$newStatus} (cached at {$cacheKey})\n";
+        echo "Status alterado para {$newStatus} (cache em {$cacheKey})\n";
 
-        // Используем private константу
-        echo "Updating table " . self::DB_TABLE . "\n";
+        // Usa a constante private
+        echo "Atualizando tabela " . self::DB_TABLE . "\n";
     }
 
     private function getId(): int
     {
-        return 123; // Упрощённо
+        return 123; // Simplificado
     }
 
     public static function getAllStatuses(): array
@@ -1076,47 +1076,47 @@ class PriorityOrder extends OrderStatus
 {
     public function processFast(): void
     {
-        // ✅ OK: protected константа доступна
+        // ✅ OK: constante protected acessível
         $this->startProcessing();
 
-        // ❌ Error: private константа недоступна
+        // ❌ Error: constante private inacessível
         // echo self::DB_TABLE;
     }
 
     protected function customProcessing(): void
     {
-        // ✅ OK: protected константа
+        // ✅ OK: constante protected
         $status = self::INTERNAL_PROCESSING;
     }
 }
 
-// Использование
+// Uso
 $order = new OrderStatus();
 
-// ✅ public константы доступны
-echo "Available statuses:\n";
+// ✅ constantes public acessíveis
+echo "Status disponíveis:\n";
 foreach (OrderStatus::getAllStatuses() as $status) {
     echo "- {$status}\n";
 }
 
 $order->markAsPaid();
-// Status changed to paid (cached at order:123)
-// Updating table orders
+// Status alterado para paid (cache em order:123)
+// Atualizando tabela orders
 
 $order->ship();
-// Status changed to shipped (cached at order:123)
+// Status alterado para shipped (cache em order:123)
 
-// ❌ protected/private константы недоступны извне
+// ❌ constantes protected/private inacessíveis de fora
 // echo OrderStatus::INTERNAL_PROCESSING;  // Error
 // echo OrderStatus::DB_TABLE;  // Error
 
-// ✅ public константы доступны
+// ✅ constantes public acessíveis
 if ($order->getStatus() === OrderStatus::SHIPPED) {
-    echo "Order is shipped!\n";
+    echo "Pedido enviado!\n";
 }
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

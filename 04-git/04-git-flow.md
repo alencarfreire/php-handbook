@@ -1,61 +1,61 @@
 # 11.4 Git Flow
 
-## Краткое резюме
+## Resumo
 
-> **Git Flow** — branching model для управления релизами в больших проектах.
+> **Git Flow** — branching model para gerenciar releases em projetos grandes.
 >
-> **Структура:** main (production), develop (разработка), feature/ (функции), release/ (подготовка релиза), hotfix/ (срочные исправления).
+> **Estrutura:** main (production), develop (desenvolvimento), feature/ (features), release/ (preparar o release), hotfix/ (correções urgentes).
 >
 > **Workflow:** feature → develop → release → main. Hotfix → main + develop.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Структура веток](#структура-веток)
+- [O que é](#o-que-é)
+- [Estrutura das branches](#estrutura-das-branches)
 - [Workflow](#workflow)
-- [Пример проекта](#пример-проекта)
-- [Альтернативы](#альтернативы)
-- [Когда использовать](#когда-использовать)
-- [Практические советы](#практические-советы)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Exemplo de projeto](#exemplo-de-projeto)
+- [Alternativas](#alternativas)
+- [Quando usar](#quando-usar)
+- [Dicas práticas](#dicas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Git Flow — branching model для управления релизами. Структура веток для больших проектов.
+**O que é:**
+Git Flow é um branching model para gerenciar releases. Estrutura de branches para projetos grandes.
 
-**Основные ветки:**
+**Branches principais:**
 - `main` (production)
-- `develop` (разработка)
-- `feature/*` (новые функции)
-- `release/*` (подготовка релиза)
-- `hotfix/*` (срочные исправления)
+- `develop` (desenvolvimento)
+- `feature/*` (features novas)
+- `release/*` (preparar o release)
+- `hotfix/*` (correções urgentes)
 
 ---
 
-## Структура веток
+## Estrutura das branches
 
-**Постоянные ветки:**
-
-```
-main     — production код, только стабильные релизы
-develop  — интеграция новых функций, следующий релиз
-```
-
-**Временные ветки:**
+**Branches permanentes:**
 
 ```
-feature/*  — новые функции (от develop)
-release/*  — подготовка релиза (от develop)
-hotfix/*   — срочные исправления (от main)
+main     — código de production, só releases estáveis
+develop  — integração de features novas, próximo release
 ```
 
-**Схема:**
+**Branches temporárias:**
+
+```
+feature/*  — features novas (a partir de develop)
+release/*  — preparar o release (a partir de develop)
+hotfix/*   — correções urgentes (a partir de main)
+```
+
+**Esquema:**
 
 ```
 main:     v1.0 --------- v1.1 ----------- v1.2
@@ -69,93 +69,93 @@ feature/x:         F1--F2        F3-F4
 
 ## Workflow
 
-**1. Feature (новая функция):**
+**1. Feature (feature nova):**
 
 ```bash
-# Создать feature от develop
+# Criar feature a partir de develop
 git checkout develop
 git pull origin develop
 git checkout -b feature/user-profile
 
-# Работать
+# Trabalhar
 git add .
 git commit -m "Add profile page"
 git commit -m "Add avatar upload"
 
-# Merge обратно в develop
+# Merge de volta em develop
 git checkout develop
 git merge --no-ff feature/user-profile
 git push origin develop
 
-# Удалить ветку
+# Apagar a branch
 git branch -d feature/user-profile
 ```
 
-**2. Release (подготовка релиза):**
+**2. Release (preparar o release):**
 
 ```bash
-# Создать release от develop
+# Criar release a partir de develop
 git checkout develop
 git checkout -b release/1.2.0
 
-# Исправить баги, обновить версию
+# Corrigir bugs, atualizar a versão
 git commit -m "Bump version to 1.2.0"
 git commit -m "Fix minor bugs"
 
-# Merge в main (production)
+# Merge em main (production)
 git checkout main
 git merge --no-ff release/1.2.0
 git tag -a v1.2.0 -m "Release 1.2.0"
 git push origin main --tags
 
-# Merge обратно в develop
+# Merge de volta em develop
 git checkout develop
 git merge --no-ff release/1.2.0
 git push origin develop
 
-# Удалить ветку
+# Apagar a branch
 git branch -d release/1.2.0
 ```
 
-**3. Hotfix (срочное исправление):**
+**3. Hotfix (correção urgente):**
 
 ```bash
-# Создать hotfix от main
+# Criar hotfix a partir de main
 git checkout main
 git checkout -b hotfix/security-fix
 
-# Исправить
+# Corrigir
 git commit -m "Fix security vulnerability"
 
-# Merge в main
+# Merge em main
 git checkout main
 git merge --no-ff hotfix/security-fix
 git tag -a v1.2.1 -m "Hotfix 1.2.1"
 git push origin main --tags
 
-# Merge в develop
+# Merge em develop
 git checkout develop
 git merge --no-ff hotfix/security-fix
 git push origin develop
 
-# Удалить ветку
+# Apagar a branch
 git branch -d hotfix/security-fix
 ```
 
 ---
 
-## Пример проекта
+## Exemplo de projeto
 
-**Инициализация Git Flow:**
+**Inicializar o Git Flow:**
 
 ```bash
-# Установить git-flow (MacOS)
+# Instalar git-flow (macOS)
 brew install git-flow
 
-# Инициализация
+# Inicialização
 git flow init
 
-# Вопросы (можно оставить по умолчанию):
+# Perguntas (pode deixar o padrão):
 # - Production branch: main
 # - Development branch: develop
 # - Feature prefix: feature/
@@ -163,59 +163,59 @@ git flow init
 # - Hotfix prefix: hotfix/
 ```
 
-**Работа с feature:**
+**Trabalhar com feature:**
 
 ```bash
-# Создать feature
+# Criar feature
 git flow feature start user-auth
 
-# Работать
+# Trabalhar
 git add .
 git commit -m "Add authentication"
 
-# Закончить feature (merge в develop)
+# Finalizar a feature (merge em develop)
 git flow feature finish user-auth
 ```
 
-**Работа с release:**
+**Trabalhar com release:**
 
 ```bash
-# Создать release
+# Criar release
 git flow release start 1.2.0
 
-# Обновить версию, исправить баги
+# Atualizar a versão, corrigir bugs
 git commit -m "Bump version"
 
-# Закончить release (merge в main и develop, создать tag)
+# Finalizar o release (merge em main e develop, criar tag)
 git flow release finish 1.2.0
 ```
 
-**Работа с hotfix:**
+**Trabalhar com hotfix:**
 
 ```bash
-# Создать hotfix
+# Criar hotfix
 git flow hotfix start 1.2.1
 
-# Исправить баг
+# Corrigir o bug
 git commit -m "Fix critical bug"
 
-# Закончить hotfix (merge в main и develop)
+# Finalizar o hotfix (merge em main e develop)
 git flow hotfix finish 1.2.1
 ```
 
 ---
 
-## Альтернативы
+## Alternativas
 
-**GitHub Flow (упрощённый):**
+**GitHub Flow (simplificado):**
 
 ```
 main  — production
        \
-feature — всегда от main, merge через PR
+feature — sempre a partir de main, merge via PR
 ```
 
-Проще Git Flow, подходит для continuous deployment.
+Mais simples que Git Flow. Serve para continuous deployment.
 
 **GitLab Flow:**
 
@@ -223,35 +223,35 @@ feature — всегда от main, merge через PR
 main → production → stable
 ```
 
-Дополнительные environment ветки (staging, production).
+Branches extras de environment (staging, production).
 
 **Trunk-Based Development:**
 
 ```
-main  — все работают в main
+main  — todo mundo trabalha em main
        \
-feature — короткие feature branches (1-2 дня)
+feature — feature branches curtas (1-2 dias)
 ```
 
-Для команд с CI/CD, feature flags.
+Para times com CI/CD e feature flags.
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Git Flow для:**
-- Запланированные релизы
-- Несколько версий в production
-- Большая команда
+**Git Flow para:**
+- Releases planejados
+- Várias versões em production
+- Time grande
 
-**НЕ для:**
+**NÃO para:**
 - Continuous deployment
-- Маленькие проекты
-- Solo разработка
+- Projetos pequenos
+- Desenvolvimento solo
 
 ---
 
-## Практические советы
+## Dicas práticas
 
 **Naming conventions:**
 
@@ -268,7 +268,7 @@ release/2024-Q1
 hotfix/fix-login-bug
 hotfix/security-patch-1.2.1
 
-# Bugfix (в develop)
+# Bugfix (em develop)
 bugfix/fix-email-validation
 ```
 
@@ -288,7 +288,7 @@ bugfix/fix-email-validation
 "Hotfix: Resolve memory leak in cache"
 ```
 
-**Защита веток (GitHub/GitLab):**
+**Proteção de branches (GitHub/GitLab):**
 
 ```bash
 # Settings → Branches → Branch protection rules
@@ -302,64 +302,64 @@ main:
 
 develop:
 ✅ Require pull request reviews
-⬜ Allow force push (для rebase)
+⬜ Allow force push (para rebase)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Git Flow — branching model для управления релизами
-- Структурированный подход к версионированию
-- Подходит для запланированных релизов
+**O que é:**
+- Git Flow é um branching model para gerenciar releases
+- Abordagem estruturada de versionamento
+- Serve para releases planejados
 
-**Структура веток:**
-- **main** — production код, стабильные релизы
-- **develop** — интеграция функций, следующий релиз
-- **feature/** — новые функции (от develop)
-- **release/** — подготовка релиза (от develop)
-- **hotfix/** — срочные исправления (от main)
+**Estrutura das branches:**
+- **main** — código de production, releases estáveis
+- **develop** — integração de features, próximo release
+- **feature/** — features novas (a partir de develop)
+- **release/** — preparar o release (a partir de develop)
+- **hotfix/** — correções urgentes (a partir de main)
 
 **Workflow:**
-- Feature → develop (новые функции)
-- Release → main + develop (релиз)
-- Hotfix → main + develop (срочное исправление)
-- Теги для версий (v1.2.0)
+- Feature → develop (features novas)
+- Release → main + develop (release)
+- Hotfix → main + develop (correção urgente)
+- Tags para versões (v1.2.0)
 
-**Альтернативы:**
-- **GitHub Flow** — проще, одна main ветка, PR для features
-- **Trunk-Based** — короткие ветки, feature flags
-- Выбор зависит от процесса релизов
+**Alternativas:**
+- **GitHub Flow** — mais simples, uma branch main, PR para features
+- **Trunk-Based** — branches curtas, feature flags
+- A escolha depende do processo de release
 
-**Когда использовать:**
-- Запланированные релизы (не continuous deployment)
-- Большая команда (нужна структура)
-- Несколько версий в production
+**Quando usar:**
+- Releases planejados (não continuous deployment)
+- Time grande (precisa de estrutura)
+- Várias versões em production
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Полный цикл релиза через Git Flow
+### Exercício 1: Ciclo completo de release com Git Flow
 
-Создай feature, merge в develop, создай release, merge в main и develop, добавь тег.
+**Enunciado:** Crie uma feature, faça merge em develop, crie um release, faça merge em main e develop, adicione a tag.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Шаг 1: Инициализировать Git Flow (если ещё не сделано)
+# Passo 1: Inicializar o Git Flow (se ainda não fez)
 git flow init
-# Оставить все по умолчанию
+# Deixar tudo no padrão
 
-# Шаг 2: Создать feature
+# Passo 2: Criar feature
 git flow feature start payment-integration
-# Автоматически создаст ветку feature/payment-integration от develop
+# Cria automaticamente a branch feature/payment-integration a partir de develop
 
-# Шаг 3: Работать над feature
+# Passo 3: Trabalhar na feature
 echo "Payment integration code" > app/Services/PaymentService.php
 git add app/Services/PaymentService.php
 git commit -m "Add PaymentService with Stripe integration"
@@ -370,77 +370,77 @@ git commit -m "Add payment controller"
 git add tests/Feature/PaymentTest.php
 git commit -m "Add payment integration tests"
 
-# Шаг 4: Закончить feature
+# Passo 4: Finalizar a feature
 git flow feature finish payment-integration
-# Автоматически:
-# - merge в develop
-# - удалит ветку feature/payment-integration
-# - переключит на develop
+# Automaticamente:
+# - merge em develop
+# - apaga a branch feature/payment-integration
+# - muda para develop
 
-# Шаг 5: Создать release
+# Passo 5: Criar release
 git flow release start 1.3.0
-# Автоматически создаст ветку release/1.3.0 от develop
+# Cria automaticamente a branch release/1.3.0 a partir de develop
 
-# Шаг 6: Подготовка релиза
-# Обновить версию
+# Passo 6: Preparar o release
+# Atualizar a versão
 echo "1.3.0" > version.txt
 git add version.txt
 git commit -m "Bump version to 1.3.0"
 
-# Обновить CHANGELOG
+# Atualizar o CHANGELOG
 echo "## 1.3.0\n- Add payment integration" >> CHANGELOG.md
 git add CHANGELOG.md
 git commit -m "Update CHANGELOG for 1.3.0"
 
-# Исправить последние баги
+# Corrigir os últimos bugs
 git commit -m "Fix minor UI bugs before release"
 
-# Шаг 7: Закончить release
+# Passo 7: Finalizar o release
 git flow release finish 1.3.0
-# Автоматически:
-# - merge в main
-# - создаст тег v1.3.0
-# - merge обратно в develop
-# - удалит ветку release/1.3.0
+# Automaticamente:
+# - merge em main
+# - cria a tag v1.3.0
+# - merge de volta em develop
+# - apaga a branch release/1.3.0
 
-# Откроется редактор для tag message, написать:
+# Abre o editor da tag message. Escreva:
 Release version 1.3.0
 
 - Payment integration with Stripe
 - Bug fixes
 - UI improvements
 
-# Шаг 8: Push всё
+# Passo 8: Push de tudo
 git checkout main
 git push origin main --tags
 
 git checkout develop
 git push origin develop
 
-# Проверить результат
+# Conferir o resultado
 git log --graph --oneline --all --decorate
 ```
 </details>
 
-### Задание 2: Hotfix критического бага
+### Exercício 2: Hotfix de bug crítico
 
-В production обнаружен критический баг. Создай hotfix, исправь, merge в main и develop.
+**Enunciado:** Bug crítico em production. Crie um hotfix, corrija, faça merge em main e develop.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация: Production на v1.3.0, критический баг в PaymentService
+# Situação: production em v1.3.0, bug crítico no PaymentService
 
-# Шаг 1: Создать hotfix от main
+# Passo 1: Criar hotfix a partir de main
 git checkout main
 git pull origin main
 
 git flow hotfix start 1.3.1
-# Автоматически создаст ветку hotfix/1.3.1 от main
+# Cria automaticamente a branch hotfix/1.3.1 a partir de main
 
-# Шаг 2: Исправить баг
-# Редактируем app/Services/PaymentService.php
+# Passo 2: Corrigir o bug
+# Edite app/Services/PaymentService.php
 git add app/Services/PaymentService.php
 git commit -m "Fix critical bug in payment validation
 
@@ -450,49 +450,49 @@ Solution: Use bcmath for precise calculations
 
 Refs: BUG-789"
 
-# Добавить тест для регрессии
+# Adicionar teste de regressão
 git add tests/Feature/PaymentBugTest.php
 git commit -m "Add regression test for payment bug"
 
-# Обновить версию
+# Atualizar a versão
 echo "1.3.1" > version.txt
 git add version.txt
 git commit -m "Bump version to 1.3.1"
 
-# Обновить CHANGELOG
+# Atualizar o CHANGELOG
 echo "## 1.3.1 (Hotfix)\n- Fix payment validation bug" >> CHANGELOG.md
 git add CHANGELOG.md
 git commit -m "Update CHANGELOG for hotfix 1.3.1"
 
-# Шаг 3: Закончить hotfix
+# Passo 3: Finalizar o hotfix
 git flow hotfix finish 1.3.1
-# Автоматически:
-# - merge в main
-# - создаст тег v1.3.1
-# - merge в develop (чтобы баг не вернулся)
-# - удалит ветку hotfix/1.3.1
+# Automaticamente:
+# - merge em main
+# - cria a tag v1.3.1
+# - merge em develop (para o bug não voltar)
+# - apaga a branch hotfix/1.3.1
 
-# Откроется редактор для tag message:
+# Abre o editor da tag message:
 Hotfix 1.3.1: Critical payment bug fix
 
 Critical bug fix for payment validation failing on amounts > 1000.
 
 IMPORTANT: Deploy immediately to production.
 
-# Шаг 4: Push всё
+# Passo 4: Push de tudo
 git checkout main
 git push origin main --tags
 
 git checkout develop
 git push origin develop
 
-# Шаг 5: Deploy в production (через CI/CD или вручную)
-# Уведомить команду о hotfix
+# Passo 5: Deploy em production (via CI/CD ou na mão)
+# Avisar o time sobre o hotfix
 
-# Альтернатива без git-flow:
+# Alternativa sem git-flow:
 git checkout main
 git checkout -b hotfix/1.3.1
-# ... fixes ...
+# ... correções ...
 git checkout main
 git merge --no-ff hotfix/1.3.1
 git tag -a v1.3.1 -m "Hotfix message"
@@ -502,25 +502,25 @@ git push origin main develop --tags
 ```
 </details>
 
-### Задание 3: Несколько feature одновременно
+### Exercício 3: Várias features ao mesmo tempo
 
-У тебя 2 разработчика работают над разными feature. Управи их merge в develop без конфликтов.
+**Enunciado:** Você tem 2 desenvolvedores em features diferentes. Gerencie o merge em develop sem conflitos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация:
-# - Developer 1 работает над feature/user-profile
-# - Developer 2 работает над feature/notifications
+# Situação:
+# - Developer 1 trabalha em feature/user-profile
+# - Developer 2 trabalha em feature/notifications
 
 # === Developer 1 ===
-# Шаг 1: Создать feature для профиля
+# Passo 1: Criar feature de perfil
 git checkout develop
 git pull origin develop
 git flow feature start user-profile
 
-# Работать
+# Trabalhar
 git add app/Controllers/ProfileController.php
 git commit -m "Add profile controller"
 
@@ -530,48 +530,48 @@ git commit -m "Add profile model"
 git add resources/views/profile.blade.php
 git commit -m "Add profile view"
 
-# Закончить feature
+# Finalizar a feature
 git flow feature finish user-profile
-# merge в develop
+# merge em develop
 
 git push origin develop
 
-# === Developer 2 (в то же время) ===
-# Шаг 2: Создать feature для уведомлений
+# === Developer 2 (ao mesmo tempo) ===
+# Passo 2: Criar feature de notificações
 git checkout develop
 git pull origin develop
 git flow feature start notifications
 
-# Работать
+# Trabalhar
 git add app/Notifications/UserNotification.php
 git commit -m "Add user notification"
 
 git add app/Controllers/NotificationController.php
 git commit -m "Add notification controller"
 
-# Шаг 3: Developer 1 уже запушил в develop
-# Обновить feature ветку из develop перед finish
+# Passo 3: Developer 1 já fez push em develop
+# Atualizar a branch da feature a partir de develop antes do finish
 git checkout develop
-git pull origin develop  # Получить изменения от Developer 1
+git pull origin develop  # Pegar as mudanças do Developer 1
 
 git checkout feature/notifications
-git rebase develop  # Перебазировать на актуальный develop
+git rebase develop  # Rebase no develop atual
 
-# Если конфликты — решить их:
+# Se tiver conflito — resolva:
 # git add .
 # git rebase --continue
 
-# Закончить feature
+# Finalizar a feature
 git flow feature finish notifications
-# merge в develop (уже с изменениями от Developer 1)
+# merge em develop (já com as mudanças do Developer 1)
 
 git push origin develop
 
-# === Проверка результата ===
+# === Conferir o resultado ===
 git checkout develop
 git log --graph --oneline --all
 
-# Должно быть:
+# Deve ficar assim:
 # * merge feature/notifications
 # |\
 # | * Add notification controller
@@ -584,32 +584,32 @@ git log --graph --oneline --all
 # |/
 # * (older develop commits)
 
-# === Best practices для параллельной работы ===
+# === Boas práticas para trabalho em paralelo ===
 
-# 1. Частые pull из develop
+# 1. Pull frequente de develop
 git checkout feature/my-feature
 git fetch origin develop
 git rebase origin/develop
 
-# 2. Маленькие PR (1-2 дня работы)
-# Меньше шансов на конфликты
+# 2. PRs pequenos (1-2 dias de trabalho)
+# Menos chance de conflito
 
-# 3. Коммуникация
-# "Я работаю в UserController.php" — в Slack/Discord
+# 3. Comunicação
+# "Estou mexendo em UserController.php" — no Slack/Discord
 
-# 4. Разделение зон ответственности
+# 4. Separar as áreas de responsabilidade
 # Developer 1: User module
 # Developer 2: Notification module
-# Минимум пересечений = минимум конфликтов
+# Menos sobreposição = menos conflito
 
-# 5. Code review перед merge
-# Проверить что изменения не конфликтуют
+# 5. Code review antes do merge
+# Conferir se as mudanças não conflitam
 
 # 6. CI/CD
-# Автоматические тесты при merge в develop
+# Testes automáticos no merge em develop
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,47 +1,43 @@
-# 2.1 Классы и объекты
+# 2.1 Classes e objetos
 
-## Краткое резюме
+## Resumo
 
-> **Классы и объекты** — основа ООП в PHP. Класс — шаблон с данными (свойства) и поведением (методы). Объект — экземпляр класса.
->
-> **Ключевые концепции:** __construct (конструктор), модификаторы доступа (public/protected/private), статические элементы (static), константы класса (const).
->
-> **Важно:** PHP 8.0+ Constructor Property Promotion. Объекты передаются по ссылке. $this (объект), self (статика), parent (родитель).
+> Classe é o molde: dados (propriedades) e comportamento (métodos). Objeto é a instância. Conceitos-chave: __construct, public/protected/private, static, const. PHP 8.0+ Constructor Property Promotion. Objeto passa por referência. $this (objeto), self (estático), parent (pai).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Объявление класса](#объявление-класса)
-- [Конструктор (__construct)](#конструктор-__construct)
-- [Модификаторы доступа](#модификаторы-доступа-public-private-protected)
+- [Declaração de classe](#declaração-de-classe)
+- [Construtor (__construct)](#construtor-__construct)
+- [Modificadores de acesso](#modificadores-de-acesso-public-private-protected)
 - [$this vs self vs parent](#this-vs-self-vs-parent)
-- [Статические свойства и методы](#статические-свойства-и-методы)
-- [Константы класса](#константы-класса)
-- [Передача объектов](#передача-объектов-по-ссылке)
-- [Резюме](#резюме-классов-и-объектов)
-- [Практические задания](#практические-задания)
+- [Propriedades e métodos estáticos](#propriedades-e-métodos-estáticos)
+- [Constantes de classe](#constantes-de-classe)
+- [Passagem de objetos](#passagem-de-objetos-por-referência)
+- [Recapitulando](#recapitulando-classes-e-objetos)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Объявление класса
+## Declaração de classe
 
-**Что это:**
-Класс — это шаблон для создания объектов с данными (свойства) и поведением (методы).
+**O que é:**
+Classe é o molde para criar objetos com dados (propriedades) e comportamento (métodos).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
-    // Свойства (properties)
+    // Propriedades (properties)
     public string $name;
     public string $email;
     private int $age;
 
-    // Метод
+    // Método
     public function greet(): string
     {
-        return "Привет, {$this->name}!";
+        return "Olá, {$this->name}!";
     }
 
     public function getAge(): int
@@ -52,27 +48,27 @@ class User
     public function setAge(int $age): void
     {
         if ($age < 0) {
-            throw new \InvalidArgumentException('Возраст не может быть отрицательным');
+            throw new \InvalidArgumentException('Idade não pode ser negativa');
         }
         $this->age = $age;
     }
 }
 
-// Создание объекта
+// Criar o objeto
 $user = new User();
-$user->name = 'Иван';
-$user->email = 'ivan@mail.com';
+$user->name = 'João';
+$user->email = 'joao@email.com';
 $user->setAge(25);
 
-echo $user->greet();  // "Привет, Иван!"
+echo $user->greet();  // "Olá, João!"
 ```
 
-**Когда использовать:**
-Для моделирования сущностей (User, Post, Order), сервисов (PaymentService), value objects (Money, Email).
+**Quando usar:**
+Para modelar entidade (User, Post, Order), service (PaymentService), value object (Money, Email).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent модель
+// Model Eloquent
 class Post extends Model
 {
     protected $fillable = ['title', 'content', 'author_id'];
@@ -88,7 +84,7 @@ class Post extends Model
     }
 }
 
-// Использование
+// Uso
 $post = Post::find(1);
 echo $post->title;
 echo $post->author->name;
@@ -98,17 +94,17 @@ if ($post->isPublished()) {
 }
 ```
 
-**На собеседовании скажешь:**
-> "Класс — шаблон для объектов. Содержит свойства (данные) и методы (поведение). $this ссылается на текущий объект. В Laravel модели (User, Post) наследуются от Model."
+**Na entrevista:**
+> "Classe é o molde do objeto. Tem propriedade (dado) e método (comportamento). $this aponta para o objeto atual. No Laravel, model (User, Post) estende Model."
 
 ---
 
-## Конструктор (__construct)
+## Construtor (__construct)
 
-**Что это:**
-Метод, который вызывается автоматически при создании объекта.
+**O que é:**
+Método que roda sozinho na hora que você cria o objeto.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -127,8 +123,8 @@ class User
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com');
-echo $user->getName();  // "Иван"
+$user = new User('João', 'joao@email.com');
+echo $user->getName();  // "João"
 
 // Constructor Property Promotion (PHP 8.0+)
 class User
@@ -144,15 +140,15 @@ class User
     }
 }
 
-// Короче и читаемее!
+// Mais curto e mais legível!
 ```
 
-**Когда использовать:**
-Для инициализации обязательных свойств, внедрения зависимостей.
+**Quando usar:**
+Para inicializar propriedade obrigatória e injetar dependência.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Service с Dependency Injection
+// Service com Dependency Injection
 class OrderService
 {
     public function __construct(
@@ -165,13 +161,13 @@ class OrderService
     {
         $order = $this->repository->create($data);
         $this->gateway->charge($order->amount);
-        $this->notifications->send($order->user, 'Заказ создан');
+        $this->notifications->send($order->user, 'Pedido criado');
 
         return $order;
     }
 }
 
-// Laravel Service Container автоматически внедрит зависимости
+// O Service Container do Laravel injeta as dependências sozinho
 $orderService = app(OrderService::class);
 
 // Value Object
@@ -179,80 +175,80 @@ class Money
 {
     public function __construct(
         private int $amount,
-        private string $currency = 'RUB',
+        private string $currency = 'BRL',
     ) {
         if ($amount < 0) {
-            throw new \InvalidArgumentException('Сумма не может быть отрицательной');
+            throw new \InvalidArgumentException('Valor não pode ser negativo');
         }
     }
 
     public function add(Money $other): Money
     {
         if ($this->currency !== $other->currency) {
-            throw new \Exception('Валюты не совпадают');
+            throw new \Exception('Moedas não coincidem');
         }
 
         return new Money($this->amount + $other->amount, $this->currency);
     }
 }
 
-$price = new Money(1000, 'RUB');
-$discount = new Money(100, 'RUB');
+$price = new Money(1000, 'BRL');
+$discount = new Money(100, 'BRL');
 $total = $price->add($discount);
 ```
 
-**На собеседовании скажешь:**
-> "__construct вызывается при создании объекта. PHP 8.0 добавил Constructor Property Promotion — короткий синтаксис (private string $name в параметрах). Использую для DI и инициализации обязательных свойств."
+**Na entrevista:**
+> "__construct roda na hora do new. PHP 8.0 trouxe Constructor Property Promotion — sintaxe curta (private string $name nos parâmetros). Uso para DI e para inicializar o que é obrigatório."
 
 ---
 
-## Модификаторы доступа (public, private, protected)
+## Modificadores de acesso (public, private, protected)
 
-**Что это:**
-Ключевые слова, определяющие видимость свойств и методов.
+**O que é:**
+Palavras-chave que definem a visibilidade de propriedade e método.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
-    public string $name;          // Доступно везде
-    protected string $email;      // Доступно в классе и наследниках
-    private int $age;             // Доступно ТОЛЬКО в этом классе
+    public string $name;          // Acessível em qualquer lugar
+    protected string $email;      // Acessível na classe e nas filhas
+    private int $age;             // Acessível SÓ nesta classe
 
-    public function getEmail(): string  // public метод
+    public function getEmail(): string  // método public
     {
         return $this->email;
     }
 
-    protected function validateAge(int $age): bool  // protected метод
+    protected function validateAge(int $age): bool  // método protected
     {
         return $age >= 0 && $age <= 150;
     }
 
-    private function log(string $message): void  // private метод
+    private function log(string $message): void  // método private
     {
-        // Внутренняя логика
+        // Lógica interna
     }
 }
 
 $user = new User();
-$user->name = 'Иван';              // ✅ OK (public)
-$user->email = 'ivan@mail.com';    // ❌ Error (protected)
+$user->name = 'João';              // ✅ OK (public)
+$user->email = 'joao@email.com';    // ❌ Error (protected)
 $user->age = 25;                   // ❌ Error (private)
 
-echo $user->getEmail();            // ✅ OK (public метод)
+echo $user->getEmail();            // ✅ OK (método public)
 ```
 
-**Когда использовать:**
-- `public` — для API класса (публичные методы)
-- `protected` — для методов, которые нужны наследникам
-- `private` — для внутренней реализации (инкапсуляция)
+**Quando usar:**
+- `public` — API da classe (métodos públicos)
+- `protected` — método que a classe filha precisa
+- `private` — implementação interna (encapsulamento)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 class Model
 {
-    protected array $attributes = [];  // Доступно в наследниках
+    protected array $attributes = [];  // Acessível nas filhas
 
     public function __get(string $key): mixed
     {
@@ -264,14 +260,14 @@ class Model
         $this->attributes[$key] = $value;
     }
 
-    protected function performInsert(): bool  // Используется в наследниках
+    protected function performInsert(): bool  // Usado nas filhas
     {
-        // Логика вставки в БД
+        // Lógica de insert no banco
     }
 
-    private function cleanAttributes(): void  // Только для Model
+    private function cleanAttributes(): void  // Só para Model
     {
-        // Внутренняя очистка
+        // Limpeza interna
     }
 }
 
@@ -286,32 +282,32 @@ class User extends Model
 // Payment Service
 class PaymentService
 {
-    private const API_KEY = 'secret';  // private константа
+    private const API_KEY = 'secret';  // constante private
 
     public function charge(int $amount): bool
     {
         return $this->sendRequest($amount);
     }
 
-    private function sendRequest(int $amount): bool  // Внутренняя реализация
+    private function sendRequest(int $amount): bool  // Implementação interna
     {
-        // Используем self::API_KEY
-        // Клиент класса не должен знать про этот метод
+        // Usa self::API_KEY
+        // Quem consome a classe não precisa conhecer este método
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "public — доступно везде, protected — в классе и наследниках, private — только в текущем классе. Инкапсуляция: скрываю внутреннюю реализацию (private), открываю API (public), даю доступ наследникам (protected)."
+**Na entrevista:**
+> "public — acessível em qualquer lugar, protected — na classe e nas filhas, private — só na classe atual. Encapsulamento: escondo a implementação (private), abro a API (public), libero para herança (protected)."
 
 ---
 
 ## $this vs self vs parent
 
-**Что это:**
-Ключевые слова для обращения к контексту.
+**O que é:**
+Palavras-chave para falar com o contexto certo.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -320,57 +316,57 @@ class User
 
     public function __construct(string $name)
     {
-        $this->name = $name;       // $this — текущий объект
-        self::$count++;            // self — текущий класс (для статики)
+        $this->name = $name;       // $this — objeto atual
+        self::$count++;            // self — classe atual (para estático)
     }
 
     public function getName(): string
     {
-        return $this->name;        // $this для свойств объекта
+        return $this->name;        // $this para propriedade do objeto
     }
 
     public static function getCount(): int
     {
-        return self::$count;       // self для статических свойств
+        return self::$count;       // self para propriedade estática
     }
 }
 
-// parent — родительский класс
+// parent — classe pai
 class Admin extends User
 {
     public function __construct(string $name)
     {
-        parent::__construct($name);  // Вызов конструктора родителя
-        // Дополнительная логика
+        parent::__construct($name);  // Chama o construtor do pai
+        // Lógica extra
     }
 
     public function greet(): string
     {
-        return "Admin: " . $this->getName();  // $this для методов объекта
+        return "Admin: " . $this->getName();  // $this para método do objeto
     }
 }
 
-$user = new User('Иван');
-echo $user->getName();      // "Иван" ($this)
+$user = new User('João');
+echo $user->getName();      // "João" ($this)
 echo User::getCount();      // 1 (self)
 
-$admin = new Admin('Пётр');
+$admin = new Admin('Pedro');
 echo Admin::getCount();     // 2 (self)
 ```
 
-**Когда использовать:**
-- `$this` — для обращения к свойствам и методам **объекта**
-- `self` — для обращения к статическим свойствам и методам **текущего класса**
-- `parent` — для вызова методов **родительского класса**
+**Quando usar:**
+- `$this` — para acessar propriedade e método do **objeto**
+- `self` — para acessar propriedade e método estático da **classe atual**
+- `parent` — para chamar método da **classe pai**
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Eloquent Model
 class Post extends Model
 {
     protected static function boot()
     {
-        parent::boot();  // Вызов родительского метода
+        parent::boot();  // Chama o método do pai
 
         static::creating(function ($post) {
             $post->slug = Str::slug($post->title);
@@ -379,12 +375,12 @@ class Post extends Model
 
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class);  // $this для объекта
+        return $this->belongsTo(User::class);  // $this para o objeto
     }
 
     public static function published(): Builder
     {
-        return self::where('status', 'published');  // self для статики
+        return self::where('status', 'published');  // self para estático
     }
 }
 
@@ -400,7 +396,7 @@ class CacheService
         }
 
         $value = $callback();
-        $this->put($key, $value, self::DEFAULT_TTL);  // self для константы
+        $this->put($key, $value, self::DEFAULT_TTL);  // self para constante
 
         return $value;
     }
@@ -417,25 +413,25 @@ class CacheService
 }
 ```
 
-**На собеседовании скажешь:**
-> "$this для обращения к объекту (свойства, методы). self для статических элементов текущего класса. parent для вызова методов родителя. В наследовании parent::__construct() вызывает конструктор родителя."
+**Na entrevista:**
+> "$this acessa o objeto (propriedade, método). self acessa estático da classe atual. parent chama método do pai. Na herança, parent::__construct() chama o construtor do pai."
 
 ---
 
-## Статические свойства и методы
+## Propriedades e métodos estáticos
 
-**Что это:**
-Элементы класса, которые принадлежат классу, а не объекту.
+**O que é:**
+Elementos da classe que pertencem à classe, não ao objeto.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Database
 {
-    private static ?Database $instance = null;  // Статическое свойство
+    private static ?Database $instance = null;  // Propriedade estática
 
-    private function __construct() {}  // private конструктор
+    private function __construct() {}  // construtor private
 
-    public static function getInstance(): Database  // Статический метод
+    public static function getInstance(): Database  // Método estático
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -446,16 +442,16 @@ class Database
 
     public function query(string $sql): array
     {
-        // Выполнение запроса
+        // Executa a query
         return [];
     }
 }
 
-// Использование без создания объекта
+// Uso sem criar objeto
 $db = Database::getInstance();
 $users = $db->query('SELECT * FROM users');
 
-// Счётчик объектов
+// Contador de objetos
 class User
 {
     private static int $count = 0;
@@ -476,12 +472,12 @@ $user2 = new User();
 echo User::getCount();  // 2
 ```
 
-**Когда использовать:**
-Для утилит, фабрик, синглтонов, счётчиков, констант класса.
+**Quando usar:**
+Para helper, factory, Singleton, contador, constante de classe.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Helper класс
+// Classe helper
 class Str
 {
     public static function slug(string $title): string
@@ -498,11 +494,11 @@ class Str
 $slug = Str::slug('Hello World');  // "hello-world"
 $token = Str::random(32);
 
-// Laravel использует это повсеместно
+// O Laravel usa isso o tempo todo
 use Illuminate\Support\Str;
 $slug = Str::slug('My Post Title');
 
-// Eloquent scope (статический вызов)
+// Eloquent scope (chamada estática)
 class Post extends Model
 {
     public static function published(): Builder
@@ -529,21 +525,21 @@ class Config
     }
 }
 
-Config::set('app.name', 'My App');
+Config::set('app.name', 'Minha App');
 echo Config::get('app.name');
 ```
 
-**На собеседовании скажешь:**
-> "Статические элементы принадлежат классу, не объекту. Вызываются через ::. Использую для утилит (Str::slug), фабрик, синглтонов. В Laravel много статических методов (Str, Arr, DB)."
+**Na entrevista:**
+> "Elemento estático pertence à classe, não ao objeto. Chama com ::. Uso em helper (Str::slug), factory, Singleton. No Laravel tem bastante: Str, Arr, DB."
 
 ---
 
-## Константы класса
+## Constantes de classe
 
-**Что это:**
-Неизменяемые значения, принадлежащие классу.
+**O que é:**
+Valores imutáveis que pertencem à classe.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Order
 {
@@ -570,32 +566,32 @@ class Order
     }
 }
 
-// Использование
+// Uso
 $order = new Order();
 if ($order->isPaid()) {
     // ...
 }
 
-// Доступ извне
+// Acesso de fora
 if ($order->status === Order::STATUS_PAID) {
     // ...
 }
 
-// Модификаторы доступа (PHP 7.1+)
+// Modificadores de acesso (PHP 7.1+)
 class Config
 {
-    public const PUBLIC_KEY = 'public';      // Доступна везде
-    protected const PROTECTED_KEY = 'prot';  // Доступна в наследниках
-    private const PRIVATE_KEY = 'private';   // Только в этом классе
+    public const PUBLIC_KEY = 'public';      // Acessível em qualquer lugar
+    protected const PROTECTED_KEY = 'prot';  // Acessível nas filhas
+    private const PRIVATE_KEY = 'private';   // Só nesta classe
 }
 ```
 
-**Когда использовать:**
-Для статусов, типов, режимов, конфигурационных значений.
+**Quando usar:**
+Para status, tipo, modo, valor de configuração.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Статусы пользователя
+// Status do usuário
 class User extends Model
 {
     public const STATUS_ACTIVE = 'active';
@@ -613,7 +609,7 @@ class User extends Model
     }
 }
 
-// Роли
+// Papéis
 class Role
 {
     public const ADMIN = 'admin';
@@ -622,10 +618,10 @@ class Role
 }
 
 if ($user->role === Role::ADMIN) {
-    // Админ
+    // Admin
 }
 
-// HTTP коды
+// Códigos HTTP
 class Response
 {
     public const HTTP_OK = 200;
@@ -639,7 +635,7 @@ class Response
 
 return response()->json($data, Response::HTTP_OK);
 
-// Laravel uses Enums (PHP 8.1+) instead
+// No Laravel, prefira Enum (PHP 8.1+)
 enum OrderStatus: string
 {
     case Pending = 'pending';
@@ -651,17 +647,17 @@ enum OrderStatus: string
 $order->status = OrderStatus::Paid;
 ```
 
-**На собеседовании скажешь:**
-> "Константы класса — неизменяемые значения через const. Доступ через self:: внутри класса, ClassName:: снаружи. Использую для статусов, типов, HTTP кодов. PHP 8.1 добавил Enum — лучше для статусов."
+**Na entrevista:**
+> "Constante de classe é valor imutável com const. Dentro da classe: self::. Fora: NomeDaClasse::. Uso para status, tipo, código HTTP. PHP 8.1 trouxe Enum — melhor para status."
 
 ---
 
-## Передача объектов (по ссылке)
+## Passagem de objetos (por referência)
 
-**Что это:**
-Объекты в PHP передаются по ссылке на значение (не копируются).
+**O que é:**
+Em PHP, objeto passa por referência ao valor (não é copiado).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -675,50 +671,50 @@ class User
 
 function changeName(User $user): void
 {
-    $user->name = 'Новое имя';  // Изменяет оригинал!
+    $user->name = 'Novo nome';  // Muda o original!
 }
 
-$user = new User('Иван');
+$user = new User('João');
 changeName($user);
-echo $user->name;  // "Новое имя" (изменился)
+echo $user->name;  // "Novo nome" (mudou)
 
-// Копирование объекта (clone)
-$user1 = new User('Иван');
-$user2 = $user1;  // Не копия! Обе переменные ссылаются на один объект
+// Copiar o objeto (clone)
+$user1 = new User('João');
+$user2 = $user1;  // Não é cópia! As duas variáveis apontam para o mesmo objeto
 
-$user2->name = 'Пётр';
-echo $user1->name;  // "Пётр" (изменился!)
+$user2->name = 'Pedro';
+echo $user1->name;  // "Pedro" (mudou!)
 
-// Реальная копия через clone
-$user1 = new User('Иван');
-$user2 = clone $user1;  // Копия
+// Cópia de verdade com clone
+$user1 = new User('João');
+$user2 = clone $user1;  // Cópia
 
-$user2->name = 'Пётр';
-echo $user1->name;  // "Иван" (не изменился)
-echo $user2->name;  // "Пётр"
+$user2->name = 'Pedro';
+echo $user1->name;  // "João" (não mudou)
+echo $user2->name;  // "Pedro"
 ```
 
-**Когда использовать:**
-Важно понимать, что изменение свойств объекта в функции влияет на оригинал. Для копии использовать `clone`.
+**Quando usar:**
+O ponto: mudar propriedade do objeto dentro da função mexe no original. Para copiar, use `clone`.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Service method изменяет объект
+// Método do service altera o objeto
 class UserService
 {
     public function activate(User $user): void
     {
         $user->is_active = true;
         $user->activated_at = now();
-        $user->save();  // Eloquent сохранит изменения
+        $user->save();  // Eloquent persiste a mudança
     }
 }
 
 $user = User::find(1);
 $service->activate($user);
-// $user теперь активен (объект изменился)
+// $user agora está ativo (o objeto mudou)
 
-// Иммутабельные объекты (Value Objects)
+// Objetos imutáveis (Value Objects)
 class Money
 {
     public function __construct(
@@ -728,7 +724,7 @@ class Money
 
     public function add(Money $other): Money
     {
-        // Возвращает НОВЫЙ объект, не изменяет текущий
+        // Devolve um objeto NOVO, não altera o atual
         return new Money(
             $this->amount + $other->amount,
             $this->currency
@@ -736,61 +732,61 @@ class Money
     }
 }
 
-$price = new Money(1000, 'RUB');
-$total = $price->add(new Money(500, 'RUB'));
-// $price не изменился (1000)
-// $total — новый объект (1500)
+$price = new Money(1000, 'BRL');
+$total = $price->add(new Money(500, 'BRL'));
+// $price não mudou (1000)
+// $total — objeto novo (1500)
 
-// Клонирование для истории изменений
+// Clone para guardar o histórico
 $order = Order::find(1);
-$oldOrder = clone $order;  // Сохранить snapshot
+$oldOrder = clone $order;  // Guardar o snapshot
 
 $order->status = 'paid';
 $order->save();
 
-// Можем сравнить с $oldOrder
+// Dá para comparar com $oldOrder
 ```
 
-**На собеседовании скажешь:**
-> "Объекты передаются по ссылке: изменение свойств в функции влияет на оригинал. Для копии использую clone. Value Objects делаю иммутабельными (методы возвращают новый объект)."
+**Na entrevista:**
+> "Objeto passa por referência: se você muda a propriedade dentro da função, o original muda. Para copiar, uso clone. Value Object eu deixo imutável (o método devolve um objeto novo)."
 
 ---
 
-## Резюме классов и объектов
+## Recapitulando classes e objetos
 
-**Основное:**
-- Класс — шаблон, объект — экземпляр класса
-- `__construct` — конструктор (PHP 8.0: Constructor Property Promotion)
-- Модификаторы: `public` (везде), `protected` (наследники), `private` (только класс)
-- `$this` (объект), `self` (статика текущего класса), `parent` (родитель)
-- Статические элементы принадлежат классу: `static $property`, `public static function()`
-- Константы класса: `public const STATUS = 'active'`
-- Объекты передаются по ссылке (изменения влияют на оригинал)
+**O essencial:**
+- Classe é o molde, objeto é a instância
+- `__construct` — construtor (PHP 8.0: Constructor Property Promotion)
+- Modificadores: `public` (em qualquer lugar), `protected` (filhas), `private` (só a classe)
+- `$this` (objeto), `self` (estático da classe atual), `parent` (pai)
+- Elemento estático pertence à classe: `static $property`, `public static function()`
+- Constante de classe: `public const STATUS = 'active'`
+- Objeto passa por referência (a mudança mexe no original)
 
-**Важно на собесе:**
-- PHP 8.0: Constructor Property Promotion (`private string $name` в параметрах)
-- Объекты не копируются при присваивании (нужен `clone`)
-- `self::` для статики, `$this->` для объекта
-- Инкапсуляция: скрываю реализацию (private), открываю API (public)
-- Value Objects делаю иммутабельными
+**Importante na entrevista:**
+- PHP 8.0: Constructor Property Promotion (`private string $name` nos parâmetros)
+- Objeto não copia na atribuição (precisa de `clone`)
+- `self::` para estático, `$this->` para objeto
+- Encapsulamento: escondo a implementação (private), abro a API (public)
+- Value Object eu deixo imutável
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Value Object Money
+### Exercício 1: Crie o Value Object Money
 
-Создай класс `Money` с amount и currency. Добавь метод `add()`, который складывает две суммы (только одинаковые валюты). Сделай класс иммутабельным.
+**Enunciado:** Crie a classe `Money` com amount e currency. Adicione o método `add()`, que soma dois valores (só a mesma moeda). Deixe a classe imutável.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 final class Money
 {
     public function __construct(
-        private int $amount,        // В копейках
-        private string $currency = 'RUB',
+        private int $amount,        // Em centavos
+        private string $currency = 'BRL',
     ) {
         if ($amount < 0) {
             throw new \InvalidArgumentException('Amount cannot be negative');
@@ -807,7 +803,7 @@ final class Money
         return $this->currency;
     }
 
-    // Иммутабельный метод (возвращает новый объект)
+    // Método imutável (devolve um objeto novo)
     public function add(Money $other): Money
     {
         if ($this->currency !== $other->currency) {
@@ -828,8 +824,8 @@ final class Money
 
     public function format(): string
     {
-        $formatted = number_format($this->amount / 100, 2, '.', ' ');
-        return "{$formatted} {$this->currency}";
+        $formatted = number_format($this->amount / 100, 2, ',', '.');
+        return "R$ {$formatted}";
     }
 
     public function __toString(): string
@@ -838,26 +834,26 @@ final class Money
     }
 }
 
-// Использование
-$price = new Money(199900, 'RUB');        // 1999.00 RUB
-$discount = new Money(10000, 'RUB');      // 100.00 RUB
-$total = $price->subtract($discount);     // 1899.00 RUB
+// Uso
+$price = new Money(199900, 'BRL');        // R$ 1.999,00
+$discount = new Money(10000, 'BRL');      // R$ 100,00
+$total = $price->subtract($discount);     // R$ 1.899,00
 
-echo "Цена: {$price}";                    // Цена: 1 999.00 RUB
-echo "Скидка: {$discount}";               // Скидка: 100.00 RUB
-echo "Итого: {$total}";                   // Итого: 1 899.00 RUB
+echo "Preço: {$price}";                    // Preço: R$ 1.999,00
+echo "Desconto: {$discount}";              // Desconto: R$ 100,00
+echo "Total: {$total}";                    // Total: R$ 1.899,00
 
-// $price не изменился (иммутабельность)
+// $price não mudou (imutabilidade)
 echo $price->getAmount();                 // 199900
 ```
 </details>
 
-### Задание 2: Singleton Pattern
+### Exercício 2: Singleton Pattern
 
-Реализуй Singleton для класса `Database` — только один экземпляр может существовать.
+**Enunciado:** Implemente Singleton na classe `Database` — só pode existir uma instância.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class Database
@@ -865,7 +861,7 @@ class Database
     private static ?Database $instance = null;
     private \PDO $connection;
 
-    // private конструктор — нельзя создать через new
+    // Construtor private — não dá para criar com new
     private function __construct(
         private string $host = 'localhost',
         private string $dbname = 'test',
@@ -879,16 +875,16 @@ class Database
         ]);
     }
 
-    // Запретить клонирование
+    // Bloqueia clone
     private function __clone() {}
 
-    // Запретить unserialize
+    // Bloqueia unserialize
     public function __wakeup()
     {
         throw new \Exception("Cannot unserialize singleton");
     }
 
-    // Единственный способ получить экземпляр
+    // Único jeito de pegar a instância
     public static function getInstance(): Database
     {
         if (self::$instance === null) {
@@ -912,11 +908,11 @@ class Database
     }
 }
 
-// Использование
+// Uso
 $db = Database::getInstance();
 $users = $db->query('SELECT * FROM users WHERE id = ?', [1]);
 
-// $db2 будет той же самой инстанцией
+// $db2 é a mesma instância
 $db2 = Database::getInstance();
 var_dump($db === $db2);  // true
 
@@ -924,12 +920,12 @@ var_dump($db === $db2);  // true
 ```
 </details>
 
-### Задание 3: Счётчик объектов
+### Exercício 3: Contador de objetos
 
-Создай класс `User`, который подсчитывает, сколько объектов было создано. Добавь статический метод `getCount()`.
+**Enunciado:** Crie a classe `User` que conta quantos objetos foram criados. Adicione o método estático `getCount()`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class User
@@ -976,21 +972,21 @@ class User
     }
 }
 
-// Использование
-echo "Count: " . User::getCount();  // 0
+// Uso
+echo "Contagem: " . User::getCount();  // 0
 
-$user1 = new User('Иван', 'ivan@mail.com');
-$user2 = new User('Пётр', 'petr@mail.com');
-$user3 = new User('Анна', 'anna@mail.com');
+$user1 = new User('João', 'joao@email.com');
+$user2 = new User('Pedro', 'pedro@email.com');
+$user3 = new User('Ana', 'ana@email.com');
 
-echo "Active: " . User::getCount();          // 3
-echo "Total created: " . User::getTotalCreated();  // 3
+echo "Ativos: " . User::getCount();          // 3
+echo "Total criado: " . User::getTotalCreated();  // 3
 
 unset($user2);
-echo "Active after unset: " . User::getCount();  // 2
-echo "Total created: " . User::getTotalCreated();  // 3 (не изменилось)
+echo "Ativos depois do unset: " . User::getCount();  // 2
+echo "Total criado: " . User::getTotalCreated();  // 3 (não mudou)
 
-// Получить все экземпляры
+// Pegar todas as instâncias
 foreach (User::getAllInstances() as $user) {
     echo $user->getName() . "\n";
 }
@@ -999,4 +995,4 @@ foreach (User::getAllInstances() as $user) {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

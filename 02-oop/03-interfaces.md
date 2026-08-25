@@ -1,34 +1,34 @@
-# 2.3 Интерфейсы
+# 2.3 Interfaces
 
-## Краткое резюме
+## Resumo
 
-> **Интерфейс** — контракт, определяющий методы, которые должен реализовать класс. Только объявление методов, без реализации.
+> **Interface** — contrato que define os métodos que a classe tem que implementar. Só a declaração, sem implementação.
 >
-> **Ключевые концепции:** implements (реализация), множественная реализация, наследование интерфейсов, константы в интерфейсах.
+> **Conceitos-chave:** implements (implementação), várias interfaces, herança de interfaces, constantes na interface.
 >
-> **Важно:** Класс может реализовать несколько интерфейсов (в отличие от наследования — только один родитель). PSR интерфейсы для совместимости библиотек.
+> **Importante:** A classe pode implementar várias interfaces (herança aceita só um pai). Interfaces PSR para as libs falarem a mesma língua.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое интерфейс](#что-такое-интерфейс)
-- [Множественная реализация интерфейсов](#множественная-реализация-интерфейсов)
-- [Наследование интерфейсов](#наследование-интерфейсов)
-- [Константы в интерфейсах](#константы-в-интерфейсах)
-- [Интерфейс vs Абстрактный класс](#интерфейс-vs-абстрактный-класс)
-- [PSR интерфейсы](#psr-интерфейсы-стандарты-php)
-- [Резюме](#резюме-интерфейсов)
-- [Практические задания](#практические-задания)
+- [O que é interface](#o-que-é-interface)
+- [Implementar várias interfaces](#implementar-várias-interfaces)
+- [Herança de interfaces](#herança-de-interfaces)
+- [Constantes em interfaces](#constantes-em-interfaces)
+- [Interface vs classe abstrata](#interface-vs-classe-abstrata)
+- [Interfaces PSR (padrões PHP)](#interfaces-psr-padrões-php)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое интерфейс
+## O que é interface
 
-**Что это:**
-Контракт, определяющий методы, которые должен реализовать класс. Интерфейс — это только объявление методов без реализации.
+**O que é:**
+Contrato que define os métodos que a classe tem que implementar. Interface é só declaração, sem corpo.
 
-**Как работает:**
+**Como funciona:**
 ```php
 interface PaymentGatewayInterface
 {
@@ -41,19 +41,19 @@ class StripeGateway implements PaymentGatewayInterface
 {
     public function charge(int $amount, string $currency): bool
     {
-        // Реализация для Stripe
+        // Implementação do Stripe
         return true;
     }
 
     public function refund(string $transactionId, int $amount): bool
     {
-        // Реализация для Stripe
+        // Implementação do Stripe
         return true;
     }
 
     public function getBalance(): int
     {
-        // Реализация для Stripe
+        // Implementação do Stripe
         return 10000;
     }
 }
@@ -62,42 +62,42 @@ class PayPalGateway implements PaymentGatewayInterface
 {
     public function charge(int $amount, string $currency): bool
     {
-        // Реализация для PayPal
+        // Implementação do PayPal
         return true;
     }
 
     public function refund(string $transactionId, int $amount): bool
     {
-        // Реализация для PayPal
+        // Implementação do PayPal
         return true;
     }
 
     public function getBalance(): int
     {
-        // Реализация для PayPal
+        // Implementação do PayPal
         return 5000;
     }
 }
 
-// Можно использовать любую реализацию
+// Qualquer implementação serve
 function processPayment(PaymentGatewayInterface $gateway, int $amount): bool
 {
-    return $gateway->charge($amount, 'RUB');
+    return $gateway->charge($amount, 'BRL');
 }
 
 $stripe = new StripeGateway();
 $paypal = new PayPalGateway();
 
-processPayment($stripe, 1000);  // Работает
-processPayment($paypal, 1000);  // Работает
+processPayment($stripe, 1000);  // Funciona
+processPayment($paypal, 1000);  // Funciona
 ```
 
-**Когда использовать:**
-Для определения контрактов, полиморфизма, Dependency Injection, тестирования (моки).
+**Quando usar:**
+Contrato, polimorfismo, Dependency Injection, teste (mock).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Repository интерфейс
+// Interface do Repository
 interface UserRepositoryInterface
 {
     public function find(int $id): ?User;
@@ -107,7 +107,7 @@ interface UserRepositoryInterface
     public function delete(int $id): bool;
 }
 
-// Eloquent реализация
+// Implementação Eloquent
 class EloquentUserRepository implements UserRepositoryInterface
 {
     public function find(int $id): ?User
@@ -138,7 +138,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 }
 
-// Service с DI
+// Service com DI
 class UserService
 {
     public function __construct(
@@ -154,21 +154,21 @@ class UserService
 // Laravel Service Container
 app()->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 
-// Теперь можем легко заменить реализацию (например, для тестов)
+// Agora dá para trocar a implementação fácil (por exemplo, nos testes)
 app()->bind(UserRepositoryInterface::class, FakeUserRepository::class);
 ```
 
-**На собеседовании скажешь:**
-> "Интерфейс — контракт, только объявление методов. Класс implements интерфейс и обязан реализовать все методы. Использую для полиморфизма, DI, тестирования. В Laravel часто создаю интерфейсы для репозиториев, сервисов."
+**Na entrevista:**
+> "Interface é contrato: só a declaração dos métodos. A classe implements a interface e é obrigada a implementar tudo. Uso para polimorfismo, DI, teste. No Laravel eu crio interface para Repository e service."
 
 ---
 
-## Множественная реализация интерфейсов
+## Implementar várias interfaces
 
-**Что это:**
-Класс может реализовать несколько интерфейсов (в отличие от наследования — только один родитель).
+**O que é:**
+A classe pode implementar várias interfaces (herança aceita só um pai).
 
-**Как работает:**
+**Como funciona:**
 ```php
 interface Loggable
 {
@@ -205,11 +205,11 @@ class UserService implements Loggable, Cacheable, Notifiable
 
     public function notify(string $message): void
     {
-        // Отправка уведомления
+        // Envia a notificação
     }
 }
 
-// Работает с любым интерфейсом
+// Funciona com qualquer uma das interfaces
 function logMessage(Loggable $service, string $msg): void
 {
     $service->log($msg);
@@ -221,14 +221,14 @@ function cacheData(Cacheable $service, string $key, mixed $data): void
 }
 
 $service = new UserService();
-logMessage($service, 'Test');
-cacheData($service, 'user:1', ['name' => 'Ivan']);
+logMessage($service, 'Teste');
+cacheData($service, 'user:1', ['name' => 'João']);
 ```
 
-**Когда использовать:**
-Когда объект должен иметь несколько "способностей" (логирование + кэширование + уведомления).
+**Quando usar:**
+Quando o objeto precisa de várias "habilidades" (log + cache + notificação).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Contracts
 interface Arrayable
@@ -258,7 +258,7 @@ class User extends Model implements Arrayable, Jsonable
     }
 }
 
-// Можем использовать как Arrayable или Jsonable
+// Dá para usar como Arrayable ou Jsonable
 function convertToArray(Arrayable $object): array
 {
     return $object->toArray();
@@ -274,17 +274,17 @@ $array = convertToArray($user);
 $json = convertToJson($user);
 ```
 
-**На собеседовании скажешь:**
-> "Класс может реализовать несколько интерфейсов через запятую: implements A, B, C. Это решает проблему множественного наследования через контракты. В Laravel модели реализуют Arrayable, Jsonable."
+**Na entrevista:**
+> "A classe implementa várias interfaces separadas por vírgula: implements A, B, C. Isso resolve herança múltipla via contrato. No Laravel o model implementa Arrayable, Jsonable."
 
 ---
 
-## Наследование интерфейсов
+## Herança de interfaces
 
-**Что это:**
-Интерфейс может наследовать другой интерфейс (extends).
+**O que é:**
+Interface pode herdar outra interface (extends).
 
-**Как работает:**
+**Como funciona:**
 ```php
 interface Readable
 {
@@ -296,7 +296,7 @@ interface Writable
     public function write(string $data): bool;
 }
 
-// Интерфейс наследует другие интерфейсы
+// Interface herda outras interfaces
 interface ReadWritable extends Readable, Writable
 {
     public function readWrite(string $data): string;
@@ -322,19 +322,19 @@ class File implements ReadWritable
 }
 ```
 
-**Когда использовать:**
-Для создания иерархии интерфейсов (базовый → расширенный).
+**Quando usar:**
+Para hierarquia de interfaces (base → estendida).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый репозиторий интерфейс
+// Interface base do Repository
 interface RepositoryInterface
 {
     public function find(int $id): ?Model;
     public function all(): Collection;
 }
 
-// Расширенный интерфейс с дополнительными методами
+// Interface estendida com métodos extras
 interface AdvancedRepositoryInterface extends RepositoryInterface
 {
     public function findByCustomCriteria(array $criteria): Collection;
@@ -344,7 +344,7 @@ interface AdvancedRepositoryInterface extends RepositoryInterface
 
 class UserRepository implements AdvancedRepositoryInterface
 {
-    // Обязан реализовать ВСЕ методы (из обоих интерфейсов)
+    // Obrigado a implementar TODOS os métodos (das duas interfaces)
     public function find(int $id): ?Model { /* ... */ }
     public function all(): Collection { /* ... */ }
     public function findByCustomCriteria(array $criteria): Collection { /* ... */ }
@@ -363,21 +363,21 @@ interface Authenticatable extends \JsonSerializable
 
 class User extends Model implements Authenticatable
 {
-    // Реализует методы Authenticatable + JsonSerializable
+    // Implementa os métodos de Authenticatable + JsonSerializable
 }
 ```
 
-**На собеседовании скажешь:**
-> "Интерфейс может наследовать другие интерфейсы через extends. Класс, реализующий расширенный интерфейс, обязан реализовать ВСЕ методы из всей иерархии. В Laravel Authenticatable наследует JsonSerializable."
+**Na entrevista:**
+> "Interface pode herdar outras via extends. A classe que implementa a interface estendida é obrigada a implementar TODOS os métodos da hierarquia. No Laravel, Authenticatable herda JsonSerializable."
 
 ---
 
-## Константы в интерфейсах
+## Constantes em interfaces
 
-**Что это:**
-Интерфейсы могут содержать константы (всегда public).
+**O que é:**
+Interface pode ter constante (sempre public).
 
-**Как работает:**
+**Como funciona:**
 ```php
 interface OrderStatus
 {
@@ -403,7 +403,7 @@ class Order implements OrderStatus
     }
 }
 
-// Доступ к константам
+// Acesso às constantes
 echo OrderStatus::PENDING;  // "pending"
 
 if ($order->status === OrderStatus::PAID) {
@@ -411,12 +411,12 @@ if ($order->status === OrderStatus::PAID) {
 }
 ```
 
-**Когда использовать:**
-Для определения констант, связанных с контрактом.
+**Quando usar:**
+Constante ligada ao contrato.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// HTTP коды
+// Códigos HTTP
 interface HttpStatus
 {
     public const OK = 200;
@@ -469,17 +469,17 @@ class CacheService implements CacheTTL
 }
 ```
 
-**На собеседовании скажешь:**
-> "Интерфейсы могут содержать константы (всегда public). Использую для HTTP статусов, TTL, статусов. PHP 8.1 добавил Enum — лучше для таких случаев."
+**Na entrevista:**
+> "Interface pode ter constante (sempre public). Uso para status HTTP, TTL, status de pedido. PHP 8.1 trouxe Enum — melhor para esses casos."
 
 ---
 
-## Интерфейс vs Абстрактный класс
+## Interface vs classe abstrata
 
-**Что это:**
-Сравнение двух механизмов для определения контрактов.
+**O que é:**
+Comparação dos dois jeitos de definir contrato.
 
-**Интерфейс:**
+**Interface:**
 ```php
 interface PaymentGatewayInterface
 {
@@ -494,7 +494,7 @@ class StripeGateway implements PaymentGatewayInterface
 }
 ```
 
-**Абстрактный класс:**
+**Classe abstrata:**
 ```php
 abstract class PaymentGateway
 {
@@ -505,13 +505,13 @@ abstract class PaymentGateway
         $this->apiKey = $apiKey;
     }
 
-    // Метод с реализацией
+    // Método com implementação
     protected function log(string $message): void
     {
         Log::info($message);
     }
 
-    // Абстрактные методы (без реализации)
+    // Métodos abstratos (sem implementação)
     abstract public function charge(int $amount): bool;
     abstract public function refund(string $id): bool;
 }
@@ -520,44 +520,44 @@ class StripeGateway extends PaymentGateway
 {
     public function charge(int $amount): bool
     {
-        $this->log("Charging {$amount}");  // Используем метод родителя
+        $this->log("Cobrando {$amount}");  // Usa o método do pai
         // Stripe API
         return true;
     }
 
     public function refund(string $id): bool
     {
-        $this->log("Refunding {$id}");
+        $this->log("Reembolsando {$id}");
         // Stripe API
         return true;
     }
 }
 ```
 
-**Отличия:**
+**Diferenças:**
 
-| Интерфейс | Абстрактный класс |
+| Interface | Classe abstrata |
 |-----------|-------------------|
-| Только объявление методов | Может содержать реализацию |
-| Нет свойств (кроме констант) | Может иметь свойства |
-| Можно реализовать несколько | Можно наследовать только один |
-| Нет конструктора | Может иметь конструктор |
-| Все методы public | Методы: public, protected, private |
-| Контракт "ЧТО делать" | Базовый класс "КАК делать" |
+| Só declaração de método | Pode ter implementação |
+| Sem propriedade (só constante) | Pode ter propriedade |
+| Dá para implementar várias | Herda só uma |
+| Sem construtor | Pode ter construtor |
+| Todo método é public | Métodos: public, protected, private |
+| Contrato "O QUE fazer" | Classe base "COMO fazer" |
 
-**Когда использовать:**
-- **Интерфейс** — для контракта (что должен уметь класс), полиморфизма, DI
-- **Абстрактный класс** — для общей логики (как делать), базового поведения
+**Quando usar:**
+- **Interface** — contrato (o que a classe tem que saber fazer), polimorfismo, DI
+- **Classe abstrata** — lógica compartilhada (como fazer), comportamento base
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Интерфейс — контракт
+// Interface — o contrato
 interface LoggerInterface
 {
     public function log(string $level, string $message): void;
 }
 
-// Абстрактный класс — общая логика
+// Classe abstrata — lógica compartilhada
 abstract class BaseLogger implements LoggerInterface
 {
     protected function format(string $level, string $message): string
@@ -574,7 +574,7 @@ abstract class BaseLogger implements LoggerInterface
     }
 }
 
-// Конкретные реализации
+// Implementações concretas
 class FileLogger extends BaseLogger
 {
     protected function write(string $formatted): void
@@ -591,7 +591,7 @@ class DatabaseLogger extends BaseLogger
     }
 }
 
-// Можем использовать через интерфейс
+// Dá para usar pela interface
 function logMessage(LoggerInterface $logger, string $message): void
 {
     $logger->log('info', $message);
@@ -600,21 +600,21 @@ function logMessage(LoggerInterface $logger, string $message): void
 $fileLogger = new FileLogger();
 $dbLogger = new DatabaseLogger();
 
-logMessage($fileLogger, 'Test');  // Работает
-logMessage($dbLogger, 'Test');    // Работает
+logMessage($fileLogger, 'Teste');  // Funciona
+logMessage($dbLogger, 'Teste');    // Funciona
 ```
 
-**На собеседовании скажешь:**
-> "Интерфейс — контракт (ЧТО делать), только объявление. Абстрактный класс — базовая реализация (КАК делать), может содержать логику. Интерфейсов можно несколько, абстрактный класс — один. Использую интерфейс для DI, абстрактный класс для переиспользования кода."
+**Na entrevista:**
+> "Interface é contrato (O QUE fazer), só declaração. Classe abstrata é implementação base (COMO fazer), pode ter lógica. Várias interfaces, uma classe abstrata. Interface para DI, classe abstrata para reaproveitar código."
 
 ---
 
-## PSR интерфейсы (Стандарты PHP)
+## Interfaces PSR (padrões PHP)
 
-**Что это:**
-Стандартные интерфейсы PSR для совместимости библиотек.
+**O que é:**
+Interfaces padrão PSR para as libs serem compatíveis.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // PSR-3: Logger Interface
 use Psr\Log\LoggerInterface;
@@ -622,17 +622,17 @@ use Psr\Log\LoggerInterface;
 class MyService
 {
     public function __construct(
-        private LoggerInterface $logger,  // Любой PSR-3 логгер
+        private LoggerInterface $logger,  // Qualquer logger PSR-3
     ) {}
 
     public function process(): void
     {
-        $this->logger->info('Processing...');
-        $this->logger->error('Error!', ['context' => 'data']);
+        $this->logger->info('Processando...');
+        $this->logger->error('Erro!', ['context' => 'data']);
     }
 }
 
-// Можем использовать любой PSR-3 логгер
+// Qualquer logger PSR-3 serve
 $monolog = new Monolog\Logger('app');
 $service = new MyService($monolog);
 
@@ -666,7 +666,7 @@ class ServiceFactory
 }
 ```
 
-**Основные PSR интерфейсы:**
+**Principais interfaces PSR:**
 - **PSR-3** — Logger Interface (LoggerInterface)
 - **PSR-6** — Caching Interface (CacheItemPoolInterface)
 - **PSR-7** — HTTP Message Interface (RequestInterface, ResponseInterface)
@@ -674,12 +674,12 @@ class ServiceFactory
 - **PSR-15** — HTTP Server Request Handlers (RequestHandlerInterface, MiddlewareInterface)
 - **PSR-16** — Simple Cache (CacheInterface)
 
-**Когда использовать:**
-Всегда используй PSR интерфейсы для совместимости библиотек.
+**Quando usar:**
+Use sempre interface PSR para a lib ser compatível.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel использует PSR интерфейсы
+// Laravel usa interfaces PSR
 use Illuminate\Contracts\Cache\Repository as CacheContract;  // PSR-16
 use Psr\Log\LoggerInterface;  // PSR-3
 
@@ -692,7 +692,7 @@ class OrderService
 
     public function create(array $data): Order
     {
-        $this->logger->info('Creating order', $data);
+        $this->logger->info('Criando pedido', $data);
 
         $order = Order::create($data);
 
@@ -702,45 +702,45 @@ class OrderService
     }
 }
 
-// Service Container автоматически внедрит PSR реализации
+// O Service Container injeta as implementações PSR sozinho
 $service = app(OrderService::class);
 ```
 
-**На собеседовании скажешь:**
-> "PSR интерфейсы — стандарты PHP для совместимости библиотек. PSR-3 (Logger), PSR-7 (HTTP), PSR-11 (Container), PSR-16 (Cache). Laravel использует PSR интерфейсы для DI. Это позволяет легко заменять реализации."
+**Na entrevista:**
+> "Interfaces PSR são padrões PHP para as libs falarem a mesma língua. PSR-3 (Logger), PSR-7 (HTTP), PSR-11 (Container), PSR-16 (Cache). Laravel usa interface PSR no DI. Dá para trocar a implementação sem dor."
 
 ---
 
-## Резюме интерфейсов
+## Recapitulando
 
-**Основное:**
-- Интерфейс — контракт, только объявление методов (без реализации)
-- `implements` — класс реализует интерфейс
-- Можно реализовать несколько интерфейсов: `implements A, B, C`
-- Интерфейс может наследовать другие: `extends A, B`
-- Константы в интерфейсах (всегда public)
-- Интерфейс vs Абстрактный класс:
-  - Интерфейс — контракт (ЧТО), можно несколько
-  - Абстрактный — реализация (КАК), только один
-- PSR интерфейсы — стандарты для совместимости
+**O essencial:**
+- Interface é contrato: só declaração de método (sem implementação)
+- `implements` — a classe implementa a interface
+- Dá para implementar várias: `implements A, B, C`
+- Interface pode herdar outras: `extends A, B`
+- Constante na interface (sempre public)
+- Interface vs classe abstrata:
+  - Interface — contrato (O QUE), várias
+  - Abstrata — implementação (COMO), só uma
+- Interfaces PSR — padrão de compatibilidade
 
-**Важно на собесе:**
-- Интерфейс — только объявление (в отличие от абстрактного класса)
-- Можно реализовать много интерфейсов (решение проблемы множественного наследования)
-- Использую для DI, полиморфизма, тестирования
-- PSR интерфейсы (PSR-3, PSR-7, PSR-11) для совместимости библиотек
-- В Laravel создаю интерфейсы для репозиториев, сервисов
+**Importante na entrevista:**
+- Interface é só declaração (classe abstrata pode ter corpo)
+- Dá para implementar várias (resolve herança múltipla)
+- Uso para DI, polimorfismo, teste
+- Interfaces PSR (PSR-3, PSR-7, PSR-11) para compatibilidade
+- No Laravel eu crio interface para Repository e service
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Repository Pattern
+### Exercício 1: Implemente o Repository Pattern
 
-Создай `UserRepositoryInterface` с методами find, all, create, update, delete. Реализуй `EloquentUserRepository` и `ArrayUserRepository`.
+Crie `UserRepositoryInterface` com find, all, create, update, delete. Implemente `EloquentUserRepository` e `ArrayUserRepository`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface UserRepositoryInterface
@@ -753,7 +753,7 @@ interface UserRepositoryInterface
     public function findByEmail(string $email): ?array;
 }
 
-// Реализация через массив (для тестов)
+// Implementação em array (para testes)
 class ArrayUserRepository implements UserRepositoryInterface
 {
     private array $users = [];
@@ -816,7 +816,7 @@ class ArrayUserRepository implements UserRepositoryInterface
     }
 }
 
-// Реализация через Eloquent (псевдокод)
+// Implementação Eloquent (pseudocódigo)
 class EloquentUserRepository implements UserRepositoryInterface
 {
     public function find(int $id): ?array
@@ -854,7 +854,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 }
 
-// Service с DI
+// Service com DI
 class UserService
 {
     public function __construct(
@@ -863,7 +863,7 @@ class UserService
 
     public function register(string $name, string $email, string $password): array
     {
-        // Проверка email
+        // Checa o email
         if ($this->repository->findByEmail($email)) {
             throw new \Exception('Email already exists');
         }
@@ -887,25 +887,25 @@ class UserService
     }
 }
 
-// Использование (легко заменить реализацию)
+// Uso (troca a implementação fácil)
 $repository = new ArrayUserRepository();
 $service = new UserService($repository);
 
-$user = $service->register('Иван', 'ivan@mail.com', 'secret');
+$user = $service->register('João', 'joao@email.com', 'secret');
 print_r($user);
 
-// Для продакшена
+// Em produção
 $repository = new EloquentUserRepository();
 $service = new UserService($repository);
 ```
 </details>
 
-### Задание 2: Множественные интерфейсы и Cacheable
+### Exercício 2: Várias interfaces e Cacheable
 
-Создай интерфейсы `Loggable`, `Cacheable`, `Notifiable`. Класс `OrderService` реализует все три.
+Crie as interfaces `Loggable`, `Cacheable`, `Notifiable`. A classe `OrderService` implementa as três.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface Loggable
@@ -989,17 +989,17 @@ class OrderService implements Loggable, Cacheable, Notifiable
         echo "[{$channel}] {$message}\n";
     }
 
-    // Бизнес-логика
+    // Lógica de negócio
     public function createOrder(array $orderData): array
     {
-        $this->log('info', 'Creating order', ['data' => $orderData]);
+        $this->log('info', 'Criando pedido', ['data' => $orderData]);
 
-        // Проверка кэша
+        // Checa o cache
         $cacheKey = "order:draft:{$orderData['user_id']}";
         $draft = $this->getCached($cacheKey);
 
         if ($draft) {
-            $this->log('info', 'Using cached draft');
+            $this->log('info', 'Usando rascunho do cache');
             $orderData = array_merge($draft, $orderData);
         }
 
@@ -1011,14 +1011,14 @@ class OrderService implements Loggable, Cacheable, Notifiable
             'created_at' => date('Y-m-d H:i:s'),
         ];
 
-        // Кэшируем заказ
+        // Cacheia o pedido
         $this->cache("order:{$order['id']}", $order, 7200);
 
-        // Уведомление
-        $this->notify('email', 'Order created', ['order_id' => $order['id']]);
-        $this->notify('sms', 'Your order #' . $order['id'] . ' created');
+        // Notificação
+        $this->notify('email', 'Pedido criado', ['order_id' => $order['id']]);
+        $this->notify('sms', 'Seu pedido #' . $order['id'] . ' foi criado');
 
-        $this->log('info', 'Order created successfully', ['order_id' => $order['id']]);
+        $this->log('info', 'Pedido criado com sucesso', ['order_id' => $order['id']]);
 
         return $order;
     }
@@ -1034,7 +1034,7 @@ class OrderService implements Loggable, Cacheable, Notifiable
     }
 }
 
-// Использование
+// Uso
 $service = new OrderService();
 
 $order = $service->createOrder([
@@ -1048,12 +1048,12 @@ print_r($service->getNotifications());
 ```
 </details>
 
-### Задание 3: Payment Gateway с интерфейсом
+### Exercício 3: Payment Gateway com interface
 
-Создай `PaymentGatewayInterface` и две реализации: `StripeGateway` и `PayPalGateway`.
+Crie `PaymentGatewayInterface` e duas implementações: `StripeGateway` e `PayPalGateway`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface PaymentGatewayInterface
@@ -1079,7 +1079,7 @@ class StripeGateway implements PaymentGatewayInterface
             'currency' => $currency,
             'status' => 'succeeded',
             'gateway' => 'stripe',
-            'fee' => (int) ($amount * 0.029 + 30), // 2.9% + 30 копеек
+            'fee' => (int) ($amount * 0.029 + 30), // 2.9% + 30 centavos
             'metadata' => $metadata,
         ];
     }
@@ -1098,7 +1098,7 @@ class StripeGateway implements PaymentGatewayInterface
     public function getBalance(): int
     {
         // Stripe API balance
-        return 1000000; // 10,000.00
+        return 1000000; // 10.000,00
     }
 
     public function getName(): string
@@ -1123,7 +1123,7 @@ class PayPalGateway implements PaymentGatewayInterface
             'currency' => $currency,
             'status' => 'completed',
             'gateway' => 'paypal',
-            'fee' => (int) ($amount * 0.034 + 10), // 3.4% + 10 копеек
+            'fee' => (int) ($amount * 0.034 + 10), // 3.4% + 10 centavos
             'metadata' => $metadata,
         ];
     }
@@ -1142,7 +1142,7 @@ class PayPalGateway implements PaymentGatewayInterface
     public function getBalance(): int
     {
         // PayPal API balance
-        return 500000; // 5,000.00
+        return 500000; // 5.000,00
     }
 
     public function getName(): string
@@ -1151,55 +1151,55 @@ class PayPalGateway implements PaymentGatewayInterface
     }
 }
 
-// Payment Service с DI
+// Payment Service com DI
 class PaymentService
 {
     public function __construct(
         private PaymentGatewayInterface $gateway,
     ) {}
 
-    public function processPayment(int $amount, string $currency = 'RUB'): array
+    public function processPayment(int $amount, string $currency = 'BRL'): array
     {
-        echo "Processing payment via {$this->gateway->getName()}...\n";
+        echo "Processando pagamento via {$this->gateway->getName()}...\n";
 
         $result = $this->gateway->charge($amount, $currency, [
             'customer_id' => 123,
             'order_id' => 456,
         ]);
 
-        echo "Payment {$result['status']}: {$result['transaction_id']}\n";
-        echo "Fee: " . number_format($result['fee'] / 100, 2) . " {$currency}\n";
+        echo "Pagamento {$result['status']}: {$result['transaction_id']}\n";
+        echo "Taxa: " . number_format($result['fee'] / 100, 2, ',', '.') . " {$currency}\n";
 
         return $result;
     }
 
     public function processRefund(string $transactionId, int $amount): array
     {
-        echo "Processing refund via {$this->gateway->getName()}...\n";
+        echo "Processando reembolso via {$this->gateway->getName()}...\n";
 
         $result = $this->gateway->refund($transactionId, $amount);
 
-        echo "Refund {$result['status']}: {$result['refund_id']}\n";
+        echo "Reembolso {$result['status']}: {$result['refund_id']}\n";
 
         return $result;
     }
 }
 
-// Использование — легко переключаться между gateway
+// Uso — troca o gateway fácil
 $stripeGateway = new StripeGateway('sk_test_...');
 $paymentService = new PaymentService($stripeGateway);
 
-$payment = $paymentService->processPayment(100000, 'RUB'); // 1000.00 RUB
+$payment = $paymentService->processPayment(100000, 'BRL'); // 1000,00 BRL
 $refund = $paymentService->processRefund($payment['transaction_id'], 50000);
 
-// Переключение на PayPal
+// Troca para PayPal
 $paypalGateway = new PayPalGateway('client_id', 'client_secret');
 $paymentService = new PaymentService($paypalGateway);
 
-$payment = $paymentService->processPayment(100000, 'RUB');
+$payment = $paymentService->processPayment(100000, 'BRL');
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

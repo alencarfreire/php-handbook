@@ -1,37 +1,37 @@
-# 3.2 Автозагрузка (Composer, PSR-4)
+# 3.2 Autoload (Composer, PSR-4)
 
-## Краткое резюме
+## Resumo
 
-> **Автозагрузка** — автоматическая загрузка классов без require/include через Composer.
+> **Autoload** — carrega classes sozinho, sem require/include, via Composer.
 >
-> **PSR-4:** Namespace = структура папок. `App\\Models\\User` → `app/Models/User.php`.
+> **PSR-4:** Namespace = estrutura de pastas. `App\\Models\\User` → `app/Models/User.php`.
 >
-> **Важно:** `composer dump-autoload` после изменений, `--optimize` для продакшена.
+> **Importante:** `composer dump-autoload` depois de mudar, `--optimize` em produção.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое автозагрузка](#что-такое-автозагрузка)
-- [PSR-4 стандарт](#psr-4-стандарт)
+- [O que é autoload](#o-que-é-autoload)
+- [Padrão PSR-4](#padrão-psr-4)
 - [composer dump-autoload](#composer-dump-autoload)
-- [classmap автозагрузка](#classmap-автозагрузка)
-- [files автозагрузка](#files-автозагрузка)
-- [Автозагрузка для dev (autoload-dev)](#автозагрузка-для-dev-autoload-dev)
-- [spl_autoload_register](#spl_autoload_register-custom-autoloader)
-- [Резюме автозагрузки](#резюме-автозагрузки)
-- [Практические задания](#практические-задания)
+- [Autoload classmap](#autoload-classmap)
+- [Autoload files](#autoload-files)
+- [Autoload de dev (autoload-dev)](#autoload-de-dev-autoload-dev)
+- [spl_autoload_register](#spl_autoload_register-autoloader-próprio)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое автозагрузка
+## O que é autoload
 
-**Что это:**
-Автоматическая загрузка классов без require/include.
+**O que é:**
+Carrega classes sozinho, sem require/include.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// БЕЗ автозагрузки (старый способ)
+// SEM autoload (jeito antigo)
 require_once 'app/Models/User.php';
 require_once 'app/Services/UserService.php';
 require_once 'app/Repositories/UserRepository.php';
@@ -39,17 +39,17 @@ require_once 'app/Repositories/UserRepository.php';
 $user = new App\Models\User();
 $service = new App\Services\UserService();
 
-// С автозагрузкой
-// require_once 'vendor/autoload.php';  // Только один раз
+// COM autoload
+// require_once 'vendor/autoload.php';  // Só uma vez
 
-$user = new App\Models\User();  // Автоматически загружает app/Models/User.php
-$service = new App\Services\UserService();  // Автоматически загружает app/Services/UserService.php
+$user = new App\Models\User();  // Carrega app/Models/User.php sozinho
+$service = new App\Services\UserService();  // Carrega app/Services/UserService.php sozinho
 ```
 
-**Когда использовать:**
-**Всегда** через Composer (PSR-4).
+**Quando usar:**
+**Sempre** via Composer (PSR-4).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // composer.json
 {
@@ -64,25 +64,25 @@ $service = new App\Services\UserService();  // Автоматически заг
 // index.php (Laravel public/index.php)
 require __DIR__ . '/../vendor/autoload.php';
 
-// Теперь все классы загружаются автоматически
+// Agora as classes carregam sozinhas
 use App\Models\User;
 use App\Services\UserService;
 
-$user = User::find(1);  // Автоматически загружает app/Models/User.php
-$service = new UserService();  // Автоматически загружает app/Services/UserService.php
+$user = User::find(1);  // Carrega app/Models/User.php sozinho
+$service = new UserService();  // Carrega app/Services/UserService.php sozinho
 ```
 
-**На собеседовании скажешь:**
-> "Автозагрузка автоматически подключает классы без require. Composer генерирует autoloader по PSR-4. Достаточно require 'vendor/autoload.php' один раз. Composer связывает namespace со структурой папок."
+**Na entrevista:**
+> "Autoload carrega a classe sozinho, sem require. O Composer gera o autoloader no PSR-4. Você dá require em vendor/autoload.php uma vez. O Composer liga o namespace à pasta."
 
 ---
 
-## PSR-4 стандарт
+## Padrão PSR-4
 
-**Что это:**
-Стандарт автозагрузки: namespace соответствует структуре папок.
+**O que é:**
+Padrão de autoload: namespace = estrutura de pastas.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // composer.json
 {
@@ -94,7 +94,7 @@ $service = new UserService();  // Автоматически загружает 
     }
 }
 
-// Структура проекта:
+// Estrutura do projeto:
 // app/
 //   Models/
 //     User.php        → namespace App\Models; class User
@@ -105,29 +105,29 @@ $service = new UserService();  // Автоматически загружает 
 //     Controllers/
 //       UserController.php → namespace App\Http\Controllers; class UserController
 
-// Правила PSR-4:
-// 1. Namespace = путь от базовой директории
-// 2. Имя файла = имя класса + .php
-// 3. Один класс = один файл
+// Regras do PSR-4:
+// 1. Namespace = caminho a partir do diretório base
+// 2. Nome do arquivo = nome da classe + .php
+// 3. Uma classe = um arquivo
 
-// Пример:
+// Exemplo:
 // App\Models\User → app/Models/User.php
 // App\Services\Order\OrderService → app/Services/Order/OrderService.php
 
-// Использование:
+// Uso:
 use App\Models\User;
 use App\Services\UserService;
 
-$user = new User();  // Загрузит app/Models/User.php
-$service = new UserService();  // Загрузит app/Services/UserService.php
+$user = new User();  // Carrega app/Models/User.php
+$service = new UserService();  // Carrega app/Services/UserService.php
 ```
 
-**Когда использовать:**
-**Всегда** следуй PSR-4 для структуры проекта.
+**Quando usar:**
+**Sempre** siga o PSR-4 na estrutura do projeto.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel структура (PSR-4)
+// Estrutura Laravel (PSR-4)
 {
     "autoload": {
         "psr-4": {
@@ -138,7 +138,7 @@ $service = new UserService();  // Загрузит app/Services/UserService.php
     }
 }
 
-// Файл: app/Http/Controllers/Api/PostController.php
+// Arquivo: app/Http/Controllers/Api/PostController.php
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -152,7 +152,7 @@ class PostController extends Controller
     }
 }
 
-// Файл: app/Services/Order/OrderService.php
+// Arquivo: app/Services/Order/OrderService.php
 namespace App\Services\Order;
 
 use App\Models\Order;
@@ -170,82 +170,82 @@ class OrderService
     }
 }
 
-// Composer автоматически знает:
+// O Composer já sabe:
 // App\Http\Controllers\Api\PostController → app/Http/Controllers/Api/PostController.php
 // App\Services\Order\OrderService → app/Services/Order/OrderService.php
 ```
 
-**На собеседовании скажешь:**
-> "PSR-4 — стандарт автозагрузки. Namespace соответствует структуре папок. App\\\\ → app/, App\\\\Models\\\\User → app/Models/User.php. Один класс = один файл. Имя файла = имя класса + .php."
+**Na entrevista:**
+> "PSR-4 é o padrão de autoload. Namespace = estrutura de pastas. App\\ → app/, App\\Models\\User → app/Models/User.php. Uma classe = um arquivo. Nome do arquivo = nome da classe + .php."
 
 ---
 
 ## composer dump-autoload
 
-**Что это:**
-Команда для регенерации файлов автозагрузки.
+**O que é:**
+Comando que regenera os arquivos de autoload.
 
-**Как работает:**
+**Como funciona:**
 ```bash
-# После изменения composer.json
+# Depois de mudar o composer.json
 composer dump-autoload
 
-# Оптимизированная автозагрузка (для продакшена)
+# Autoload otimizado (produção)
 composer dump-autoload --optimize
-# или
+# ou
 composer dump-autoload -o
 
-# Авторитетная автозагрузка (ещё быстрее)
+# Autoload authoritative (ainda mais rápido)
 composer dump-autoload --classmap-authoritative
-# или
+# ou
 composer dump-autoload -a
 ```
 
-**Когда использовать:**
-- После изменения `autoload` в composer.json
-- После добавления новых namespace
-- Перед деплоем (с `--optimize`)
+**Quando usar:**
+- Depois de mudar `autoload` no composer.json
+- Depois de adicionar um namespace novo
+- Antes do deploy (com `--optimize`)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// 1. Добавили новый namespace в composer.json
+// 1. Novo namespace no composer.json
 {
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "MyPackage\\": "packages/my-package/src/"  // Новый namespace
+            "MyPackage\\": "packages/my-package/src/"  // Novo namespace
         }
     }
 }
 
-// 2. Регенерировать autoload
+// 2. Regenerar o autoload
 composer dump-autoload
 
-// 3. Теперь можно использовать
+// 3. Agora dá para usar
 use MyPackage\Services\MyService;
 $service = new MyService();
 
-// Для продакшена (быстрее)
+// Produção (mais rápido)
 composer dump-autoload --optimize
 
-// Laravel Artisan (обёртка)
-php artisan optimize  # Включает composer dump-autoload -o
+// Laravel Artisan (wrapper)
+php artisan optimize  # Inclui composer dump-autoload -o
 
 // CI/CD pipeline
 composer install --no-dev --optimize-autoloader
 ```
 
-**На собеседовании скажешь:**
-> "composer dump-autoload регенерирует файлы автозагрузки. Запускаю после изменения autoload в composer.json. --optimize для продакшена (быстрее). Laravel: php artisan optimize включает dump-autoload."
+**Na entrevista:**
+> "composer dump-autoload regenera os arquivos de autoload. Eu rodo depois de mudar o autoload no composer.json. --optimize em produção, fica mais rápido. No Laravel, php artisan optimize já chama o dump-autoload."
 
 ---
 
-## classmap автозагрузка
+## Autoload classmap
 
-**Что это:**
-Альтернативный способ автозагрузки: список классов и путей к файлам.
+**O que é:**
+Outro jeito de autoload: lista de classes e caminhos.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // composer.json
 {
@@ -260,29 +260,29 @@ composer install --no-dev --optimize-autoloader
     }
 }
 
-// Classmap НЕ требует соответствия namespace структуре папок
+// classmap NÃO exige namespace = pasta
 // database/seeders/UserSeeder.php
 namespace Database\Seeders;
 
 class UserSeeder extends Seeder
 {
-    // Файл может быть где угодно, Composer найдёт класс
+    // O arquivo pode estar em qualquer lugar, o Composer acha a classe
 }
 
-// После изменений
+// Depois das mudanças
 composer dump-autoload
 
-// Теперь можно использовать
+// Agora dá para usar
 use Database\Seeders\UserSeeder;
 $seeder = new UserSeeder();
 ```
 
-**Когда использовать:**
-Для legacy кода, тестов, сидеров (где не соблюдается PSR-4).
+**Quando usar:**
+Código legado, teste, seeder — quando o PSR-4 não vale.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel использует classmap для database
+// Laravel usa classmap em database
 {
     "autoload": {
         "psr-4": {
@@ -297,7 +297,7 @@ $seeder = new UserSeeder();
     }
 }
 
-// Legacy код (не PSR-4)
+// Código legado (não PSR-4)
 // lib/
 //   some_old_file.php  → class SomeOldClass {}
 //   another.php        → class AnotherClass {}
@@ -313,21 +313,21 @@ $seeder = new UserSeeder();
 
 composer dump-autoload
 
-// Теперь можно использовать
-$obj = new SomeOldClass();  // Найдёт в lib/some_old_file.php
+// Agora dá para usar
+$obj = new SomeOldClass();  // Acha em lib/some_old_file.php
 ```
 
-**На собеседовании скажешь:**
-> "classmap — список папок с классами. Composer сканирует файлы и создаёт карту классов. Не требует соответствия namespace структуре. Использую для legacy кода, сидеров. PSR-4 предпочтительнее."
+**Na entrevista:**
+> "classmap é uma lista de pastas com classes. O Composer varre os arquivos e monta o mapa. Não exige namespace = pasta. Uso em código legado e seeder. PSR-4 é o preferido."
 
 ---
 
-## files автозагрузка
+## Autoload files
 
-**Что это:**
-Автоматическая загрузка файлов (для функций, констант).
+**O que é:**
+Carrega arquivo sozinho (função, constante).
 
-**Как работает:**
+**Como funciona:**
 ```php
 // composer.json
 {
@@ -345,7 +345,7 @@ $obj = new SomeOldClass();  // Найдёт в lib/some_old_file.php
 if (!function_exists('format_price')) {
     function format_price(int $cents): string
     {
-        return number_format($cents / 100, 2, '.', ' ');
+        return 'R$ ' . number_format($cents / 100, 2, ',', '.');
     }
 }
 
@@ -362,29 +362,29 @@ if (!function_exists('str_limit')) {
 define('MAX_UPLOAD_SIZE', 10485760);  // 10MB
 define('ALLOWED_EXTENSIONS', ['jpg', 'png', 'pdf']);
 
-// После изменений
+// Depois das mudanças
 composer dump-autoload
 
-// Файлы загружаются автоматически при require 'vendor/autoload.php'
-$price = format_price(199900);  // "1 999.00"
-$limit = str_limit('Long text...', 100);
+// Os arquivos entram no require 'vendor/autoload.php'
+$price = format_price(199900);  // "R$ 1.999,00"
+$limit = str_limit('Texto longo...', 100);
 
 $maxSize = MAX_UPLOAD_SIZE;
 ```
 
-**Когда использовать:**
-Для глобальных функций, констант, bootstrap файлов.
+**Quando usar:**
+Função global, constante, arquivo de bootstrap.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel структура
+// Estrutura Laravel
 {
     "autoload": {
         "psr-4": {
             "App\\": "app/"
         },
         "files": [
-            "app/helpers.php"  // Глобальные helper функции
+            "app/helpers.php"  // Helpers globais
         ]
     }
 }
@@ -392,8 +392,8 @@ $maxSize = MAX_UPLOAD_SIZE;
 // app/helpers.php
 <?php
 
-// Laravel уже содержит множество helpers
-// Можно добавить свои
+// O Laravel já tem vários helpers
+// Você pode adicionar os seus
 
 if (!function_exists('active_class')) {
     function active_class(string $path, string $active = 'active'): string
@@ -405,19 +405,19 @@ if (!function_exists('active_class')) {
 if (!function_exists('format_date')) {
     function format_date(?string $date): string
     {
-        return $date ? (new DateTime($date))->format('d.m.Y') : '';
+        return $date ? (new DateTime($date))->format('d/m/Y') : '';
     }
 }
 
-// Использование в Blade
+// Uso no Blade
 <li class="{{ active_class('users*') }}">
-    <a href="/users">Users</a>
+    <a href="/users">Usuários</a>
 </li>
 
-// Использование в PHP
+// Uso no PHP
 $formatted = format_date($user->created_at);
 
-// Пакеты тоже могут регистрировать files
+// Pacotes também registram files
 // vendor/laravel/framework/composer.json
 {
     "autoload": {
@@ -429,17 +429,17 @@ $formatted = format_date($user->created_at);
 }
 ```
 
-**На собеседовании скажешь:**
-> "files автозагружает файлы при require 'vendor/autoload.php'. Использую для глобальных функций, констант. Laravel загружает helpers.php через files. if (!function_exists()) предотвращает конфликты."
+**Na entrevista:**
+> "files carrega o arquivo no require de vendor/autoload.php. Uso para função global e constante. O Laravel carrega helpers.php assim. if (!function_exists()) evita conflito."
 
 ---
 
-## Автозагрузка для dev (autoload-dev)
+## Autoload de dev (autoload-dev)
 
-**Что это:**
-Автозагрузка только для разработки (тесты).
+**O que é:**
+Autoload só de desenvolvimento (teste).
 
-**Как работает:**
+**Como funciona:**
 ```php
 // composer.json
 {
@@ -455,7 +455,7 @@ $formatted = format_date($user->created_at);
     }
 }
 
-// Структура:
+// Estrutura:
 // tests/
 //   Unit/
 //     ExampleTest.php → namespace Tests\Unit; class ExampleTest
@@ -477,19 +477,19 @@ class UserTest extends TestCase
     }
 }
 
-// В разработке (composer install)
-composer dump-autoload  # Загружает autoload + autoload-dev
+// Em desenvolvimento (composer install)
+composer dump-autoload  # Carrega autoload + autoload-dev
 
-// В продакшене (composer install --no-dev)
-composer install --no-dev  # НЕ загружает autoload-dev (тесты не нужны)
+// Em produção (composer install --no-dev)
+composer install --no-dev  # NÃO carrega autoload-dev (teste não entra)
 ```
 
-**Когда использовать:**
-Для тестов, dev-утилит, fixtures.
+**Quando usar:**
+Teste, utilitário de dev, fixture.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// composer.json (полный пример)
+// composer.json (exemplo completo)
 {
     "autoload": {
         "psr-4": {
@@ -527,83 +527,83 @@ class UserServiceTest extends TestCase
             ->once()
             ->andReturn(new User());
 
-        $user = $service->create(['name' => 'Test']);
+        $user = $service->create(['name' => 'Teste']);
 
         $this->assertInstanceOf(User::class, $user);
     }
 }
 
 // CI/CD
-# Установка зависимостей для тестов
+# Instala dependências de teste
 composer install
 
-# Запуск тестов
+# Roda os testes
 php artisan test
 
-# Деплой (без dev-зависимостей)
+# Deploy (sem dependências de dev)
 composer install --no-dev --optimize-autoloader
 ```
 
-**На собеседовании скажешь:**
-> "autoload-dev для разработки (тесты, dev-утилиты). composer install загружает, composer install --no-dev — нет. В продакшене тесты не нужны. Laravel: Tests\\\\ → tests/."
+**Na entrevista:**
+> "autoload-dev é só de desenvolvimento: teste, utilitário de dev. composer install carrega. composer install --no-dev não carrega. Em produção teste não entra. No Laravel: Tests\\ → tests/."
 
 ---
 
-## spl_autoload_register (custom autoloader)
+## spl_autoload_register (autoloader próprio)
 
-**Что это:**
-Регистрация собственного автозагрузчика (без Composer).
+**O que é:**
+Registra o seu autoloader (sem Composer).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Свой автозагрузчик (PSR-4)
+// Autoloader próprio (PSR-4)
 spl_autoload_register(function ($class) {
     // App\Models\User → app/Models/User.php
 
-    // Базовый namespace
+    // Namespace base
     $prefix = 'App\\';
     $baseDir = __DIR__ . '/app/';
 
-    // Проверка префикса
+    // Checa o prefixo
     if (strncmp($prefix, $class, strlen($prefix)) !== 0) {
-        return;  // Не наш namespace
+        return;  // Não é o nosso namespace
     }
 
-    // Относительное имя класса
+    // Nome relativo da classe
     $relativeClass = substr($class, strlen($prefix));
 
-    // Замена \ на /
+    // Troca \ por /
     $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
 
-    // Загрузить файл
+    // Carrega o arquivo
     if (file_exists($file)) {
         require $file;
     }
 });
 
-// Теперь можно использовать
-$user = new App\Models\User();  // Автоматически загрузит app/Models/User.php
+// Agora dá para usar
+$user = new App\Models\User();  // Carrega app/Models/User.php sozinho
 
-// Несколько автозагрузчиков
+// Vários autoloaders
 spl_autoload_register(function ($class) {
-    // Первый автозагрузчик
+    // Primeiro autoloader
 });
 
 spl_autoload_register(function ($class) {
-    // Второй автозагрузчик
+    // Segundo autoloader
 });
-// Вызываются по очереди, пока класс не загрузится
+// Chamam em sequência até a classe carregar
 ```
 
-**Когда использовать:**
-Редко (Composer лучше). Для микропроектов без Composer.
+**Quando usar:**
+Raro (Composer é melhor). Projeto pequeno sem Composer.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// index.php (без Composer)
+// index.php (sem Composer)
 <?php
 
-// Автозагрузчик PSR-4
+// Autoloader PSR-4
 spl_autoload_register(function ($class) {
     $namespaces = [
         'App\\' => __DIR__ . '/app/',
@@ -623,34 +623,34 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// Теперь можно использовать
+// Agora dá para usar
 use App\Controllers\HomeController;
 use Lib\Database\Connection;
 
 $controller = new HomeController();
 $db = new Connection();
 
-// Composer делает то же самое (но лучше)
+// O Composer faz o mesmo (e melhor)
 require 'vendor/autoload.php';
 ```
 
-**На собеседовании скажешь:**
-> "spl_autoload_register регистрирует свой автозагрузчик. Функция получает имя класса, преобразует в путь к файлу, загружает. Composer использует spl_autoload_register внутри. Для проектов предпочитаю Composer."
+**Na entrevista:**
+> "spl_autoload_register registra o seu autoloader. A função recebe o nome da classe, vira caminho de arquivo e carrega. O Composer usa isso por baixo. Em projeto de verdade eu fico com o Composer."
 
 ---
 
-## Резюме автозагрузки
+## Recapitulando
 
-**Основное:**
-- **PSR-4** — стандарт автозагрузки (namespace = структура папок)
-- `composer dump-autoload` — регенерация autoloader
-- `--optimize` — оптимизированная автозагрузка (для продакшена)
-- **classmap** — список папок с классами (не требует PSR-4)
-- **files** — автозагрузка файлов (функции, константы)
-- **autoload-dev** — только для разработки (тесты)
-- `spl_autoload_register` — custom autoloader (редко)
+**O essencial:**
+- **PSR-4** — padrão de autoload (namespace = estrutura de pastas)
+- `composer dump-autoload` — regenera o autoloader
+- `--optimize` — autoload otimizado (produção)
+- **classmap** — lista de pastas com classes (não exige PSR-4)
+- **files** — carrega arquivo (função, constante)
+- **autoload-dev** — só de desenvolvimento (teste)
+- `spl_autoload_register` — autoloader próprio (raro)
 
-**composer.json структура:**
+**Estrutura do composer.json:**
 ```json
 {
     "autoload": {
@@ -668,24 +668,23 @@ require 'vendor/autoload.php';
 }
 ```
 
-**Важно на собесе:**
+**Importante na entrevista:**
 - PSR-4: App\\Models\\User → app/Models/User.php
-- После изменения composer.json: composer dump-autoload
-- Продакшен: composer dump-autoload --optimize
-- files для глобальных функций (helpers.php)
-- autoload-dev не загружается в продакшене (--no-dev)
-- Composer автоматически использует spl_autoload_register
+- Depois de mudar o composer.json: composer dump-autoload
+- Produção: composer dump-autoload --optimize
+- files para função global (helpers.php)
+- autoload-dev não entra em produção (--no-dev)
+- O Composer usa spl_autoload_register por baixo
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой PSR-4 автозагрузку для пакета
-
-Создай структуру для пакета `MyPackage` с namespace `MyCompany\MyPackage`. Настрой автозагрузку.
+### Exercício 1: Configure o autoload PSR-4 de um pacote
+**Enunciado:** Crie a estrutura do pacote `MyPackage` com namespace `MyCompany\MyPackage`. Configure o autoload.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```json
 // composer.json
@@ -707,7 +706,7 @@ require 'vendor/autoload.php';
 }
 ```
 
-Структура:
+Estrutura:
 ```
 mypackage/
   src/
@@ -739,28 +738,27 @@ class UserService
 }
 ```
 
-После создания структуры:
+Depois de criar a estrutura:
 ```bash
 composer dump-autoload
 ```
 
-Использование в проекте:
+Uso no projeto:
 ```php
 use MyCompany\MyPackage\Services\UserService;
 
 $service = new UserService();
-$user = $service->create('Иван');
+$user = $service->create('João');
 ```
 </details>
 
-### Задание 2: Добавь legacy код через classmap
-
-Есть папка `legacy/` с классами без namespace. Добавь их в автозагрузку.
+### Exercício 2: Inclua código legado via classmap
+**Enunciado:** Tem uma pasta `legacy/` com classes sem namespace. Inclua elas no autoload.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-Структура:
+Estrutura:
 ```
 legacy/
   OldUser.php      → class OldUser {}
@@ -786,17 +784,17 @@ legacy/
 composer dump-autoload
 ```
 
-Использование:
+Uso:
 ```php
-// Классы из legacy доступны глобально
+// Classes do legacy ficam globais
 $user = new OldUser();
 $product = new OldProduct();
 
-// Функции тоже доступны
+// Funções também ficam disponíveis
 old_helper();
 ```
 
-**Альтернатива (только классы, без функций):**
+**Alternativa (só classes, sem funções):**
 ```json
 {
     "autoload": {
@@ -809,46 +807,45 @@ old_helper();
 ```
 </details>
 
-### Задание 3: Оптимизируй автозагрузку для продакшена
-
-Подготовь команды для деплоя Laravel приложения с оптимизированной автозагрузкой.
+### Exercício 3: Otimize o autoload de produção
+**Enunciado:** Monte os comandos de deploy de um app Laravel com autoload otimizado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Установка зависимостей без dev-пакетов
+# 1. Instala dependências sem pacotes de dev
 composer install --no-dev --optimize-autoloader
 
-# 2. Или отдельно (если уже установлено)
+# 2. Ou separado (se já estiver instalado)
 composer dump-autoload --optimize --no-dev
 
-# 3. Laravel оптимизация (включает composer dump-autoload -o)
+# 3. Otimização Laravel (inclui composer dump-autoload -o)
 php artisan optimize
 
-# 4. Проверка режима автозагрузки
+# 4. Checa o modo de autoload
 composer dump-autoload --optimize --classmap-authoritative
 
-# Полный скрипт деплоя
+# Script completo de deploy
 #!/bin/bash
 
-# Установка зависимостей
+# Instala dependências
 composer install --no-dev --optimize-autoloader
 
-# Laravel кэширование
+# Cache do Laravel
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-# Права доступа
+# Permissões
 chmod -R 755 storage bootstrap/cache
 
-# Миграции
+# Migrations
 php artisan migrate --force
 ```
 
-**Composer scripts (composer.json):**
+**Scripts do Composer (composer.json):**
 ```json
 {
     "scripts": {
@@ -865,7 +862,7 @@ php artisan migrate --force
 }
 ```
 
-Использование:
+Uso:
 ```bash
 composer deploy
 ```
@@ -873,4 +870,4 @@ composer deploy
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,37 +1,37 @@
-# 3.1 Пространства имён (Namespaces)
+# 3.1 Namespaces
 
-## Краткое резюме
+## Resumo
 
-> **Namespaces** — способ организации кода в логические группы, избегая конфликтов имён.
+> **Namespaces** — jeito de organizar o código em grupos lógicos, sem conflito de nomes.
 >
-> **Основное:** `namespace App\Models;`, `use App\Models\User;`, `use ... as Alias;`, группировка `use App\Models\{User, Post}`.
+> **O essencial:** `namespace App\Models;`, `use App\Models\User;`, `use ... as Alias;`, agrupamento `use App\Models\{User, Post}`.
 >
-> **PSR-4:** Namespace соответствует структуре папок. `App\\Models\\User` → `app/Models/User.php`.
+> **PSR-4:** o namespace bate com a estrutura de pastas. `App\\Models\\User` → `app/Models/User.php`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое namespace](#что-такое-namespace)
-- [Объявление namespace](#объявление-namespace)
-- [use, as, группировка](#use-as-группировка)
-- [Глобальный namespace](#глобальный-namespace)
-- [namespace и автозагрузка (PSR-4)](#namespace-и-автозагрузка-psr-4)
-- [__NAMESPACE__ константа](#__namespace__-константа)
-- [namespace_alias для функций и констант](#namespace_alias-use-для-функций-и-констант)
-- [Резюме namespace](#резюме-namespace)
-- [Практические задания](#практические-задания)
+- [O que é namespace](#o-que-é-namespace)
+- [Declaração de namespace](#declaração-de-namespace)
+- [use, as, agrupamento](#use-as-agrupamento)
+- [Namespace global](#namespace-global)
+- [namespace e autoload (PSR-4)](#namespace-e-autoload-psr-4)
+- [Constante __NAMESPACE__](#constante-__namespace__)
+- [namespace_alias (use) para funções e constantes](#namespace_alias-use-para-funções-e-constantes)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое namespace
+## O que é namespace
 
-**Что это:**
-Способ организации кода в логические группы, избегая конфликтов имён.
+**O que é:**
+Jeito de organizar o código em grupos lógicos, sem conflito de nomes.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// File: app/Models/User.php
+// Arquivo: app/Models/User.php
 namespace App\Models;
 
 class User
@@ -39,32 +39,32 @@ class User
     public string $name;
 }
 
-// File: app/Services/User.php
+// Arquivo: app/Services/User.php
 namespace App\Services;
 
-class User  // Не конфликтует с App\Models\User
+class User  // Não conflita com App\Models\User
 {
     public function process(): void {}
 }
 
-// Использование
+// Uso
 use App\Models\User as ModelUser;
 use App\Services\User as ServiceUser;
 
 $model = new ModelUser();
 $service = new ServiceUser();
 
-// Или полное имя (Fully Qualified Name)
+// Ou o nome completo (Fully Qualified Name)
 $model = new \App\Models\User();
 $service = new \App\Services\User();
 ```
 
-**Когда использовать:**
-**Всегда** в современном PHP (PSR-4). Организация кода, избежание конфликтов имён.
+**Quando usar:**
+**Sempre** no PHP moderno (PSR-4). Organizar código, evitar conflito de nomes.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel структура
+// Estrutura Laravel
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -84,7 +84,7 @@ class UserController extends Controller
     }
 }
 
-// Composer автозагрузка (composer.json)
+// Autoload do Composer (composer.json)
 {
     "autoload": {
         "psr-4": {
@@ -95,17 +95,17 @@ class UserController extends Controller
 }
 ```
 
-**На собеседовании скажешь:**
-> "Namespace организует код в логические группы, избегая конфликтов имён. В Laravel: App\Models, App\Http\Controllers. PSR-4 автозагрузка связывает namespace с директорией."
+**Na entrevista:**
+> "Namespace organiza o código em grupos lógicos e evita conflito de nomes. No Laravel: App\Models, App\Http\Controllers. PSR-4 liga o namespace à pasta."
 
 ---
 
-## Объявление namespace
+## Declaração de namespace
 
-**Что это:**
-Указание namespace в начале файла.
+**O que é:**
+Declarar o namespace no começo do arquivo.
 
-**Как работает:**
+**Como funciona:**
 ```php
 <?php
 declare(strict_types=1);
@@ -125,7 +125,7 @@ class UserService
     }
 }
 
-// Вложенные namespace
+// Namespace aninhado
 namespace App\Services\Payment;
 
 class StripeService {}
@@ -134,7 +134,7 @@ namespace App\Services\Notification;
 
 class EmailService {}
 
-// Или через фигурные скобки (редко используется)
+// Ou com chaves (raro)
 namespace App\Services {
     class UserService {}
 }
@@ -144,10 +144,10 @@ namespace App\Repositories {
 }
 ```
 
-**Когда использовать:**
-Один namespace на файл (первая строка после `<?php`).
+**Quando usar:**
+Um namespace por arquivo (primeira linha depois do `<?php`).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // app/Services/Order/OrderService.php
 <?php
@@ -176,35 +176,35 @@ class OrderService
     }
 }
 
-// Использование
+// Uso
 use App\Services\Order\OrderService;
 
 $service = app(OrderService::class);
 ```
 
-**На собеседовании скажешь:**
-> "Объявление namespace — первая строка после <?php. Один namespace на файл. Вложенные namespace через \\ (App\\Services\\Order). Laravel следует PSR-4: namespace соответствует структуре папок."
+**Na entrevista:**
+> "O namespace vai na primeira linha depois do <?php. Um namespace por arquivo. Aninhado com \\ (App\\Services\\Order). Laravel segue PSR-4: namespace bate com a pasta."
 
 ---
 
-## use, as, группировка
+## use, as, agrupamento
 
-**Что это:**
-Импорт классов из других namespace.
+**O que é:**
+Importar classes de outro namespace.
 
-**Как работает:**
+**Como funciona:**
 ```php
 namespace App\Http\Controllers;
 
-// Импорт класса
+// Import da classe
 use App\Models\User;
 use App\Services\UserService;
 
-// Алиас (если конфликт имён)
+// Alias (se houver conflito de nomes)
 use App\Models\Post as PostModel;
 use App\Services\Post as PostService;
 
-// Группировка (PHP 7.0+)
+// Agrupamento (PHP 7.0+)
 use App\Models\{User, Post, Comment};
 use App\Services\{
     UserService,
@@ -212,7 +212,7 @@ use App\Services\{
     CommentService
 };
 
-// Функции и константы (PHP 5.6+)
+// Funções e constantes (PHP 5.6+)
 use function App\Helpers\format_price;
 use const App\Constants\MAX_ITEMS;
 
@@ -220,26 +220,26 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all();  // Без \App\Models\
+        $users = User::all();  // Sem \App\Models\
         $service = new UserService();
 
-        $price = format_price(1000);  // Функция
-        $limit = MAX_ITEMS;  // Константа
+        $price = format_price(1000);  // Função
+        $limit = MAX_ITEMS;  // Constante
 
         return view('users.index', compact('users'));
     }
 }
 
-// Без use (полное имя)
+// Sem use (nome completo)
 $user = new \App\Models\User();
 ```
 
-**Когда использовать:**
-`use` для всех классов из других namespace. Группировка для импорта из одного namespace.
+**Quando usar:**
+`use` para toda classe de outro namespace. Agrupamento para importar do mesmo namespace.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Controller с множественными импортами
+// Controller com vários imports
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -279,51 +279,51 @@ namespace App\Helpers;
 
 function format_price(int $cents): string
 {
-    return number_format($cents / 100, 2);
+    return 'R$ ' . number_format($cents / 100, 2, ',', '.');
 }
 
-// Использование
+// Uso
 use function App\Helpers\format_price;
 
-echo format_price(199900);  // "1999.00"
+echo format_price(199900);  // "R$ 1.999,00"
 ```
 
-**На собеседовании скажешь:**
-> "use импортирует классы из других namespace. as создаёт алиас при конфликте. Группировка use App\Models\{User, Post} для импорта из одного namespace. Можно импортировать функции (use function) и константы (use const)."
+**Na entrevista:**
+> "use importa classes de outro namespace. as cria alias quando tem conflito. Agrupamento: use App\Models\{User, Post} para importar do mesmo namespace. Dá para importar função (use function) e constante (use const)."
 
 ---
 
-## Глобальный namespace
+## Namespace global
 
-**Что это:**
-Классы без namespace (встроенные PHP классы, legacy код).
+**O que é:**
+Classes sem namespace (classes nativas do PHP, código legacy).
 
-**Как работает:**
+**Como funciona:**
 ```php
 namespace App\Services;
 
-// PDO — встроенный класс в глобальном namespace
+// PDO — classe nativa no namespace global
 $pdo = new \PDO('mysql:host=localhost', 'user', 'pass');
 
-// Без \ — ищет в текущем namespace
+// Sem \ — procura no namespace atual
 $pdo = new PDO();  // ❌ Class 'App\Services\PDO' not found
 
-// Встроенные классы PHP
+// Classes nativas do PHP
 $date = new \DateTime();
-$exception = new \Exception('Error');
+$exception = new \Exception('Erro');
 $reflection = new \ReflectionClass(User::class);
 
-// Legacy класс без namespace
+// Classe legacy sem namespace
 class LegacyClass {}
 
-// Использование
-$legacy = new \LegacyClass();  // Из глобального namespace
+// Uso
+$legacy = new \LegacyClass();  // Do namespace global
 ```
 
-**Когда использовать:**
-Всегда ставь `\` перед встроенными классами PHP (DateTime, Exception, PDO) внутри namespace.
+**Quando usar:**
+Sempre coloque `\` na frente das classes nativas do PHP (DateTime, Exception, PDO) dentro de um namespace.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 namespace App\Services;
 
@@ -334,7 +334,7 @@ class UserService
     public function create(array $data): User
     {
         try {
-            // \DateTime — встроенный класс
+            // \DateTime — classe nativa
             $now = new \DateTime();
 
             $user = User::create([
@@ -343,19 +343,19 @@ class UserService
             ]);
 
             return $user;
-        } catch (\Exception $e) {  // \Exception — встроенный
-            throw new \RuntimeException('User creation failed', 0, $e);
+        } catch (\Exception $e) {  // \Exception — nativa
+            throw new \RuntimeException('Falha ao criar o usuário', 0, $e);
         }
     }
 
     public function validate(string $email): bool
     {
-        // filter_var — встроенная функция
+        // filter_var — função nativa
         return filter_var($email, \FILTER_VALIDATE_EMAIL) !== false;
     }
 }
 
-// Или импортируй
+// Ou importe
 namespace App\Services;
 
 use DateTime;
@@ -367,26 +367,26 @@ class UserService
     public function create(array $data): User
     {
         try {
-            $now = new DateTime();  // Без \
+            $now = new DateTime();  // Sem \
             // ...
         } catch (Exception $e) {
-            throw new RuntimeException('Failed', 0, $e);
+            throw new RuntimeException('Falhou', 0, $e);
         }
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "Глобальный namespace — для встроенных PHP классов (DateTime, Exception, PDO). Внутри namespace нужен \\ перед глобальными классами или use. Константы PHP (FILTER_VALIDATE_EMAIL) тоже в глобальном namespace."
+**Na entrevista:**
+> "Namespace global é o das classes nativas do PHP (DateTime, Exception, PDO). Dentro de um namespace você precisa do \\ na frente ou de um use. Constantes do PHP (FILTER_VALIDATE_EMAIL) também ficam no global."
 
 ---
 
-## namespace и автозагрузка (PSR-4)
+## namespace e autoload (PSR-4)
 
-**Что это:**
-Стандарт связи namespace с структурой папок.
+**O que é:**
+Padrão que liga namespace à estrutura de pastas.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // composer.json
 {
@@ -399,7 +399,7 @@ class UserService
     }
 }
 
-// Структура:
+// Estrutura:
 // app/
 //   Models/
 //     User.php        → namespace App\Models; class User
@@ -409,20 +409,20 @@ class UserService
 //     Controllers/
 //       UserController.php → namespace App\Http\Controllers; class UserController
 
-// Автозагрузка:
+// Autoload:
 // new App\Models\User()         → app/Models/User.php
 // new App\Services\UserService() → app/Services/UserService.php
 
-// После изменения composer.json
+// Depois de alterar o composer.json
 composer dump-autoload
 ```
 
-**Когда использовать:**
-**Всегда** следуй PSR-4. Namespace = структура папок.
+**Quando usar:**
+**Sempre** siga PSR-4. Namespace = estrutura de pastas.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel структура (PSR-4)
+// Estrutura Laravel (PSR-4)
 app/
   Http/
     Controllers/
@@ -439,15 +439,15 @@ app/
     Order/
       OrderService.php     → namespace App\Services\Order;
 
-// Composer автоматически загружает по namespace
+// O Composer carrega automaticamente pelo namespace
 use App\Http\Controllers\Api\PostController;
 use App\Services\Order\OrderService;
 
-// Не нужно require/include
+// Não precisa de require/include
 $controller = new PostController();
 $service = new OrderService();
 
-// Кастомный namespace
+// Namespace customizado
 // composer.json
 {
     "autoload": {
@@ -463,22 +463,22 @@ namespace MyApp\Services;
 
 class Payment {}
 
-// Использование
+// Uso
 use MyApp\Services\Payment;
 $payment = new Payment();
 ```
 
-**На собеседовании скажешь:**
-> "PSR-4 связывает namespace со структурой папок. Composer автоматически загружает классы. App\\ → app/, namespace App\\Models\\User → файл app/Models/User.php. После изменения composer.json делаю composer dump-autoload."
+**Na entrevista:**
+> "PSR-4 liga namespace à pasta. O Composer carrega a classe sozinho. App\\ → app/, namespace App\\Models\\User → arquivo app/Models/User.php. Depois de mudar o composer.json eu rodo composer dump-autoload."
 
 ---
 
-## __NAMESPACE__ константа
+## Constante __NAMESPACE__
 
-**Что это:**
-Магическая константа, возвращающая текущий namespace.
+**O que é:**
+Constante mágica que devolve o namespace atual.
 
-**Как работает:**
+**Como funciona:**
 ```php
 namespace App\Services;
 
@@ -495,7 +495,7 @@ class UserService
     }
 }
 
-// Динамическое создание класса
+// Criação dinâmica de classe
 namespace App\Services;
 
 function createService(string $name): object
@@ -507,12 +507,12 @@ function createService(string $name): object
 $service = createService('UserService');
 ```
 
-**Когда использовать:**
-Для динамического создания классов, метапрограммирования.
+**Quando usar:**
+Para criar classe dinâmica, metaprogramação.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Фабрика сервисов
+// Factory de serviços
 namespace App\Services;
 
 class ServiceFactory
@@ -522,10 +522,10 @@ class ServiceFactory
         $class = __NAMESPACE__ . '\\' . $serviceName;
 
         if (!class_exists($class)) {
-            throw new \RuntimeException("Service {$serviceName} not found");
+            throw new \RuntimeException("Service {$serviceName} não encontrado");
         }
 
-        return app($class);  // Создать через контейнер
+        return app($class);  // Resolve pelo Service Container
     }
 }
 
@@ -533,7 +533,7 @@ $factory = new ServiceFactory();
 $userService = $factory->make('UserService');
 $orderService = $factory->make('OrderService');
 
-// Helper для создания DTO
+// Helper para criar DTO
 namespace App\DTO;
 
 function make(string $dtoName, array $data): object
@@ -542,9 +542,9 @@ function make(string $dtoName, array $data): object
     return new $class(...$data);
 }
 
-$dto = make('CreateUserDTO', ['name' => 'Иван', 'email' => 'ivan@mail.com']);
+$dto = make('CreateUserDTO', ['name' => 'João', 'email' => 'joao@email.com']);
 
-// Логирование с namespace
+// Log com namespace
 namespace App\Services\Payment;
 
 use Illuminate\Support\Facades\Log;
@@ -553,32 +553,32 @@ class StripeService
 {
     public function charge(int $amount): bool
     {
-        Log::info(__NAMESPACE__ . ': Charging', ['amount' => $amount]);
-        // [App\Services\Payment: Charging]
+        Log::info(__NAMESPACE__ . ': Cobrando', ['amount' => $amount]);
+        // [App\Services\Payment: Cobrando]
 
         return true;
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "__NAMESPACE__ возвращает текущий namespace. Использую для динамического создания классов, фабрик, логирования. __NAMESPACE__ . '\\\\' . $className создаёт полное имя класса."
+**Na entrevista:**
+> "__NAMESPACE__ devolve o namespace atual. Uso para criar classe dinâmica, factory, log. __NAMESPACE__ . '\\\\' . $className monta o nome completo da classe."
 
 ---
 
-## namespace_alias (use) для функций и констант
+## namespace_alias (use) para funções e constantes
 
-**Что это:**
-Импорт функций и констант из других namespace.
+**O que é:**
+Importar funções e constantes de outro namespace.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Файл с функциями
+// Arquivo com funções
 namespace App\Helpers;
 
 function format_price(int $cents): string
 {
-    return number_format($cents / 100, 2, '.', ' ');
+    return 'R$ ' . number_format($cents / 100, 2, ',', '.');
 }
 
 function truncate(string $text, int $length): string
@@ -586,13 +586,13 @@ function truncate(string $text, int $length): string
     return mb_substr($text, 0, $length) . '...';
 }
 
-// Файл с константами
+// Arquivo com constantes
 namespace App\Constants;
 
 const MAX_UPLOAD_SIZE = 10485760;  // 10MB
 const ALLOWED_EXTENSIONS = ['jpg', 'png', 'pdf'];
 
-// Использование
+// Uso
 namespace App\Http\Controllers;
 
 use function App\Helpers\{format_price, truncate};
@@ -602,8 +602,8 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $price = format_price(199900);  // "1 999.00"
-        $description = truncate('Long text...', 100);
+        $price = format_price(199900);  // "R$ 1.999,00"
+        $description = truncate('Texto longo...', 100);
 
         $maxSize = MAX_UPLOAD_SIZE;  // 10485760
         $extensions = ALLOWED_EXTENSIONS;  // ['jpg', 'png', 'pdf']
@@ -612,15 +612,15 @@ class ProductController extends Controller
     }
 }
 
-// Без use (полное имя)
+// Sem use (nome completo)
 $price = \App\Helpers\format_price(199900);
 $maxSize = \App\Constants\MAX_UPLOAD_SIZE;
 ```
 
-**Когда использовать:**
-Для переиспользования функций и констант между namespace.
+**Quando usar:**
+Para reusar funções e constantes entre namespaces.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // app/Helpers/helpers.php
 namespace App\Helpers;
@@ -635,7 +635,7 @@ function str_limit(string $value, int $limit = 100): string
     return mb_substr($value, 0, $limit) . '...';
 }
 
-// composer.json (автозагрузка файлов с функциями)
+// composer.json (autoload de arquivos com funções)
 {
     "autoload": {
         "files": [
@@ -644,7 +644,7 @@ function str_limit(string $value, int $limit = 100): string
     }
 }
 
-// Использование
+// Uso
 namespace App\Services;
 
 use function App\Helpers\{array_get, str_limit};
@@ -653,59 +653,59 @@ class DataService
 {
     public function process(array $data): array
     {
-        $name = array_get($data, 'name', 'Unknown');
+        $name = array_get($data, 'name', 'Desconhecido');
         $description = str_limit($data['description'] ?? '', 200);
 
         return compact('name', 'description');
     }
 }
 
-// Laravel helpers (уже есть в глобальном namespace)
-// Не нужен use
+// Helpers do Laravel (já estão no namespace global)
+// Não precisa de use
 $user = auth()->user();
 $path = storage_path('app/files');
 $config = config('app.name');
 ```
 
-**На собеседовании скажешь:**
-> "use function импортирует функции, use const — константы из других namespace. Группировка: use function App\\Helpers\\{fn1, fn2}. Laravel helpers в глобальном namespace (auth(), config())."
+**Na entrevista:**
+> "use function importa funções, use const importa constantes de outro namespace. Agrupamento: use function App\\Helpers\\{fn1, fn2}. Helpers do Laravel ficam no global (auth(), config())."
 
 ---
 
-## Резюме namespace
+## Recapitulando
 
-**Основное:**
-- `namespace App\Services;` — объявление namespace
-- `use App\Models\User;` — импорт класса
-- `use App\Models\User as ModelUser;` — алиас
-- `use App\Models\{User, Post};` — группировка
-- `use function`, `use const` — импорт функций и констант
-- `\DateTime` — глобальный namespace (встроенные классы)
-- `__NAMESPACE__` — текущий namespace
+**O essencial:**
+- `namespace App\Services;` — declaração de namespace
+- `use App\Models\User;` — import da classe
+- `use App\Models\User as ModelUser;` — alias
+- `use App\Models\{User, Post};` — agrupamento
+- `use function`, `use const` — import de funções e constantes
+- `\DateTime` — namespace global (classes nativas)
+- `__NAMESPACE__` — namespace atual
 
 **PSR-4:**
-- Namespace = структура папок
+- Namespace = estrutura de pastas
 - `App\\Models\\User` → `app/Models/User.php`
-- `composer dump-autoload` после изменений
+- `composer dump-autoload` depois das mudanças
 
-**Важно на собесе:**
-- Один namespace на файл (первая строка)
-- Всегда use для классов из других namespace
-- `\\` перед встроенными классами (DateTime, Exception) в namespace
-- PSR-4: namespace соответствует папкам
+**Importante na entrevista:**
+- Um namespace por arquivo (primeira linha)
+- Sempre use para classes de outro namespace
+- `\\` na frente das classes nativas (DateTime, Exception) dentro do namespace
+- PSR-4: namespace bate com as pastas
 - Laravel: App\\, Database\\, Tests\\
-- Группировка use для импорта из одного namespace
+- Agrupamento use para importar do mesmo namespace
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай структуру классов с namespace
+### Exercício 1: Crie uma estrutura de classes com namespace
 
-Создай классы `User`, `Post`, `Comment` в namespace `App\Models`. Создай сервисы `UserService`, `PostService` в namespace `App\Services`. Правильно импортируй зависимости.
+**Enunciado:** Crie as classes `User`, `Post`, `Comment` no namespace `App\Models`. Crie os services `UserService`, `PostService` no namespace `App\Services`. Importe as dependências certo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Models/User.php
@@ -772,7 +772,7 @@ class PostService
 
     public function createPost(string $title, string $authorEmail): Post
     {
-        $author = $this->userService->create('Author', $authorEmail);
+        $author = $this->userService->create('Autor', $authorEmail);
         return new Post($title, $author);
     }
 }
@@ -789,18 +789,18 @@ class PostService
 }
 ```
 
-После изменений:
+Depois das mudanças:
 ```bash
 composer dump-autoload
 ```
 </details>
 
-### Задание 2: Исправь конфликт имён
+### Exercício 2: Resolva o conflito de nomes
 
-Есть два класса `User`: `App\Models\User` и `App\DTO\User`. Используй оба в одном файле без конфликтов.
+**Enunciado:** Há duas classes `User`: `App\Models\User` e `App\DTO\User`. Use as duas no mesmo arquivo, sem conflito.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -831,20 +831,20 @@ class UserService
     }
 }
 
-// Использование
-$dto = new UserDTO('Иван', 'ivan@mail.com');
+// Uso
+$dto = new UserDTO('João', 'joao@email.com');
 $service = new UserService();
 $user = $service->create($dto);  // UserModel
 $backToDto = $service->toDTO($user);  // UserDTO
 ```
 </details>
 
-### Задание 3: Создай helper функции с namespace
+### Exercício 3: Crie helper functions com namespace
 
-Создай файл `app/Helpers/helpers.php` с функциями `format_price()` и `str_limit()` в namespace `App\Helpers`. Настрой автозагрузку.
+**Enunciado:** Crie o arquivo `app/Helpers/helpers.php` com as funções `format_price()` e `str_limit()` no namespace `App\Helpers`. Configure o autoload.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Helpers/helpers.php
@@ -854,7 +854,7 @@ namespace App\Helpers;
 
 function format_price(int $cents): string
 {
-    return number_format($cents / 100, 2, '.', ' ') . ' ₽';
+    return 'R$ ' . number_format($cents / 100, 2, ',', '.');
 }
 
 function str_limit(string $text, int $length): string
@@ -878,7 +878,7 @@ function str_limit(string $text, int $length): string
     }
 }
 
-// Использование
+// Uso
 namespace App\Services;
 
 use function App\Helpers\{format_price, str_limit};
@@ -887,7 +887,7 @@ class ProductService
 {
     public function getFormattedPrice(int $price): string
     {
-        return format_price($price);  // "19 999.00 ₽"
+        return format_price($price);  // "R$ 19.999,00"
     }
 
     public function getShortDescription(string $description): string
@@ -896,11 +896,11 @@ class ProductService
     }
 }
 
-// После изменений
+// Depois das mudanças
 // composer dump-autoload
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

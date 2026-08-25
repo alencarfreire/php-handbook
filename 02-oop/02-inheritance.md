@@ -1,34 +1,34 @@
-# 2.2 Наследование
+# 2.2 Herança
 
-## Краткое резюме
+## Resumo
 
-> **Наследование** — механизм создания класса на основе другого (extends). Дочерний класс наследует свойства и методы родителя.
+> **Herança** — mecanismo para criar uma classe a partir de outra (`extends`). A classe filha herda propriedades e métodos do pai.
 >
-> **Ключевые концепции:** переопределение методов (override), parent::__construct(), final (запрет наследования/переопределения), abstract (абстрактные классы и методы).
+> **Conceitos-chave:** override de métodos, parent::__construct(), final (trava herança/override), abstract (classe e método abstratos).
 >
-> **Важно:** PHP поддерживает только одиночное наследование. Для множественного поведения используй Трейты или Интерфейсы.
+> **Importante:** PHP só tem herança simples. Para vários comportamentos, use trait ou interface.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое наследование](#что-такое-наследование)
-- [Переопределение методов (Override)](#переопределение-методов-override)
+- [O que é herança](#o-que-é-herança)
+- [Sobrescrita de métodos (Override)](#sobrescrita-de-métodos-override)
 - [parent::__construct()](#parent__construct)
-- [final (запрет наследования/переопределения)](#final-запрет-наследованияпереопределения)
-- [abstract (абстрактные классы)](#abstract-абстрактные-классы)
-- [Множественное наследование (НЕТ в PHP)](#множественное-наследование-нет-в-php)
-- [Резюме](#резюме-наследования)
-- [Практические задания](#практические-задания)
+- [final (proíbe herança/override)](#final-proíbe-herançaoverride)
+- [abstract (classes abstratas)](#abstract-classes-abstratas)
+- [Herança múltipla (NÃO existe em PHP)](#herança-múltipla-não-existe-em-php)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое наследование
+## O que é herança
 
-**Что это:**
-Механизм, позволяющий создать класс на основе другого класса, наследуя его свойства и методы.
+**O que é:**
+Mecanismo para criar uma classe a partir de outra, herdando propriedades e métodos.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
@@ -41,7 +41,7 @@ class Animal
 
     public function eat(): string
     {
-        return "{$this->name} ест";
+        return "{$this->name} come";
     }
 }
 
@@ -49,7 +49,7 @@ class Dog extends Animal
 {
     public function bark(): string
     {
-        return "{$this->name} лает: Гав!";
+        return "{$this->name} late: Au!";
     }
 }
 
@@ -57,25 +57,25 @@ class Cat extends Animal
 {
     public function meow(): string
     {
-        return "{$this->name} мяукает: Мяу!";
+        return "{$this->name} mia: Miau!";
     }
 }
 
-$dog = new Dog('Шарик');
-echo $dog->eat();   // "Шарик ест" (унаследовано от Animal)
-echo $dog->bark();  // "Шарик лает: Гав!" (собственный метод)
+$dog = new Dog('Rex');
+echo $dog->eat();   // "Rex come" (herdado de Animal)
+echo $dog->bark();  // "Rex late: Au!" (método próprio)
 
-$cat = new Cat('Мурка');
-echo $cat->eat();   // "Мурка ест" (унаследовано)
-echo $cat->meow();  // "Мурка мяукает: Мяу!"
+$cat = new Cat('Mimi');
+echo $cat->eat();   // "Mimi come" (herdado)
+echo $cat->meow();  // "Mimi mia: Miau!"
 ```
 
-**Когда использовать:**
-Когда классы имеют общую функциональность (IS-A отношение: Dog IS-A Animal).
+**Quando usar:**
+Quando as classes compartilham comportamento (relação IS-A: Dog IS-A Animal).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый контроллер в Laravel
+// Controller base no Laravel
 class Controller
 {
     protected function respondWithSuccess(mixed $data, int $status = 200): JsonResponse
@@ -94,7 +94,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::all();
-        return $this->respondWithSuccess($users);  // Используем метод родителя
+        return $this->respondWithSuccess($users);  // Usa o método do pai
     }
 
     public function store(Request $request)
@@ -111,12 +111,12 @@ class UserController extends Controller
 }
 
 // Eloquent Model
-class Post extends Model  // Наследует от Model
+class Post extends Model  // Herda de Model
 {
     protected $fillable = ['title', 'content'];
 
-    // Получаем все методы Model: find(), create(), update(), delete()
-    // + можем добавить свои
+    // Ganha todos os métodos do Model: find(), create(), update(), delete()
+    // + você pode adicionar os seus
     public function isPublished(): bool
     {
         return $this->status === 'published';
@@ -124,32 +124,32 @@ class Post extends Model  // Наследует от Model
 }
 ```
 
-**На собеседовании скажешь:**
-> "Наследование через extends. Дочерний класс получает свойства и методы родителя. В Laravel все модели наследуются от Model, контроллеры от Controller. Использую для IS-A отношений."
+**Na entrevista:**
+> "Herança é com extends. A classe filha ganha propriedades e métodos do pai. No Laravel, model herda de Model, controller herda de Controller. Uso para relação IS-A."
 
 ---
 
-## Переопределение методов (Override)
+## Sobrescrita de métodos (Override)
 
-**Что это:**
-Возможность изменить поведение метода родителя в дочернем классе.
+**O que é:**
+Mudar o comportamento do método do pai na classe filha.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
     public function makeSound(): string
     {
-        return "Какой-то звук";
+        return "Algum som";
     }
 }
 
 class Dog extends Animal
 {
-    // Переопределяем метод
+    // Sobrescreve o método
     public function makeSound(): string
     {
-        return "Гав!";
+        return "Au!";
     }
 }
 
@@ -157,38 +157,38 @@ class Cat extends Animal
 {
     public function makeSound(): string
     {
-        return "Мяу!";
+        return "Miau!";
     }
 }
 
 $dog = new Dog();
-echo $dog->makeSound();  // "Гав!" (переопределённый метод)
+echo $dog->makeSound();  // "Au!" (método sobrescrito)
 
 $cat = new Cat();
-echo $cat->makeSound();  // "Мяу!"
+echo $cat->makeSound();  // "Miau!"
 ```
 
-**Когда использовать:**
-Когда нужно изменить или расширить поведение родительского метода.
+**Quando usar:**
+Quando você precisa mudar ou estender o comportamento do método do pai.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent Model с переопределением save()
+// Eloquent Model com override de save()
 class Post extends Model
 {
     public function save(array $options = [])
     {
-        // Дополнительная логика перед сохранением
+        // Lógica extra antes de salvar
         if (empty($this->slug)) {
             $this->slug = Str::slug($this->title);
         }
 
-        // Вызов родительского метода
+        // Chama o método do pai
         return parent::save($options);
     }
 }
 
-// API Resource с переопределением toArray()
+// API Resource com override de toArray()
 class UserResource extends JsonResource
 {
     public function toArray($request): array
@@ -198,13 +198,13 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'created_at' => $this->created_at->toDateTimeString(),
-            // Добавляем дополнительные поля
+            // Campos extras
             'posts_count' => $this->posts->count(),
         ];
     }
 }
 
-// FormRequest с переопределением rules()
+// FormRequest com override de rules()
 class StorePostRequest extends FormRequest
 {
     public function rules(): array
@@ -216,28 +216,28 @@ class StorePostRequest extends FormRequest
         ];
     }
 
-    // Можем переопределить messages()
+    // Você pode sobrescrever messages()
     public function messages(): array
     {
         return [
-            'title.required' => 'Заголовок обязателен',
-            'content.required' => 'Содержимое обязательно',
+            'title.required' => 'O título é obrigatório',
+            'content.required' => 'O conteúdo é obrigatório',
         ];
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "Переопределение — изменение метода родителя в дочернем классе. parent::method() вызывает родительский метод. В Laravel переопределяю save() в моделях, toArray() в Resources, rules() в FormRequests."
+**Na entrevista:**
+> "Override é mudar o método do pai na classe filha. parent::method() chama o do pai. No Laravel eu sobrescrevo save() no model, toArray() no Resource, rules() no FormRequest."
 
 ---
 
 ## parent::__construct()
 
-**Что это:**
-Вызов конструктора родительского класса из дочернего.
+**O que é:**
+Chamar o construtor da classe pai a partir da filha.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
@@ -257,26 +257,26 @@ class Dog extends Animal
 
     public function __construct(string $name, int $age, string $breed)
     {
-        parent::__construct($name, $age);  // Вызов родительского конструктора
+        parent::__construct($name, $age);  // Chama o construtor do pai
         $this->breed = $breed;
     }
 
     public function getInfo(): string
     {
-        return "{$this->name}, {$this->age} лет, порода: {$this->breed}";
+        return "{$this->name}, {$this->age} anos, raça: {$this->breed}";
     }
 }
 
-$dog = new Dog('Шарик', 3, 'Лабрадор');
-echo $dog->getInfo();  // "Шарик, 3 лет, порода: Лабрадор"
+$dog = new Dog('Rex', 3, 'Labrador');
+echo $dog->getInfo();  // "Rex, 3 anos, raça: Labrador"
 ```
 
-**Когда использовать:**
-**Всегда** вызывай `parent::__construct()`, если у родителя есть конструктор.
+**Quando usar:**
+**Sempre** chame `parent::__construct()` se o pai tem construtor.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Service с базовыми зависимостями
+// Service com dependências da base
 class BaseService
 {
     public function __construct(
@@ -291,12 +291,12 @@ class OrderService extends BaseService
         private OrderRepository $repository,
         private PaymentGateway $gateway,
     ) {
-        parent::__construct($logger);  // Передаём logger родителю
+        parent::__construct($logger);  // Passa o logger para o pai
     }
 
     public function create(array $data): Order
     {
-        $this->logger->info('Creating order', $data);
+        $this->logger->info('Criando pedido', $data);
         $order = $this->repository->create($data);
         $this->gateway->charge($order->amount);
 
@@ -311,7 +311,7 @@ class Post extends Model
     {
         parent::__construct($attributes);
 
-        // Дополнительная инициализация
+        // Inicialização extra
         $this->perPage = 20;
     }
 }
@@ -334,22 +334,22 @@ class OrderException extends Exception
     }
 }
 
-throw new OrderException('Payment failed', $order);
+throw new OrderException('Pagamento falhou', $order);
 ```
 
-**На собеседовании скажешь:**
-> "parent::__construct() вызывает конструктор родителя. Всегда вызываю, если у родителя есть конструктор. Используется для инициализации базовых свойств, затем добавляю свои."
+**Na entrevista:**
+> "parent::__construct() chama o construtor do pai. Sempre chamo se o pai tem construtor. Primeiro inicializo o que é do pai, depois o que é meu."
 
 ---
 
-## final (запрет наследования/переопределения)
+## final (proíbe herança/override)
 
-**Что это:**
-Ключевое слово, запрещающее наследование класса или переопределение метода.
+**O que é:**
+Palavra-chave que trava herança da classe ou override do método.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// final класс — нельзя наследовать
+// final class — não dá para herdar
 final class Money
 {
     public function __construct(
@@ -365,7 +365,7 @@ final class Money
 
 class Euro extends Money {}  // ❌ Fatal error: Cannot extend final class Money
 
-// final метод — нельзя переопределить
+// final method — não dá para sobrescrever
 class Animal
 {
     final public function getId(): int
@@ -375,7 +375,7 @@ class Animal
 
     public function makeSound(): string
     {
-        return "Sound";
+        return "Som";
     }
 }
 
@@ -386,20 +386,20 @@ class Dog extends Animal
         return 123;
     }
 
-    public function makeSound(): string  // ✅ OK (метод не final)
+    public function makeSound(): string  // ✅ OK (método não é final)
     {
-        return "Гав!";
+        return "Au!";
     }
 }
 ```
 
-**Когда использовать:**
-- `final class` — для Value Objects, где наследование не имеет смысла
-- `final method` — для критичных методов, которые нельзя изменять
+**Quando usar:**
+- `final class` — para Value Objects, onde herança não faz sentido
+- `final method` — para método crítico, que ninguém pode mudar
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Value Object — не должен наследоваться
+// Value Object — não deve ser herdado
 final class Email
 {
     private string $value;
@@ -407,7 +407,7 @@ final class Email
     public function __construct(string $email)
     {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Invalid email');
+            throw new \InvalidArgumentException('Email inválido');
         }
 
         $this->value = $email;
@@ -419,7 +419,7 @@ final class Email
     }
 }
 
-// DTO — не должен наследоваться
+// DTO — não deve ser herdado
 final class CreateUserDTO
 {
     public function __construct(
@@ -429,19 +429,19 @@ final class CreateUserDTO
     ) {}
 }
 
-// Критичный метод, который нельзя переопределить
+// Método crítico: a filha não pode sobrescrever
 class Model
 {
     final public function save(): bool
     {
-        // Критичная логика сохранения
-        // Нельзя изменить в наследниках
+        // Lógica crítica de persistência
+        // Filhos não podem mudar
         return $this->performSave();
     }
 
     protected function performSave(): bool
     {
-        // Можно переопределить в наследниках
+        // Filhos podem sobrescrever
         return true;
     }
 }
@@ -451,23 +451,23 @@ final class Authenticate
 {
     public function handle($request, Closure $next)
     {
-        // Логика аутентификации
+        // Lógica de autenticação
         return $next($request);
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "final class запрещает наследование, final method — переопределение. Использую для Value Objects (Email, Money), DTO, критичных методов. В Laravel некоторые классы final (например, некоторые middleware)."
+**Na entrevista:**
+> "final class trava herança, final method trava override. Uso em Value Object (Email, Money), DTO e método crítico. No Laravel algumas classes são final — middleware, por exemplo."
 
 ---
 
-## abstract (абстрактные классы)
+## abstract (classes abstratas)
 
-**Что это:**
-Класс, который нельзя создать напрямую (только наследовать), может содержать абстрактные методы (без реализации).
+**O que é:**
+Classe que você não instancia (só herda). Pode ter método abstrato (sem implementação).
 
-**Как работает:**
+**Como funciona:**
 ```php
 abstract class Shape
 {
@@ -478,10 +478,10 @@ abstract class Shape
         $this->color = $color;
     }
 
-    // Абстрактный метод (без реализации)
+    // Método abstrato (sem implementação)
     abstract public function calculateArea(): float;
 
-    // Обычный метод (с реализацией)
+    // Método comum (com implementação)
     public function getColor(): string
     {
         return $this->color;
@@ -497,7 +497,7 @@ class Circle extends Shape
         parent::__construct($color);
     }
 
-    // ОБЯЗАТЕЛЬНО реализовать
+    // OBRIGATÓRIO implementar
     public function calculateArea(): float
     {
         return pi() * $this->radius ** 2;
@@ -529,12 +529,12 @@ $rectangle = new Rectangle('blue', 4, 6);
 echo $rectangle->calculateArea();  // 24
 ```
 
-**Когда использовать:**
-Когда есть общая логика, но часть методов должна быть реализована в наследниках.
+**Quando usar:**
+Quando tem lógica comum, mas parte dos métodos precisa ser implementada na filha.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовый репозиторий
+// Repository base
 abstract class BaseRepository
 {
     public function __construct(
@@ -551,7 +551,7 @@ abstract class BaseRepository
         return $this->model->all();
     }
 
-    // Каждый репозиторий должен реализовать свои критерии поиска
+    // Cada repository implementa o próprio critério de busca
     abstract public function findByCustomCriteria(array $criteria): Collection;
 }
 
@@ -586,7 +586,7 @@ abstract class PaymentGateway
 
     protected function logTransaction(string $type, int $amount): void
     {
-        // Общая логика логирования
+        // Lógica comum de log
         Log::info("Payment {$type}: {$amount}");
     }
 }
@@ -609,26 +609,26 @@ class StripeGateway extends PaymentGateway
 }
 ```
 
-**На собеседовании скажешь:**
-> "abstract class — нельзя создать напрямую, только наследовать. Может содержать abstract методы (без реализации) — наследники обязаны реализовать. Использую для базовых классов с общей логикой, где часть методов реализуется в наследниках."
+**Na entrevista:**
+> "abstract class você não instancia, só herda. Pode ter método abstract (sem corpo) — a filha é obrigada a implementar. Uso em classe base com lógica comum, quando parte do comportamento fica na filha."
 
 ---
 
-## Множественное наследование (НЕТ в PHP)
+## Herança múltipla (NÃO existe em PHP)
 
-**Что это:**
-PHP НЕ поддерживает множественное наследование (один класс не может наследовать от нескольких).
+**O que é:**
+PHP NÃO tem herança múltipla (uma classe não herda de várias).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class A {}
 class B {}
 
 class C extends A, B {}  // ❌ Syntax error
 
-// Вместо множественного наследования используем:
+// No lugar de herança múltipla, use:
 
-// 1. Интерфейсы (можно реализовать несколько)
+// 1. Interfaces (pode implementar várias)
 interface Flyable
 {
     public function fly(): string;
@@ -643,21 +643,21 @@ class Duck implements Flyable, Swimmable
 {
     public function fly(): string
     {
-        return "Утка летит";
+        return "O pato voa";
     }
 
     public function swim(): string
     {
-        return "Утка плывёт";
+        return "O pato nada";
     }
 }
 
-// 2. Трейты (можно использовать несколько)
+// 2. Traits (pode usar várias)
 trait Flyable
 {
     public function fly(): string
     {
-        return "Летит";
+        return "Voa";
     }
 }
 
@@ -665,7 +665,7 @@ trait Swimmable
 {
     public function swim(): string
     {
-        return "Плывёт";
+        return "Nada";
     }
 }
 
@@ -675,27 +675,27 @@ class Duck
 }
 
 $duck = new Duck();
-echo $duck->fly();   // "Летит"
-echo $duck->swim();  // "Плывёт"
+echo $duck->fly();   // "Voa"
+echo $duck->swim();  // "Nada"
 ```
 
-**Когда использовать:**
-Для композиции поведения используй **Трейты** (подробнее в теме 2.5).
+**Quando usar:**
+Para compor comportamento, use **trait** (mais em 2.5).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel Model с трейтами
+// Model Laravel com traits
 class Post extends Model
 {
-    use HasFactory;      // Фабрики для тестов
-    use SoftDeletes;     // Мягкое удаление
-    use Notifiable;      // Уведомления
-    use HasUuid;         // UUID вместо ID
+    use HasFactory;      // Factories para testes
+    use SoftDeletes;     // Soft delete
+    use Notifiable;      // Notificações
+    use HasUuid;         // UUID no lugar de ID
 
-    // Получаем методы из всех трейтов
+    // Ganha os métodos de todos os traits
 }
 
-// Множественное поведение через traits
+// Vários comportamentos via traits
 trait Loggable
 {
     public function log(string $message): void
@@ -718,54 +718,54 @@ class UserService
 
     public function process(User $user): void
     {
-        $this->log("Processing user {$user->id}");
+        $this->log("Processando usuário {$user->id}");
         $this->cache("user:{$user->id}", $user);
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "PHP НЕ поддерживает множественное наследование. Вместо этого: интерфейсы (можно несколько) или трейты (можно несколько). Трейты — горизонтальное переиспользование кода без наследования."
+**Na entrevista:**
+> "PHP não tem herança múltipla. No lugar: interface (várias) ou trait (várias). Trait é reuso horizontal de código, sem herança."
 
 ---
 
-## Резюме наследования
+## Recapitulando
 
-**Основное:**
-- `extends` — наследование от одного класса
-- Дочерний класс наследует свойства и методы родителя
-- Переопределение методов (override) — изменить поведение родительского метода
-- `parent::method()` — вызов метода родителя
-- `parent::__construct()` — всегда вызывай, если у родителя есть конструктор
-- `final class` — запрет наследования
-- `final method` — запрет переопределения
-- `abstract class` — нельзя создать, только наследовать
-- `abstract method` — без реализации, наследники обязаны реализовать
-- Множественное наследование НЕТ → используй Трейты или Интерфейсы
+**O essencial:**
+- `extends` — herda de uma classe só
+- A classe filha herda propriedades e métodos do pai
+- Override — muda o comportamento do método do pai
+- `parent::method()` — chama o método do pai
+- `parent::__construct()` — sempre chame se o pai tem construtor
+- `final class` — trava herança
+- `final method` — trava override
+- `abstract class` — não instancia, só herda
+- `abstract method` — sem implementação; a filha é obrigada a implementar
+- Herança múltipla NÃO existe → use trait ou interface
 
-**Важно на собесе:**
-- PHP — одиночное наследование (только один родитель)
-- `abstract` методы обязательно реализовать в наследниках
-- `final` использую для Value Objects и критичных методов
-- Для композиции поведения — Трейты
-- В Laravel: Model, Controller, Middleware наследуются от базовых классов
+**Importante na entrevista:**
+- PHP tem herança simples (um pai só)
+- Método `abstract` a filha é obrigada a implementar
+- `final` eu uso em Value Object e método crítico
+- Para compor comportamento — trait
+- No Laravel: Model, Controller, Middleware herdam das classes base
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Базовый контроллер с общими методами
+### Exercício 1: Controller base com métodos comuns
 
-Создай базовый `Controller` с методами `success()` и `error()` для API ответов. Затем создай `UserController`, который наследует от `Controller`.
+**Enunciado:** Crie um `Controller` base com os métodos `success()` e `error()` para respostas de API. Depois crie um `UserController` que herda de `Controller`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Controller
 {
-    // Общие методы для всех контроллеров
-    protected function success(mixed $data, string $message = 'Success', int $status = 200): array
+    // Métodos comuns a todos os controllers
+    protected function success(mixed $data, string $message = 'Sucesso', int $status = 200): array
     {
         return [
             'status' => 'success',
@@ -801,7 +801,7 @@ abstract class Controller
         ];
     }
 
-    // Абстрактный метод — каждый контроллер реализует сам
+    // Método abstrato — cada controller implementa o seu
     abstract protected function authorize(string $action): bool;
 }
 
@@ -810,58 +810,58 @@ class UserController extends Controller
     public function index(): array
     {
         if (!$this->authorize('view')) {
-            return $this->error('Unauthorized', 403);
+            return $this->error('Não autorizado', 403);
         }
 
         $users = [
-            ['id' => 1, 'name' => 'Иван'],
-            ['id' => 2, 'name' => 'Пётр'],
+            ['id' => 1, 'name' => 'João'],
+            ['id' => 2, 'name' => 'Pedro'],
         ];
 
-        return $this->success($users, 'Users retrieved');
+        return $this->success($users, 'Usuários listados');
     }
 
     public function store(array $data): array
     {
         if (!$this->authorize('create')) {
-            return $this->error('Unauthorized', 403);
+            return $this->error('Não autorizado', 403);
         }
 
-        // Валидация
+        // Validação
         if (empty($data['name'])) {
-            return $this->error('Validation failed', 422, [
-                'name' => ['Name is required']
+            return $this->error('Falha na validação', 422, [
+                'name' => ['O nome é obrigatório']
             ]);
         }
 
         $user = ['id' => 3, 'name' => $data['name']];
-        return $this->success($user, 'User created', 201);
+        return $this->success($user, 'Usuário criado', 201);
     }
 
     protected function authorize(string $action): bool
     {
-        // Логика авторизации для пользователей
-        return true;  // Упрощённо
+        // Lógica de autorização dos usuários
+        return true;  // Simplificado
     }
 }
 
-// Использование
+// Uso
 $controller = new UserController();
 print_r($controller->index());
 // [
 //   'status' => 'success',
-//   'message' => 'Users retrieved',
-//   'data' => [['id' => 1, 'name' => 'Иван'], ...]
+//   'message' => 'Usuários listados',
+//   'data' => [['id' => 1, 'name' => 'João'], ...]
 // ]
 ```
 </details>
 
-### Задание 2: Иерархия моделей с общей логикой
+### Exercício 2: Hierarquia de models com lógica comum
 
-Создай абстрактный класс `Model` с методами `save()`, `delete()`. Затем создай `Post` и `User` наследников.
+**Enunciado:** Crie uma classe abstrata `Model` com os métodos `save()` e `delete()`. Depois crie os filhos `Post` e `User`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Model
@@ -987,24 +987,24 @@ class User extends Model
     }
 }
 
-// Использование
+// Uso
 $post = new Post();
-$post->fill(['title' => 'My Post', 'content' => 'Content']);
+$post->fill(['title' => 'Meu post', 'content' => 'Conteúdo']);
 $post->save();  // INSERT INTO posts
 
 $user = User::find(1);  // SELECT * FROM users WHERE id = 1
-$user->name = 'Новое имя';
-print_r($user->getDirty());  // ['name' => 'Новое имя']
+$user->name = 'Novo nome';
+print_r($user->getDirty());  // ['name' => 'Novo nome']
 $user->save();  // UPDATE users
 ```
 </details>
 
-### Задание 3: final класс и переопределение методов
+### Exercício 3: Classe final e override de métodos
 
-Создай `Shape` с методом `calculateArea()` (можно переопределить) и `getColor()` (final, нельзя переопределить).
+**Enunciado:** Crie `Shape` com o método `calculateArea()` (pode sobrescrever) e `getColor()` (final, não pode sobrescrever).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Shape
@@ -1013,7 +1013,7 @@ abstract class Shape
         protected string $color,
     ) {}
 
-    // final — нельзя переопределить в наследниках
+    // final — a filha não pode sobrescrever
     final public function getColor(): string
     {
         return $this->color;
@@ -1030,7 +1030,7 @@ abstract class Shape
         );
     }
 
-    // Абстрактные методы — наследники ОБЯЗАНЫ реализовать
+    // Métodos abstratos — a filha É OBRIGADA a implementar
     abstract public function calculateArea(): float;
     abstract public function calculatePerimeter(): float;
 }
@@ -1054,7 +1054,7 @@ class Circle extends Shape
         return 2 * pi() * $this->radius;
     }
 
-    // ❌ Нельзя переопределить final метод
+    // ❌ Não dá para sobrescrever método final
     // public function getColor(): string
     // {
     //     return "Circle color: {$this->color}";
@@ -1090,7 +1090,7 @@ class Rectangle extends Shape
     }
 }
 
-// final класс — нельзя наследовать
+// final class — não dá para herdar
 final class Square extends Rectangle
 {
     public function __construct(string $color, float $size)
@@ -1099,10 +1099,10 @@ final class Square extends Rectangle
     }
 }
 
-// ❌ Нельзя наследовать от final класса
+// ❌ Não dá para herdar de final class
 // class SmallSquare extends Square {}
 
-// Использование
+// Uso
 $circle = new Circle('red', 5);
 echo $circle->describe();
 // Red Circle (Area: 78.54, Perimeter: 31.42)
@@ -1119,4 +1119,4 @@ echo $square->describe();
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

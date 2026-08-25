@@ -1,63 +1,63 @@
-# 2.6 Магические методы
+# 2.6 Métodos mágicos
 
-## Краткое резюме
+## Resumo
 
-> **Магические методы** — специальные методы с двумя подчёркиваниями (__), которые вызываются автоматически в определённых ситуациях.
+> **Métodos mágicos** são métodos especiais com dois underscores (__). O PHP chama sozinho em situações específicas.
 >
-> **Основные:** __construct (создание), __get/__set (доступ к свойствам), __call/__callStatic (вызов методов), __toString (преобразование в строку), __invoke (вызов как функции), __clone (клонирование).
+> **Os principais:** __construct (criação), __get/__set (acesso a propriedades), __call/__callStatic (chamada de métodos), __toString (conversão para string), __invoke (chamar como função), __clone (clonagem).
 >
-> **Важно:** Eloquent использует __get/__set для $attributes, __call для scopes. Не злоупотреблять — усложняют отладку.
+> **Importante:** Eloquent usa __get/__set para $attributes, __call para scopes. Não abuse — complica o debug.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [__construct и __destruct](#__construct-и-__destruct)
+- [__construct e __destruct](#__construct-e-__destruct)
 - [__get, __set, __isset, __unset](#__get-__set-__isset-__unset)
-- [__call и __callStatic](#__call-и-__callstatic)
+- [__call e __callStatic](#__call-e-__callstatic)
 - [__toString](#__tostring)
 - [__invoke](#__invoke)
 - [__clone](#__clone)
-- [__sleep и __wakeup](#__sleep-и-__wakeup)
-- [Резюме](#резюме-магических-методов)
-- [Практические задания](#практические-задания)
+- [__sleep e __wakeup](#__sleep-e-__wakeup)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## __construct и __destruct
+## __construct e __destruct
 
-**Что это:**
-`__construct` вызывается при создании объекта, `__destruct` — при уничтожении.
+**O que é:**
+`__construct` roda na criação do objeto, `__destruct` na destruição.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
     public function __construct(
         private string $name,
     ) {
-        echo "User создан: {$this->name}\n";
+        echo "User criado: {$this->name}\n";
     }
 
     public function __destruct()
     {
-        echo "User удалён: {$this->name}\n";
+        echo "User destruído: {$this->name}\n";
     }
 }
 
-$user = new User('Иван');  // "User создан: Иван"
-unset($user);              // "User удалён: Иван"
+$user = new User('João');  // "User criado: João"
+unset($user);              // "User destruído: João"
 
-// __destruct вызывается автоматически в конце скрипта
-$user = new User('Пётр');
-// Скрипт завершается → "User удалён: Пётр"
+// __destruct roda sozinho no fim do script
+$user = new User('Pedro');
+// Script termina → "User destruído: Pedro"
 ```
 
-**Когда использовать:**
-- `__construct` — инициализация, DI
-- `__destruct` — очистка ресурсов (закрытие соединений, файлов)
+**Quando usar:**
+- `__construct` — inicialização, DI
+- `__destruct` — limpar recurso (fechar conexão, arquivo)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Database connection
 class Database
@@ -73,7 +73,7 @@ class Database
 
     public function __destruct()
     {
-        $this->connection = null;  // Закрыть соединение
+        $this->connection = null;  // Fecha a conexão
     }
 }
 
@@ -95,47 +95,47 @@ class FileLogger
     public function __destruct()
     {
         if ($this->handle) {
-            fclose($this->handle);  // Закрыть файл
+            fclose($this->handle);  // Fecha o arquivo
         }
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "__construct вызывается при создании объекта. __destruct — при уничтожении (unset или конец скрипта). Использую __destruct для очистки ресурсов (закрытие соединений, файлов)."
+**Na entrevista:**
+> "__construct roda quando o objeto nasce. __destruct quando morre (unset ou fim do script). Uso __destruct pra fechar conexão e arquivo."
 
 ---
 
 ## __get, __set, __isset, __unset
 
-**Что это:**
-Перехват обращения к несуществующим или недоступным свойствам.
+**O que é:**
+Intercepta acesso a propriedade inexistente ou inacessível.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
     private array $data = [];
 
-    // Перехват ЧТЕНИЯ несуществующего свойства
+    // Intercepta LEITURA de propriedade inexistente
     public function __get(string $name): mixed
     {
         return $this->data[$name] ?? null;
     }
 
-    // Перехват ЗАПИСИ в несуществующее свойство
+    // Intercepta ESCRITA em propriedade inexistente
     public function __set(string $name, mixed $value): void
     {
         $this->data[$name] = $value;
     }
 
-    // Перехват isset()
+    // Intercepta isset()
     public function __isset(string $name): bool
     {
         return isset($this->data[$name]);
     }
 
-    // Перехват unset()
+    // Intercepta unset()
     public function __unset(string $name): void
     {
         unset($this->data[$name]);
@@ -143,18 +143,18 @@ class User
 }
 
 $user = new User();
-$user->name = 'Иван';         // __set('name', 'Иван')
-echo $user->name;             // __get('name') → "Иван"
+$user->name = 'João';         // __set('name', 'João')
+echo $user->name;             // __get('name') → "João"
 var_dump(isset($user->name)); // __isset('name') → true
 unset($user->name);           // __unset('name')
 ```
 
-**Когда использовать:**
-Для динамических свойств, прокси-объектов, ORM моделей.
+**Quando usar:**
+Propriedade dinâmica, objeto proxy, model de ORM.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent Model (упрощённо)
+// Eloquent Model (simplificado)
 class Model
 {
     protected array $attributes = [];
@@ -176,23 +176,23 @@ class Model
 }
 
 $user = new User();
-$user->name = 'Иван';
-$user->email = 'ivan@mail.com';
-echo $user->name;  // Читается из $attributes
+$user->name = 'João';
+$user->email = 'joao@email.com';
+echo $user->name;  // Lê de $attributes
 
-// Lazy loading отношений
+// Lazy load de relações
 class Post extends Model
 {
     protected array $relations = [];
 
     public function __get(string $key): mixed
     {
-        // Если это свойство — вернуть
+        // Se for propriedade — devolve
         if (isset($this->attributes[$key])) {
             return $this->attributes[$key];
         }
 
-        // Если это отношение — загрузить
+        // Se for relação — carrega
         if (method_exists($this, $key)) {
             return $this->relations[$key] ??= $this->$key()->get();
         }
@@ -202,57 +202,57 @@ class Post extends Model
 }
 
 $post = Post::find(1);
-echo $post->title;   // Свойство (из $attributes)
-echo $post->author->name;  // Отношение (lazy loading через __get)
+echo $post->title;   // Propriedade (de $attributes)
+echo $post->author->name;  // Relação (lazy load via __get)
 ```
 
-**На собеседовании скажешь:**
-> "__get перехватывает чтение несуществующего свойства, __set — запись, __isset — isset(), __unset — unset(). Eloquent использует для работы с $attributes и lazy loading отношений."
+**Na entrevista:**
+> "__get intercepta leitura de propriedade inexistente, __set a escrita, __isset o isset(), __unset o unset(). Eloquent usa isso em $attributes e no lazy load das relações."
 
 ---
 
-## __call и __callStatic
+## __call e __callStatic
 
-**Что это:**
-Перехват вызова несуществующих методов (обычных и статических).
+**O que é:**
+Intercepta chamada de método inexistente (de instância e estático).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Magic
 {
-    // Перехват вызова несуществующего метода
+    // Intercepta chamada de método inexistente
     public function __call(string $method, array $args): mixed
     {
-        echo "Вызван метод: {$method}\n";
-        echo "Аргументы: " . implode(', ', $args) . "\n";
+        echo "Método chamado: {$method}\n";
+        echo "Argumentos: " . implode(', ', $args) . "\n";
         return null;
     }
 
-    // Перехват вызова несуществующего статического метода
+    // Intercepta chamada de método estático inexistente
     public static function __callStatic(string $method, array $args): mixed
     {
-        echo "Вызван статический метод: {$method}\n";
-        echo "Аргументы: " . implode(', ', $args) . "\n";
+        echo "Método estático chamado: {$method}\n";
+        echo "Argumentos: " . implode(', ', $args) . "\n";
         return null;
     }
 }
 
 $obj = new Magic();
 $obj->nonExistent('arg1', 'arg2');
-// Вызван метод: nonExistent
-// Аргументы: arg1, arg2
+// Método chamado: nonExistent
+// Argumentos: arg1, arg2
 
 Magic::staticNonExistent('arg1', 'arg2');
-// Вызван статический метод: staticNonExistent
-// Аргументы: arg1, arg2
+// Método estático chamado: staticNonExistent
+// Argumentos: arg1, arg2
 ```
 
-**Когда использовать:**
-Для динамических методов, методов-маппёров, fluent API.
+**Quando usar:**
+Método dinâmico, mapper, fluent API.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Query Builder (упрощённо)
+// Query Builder (simplificado)
 class QueryBuilder
 {
     protected array $wheres = [];
@@ -286,7 +286,7 @@ class User extends Model
 {
     public function __call(string $method, array $parameters)
     {
-        // scope + метод
+        // scope + método
         if (method_exists($this, 'scope' . ucfirst($method))) {
             return $this->{'scope' . ucfirst($method)}(...$parameters);
         }
@@ -300,32 +300,32 @@ class User extends Model
     }
 }
 
-User::active()->get();  // Вызовет scopeActive через __callStatic
+User::active()->get();  // Chama scopeActive via __callStatic
 
 // Laravel Facade
 class Cache
 {
     public static function __callStatic(string $method, array $args): mixed
     {
-        $instance = app('cache');  // Получить из контейнера
+        $instance = app('cache');  // Pega do Service Container
         return $instance->$method(...$args);
     }
 }
 
-Cache::put('key', 'value', 3600);  // Через __callStatic
+Cache::put('key', 'value', 3600);  // Via __callStatic
 ```
 
-**На собеседовании скажешь:**
-> "__call перехватывает вызов несуществующего метода, __callStatic — статического. Eloquent использует для scopes (whereActive), Query Builder для where* методов, Facade для проксирования вызовов."
+**Na entrevista:**
+> "__call intercepta método inexistente, __callStatic o estático. Eloquent usa pra scopes (whereActive), Query Builder pra where*, Facade pra proxy das chamadas."
 
 ---
 
 ## __toString
 
-**Что это:**
-Преобразование объекта в строку.
+**O que é:**
+Converte o objeto em string.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -340,18 +340,18 @@ class User
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com');
-echo $user;  // "Иван (ivan@mail.com)" (вызовет __toString)
+$user = new User('João', 'joao@email.com');
+echo $user;  // "João (joao@email.com)" (chama __toString)
 
-// Без __toString
+// Sem __toString
 $obj = new stdClass();
 echo $obj;  // ❌ Error: Object of class stdClass could not be converted to string
 ```
 
-**Когда использовать:**
-Для удобного вывода объектов в строку, логирования, дебаггинга.
+**Quando usar:**
+Pra imprimir objeto como string, log e debug.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Value Object
 class Money
@@ -363,13 +363,13 @@ class Money
 
     public function __toString(): string
     {
-        $formatted = number_format($this->amount / 100, 2, '.', ' ');
-        return "{$formatted} {$this->currency}";
+        $formatted = number_format($this->amount / 100, 2, ',', '.');
+        return "R$ {$formatted}";
     }
 }
 
-$price = new Money(199900, 'RUB');
-echo "Цена: {$price}";  // "Цена: 1 999.00 RUB"
+$price = new Money(199900, 'BRL');
+echo "Preço: {$price}";  // "Preço: R$ 1.999,00"
 
 // Eloquent Model
 class User extends Model
@@ -381,7 +381,7 @@ class User extends Model
 }
 
 $user = User::find(1);
-echo "Пользователь: {$user}";  // "Пользователь: Иван"
+echo "Usuário: {$user}";  // "Usuário: João"
 
 // Exception
 class OrderException extends Exception
@@ -406,17 +406,17 @@ try {
 }
 ```
 
-**На собеседовании скажешь:**
-> "__toString преобразует объект в строку. Вызывается при echo, string cast, конкатенации. Использую для Value Objects (Money), моделей, exception. Удобно для логирования и вывода."
+**Na entrevista:**
+> "__toString converte o objeto em string. Roda no echo, no cast pra string e na concatenação. Uso em Value Object (Money), model, exception. Fica fácil de logar e imprimir."
 
 ---
 
 ## __invoke
 
-**Что это:**
-Позволяет вызывать объект как функцию.
+**O que é:**
+Deixa chamar o objeto como função.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Multiplier
 {
@@ -431,20 +431,20 @@ class Multiplier
 }
 
 $double = new Multiplier(2);
-echo $double(5);  // 10 (вызов объекта как функции)
+echo $double(5);  // 10 (chama o objeto como função)
 
 $triple = new Multiplier(3);
 echo $triple(5);  // 15
 
-// Можно использовать как callback
+// Dá pra usar como callback
 $numbers = [1, 2, 3, 4, 5];
 $doubled = array_map($double, $numbers);  // [2, 4, 6, 8, 10]
 ```
 
-**Когда использовать:**
-Для callable объектов, middleware, strategies, commands.
+**Quando usar:**
+Objeto callable, middleware, Strategy, Command.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Middleware
 class Authenticate
@@ -493,7 +493,7 @@ class PriceCalculator
 {
     public function calculate(int $price, DiscountStrategy $discount): int
     {
-        return $discount($price);  // Вызов объекта как функции
+        return $discount($price);  // Chama o objeto como função
     }
 }
 
@@ -519,21 +519,21 @@ class CreateUserCommand
     }
 }
 
-$command = new CreateUserCommand(['name' => 'Иван', 'email' => 'ivan@mail.com']);
-$user = $command(new UserRepository());  // Выполнить команду
+$command = new CreateUserCommand(['name' => 'João', 'email' => 'joao@email.com']);
+$user = $command(new UserRepository());  // Executa o command
 ```
 
-**На собеседовании скажешь:**
-> "__invoke позволяет вызывать объект как функцию. Объект становится callable. В Laravel middleware с __invoke, используется в Pipeline. Применяю для Strategy, Command patterns, callable объектов."
+**Na entrevista:**
+> "__invoke deixa chamar o objeto como função. O objeto vira callable. No Laravel, middleware com __invoke entra no Pipeline. Uso em Strategy, Command e objeto callable."
 
 ---
 
 ## __clone
 
-**Что это:**
-Вызывается при клонировании объекта через `clone`.
+**O que é:**
+Roda quando você clona o objeto com `clone`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -544,10 +544,10 @@ class User
 
     public function __clone()
     {
-        // Глубокое клонирование (клонировать вложенные объекты)
+        // Clonagem profunda (clona objetos aninhados)
         $this->address = clone $this->address;
 
-        echo "Объект клонирован\n";
+        echo "Objeto clonado\n";
     }
 }
 
@@ -556,16 +556,16 @@ class Address
     public function __construct(public string $city) {}
 }
 
-$user1 = new User('Иван', new Address('Москва'));
-$user2 = clone $user1;  // Вызовет __clone
+$user1 = new User('João', new Address('São Paulo'));
+$user2 = clone $user1;  // Chama __clone
 
-$user2->name = 'Пётр';
-$user2->address->city = 'Санкт-Петербург';
+$user2->name = 'Pedro';
+$user2->address->city = 'Rio de Janeiro';
 
-echo $user1->name;  // "Иван"
-echo $user1->address->city;  // "Москва" (не изменился, т.к. clone $this->address)
+echo $user1->name;  // "João"
+echo $user1->address->city;  // "São Paulo" (não mudou, por causa do clone $this->address)
 
-// Без __clone вложенные объекты НЕ клонируются
+// Sem __clone, objetos aninhados NÃO são clonados
 class UserBad
 {
     public function __construct(
@@ -574,39 +574,39 @@ class UserBad
     ) {}
 }
 
-$user1 = new UserBad('Иван', new Address('Москва'));
+$user1 = new UserBad('João', new Address('São Paulo'));
 $user2 = clone $user1;
 
-$user2->address->city = 'Санкт-Петербург';
-echo $user1->address->city;  // "Санкт-Петербург" (изменился! Ссылка на тот же объект)
+$user2->address->city = 'Rio de Janeiro';
+echo $user1->address->city;  // "Rio de Janeiro" (mudou! Mesma referência)
 ```
 
-**Когда использовать:**
-Для глубокого клонирования (копирование вложенных объектов), создания snapshot'ов.
+**Quando usar:**
+Clonagem profunda (copiar objetos aninhados), criar snapshot.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Создание копии модели
+// Cópia de um model
 class Post extends Model
 {
     public function __clone()
     {
-        $this->id = null;  // Сбросить ID (чтобы создать новую запись)
+        $this->id = null;  // Zera o ID (pra criar um registro novo)
         $this->slug = null;
         $this->created_at = null;
         $this->updated_at = null;
 
-        // Клонировать отношения
+        // Limpa as relações
         $this->relations = [];
     }
 }
 
 $original = Post::find(1);
 $duplicate = clone $original;
-$duplicate->title = 'Копия: ' . $original->title;
-$duplicate->save();  // Создаст новую запись (ID будет новый)
+$duplicate->title = 'Cópia: ' . $original->title;
+$duplicate->save();  // Cria um registro novo (ID novo)
 
-// Snapshot для сравнения изменений
+// Snapshot pra comparar mudanças
 class Order extends Model
 {
     private ?Order $snapshot = null;
@@ -637,7 +637,7 @@ class Order extends Model
 
     public function __clone()
     {
-        // Глубокое клонирование attributes
+        // Clonagem profunda de attributes
         $this->attributes = $this->attributes;
     }
 }
@@ -652,23 +652,23 @@ $changes = $order->getChanges();
 // ['status' => ['old' => 'pending', 'new' => 'paid'], 'amount' => ['old' => 1000, 'new' => 2000]]
 ```
 
-**На собеседовании скажешь:**
-> "__clone вызывается при clone. По умолчанию clone делает shallow copy (вложенные объекты — ссылки). В __clone делаю глубокое клонирование: clone $this->nested. Использую для дублирования моделей, создания snapshot'ов."
+**Na entrevista:**
+> "__clone roda no clone. Por padrão o clone é shallow copy — objeto aninhado continua referência. No __clone eu faço deep clone: clone $this->nested. Uso pra duplicar model e criar snapshot."
 
 ---
 
-## __sleep и __wakeup
+## __sleep e __wakeup
 
-**Что это:**
-`__sleep` вызывается перед сериализацией, `__wakeup` — после десериализации.
+**O que é:**
+`__sleep` roda antes da serialização, `__wakeup` depois da desserialização.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
     public string $name;
     public string $email;
-    private $connection;  // Ресурс (не сериализуется)
+    private $connection;  // Recurso (não serializa)
 
     public function __construct(string $name, string $email)
     {
@@ -677,32 +677,32 @@ class User
         $this->connection = fopen('connection.txt', 'w');
     }
 
-    // Перед сериализацией (указать, что сериализовать)
+    // Antes da serialização (diz o que serializar)
     public function __sleep(): array
     {
-        fclose($this->connection);  // Закрыть ресурс
-        return ['name', 'email'];   // Сериализовать только эти поля
+        fclose($this->connection);  // Fecha o recurso
+        return ['name', 'email'];   // Serializa só esses campos
     }
 
-    // После десериализации (восстановить состояние)
+    // Depois da desserialização (restaura o estado)
     public function __wakeup(): void
     {
-        $this->connection = fopen('connection.txt', 'a');  // Переоткрыть
+        $this->connection = fopen('connection.txt', 'a');  // Reabre
     }
 }
 
-$user = new User('Иван', 'ivan@mail.com');
-$serialized = serialize($user);  // Вызовет __sleep
+$user = new User('João', 'joao@email.com');
+$serialized = serialize($user);  // Chama __sleep
 
-$restored = unserialize($serialized);  // Вызовет __wakeup
+$restored = unserialize($serialized);  // Chama __wakeup
 ```
 
-**Когда использовать:**
-Для очистки ресурсов перед сериализацией, восстановления состояния после десериализации.
+**Quando usar:**
+Limpar recurso antes de serializar, restaurar estado depois de desserializar.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Кэширование объекта
+// Cache de objeto
 class UserService
 {
     private LoggerInterface $logger;
@@ -716,84 +716,84 @@ class UserService
 
     public function __sleep(): array
     {
-        // Не сериализовать logger (ресурс)
+        // Não serializa o logger (recurso)
         return ['data'];
     }
 
     public function __wakeup(): void
     {
-        // Восстановить logger из контейнера
+        // Restaura o logger do Service Container
         $this->logger = app(LoggerInterface::class);
     }
 }
 
-// Кэш
+// Cache
 $service = new UserService($logger);
 Cache::put('service', serialize($service), 3600);
 
-// Восстановление
+// Restauração
 $cached = unserialize(Cache::get('service'));
 
-// Laravel Queue (сериализация job)
+// Laravel Queue (serialização do job)
 class ProcessOrder implements ShouldQueue
 {
     public function __construct(
-        private Order $order,  // Сериализуется
-        private LoggerInterface $logger,  // НЕ сериализуется
+        private Order $order,  // Serializa
+        private LoggerInterface $logger,  // NÃO serializa
     ) {}
 
     public function __sleep(): array
     {
-        return ['order'];  // Только order в очередь
+        return ['order'];  // Só o order vai pra queue
     }
 
     public function __wakeup(): void
     {
-        $this->logger = app(LoggerInterface::class);  // Восстановить
+        $this->logger = app(LoggerInterface::class);  // Restaura
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "__sleep вызывается перед serialize() — указываю, какие свойства сериализовать. __wakeup после unserialize() — восстанавливаю ресурсы (logger, connection). В Laravel Queue используется для сериализации jobs."
+**Na entrevista:**
+> "__sleep roda antes do serialize() — eu digo quais propriedades serializar. __wakeup depois do unserialize() — restauro recurso (logger, connection). No Laravel Queue isso serializa o job."
 
 ---
 
-## Резюме магических методов
+## Recapitulando
 
-**Основные:**
-- `__construct()` — конструктор (при создании)
-- `__destruct()` — деструктор (при уничтожении)
-- `__get($name)` — чтение несуществующего свойства
-- `__set($name, $value)` — запись в несуществующее свойство
-- `__isset($name)` — isset() на несуществующем свойстве
-- `__unset($name)` — unset() на несуществующем свойстве
-- `__call($method, $args)` — вызов несуществующего метода
-- `__callStatic($method, $args)` — вызов несуществующего статического метода
-- `__toString()` — преобразование в строку
-- `__invoke()` — вызов объекта как функции (callable)
-- `__clone()` — при клонировании (глубокое копирование)
-- `__sleep()` — перед сериализацией (что сериализовать)
-- `__wakeup()` — после десериализации (восстановить)
+**Os principais:**
+- `__construct()` — construtor (na criação)
+- `__destruct()` — destrutor (na destruição)
+- `__get($name)` — leitura de propriedade inexistente
+- `__set($name, $value)` — escrita em propriedade inexistente
+- `__isset($name)` — isset() em propriedade inexistente
+- `__unset($name)` — unset() em propriedade inexistente
+- `__call($method, $args)` — chamada de método inexistente
+- `__callStatic($method, $args)` — chamada de método estático inexistente
+- `__toString()` — conversão para string
+- `__invoke()` — chama o objeto como função (callable)
+- `__clone()` — na clonagem (cópia profunda)
+- `__sleep()` — antes da serialização (o que serializar)
+- `__wakeup()` — depois da desserialização (restaurar)
 
-**Важно на собесе:**
-- Eloquent использует __get/__set для $attributes, __call для scopes
-- __invoke делает объект callable (Middleware, Strategy, Command)
-- __clone для глубокого копирования вложенных объектов
-- __sleep/__wakeup для сериализации (Laravel Queue)
-- __toString для удобного вывода (Money, Exception)
-- Не злоупотреблять — усложняют отладку
+**Importante na entrevista:**
+- Eloquent usa __get/__set para $attributes, __call para scopes
+- __invoke deixa o objeto callable (Middleware, Strategy, Command)
+- __clone pra deep clone de objetos aninhados
+- __sleep/__wakeup pra serialização (Laravel Queue)
+- __toString pra imprimir fácil (Money, Exception)
+- Não abuse — complica o debug
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Динамическая модель с __get/__set/__isset/__unset
+### Exercício 1: Model dinâmico com __get/__set/__isset/__unset
 
-Создай класс `DynamicModel`, который хранит атрибуты в массиве и предоставляет доступ через магические методы.
+**Enunciado:** Crie a classe `DynamicModel`, que guarda atributos num array e dá acesso pelos métodos mágicos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class DynamicModel
@@ -857,14 +857,14 @@ class User extends DynamicModel
     ];
 }
 
-// Использование
+// Uso
 $user = new User();
-$user->name = 'Иван';
-$user->email = 'ivan@mail.com';
-$user->is_active = '1';  // Будет приведено к bool
-$user->metadata = '{"key":"value"}';  // Будет приведено к array
+$user->name = 'João';
+$user->email = 'joao@email.com';
+$user->is_active = '1';  // Vai ser convertido para bool
+$user->metadata = '{"key":"value"}';  // Vai ser convertido para array
 
-echo $user->name;  // "Иван"
+echo $user->name;  // "João"
 var_dump($user->is_active);  // bool(true)
 print_r($user->metadata);  // ['key' => 'value']
 
@@ -874,12 +874,12 @@ var_dump(isset($user->name));  // false
 ```
 </details>
 
-### Задание 2: Fluent Builder с __call
+### Exercício 2: Fluent Builder com __call
 
-Создай `QueryBuilder` с методами where* через __call (whereStatus, whereName и т.д.).
+**Enunciado:** Crie um `QueryBuilder` com métodos where* via __call (whereStatus, whereName etc.).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class QueryBuilder
@@ -952,7 +952,7 @@ class QueryBuilder
     }
 }
 
-// Использование
+// Uso
 $query = new QueryBuilder();
 $sql = $query->whereStatus('active')
              ->whereDepartmentId(5)
@@ -966,12 +966,12 @@ echo $sql;
 ```
 </details>
 
-### Задание 3: Callable класс с __invoke для Middleware
+### Exercício 3: Classe callable com __invoke para Middleware
 
-Создай `AuthMiddleware` с __invoke, который проверяет авторизацию.
+**Enunciado:** Crie um `AuthMiddleware` com __invoke que checa autenticação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface MiddlewareInterface
@@ -987,7 +987,7 @@ class AuthMiddleware implements MiddlewareInterface
 
     public function __invoke(array $request, callable $next): array
     {
-        // Проверка авторизации
+        // Checagem de autenticação
         if ($this->userId === null) {
             return [
                 'status' => 401,
@@ -995,10 +995,10 @@ class AuthMiddleware implements MiddlewareInterface
             ];
         }
 
-        // Добавляем user_id в request
+        // Adiciona user_id no request
         $request['user_id'] = $this->userId;
 
-        // Передаём дальше
+        // Passa adiante
         return $next($request);
     }
 }
@@ -1043,7 +1043,7 @@ class RateLimitMiddleware implements MiddlewareInterface
     }
 }
 
-// Pipeline для middleware
+// Pipeline de middleware
 class Pipeline
 {
     private array $middleware = [];
@@ -1068,7 +1068,7 @@ class Pipeline
     }
 }
 
-// Использование
+// Uso
 $pipeline = new Pipeline();
 $pipeline->pipe(new LogMiddleware())
          ->pipe(new RateLimitMiddleware())
@@ -1077,7 +1077,7 @@ $pipeline->pipe(new LogMiddleware())
 $request = ['path' => '/api/users', 'ip' => '192.168.1.1'];
 
 $response = $pipeline->handle($request, function ($request) {
-    // Финальный обработчик (контроллер)
+    // Handler final (controller)
     return [
         'status' => 200,
         'body' => ['message' => 'Success', 'user_id' => $request['user_id']],
@@ -1093,4 +1093,4 @@ print_r($response);
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,34 +1,34 @@
-# 3.6 Рефлексия (Reflection API)
+# 3.6 Reflection API
 
-## Краткое резюме
+## Resumo
 
-> **Reflection API** — анализ и модификация структуры классов, методов, свойств во время выполнения.
+> **Reflection API** — analisa e altera a estrutura de classes, métodos e propriedades em tempo de execução.
 >
-> **Основное:** ReflectionClass, ReflectionMethod, ReflectionProperty, setAccessible(true).
+> **O essencial:** ReflectionClass, ReflectionMethod, ReflectionProperty, setAccessible(true).
 >
-> **Laravel:** Container использует Reflection для DI, Eloquent для моделей, Attributes (PHP 8.0+).
+> **Laravel:** o Service Container (container de serviços) usa Reflection para DI, o Eloquent para models, Attributes (PHP 8.0+).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое Reflection](#что-такое-reflection)
+- [O que é Reflection](#o-que-é-reflection)
 - [ReflectionClass](#reflectionclass)
 - [ReflectionProperty](#reflectionproperty)
 - [ReflectionMethod](#reflectionmethod)
 - [ReflectionParameter](#reflectionparameter)
-- [Атрибуты (Attributes, PHP 8.0+)](#атрибуты-attributes-php-80)
-- [Резюме Reflection API](#резюме-reflection-api)
-- [Практические задания](#практические-задания)
+- [Attributes (PHP 8.0+)](#attributes-php-80)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое Reflection
+## O que é Reflection
 
-**Что это:**
-API для анализа и модификации структуры классов, методов, свойств во время выполнения.
+**O que é:**
+API para analisar e alterar a estrutura de classes, métodos e propriedades em tempo de execução.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -54,16 +54,16 @@ class User
     }
 }
 
-// Рефлексия класса
+// Reflection da classe
 $reflection = new ReflectionClass(User::class);
 
-// Информация о классе
+// Informação da classe
 echo $reflection->getName();  // "User"
-echo $reflection->getShortName();  // "User" (без namespace)
+echo $reflection->getShortName();  // "User" (sem namespace)
 var_dump($reflection->isAbstract());  // false
 var_dump($reflection->isFinal());  // false
 
-// Свойства
+// Propriedades
 $properties = $reflection->getProperties();
 foreach ($properties as $property) {
     echo $property->getName() . " (" . $property->getType() . ")\n";
@@ -72,7 +72,7 @@ foreach ($properties as $property) {
 // age (int)
 // isActive (bool)
 
-// Методы
+// Métodos
 $methods = $reflection->getMethods();
 foreach ($methods as $method) {
     echo $method->getName() . "\n";
@@ -82,26 +82,26 @@ foreach ($methods as $method) {
 // getAge
 ```
 
-**Когда использовать:**
-Для метапрограммирования, фреймворков, DI контейнеров, ORM.
+**Quando usar:**
+Metaprogramação, framework, container de DI, ORM.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel Service Container (упрощённо)
+// Laravel Service Container (simplificado)
 class Container
 {
     public function make(string $class): object
     {
         $reflection = new ReflectionClass($class);
 
-        // Получить конструктор
+        // Pegar o construtor
         $constructor = $reflection->getConstructor();
 
         if ($constructor === null) {
-            return new $class();  // Нет конструктора
+            return new $class();  // Sem construtor
         }
 
-        // Получить параметры конструктора
+        // Pegar os parâmetros do construtor
         $parameters = $constructor->getParameters();
         $dependencies = [];
 
@@ -109,87 +109,87 @@ class Container
             $type = $parameter->getType();
 
             if ($type && !$type->isBuiltin()) {
-                // Рекурсивно разрешить зависимость
+                // Resolver a dependência de forma recursiva
                 $dependencies[] = $this->make($type->getName());
             }
         }
 
-        // Создать объект с зависимостями
+        // Criar o objeto com as dependências
         return $reflection->newInstanceArgs($dependencies);
     }
 }
 
-// Использование
+// Uso
 $container = new Container();
 $service = $container->make(UserService::class);
-// Автоматически разрешит все зависимости
+// Resolve todas as dependências sozinho
 ```
 
-**На собеседовании скажешь:**
-> "Reflection API анализирует структуру классов во время выполнения. Получаю информацию о свойствах, методах, параметрах. Laravel Container использует Reflection для автоматического разрешения зависимостей."
+**Na entrevista:**
+> "Reflection API analisa a estrutura das classes em tempo de execução. Eu pego informação de propriedade, método, parâmetro. O Service Container do Laravel usa Reflection para resolver as dependências sozinho."
 
 ---
 
 ## ReflectionClass
 
-**Что это:**
-Класс для анализа класса.
+**O que é:**
+Classe que analisa outra classe.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $reflection = new ReflectionClass(User::class);
 
-// Информация о классе
+// Informação da classe
 echo $reflection->getName();  // "App\Models\User"
 echo $reflection->getShortName();  // "User"
 echo $reflection->getNamespaceName();  // "App\Models"
 echo $reflection->getFileName();  // "/path/to/User.php"
 
-// Проверки
+// Checagens
 var_dump($reflection->isAbstract());  // false
 var_dump($reflection->isFinal());  // false
 var_dump($reflection->isInterface());  // false
 var_dump($reflection->isTrait());  // false
-var_dump($reflection->isInstantiable());  // true (можно создать объект)
+var_dump($reflection->isInstantiable());  // true (dá para criar objeto)
 
-// Родительский класс
-$parent = $reflection->getParentClass();  // ReflectionClass или false
+// Classe pai
+$parent = $reflection->getParentClass();  // ReflectionClass ou false
 
-// Интерфейсы
+// Interfaces
 $interfaces = $reflection->getInterfaces();  // ReflectionClass[]
 
-// Трейты
+// Traits
 $traits = $reflection->getTraits();  // ReflectionClass[]
 
-// Константы класса
+// Constantes da classe
 $constants = $reflection->getConstants();  // ['STATUS_ACTIVE' => 'active', ...]
 
-// Создание объекта
-$user = $reflection->newInstance('Иван', 25);
-// Или с массивом аргументов
-$user = $reflection->newInstanceArgs(['Иван', 25]);
+// Criar objeto
+$user = $reflection->newInstance('João', 25);
+// Ou com array de argumentos
+$user = $reflection->newInstanceArgs(['João', 25]);
 
-// Без вызова конструктора
+// Sem chamar o construtor
 $user = $reflection->newInstanceWithoutConstructor();
 ```
 
-**Когда использовать:**
-Для анализа структуры класса, создания объектов, DI.
+**Quando usar:**
+Analisar a estrutura da classe, criar objeto, DI.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Анализ Eloquent модели
+// Análise de um model Eloquent
 $reflection = new ReflectionClass(User::class);
 
-// Проверить, является ли Model
+// Checar se é Model
 $isModel = $reflection->isSubclassOf(Model::class);
 
-// Получить таблицу (если есть protected $table)
+// Pegar a tabela (se existir protected $table)
 $table = $reflection->hasProperty('table')
     ? $reflection->getProperty('table')->getValue(new User())
     : Str::snake(Str::pluralStudly($reflection->getShortName()));
 
-// Фабрика объектов
+// Factory de objetos
 class ObjectFactory
 {
     public function create(string $class, array $data): object
@@ -197,7 +197,7 @@ class ObjectFactory
         $reflection = new ReflectionClass($class);
 
         if (!$reflection->isInstantiable()) {
-            throw new \Exception("Cannot instantiate {$class}");
+            throw new \Exception("Não é possível instanciar {$class}");
         }
 
         $constructor = $reflection->getConstructor();
@@ -219,20 +219,20 @@ class ObjectFactory
 }
 
 $factory = new ObjectFactory();
-$user = $factory->create(User::class, ['name' => 'Иван', 'age' => 25]);
+$user = $factory->create(User::class, ['name' => 'João', 'age' => 25]);
 ```
 
-**На собеседовании скажешь:**
-> "ReflectionClass анализирует класс. Методы: getName(), getProperties(), getMethods(), getInterfaces(), getTraits(). Создание объектов: newInstance(), newInstanceArgs(). Laravel использует для анализа моделей, DI."
+**Na entrevista:**
+> "ReflectionClass analisa a classe. Métodos: getName(), getProperties(), getMethods(), getInterfaces(), getTraits(). Para criar objeto: newInstance(), newInstanceArgs(). O Laravel usa isso para analisar model e para DI."
 
 ---
 
 ## ReflectionProperty
 
-**Что это:**
-Класс для анализа свойства класса.
+**O que é:**
+Classe que analisa uma propriedade.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -243,10 +243,10 @@ class User
 
 $reflection = new ReflectionClass(User::class);
 
-// Получить свойство
+// Pegar a propriedade
 $property = $reflection->getProperty('name');
 
-// Информация о свойстве
+// Informação da propriedade
 echo $property->getName();  // "name"
 echo $property->getType();  // "string"
 var_dump($property->isPrivate());  // true
@@ -254,21 +254,21 @@ var_dump($property->isProtected());  // false
 var_dump($property->isPublic());  // false
 var_dump($property->isStatic());  // false
 
-// Доступ к private/protected
-$user = new User('Иван', 25);
+// Acesso a private/protected
+$user = new User('João', 25);
 
-// Без рефлексии
+// Sem Reflection
 // echo $user->name;  // ❌ Error (private)
 
-// С рефлексией
+// Com Reflection
 $property = new ReflectionProperty(User::class, 'name');
-$property->setAccessible(true);  // Разрешить доступ
-echo $property->getValue($user);  // "Иван"
+$property->setAccessible(true);  // Liberar o acesso
+echo $property->getValue($user);  // "João"
 
-$property->setValue($user, 'Пётр');
-echo $property->getValue($user);  // "Пётр"
+$property->setValue($user, 'Pedro');
+echo $property->getValue($user);  // "Pedro"
 
-// Получить все свойства
+// Pegar todas as propriedades
 $properties = $reflection->getProperties();
 
 foreach ($properties as $property) {
@@ -279,12 +279,12 @@ foreach ($properties as $property) {
 }
 ```
 
-**Когда использовать:**
-Для доступа к private свойствам (тестирование, сериализация, ORM).
+**Quando usar:**
+Acessar propriedade private (teste, serialização, ORM).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent toArray() (упрощённо)
+// Eloquent toArray() (simplificado)
 class Model
 {
     public function toArray(): array
@@ -305,17 +305,17 @@ class Model
     }
 }
 
-// Unit тестирование private свойств
+// Teste unitário de propriedade private
 class UserTest extends TestCase
 {
     public function test_name_is_set(): void
     {
-        $user = new User('Иван', 25);
+        $user = new User('João', 25);
 
         $property = new ReflectionProperty(User::class, 'name');
         $property->setAccessible(true);
 
-        $this->assertEquals('Иван', $property->getValue($user));
+        $this->assertEquals('João', $property->getValue($user));
     }
 }
 
@@ -337,17 +337,17 @@ class Serializer
 }
 ```
 
-**На собеседовании скажешь:**
-> "ReflectionProperty анализирует свойство. setAccessible(true) для доступа к private/protected. Методы: getValue(), setValue(), getName(), getType(). Использую в тестах, ORM, serialization."
+**Na entrevista:**
+> "ReflectionProperty analisa a propriedade. setAccessible(true) libera private/protected. Métodos: getValue(), setValue(), getName(), getType(). Uso em teste, ORM, serialização."
 
 ---
 
 ## ReflectionMethod
 
-**Что это:**
-Класс для анализа метода класса.
+**O que é:**
+Classe que analisa um método.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class User
 {
@@ -376,10 +376,10 @@ class User
 
 $reflection = new ReflectionClass(User::class);
 
-// Получить метод
+// Pegar o método
 $method = $reflection->getMethod('getName');
 
-// Информация о методе
+// Informação do método
 echo $method->getName();  // "getName"
 echo $method->getReturnType();  // "string"
 var_dump($method->isPublic());  // true
@@ -389,16 +389,16 @@ var_dump($method->isStatic());  // false
 var_dump($method->isAbstract());  // false
 var_dump($method->isFinal());  // false
 
-// Вызов protected/private метода
-$user = new User('Иван');
+// Chamar método protected/private
+$user = new User('João');
 
 $method = new ReflectionMethod(User::class, 'setName');
 $method->setAccessible(true);
-$method->invoke($user, 'Пётр');  // Вызвать метод
+$method->invoke($user, 'Pedro');  // Chamar o método
 
-echo $user->getName();  // "Пётр"
+echo $user->getName();  // "Pedro"
 
-// Параметры метода
+// Parâmetros do método
 $parameters = $method->getParameters();
 foreach ($parameters as $parameter) {
     echo $parameter->getName() . ": " . $parameter->getType() . "\n";
@@ -406,17 +406,17 @@ foreach ($parameters as $parameter) {
 // name: string
 ```
 
-**Когда использовать:**
-Для вызова private методов (тестирование), анализа API.
+**Quando usar:**
+Chamar método private (teste) e analisar API.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Unit тестирование private методов
+// Teste unitário de método private
 class UserTest extends TestCase
 {
     public function test_name_validation(): void
     {
-        $user = new User('Иван');
+        $user = new User('João');
 
         $method = new ReflectionMethod(User::class, 'validateName');
         $method->setAccessible(true);
@@ -426,7 +426,7 @@ class UserTest extends TestCase
     }
 }
 
-// API анализатор
+// Analisador de API
 class ApiAnalyzer
 {
     public function analyzeController(string $controller): array
@@ -436,7 +436,7 @@ class ApiAnalyzer
 
         foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             if ($method->class !== $controller) {
-                continue;  // Только методы этого класса
+                continue;  // Só métodos desta classe
             }
 
             $endpoints[] = [
@@ -472,17 +472,17 @@ $analyzer = new ApiAnalyzer();
 $endpoints = $analyzer->analyzeController(UserController::class);
 ```
 
-**На собеседовании скажешь:**
-> "ReflectionMethod анализирует метод. setAccessible(true) для вызова private/protected. invoke() вызывает метод. getParameters() возвращает параметры. Использую в тестах для private методов."
+**Na entrevista:**
+> "ReflectionMethod analisa o método. setAccessible(true) para chamar private/protected. invoke() chama o método. getParameters() devolve os parâmetros. Uso em teste de método private."
 
 ---
 
 ## ReflectionParameter
 
-**Что это:**
-Класс для анализа параметра метода/функции.
+**O que é:**
+Classe que analisa um parâmetro de método ou função.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class UserService
 {
@@ -500,47 +500,47 @@ $reflection = new ReflectionMethod(UserService::class, 'create');
 $parameters = $reflection->getParameters();
 
 foreach ($parameters as $parameter) {
-    echo "Parameter: {$parameter->getName()}\n";
-    echo "  Type: {$parameter->getType()}\n";
-    echo "  Position: {$parameter->getPosition()}\n";
-    echo "  Optional: " . ($parameter->isOptional() ? 'yes' : 'no') . "\n";
+    echo "Parâmetro: {$parameter->getName()}\n";
+    echo "  Tipo: {$parameter->getType()}\n";
+    echo "  Posição: {$parameter->getPosition()}\n";
+    echo "  Opcional: " . ($parameter->isOptional() ? 'sim' : 'não') . "\n";
 
     if ($parameter->isDefaultValueAvailable()) {
-        echo "  Default: " . var_export($parameter->getDefaultValue(), true) . "\n";
+        echo "  Padrão: " . var_export($parameter->getDefaultValue(), true) . "\n";
     }
 
-    echo "  Nullable: " . ($parameter->allowsNull() ? 'yes' : 'no') . "\n";
+    echo "  Nullable: " . ($parameter->allowsNull() ? 'sim' : 'não') . "\n";
     echo "\n";
 }
 
-// Вывод:
-// Parameter: name
-//   Type: string
-//   Position: 0
-//   Optional: no
-//   Nullable: no
+// Saída:
+// Parâmetro: name
+//   Tipo: string
+//   Posição: 0
+//   Opcional: não
+//   Nullable: não
 //
-// Parameter: age
-//   Type: int
-//   Position: 1
-//   Optional: yes
-//   Default: 18
-//   Nullable: no
+// Parâmetro: age
+//   Tipo: int
+//   Posição: 1
+//   Opcional: sim
+//   Padrão: 18
+//   Nullable: não
 //
-// Parameter: email
-//   Type: ?string
-//   Position: 2
-//   Optional: yes
-//   Default: NULL
-//   Nullable: yes
+// Parâmetro: email
+//   Tipo: ?string
+//   Posição: 2
+//   Opcional: sim
+//   Padrão: NULL
+//   Nullable: sim
 ```
 
-**Когда использовать:**
-Для DI контейнеров, анализа API, автодокументации.
+**Quando usar:**
+Container de DI, análise de API, documentação automática.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel Service Container (упрощённо)
+// Laravel Service Container (simplificado)
 class Container
 {
     public function make(string $class): object
@@ -558,14 +558,14 @@ class Container
             $type = $parameter->getType();
 
             if ($type === null || $type->isBuiltin()) {
-                // Скалярный тип или нет type hint
+                // Tipo escalar ou sem type hint
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                 } else {
-                    throw new \Exception("Cannot resolve {$parameter->getName()}");
+                    throw new \Exception("Não é possível resolver {$parameter->getName()}");
                 }
             } else {
-                // Класс — рекурсивно разрешить
+                // Classe — resolver de forma recursiva
                 $dependencies[] = $this->make($type->getName());
             }
         }
@@ -574,7 +574,7 @@ class Container
     }
 }
 
-// Валидатор параметров
+// Validador de parâmetros
 class ParameterValidator
 {
     public function validate(ReflectionParameter $parameter, mixed $value): void
@@ -582,43 +582,43 @@ class ParameterValidator
         $type = $parameter->getType();
 
         if ($type === null) {
-            return;  // Нет type hint
+            return;  // Sem type hint
         }
 
         $typeName = $type->getName();
 
         if ($type->isBuiltin()) {
-            // Проверка скалярного типа
+            // Checagem de tipo escalar
             if (gettype($value) !== $typeName) {
-                throw new \TypeError("Expected {$typeName}, got " . gettype($value));
+                throw new \TypeError("Esperado {$typeName}, recebido " . gettype($value));
             }
         } else {
-            // Проверка класса
+            // Checagem de classe
             if (!($value instanceof $typeName)) {
-                throw new \TypeError("Expected {$typeName}, got " . get_class($value));
+                throw new \TypeError("Esperado {$typeName}, recebido " . get_class($value));
             }
         }
 
         if (!$parameter->allowsNull() && $value === null) {
-            throw new \TypeError("{$parameter->getName()} cannot be null");
+            throw new \TypeError("{$parameter->getName()} não pode ser null");
         }
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "ReflectionParameter анализирует параметр функции/метода. Методы: getName(), getType(), isOptional(), getDefaultValue(), allowsNull(). Laravel Container использует для автоматического разрешения зависимостей."
+**Na entrevista:**
+> "ReflectionParameter analisa o parâmetro da função ou do método. Métodos: getName(), getType(), isOptional(), getDefaultValue(), allowsNull(). O Service Container do Laravel usa isso para resolver dependência sozinho."
 
 ---
 
-## Атрибуты (Attributes, PHP 8.0+)
+## Attributes (PHP 8.0+)
 
-**Что это:**
-Метаданные, прикреплённые к классам, методам, свойствам (аналог аннотаций).
+**O que é:**
+Metadados em classe, método e propriedade (o sucessor das anotações).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Определение атрибута
+// Definição do attribute
 #[Attribute]
 class Route
 {
@@ -628,7 +628,7 @@ class Route
     ) {}
 }
 
-// Использование атрибута
+// Uso do attribute
 class UserController
 {
     #[Route('GET', '/users')]
@@ -641,31 +641,31 @@ class UserController
     public function show(int $id) {}
 }
 
-// Чтение атрибутов
+// Leitura dos attributes
 $reflection = new ReflectionClass(UserController::class);
 
 foreach ($reflection->getMethods() as $method) {
     $attributes = $method->getAttributes(Route::class);
 
     foreach ($attributes as $attribute) {
-        $route = $attribute->newInstance();  // Route объект
+        $route = $attribute->newInstance();  // Objeto Route
 
         echo "{$route->method} {$route->path} → {$method->getName()}\n";
     }
 }
 
-// Вывод:
+// Saída:
 // GET /users → index
 // POST /users → store
 // GET /users/{id} → show
 ```
 
-**Когда использовать:**
-Для метаданных (роуты, валидация, кэширование), замена PHPDoc аннотаций.
+**Quando usar:**
+Metadado (rota, validação, cache). Substitui anotação de PHPDoc.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация через атрибуты
+// Validação via attributes
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Required {}
 
@@ -690,7 +690,7 @@ class CreateUserRequest
     public string $name;
 }
 
-// Валидатор
+// Validador
 class AttributeValidator
 {
     public function validate(object $object): array
@@ -706,15 +706,15 @@ class AttributeValidator
                 $instance = $attribute->newInstance();
 
                 if ($instance instanceof Required && empty($value)) {
-                    $errors[$property->getName()][] = 'Field is required';
+                    $errors[$property->getName()][] = 'Campo obrigatório';
                 }
 
                 if ($instance instanceof Email && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    $errors[$property->getName()][] = 'Invalid email';
+                    $errors[$property->getName()][] = 'E-mail inválido';
                 }
 
                 if ($instance instanceof Min && strlen($value) < $instance->value) {
-                    $errors[$property->getName()][] = "Minimum length is {$instance->value}";
+                    $errors[$property->getName()][] = "Tamanho mínimo é {$instance->value}";
                 }
             }
         }
@@ -726,13 +726,13 @@ class AttributeValidator
 $request = new CreateUserRequest();
 $request->email = 'invalid';
 $request->password = '123';
-$request->name = 'John';
+$request->name = 'João';
 
 $validator = new AttributeValidator();
 $errors = $validator->validate($request);
-// ['email' => ['Invalid email'], 'password' => ['Minimum length is 8']]
+// ['email' => ['E-mail inválido'], 'password' => ['Tamanho mínimo é 8']]
 
-// Route registration (Laravel-style)
+// Registro de rota (estilo Laravel)
 #[Attribute(Attribute::TARGET_METHOD)]
 class Get
 {
@@ -764,47 +764,47 @@ class Router
 }
 ```
 
-**На собеседовании скажешь:**
-> "Attributes (PHP 8.0+) — метаданные для классов, методов, свойств. #[AttributeName]. Чтение через getAttributes(). Использую для роутинга, валидации, кэширования. Заменяет PHPDoc аннотации."
+**Na entrevista:**
+> "Attributes (PHP 8.0+) são metadados em classe, método, propriedade. #[AttributeName]. Leio com getAttributes(). Uso em rota, validação, cache. Substitui anotação de PHPDoc."
 
 ---
 
-## Резюме Reflection API
+## Recapitulando
 
-**Основное:**
-- **ReflectionClass** — анализ класса
-- **ReflectionProperty** — анализ свойства
-- **ReflectionMethod** — анализ метода
-- **ReflectionParameter** — анализ параметра
-- **setAccessible(true)** — доступ к private/protected
-- **Attributes (PHP 8.0+)** — метаданные через #[Attr]
+**O essencial:**
+- **ReflectionClass** — analisa a classe
+- **ReflectionProperty** — analisa a propriedade
+- **ReflectionMethod** — analisa o método
+- **ReflectionParameter** — analisa o parâmetro
+- **setAccessible(true)** — acesso a private/protected
+- **Attributes (PHP 8.0+)** — metadados via #[Attr]
 
-**Основные методы:**
-- `getName()` — имя элемента
-- `getType()` — тип элемента
-- `getValue()` / `setValue()` — чтение/запись свойства
-- `invoke()` — вызов метода
-- `newInstance()` / `newInstanceArgs()` — создание объекта
-- `getAttributes()` — чтение атрибутов (PHP 8.0+)
+**Métodos principais:**
+- `getName()` — nome do elemento
+- `getType()` — tipo do elemento
+- `getValue()` / `setValue()` — ler/escrever propriedade
+- `invoke()` — chamar o método
+- `newInstance()` / `newInstanceArgs()` — criar objeto
+- `getAttributes()` — ler attributes (PHP 8.0+)
 
-**Важно на собесе:**
-- Laravel Container использует Reflection для DI
-- setAccessible(true) для тестирования private методов
-- Eloquent использует Reflection для моделей
-- Attributes (PHP 8.0+) для метаданных
-- Reflection медленнее обычного кода (кэшировать результаты)
-- Использую в фреймворках, DI, ORM, тестах
+**Importante na entrevista:**
+- O Service Container do Laravel usa Reflection para DI
+- setAccessible(true) para testar método private
+- Eloquent usa Reflection nos models
+- Attributes (PHP 8.0+) para metadado
+- Reflection é mais lento que código normal (faça cache do resultado)
+- Uso em framework, DI, ORM, teste
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Object Mapper через Reflection
+### Exercício 1: Object Mapper com Reflection
 
-Реализуй класс, который преобразует DTO в массив и обратно, используя Reflection.
+**Enunciado:** Implemente uma classe que converte DTO em array e de volta, usando Reflection.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -827,7 +827,7 @@ class ObjectMapper
             $name = $property->getName();
             $value = $property->getValue($object);
 
-            // Рекурсивно преобразуем вложенные объекты
+            // Converte objetos aninhados de forma recursiva
             if (is_object($value)) {
                 $value = $this->toArray($value);
             } elseif (is_array($value)) {
@@ -846,7 +846,7 @@ class ObjectMapper
     {
         $reflection = new ReflectionClass($class);
 
-        // Создать объект без конструктора
+        // Criar objeto sem construtor
         $object = $reflection->newInstanceWithoutConstructor();
 
         foreach ($reflection->getProperties() as $property) {
@@ -860,7 +860,7 @@ class ObjectMapper
 
             $value = $data[$name];
 
-            // Преобразовать тип если нужно
+            // Converter o tipo se precisar
             $type = $property->getType();
 
             if ($type && !$type->isBuiltin() && is_array($value)) {
@@ -892,15 +892,15 @@ class UserDTO
     ) {}
 }
 
-// Использование
+// Uso
 $mapper = new ObjectMapper();
 
 $user = new UserDTO(
-    name: 'Иван',
-    email: 'ivan@mail.com',
+    name: 'João',
+    email: 'joao@email.com',
     address: new Address(
-        city: 'Москва',
-        street: 'Ленина 1'
+        city: 'São Paulo',
+        street: 'Av. Paulista, 1000'
     )
 );
 
@@ -908,11 +908,11 @@ $user = new UserDTO(
 $array = $mapper->toArray($user);
 /*
 [
-    'name' => 'Иван',
-    'email' => 'ivan@mail.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
     'address' => [
-        'city' => 'Москва',
-        'street' => 'Ленина 1',
+        'city' => 'São Paulo',
+        'street' => 'Av. Paulista, 1000',
     ]
 ]
 */
@@ -920,17 +920,17 @@ $array = $mapper->toArray($user);
 // Array → DTO
 $restored = $mapper->fromArray(UserDTO::class, $array);
 
-echo $restored->name;  // "Иван"
-echo $restored->address->city;  // "Москва"
+echo $restored->name;  // "João"
+echo $restored->address->city;  // "São Paulo"
 ```
 </details>
 
-### Задание 2: Реализуй простой Validator через Attributes
+### Exercício 2: Validator simples com Attributes
 
-Создай валидатор, который использует PHP 8 Attributes для правил валидации.
+**Enunciado:** Crie um validador que usa PHP 8 Attributes para as regras de validação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -1006,33 +1006,33 @@ class AttributeValidator
 
     private function validateRequired(mixed $value, string $property): ?string
     {
-        return empty($value) ? "{$property} is required" : null;
+        return empty($value) ? "{$property} é obrigatório" : null;
     }
 
     private function validateEmail(mixed $value, string $property): ?string
     {
-        return filter_var($value, FILTER_VALIDATE_EMAIL) ? null : "{$property} must be valid email";
+        return filter_var($value, FILTER_VALIDATE_EMAIL) ? null : "{$property} precisa ser um e-mail válido";
     }
 
     private function validateMin(mixed $value, int $min, string $property): ?string
     {
         $length = is_string($value) ? mb_strlen($value) : $value;
-        return $length >= $min ? null : "{$property} must be at least {$min}";
+        return $length >= $min ? null : "{$property} precisa ter no mínimo {$min}";
     }
 
     private function validateMax(mixed $value, int $max, string $property): ?string
     {
         $length = is_string($value) ? mb_strlen($value) : $value;
-        return $length <= $max ? null : "{$property} must be at most {$max}";
+        return $length <= $max ? null : "{$property} precisa ter no máximo {$max}";
     }
 
     private function validateRegex(mixed $value, string $pattern, string $property): ?string
     {
-        return preg_match($pattern, $value) ? null : "{$property} format is invalid";
+        return preg_match($pattern, $value) ? null : "formato de {$property} é inválido";
     }
 }
 
-// Использование
+// Uso
 class RegisterRequest
 {
     #[Required, Email]
@@ -1044,11 +1044,11 @@ class RegisterRequest
     #[Required, Min(2), Max(100)]
     public string $name = '';
 
-    #[Regex('/^\+7\d{10}$/')]
+    #[Regex('/^\+55\d{11}$/')]
     public string $phone = '';
 }
 
-// Валидация
+// Validação
 $request = new RegisterRequest();
 $request->email = 'invalid-email';
 $request->password = '123';
@@ -1060,10 +1060,10 @@ $errors = $validator->validate($request);
 
 /*
 [
-    'email' => ['email must be valid email'],
-    'password' => ['password must be at least 8'],
-    'name' => ['name must be at least 2'],
-    'phone' => ['phone format is invalid'],
+    'email' => ['email precisa ser um e-mail válido'],
+    'password' => ['password precisa ter no mínimo 8'],
+    'name' => ['name precisa ter no mínimo 2'],
+    'phone' => ['formato de phone é inválido'],
 ]
 */
 
@@ -1094,12 +1094,12 @@ public function register(Request $request)
 ```
 </details>
 
-### Задание 3: Создай Auto-Router через Reflection и Attributes
+### Exercício 3: Auto-Router com Reflection e Attributes
 
-Реализуй автоматическую регистрацию роутов через анализ Controller методов с Attributes.
+**Enunciado:** Implemente o registro automático de rotas analisando os métodos do Controller com Attributes.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -1149,7 +1149,7 @@ class AutoRouter
         $reflection = new ReflectionClass($controller);
 
         foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            // Пропускаем методы из родительского класса
+            // Pula métodos da classe pai
             if ($method->class !== $controller) {
                 continue;
             }
@@ -1206,11 +1206,11 @@ class AutoRouter
             $route->middleware($middleware);
         }
 
-        echo "Registered: {$method} {$path} -> {$action[0]}@{$action[1]}\n";
+        echo "Registrado: {$method} {$path} -> {$action[0]}@{$action[1]}\n";
     }
 }
 
-// Controller с Attributes
+// Controller com Attributes
 namespace App\Http\Controllers\Api;
 
 use App\Routing\{Get, Post, Put, Delete, Middleware};
@@ -1268,11 +1268,11 @@ class RouteServiceProvider extends ServiceProvider
     {
         $router = new AutoRouter();
 
-        // Автоматически регистрируем все контроллеры
+        // Registra todos os controllers automaticamente
         $router->registerController(\App\Http\Controllers\Api\UserController::class);
         $router->registerController(\App\Http\Controllers\Api\PostController::class);
 
-        // Или сканируем папку
+        // Ou varre a pasta
         $this->registerControllersFromDirectory(app_path('Http/Controllers/Api'));
     }
 
@@ -1301,4 +1301,4 @@ class RouteServiceProvider extends ServiceProvider
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

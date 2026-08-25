@@ -1,37 +1,37 @@
-# 3.4 PSR стандарты
+# 3.4 Padrões PSR
 
-## Краткое резюме
+## Resumo
 
-> **PSR** — PHP Standard Recommendations, стандарты для совместимости библиотек.
+> **PSR** — PHP Standard Recommendations, padrões para compatibilidade entre bibliotecas.
 >
-> **Основные:** PSR-4 (автозагрузка), PSR-3 (логирование), PSR-11 (контейнер), PSR-12 (стиль кода).
+> **Principais:** PSR-4 (autoload), PSR-3 (log), PSR-11 (container), PSR-12 (estilo de código).
 >
-> **Laravel** следует PSR-4, PSR-3, PSR-11, PSR-16.
+> **Laravel** segue PSR-4, PSR-3, PSR-11, PSR-16.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое PSR](#что-такое-psr)
+- [O que é PSR](#o-que-é-psr)
 - [PSR-1: Basic Coding Standard](#psr-1-basic-coding-standard)
 - [PSR-12: Extended Coding Style Guide](#psr-12-extended-coding-style-guide)
 - [PSR-3: Logger Interface](#psr-3-logger-interface)
 - [PSR-4: Autoloading Standard](#psr-4-autoloading-standard)
 - [PSR-11: Container Interface](#psr-11-container-interface)
 - [PSR-16: Simple Cache](#psr-16-simple-cache)
-- [Резюме PSR стандартов](#резюме-psr-стандартов)
-- [Практические задания](#практические-задания)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое PSR
+## O que é PSR
 
-**Что это:**
-PHP Standard Recommendations — стандарты кодирования и интерфейсы для совместимости библиотек.
+**O que é:**
+PHP Standard Recommendations — padrões de código e interfaces para bibliotecas falarem a mesma língua.
 
-**Основные PSR:**
-- **PSR-1** — Basic Coding Standard (базовый стиль кода)
-- **PSR-2** — Coding Style Guide (устарел, заменён PSR-12)
+**Principais PSR:**
+- **PSR-1** — Basic Coding Standard (estilo básico)
+- **PSR-2** — Coding Style Guide (legado, substituído pelo PSR-12)
 - **PSR-3** — Logger Interface
 - **PSR-4** — Autoloading Standard
 - **PSR-6** — Caching Interface
@@ -41,18 +41,18 @@ PHP Standard Recommendations — стандарты кодирования и и
 - **PSR-15** — HTTP Server Request Handlers
 - **PSR-16** — Simple Cache
 
-**Когда использовать:**
-**Всегда** следуй PSR стандартам для совместимости и читаемости.
+**Quando usar:**
+**Sempre.** Siga os padrões PSR. Compatibilidade e leitura.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel следует PSR-4, PSR-3, PSR-11, PSR-16
+// Laravel segue PSR-4, PSR-3, PSR-11, PSR-16
 
-// PSR-4 автозагрузка
+// Autoload PSR-4
 use App\Models\User;
 use App\Services\UserService;
 
-// PSR-3 Logger
+// Logger PSR-3
 use Psr\Log\LoggerInterface;
 
 class OrderService
@@ -63,54 +63,54 @@ class OrderService
 
     public function create(array $data): Order
     {
-        $this->logger->info('Creating order', $data);
+        $this->logger->info('Criando pedido', $data);
         // ...
     }
 }
 
-// PSR-11 Container
+// Container PSR-11
 $service = app(OrderService::class);  // Laravel Container (PSR-11)
 
-// PSR-16 Simple Cache
+// Simple Cache PSR-16
 Cache::put('key', 'value', 3600);  // Laravel Cache (PSR-16)
 ```
 
-**На собеседовании скажешь:**
-> "PSR — стандарты PHP. PSR-4 для автозагрузки, PSR-3 для логирования, PSR-11 для контейнеров. Laravel следует PSR. Это обеспечивает совместимость библиотек и читаемость кода."
+**Na entrevista:**
+> "PSR são os padrões do PHP. PSR-4 é autoload, PSR-3 é log, PSR-11 é container. Laravel segue PSR. Isso deixa biblioteca compatível e o código legível."
 
 ---
 
 ## PSR-1: Basic Coding Standard
 
-**Что это:**
-Базовые правила оформления кода.
+**O que é:**
+Regras básicas de estilo.
 
-**Правила:**
+**Regras:**
 ```php
-// 1. <?php или <?= для открытия
+// 1. <?php ou <?= para abrir
 <?php
 
-// 2. Только UTF-8 без BOM
-// 3. Файлы должны объявлять символы (классы) ИЛИ производить побочные эффекты, но не оба
+// 2. Só UTF-8 sem BOM
+// 3. Arquivo declara símbolos (classes) OU produz efeito colateral, nunca os dois
 
-// ПЛОХО (объявление + побочный эффект)
-<?php
-class User {}
-echo "Hello";  // Побочный эффект
-
-// ХОРОШО (только объявление)
+// RUIM (declaração + efeito colateral)
 <?php
 class User {}
+echo "Olá";  // Efeito colateral
 
-// ХОРОШО (только побочные эффекты)
+// BOM (só declaração)
+<?php
+class User {}
+
+// BOM (só efeitos colaterais)
 <?php
 require 'vendor/autoload.php';
 $app->run();
 
-// 4. Namespace и use после <?php
+// 4. namespace e use depois de <?php
 <?php
 
-declare(strict_types=1);  // Опционально
+declare(strict_types=1);  // Opcional
 
 namespace App\Models;
 
@@ -118,18 +118,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class User extends Model {}
 
-// 5. Имена классов в StudlyCaps (PascalCase)
+// 5. Nome de classe em StudlyCaps (PascalCase)
 class UserService {}
 class OrderController {}
 
-// 6. Константы класса в UPPER_CASE
+// 6. Constante de classe em UPPER_CASE
 class Config
 {
     public const DB_HOST = 'localhost';
     public const DB_PORT = 5432;
 }
 
-// 7. Методы в camelCase
+// 7. Método em camelCase
 class UserService
 {
     public function createUser() {}
@@ -137,12 +137,12 @@ class UserService
 }
 ```
 
-**Когда использовать:**
-**Всегда** следуй PSR-1.
+**Quando usar:**
+**Sempre.** Siga o PSR-1.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel файл (следует PSR-1)
+// Arquivo Laravel (segue PSR-1)
 <?php
 
 declare(strict_types=1);
@@ -165,7 +165,7 @@ class OrderService
 
     public function createOrder(array $data): Order
     {
-        $this->logger->info('Creating order');
+        $this->logger->info('Criando pedido');
         return $this->repository->create($data);
     }
 
@@ -176,17 +176,17 @@ class OrderService
 }
 ```
 
-**На собеседовании скажешь:**
-> "PSR-1: файлы UTF-8, классы в PascalCase, методы в camelCase, константы в UPPER_CASE. Один файл — либо объявления, либо побочные эффекты. declare(strict_types=1) в начале файла."
+**Na entrevista:**
+> "PSR-1: arquivo em UTF-8, classe em PascalCase, método em camelCase, constante em UPPER_CASE. Um arquivo — ou declaração, ou efeito colateral. declare(strict_types=1) no topo."
 
 ---
 
 ## PSR-12: Extended Coding Style Guide
 
-**Что это:**
-Расширенные правила оформления кода (заменил PSR-2).
+**O que é:**
+Regras de estilo estendidas. Substituiu o PSR-2.
 
-**Правила:**
+**Regras:**
 ```php
 <?php
 
@@ -194,37 +194,37 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\{User, Post, Comment};  // Группировка
+use App\Models\{User, Post, Comment};  // Agrupamento
 use Illuminate\Support\Collection;
 
-// 1. Отступы: 4 пробела (не табы)
-// 2. Длина строки: желательно <= 120 символов
+// 1. Indentação: 4 espaços (não tab)
+// 2. Linha: de preferência <= 120 caracteres
 
 class UserService
 {
-    // 3. Видимость обязательна для всех свойств и методов
+    // 3. Visibilidade obrigatória em toda propriedade e método
     private string $name;
     protected int $age;
     public bool $isActive;
 
-    // 4. Конструктор
+    // 4. Construtor
     public function __construct(
-        private UserRepository $repository,  // Каждый параметр на новой строке
+        private UserRepository $repository,  // Cada parâmetro em uma linha
         private LoggerInterface $logger,
-    ) {}  // Закрывающая скобка на новой строке
+    ) {}  // Parêntese de fechamento em linha nova
 
-    // 5. Методы: открывающая { на новой строке (устарело в PSR-12, теперь на той же)
+    // 5. Métodos: { na mesma linha (PSR-12; na linha nova é legado)
     public function create(array $data): User
     {
-        // Тело метода
+        // Corpo do método
         if (empty($data['name'])) {
-            throw new \InvalidArgumentException('Name is required');
+            throw new \InvalidArgumentException('Nome é obrigatório');
         }
 
         return $this->repository->create($data);
     }
 
-    // 6. if, for, foreach: { на той же строке
+    // 6. if, for, foreach: { na mesma linha
     public function process(Collection $items): void
     {
         foreach ($items as $item) {
@@ -236,31 +236,31 @@ class UserService
         }
     }
 
-    // 7. return type на той же строке
+    // 7. Tipo de retorno na mesma linha
     public function getUserById(int $id): ?User
     {
         return $this->repository->find($id);
     }
 }
 
-// 8. Операторы: пробелы вокруг
+// 8. Operadores: espaço em volta
 $sum = $a + $b;  // ✅
 $sum=$a+$b;      // ❌
 
-// 9. Запятая в массиве: пробел после
+// 9. Vírgula no array: espaço depois
 $array = [1, 2, 3];  // ✅
 $array = [1,2,3];    // ❌
 
-// 10. use в начале файла, сортировка по алфавиту
+// 10. use no topo do arquivo, ordem alfabética
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Log;
 ```
 
-**Когда использовать:**
-**Всегда**. Используй PHP CS Fixer для автоформатирования.
+**Quando usar:**
+**Sempre.** Use PHP CS Fixer para formatar sozinho.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```bash
 # PHP CS Fixer
 composer require friendsofphp/php-cs-fixer --dev
@@ -281,10 +281,10 @@ return (new PhpCsFixer\Config())
     ])
     ->setFinder($finder);
 
-# Запуск
+# Rodar
 php-cs-fixer fix
 
-# Laravel Pint (встроенный в Laravel 9+)
+# Laravel Pint (já vem no Laravel 9+)
 ./vendor/bin/pint
 
 # composer.json
@@ -297,19 +297,19 @@ php-cs-fixer fix
 composer format
 ```
 
-**На собеседовании скажешь:**
-> "PSR-12: 4 пробела отступ, видимость обязательна, { на той же строке для if/foreach. PHP CS Fixer или Laravel Pint для автоформатирования. PSR-12 заменил PSR-2."
+**Na entrevista:**
+> "PSR-12: indentação de 4 espaços, visibilidade obrigatória, { na mesma linha no if/foreach. PHP CS Fixer ou Laravel Pint formata sozinho. PSR-12 substituiu o PSR-2."
 
 ---
 
 ## PSR-3: Logger Interface
 
-**Что это:**
-Стандартный интерфейс для логирования.
+**O que é:**
+Interface padrão de log.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Интерфейс PSR-3
+// Interface PSR-3
 namespace Psr\Log;
 
 interface LoggerInterface
@@ -325,7 +325,7 @@ interface LoggerInterface
     public function log($level, string|\Stringable $message, array $context = []): void;
 }
 
-// Использование
+// Uso
 use Psr\Log\LoggerInterface;
 
 class UserService
@@ -336,15 +336,15 @@ class UserService
 
     public function create(array $data): User
     {
-        $this->logger->info('Creating user', ['email' => $data['email']]);
+        $this->logger->info('Criando usuário', ['email' => $data['email']]);
 
         try {
             $user = User::create($data);
-            $this->logger->info('User created', ['id' => $user->id]);
+            $this->logger->info('Usuário criado', ['id' => $user->id]);
 
             return $user;
         } catch (\Exception $e) {
-            $this->logger->error('User creation failed', [
+            $this->logger->error('Falha ao criar usuário', [
                 'error' => $e->getMessage(),
                 'data' => $data,
             ]);
@@ -355,60 +355,60 @@ class UserService
 }
 ```
 
-**Когда использовать:**
-Для совместимости с разными логгерами (Monolog, Laravel Log).
+**Quando usar:**
+Para ficar compatível com qualquer logger (Monolog, Laravel Log).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel реализует PSR-3
+// Laravel implementa PSR-3
 use Illuminate\Support\Facades\Log;
 
-// Методы PSR-3
-Log::emergency('System is down');
-Log::alert('Critical issue');
-Log::critical('Application crashed');
-Log::error('User not found', ['id' => 123]);
-Log::warning('Slow query', ['time' => 5.2]);
-Log::notice('User logged in', ['user_id' => 1]);
-Log::info('Processing order', ['order_id' => 456]);
-Log::debug('Debug info', ['var' => $value]);
+// Métodos PSR-3
+Log::emergency('Sistema fora do ar');
+Log::alert('Problema crítico');
+Log::critical('App caiu');
+Log::error('Usuário não encontrado', ['id' => 123]);
+Log::warning('Query lenta', ['time' => 5.2]);
+Log::notice('Usuário fez login', ['user_id' => 1]);
+Log::info('Processando pedido', ['order_id' => 456]);
+Log::debug('Info de debug', ['var' => $value]);
 
-// DI через PSR-3
+// DI via PSR-3
 class OrderService
 {
     public function __construct(
-        private LoggerInterface $logger,  // Любая PSR-3 реализация
+        private LoggerInterface $logger,  // Qualquer implementação PSR-3
     ) {}
 
     public function process(Order $order): void
     {
-        $this->logger->info('Processing order', [
+        $this->logger->info('Processando pedido', [
             'order_id' => $order->id,
             'amount' => $order->amount,
         ]);
 
-        // Логика
+        // Lógica
     }
 }
 
-// Laravel Service Container автоматически внедрит
+// O Service Container (container de serviços) do Laravel injeta sozinho
 $service = app(OrderService::class);
 
-// Можно заменить реализацию
+// Dá para trocar a implementação
 app()->bind(LoggerInterface::class, MyCustomLogger::class);
 ```
 
-**На собеседовании скажешь:**
-> "PSR-3 — стандартный интерфейс логирования. Методы: emergency, alert, critical, error, warning, notice, info, debug. Laravel Log реализует PSR-3. DI через LoggerInterface для совместимости с разными логгерами."
+**Na entrevista:**
+> "PSR-3 é a interface padrão de log. Métodos: emergency, alert, critical, error, warning, notice, info, debug. Laravel Log implementa PSR-3. DI via LoggerInterface para trocar o logger."
 
 ---
 
 ## PSR-4: Autoloading Standard
 
-**Что это:**
-Стандарт автозагрузки классов (см. тему 3.2).
+**O que é:**
+Padrão de autoload de classes (veja o tópico 3.2).
 
-**Правила:**
+**Regras:**
 ```php
 // composer.json
 {
@@ -420,51 +420,51 @@ app()->bind(LoggerInterface::class, MyCustomLogger::class);
     }
 }
 
-// Правила PSR-4:
-// 1. Полное имя класса = namespace + class name
-// 2. Namespace соответствует структуре папок
-// 3. Имя файла = имя класса + .php
+// Regras PSR-4:
+// 1. Nome completo da classe = namespace + class name
+// 2. Namespace bate com a estrutura de pastas
+// 3. Nome do arquivo = nome da classe + .php
 
-// Пример:
-// Класс: App\Services\Order\OrderService
-// Файл: app/Services/Order/OrderService.php
+// Exemplo:
+// Classe: App\Services\Order\OrderService
+// Arquivo: app/Services/Order/OrderService.php
 
-// namespace App\Services\Order; — соответствует app/Services/Order/
-// class OrderService             — соответствует OrderService.php
+// namespace App\Services\Order; — bate com app/Services/Order/
+// class OrderService             — bate com OrderService.php
 ```
 
-**На собеседовании скажешь:**
-> "PSR-4 — стандарт автозагрузки. Namespace соответствует структуре папок. App\\\\ → app/, имя файла = имя класса. Composer автоматически загружает классы."
+**Na entrevista:**
+> "PSR-4 é o padrão de autoload. Namespace bate com a pasta. App\\ → app/, nome do arquivo = nome da classe. O Composer carrega sozinho."
 
 ---
 
 ## PSR-11: Container Interface
 
-**Что это:**
-Стандартный интерфейс для Dependency Injection контейнеров.
+**O que é:**
+Interface padrão de Service Container para Dependency Injection.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Интерфейс PSR-11
+// Interface PSR-11
 namespace Psr\Container;
 
 interface ContainerInterface
 {
-    public function get(string $id): mixed;  // Получить сервис
-    public function has(string $id): bool;   // Проверить наличие
+    public function get(string $id): mixed;  // Pegar o service
+    public function has(string $id): bool;   // Checar se existe
 }
 
-// Laravel Container реализует PSR-11
+// Laravel Container implementa PSR-11
 use Psr\Container\ContainerInterface;
 
 $container = app();  // Laravel Container (PSR-11)
 
-// Методы PSR-11
+// Métodos PSR-11
 if ($container->has(UserService::class)) {
     $service = $container->get(UserService::class);
 }
 
-// Использование
+// Uso
 class OrderController
 {
     public function __construct(
@@ -481,23 +481,23 @@ class OrderController
 }
 ```
 
-**Когда использовать:**
-Для совместимости с разными контейнерами.
+**Quando usar:**
+Para ficar compatível com qualquer container.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Service Container (PSR-11)
 app()->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 
-// Получение через PSR-11
+// Busca via PSR-11
 $repository = app()->get(UserRepositoryInterface::class);
 
-// Проверка
+// Checagem
 if (app()->has(UserRepositoryInterface::class)) {
     // ...
 }
 
-// DI в конструкторе (Laravel автоматически использует контейнер)
+// DI no construtor (Laravel usa o container sozinho)
 class UserService
 {
     public function __construct(
@@ -505,22 +505,22 @@ class UserService
     ) {}
 }
 
-$service = app(UserService::class);  // Laravel разрешит зависимости
+$service = app(UserService::class);  // Laravel resolve as dependências
 ```
 
-**На собеседовании скажешь:**
-> "PSR-11 — стандартный интерфейс контейнера. Методы: get(), has(). Laravel Container реализует PSR-11. Используется для DI, разрешения зависимостей."
+**Na entrevista:**
+> "PSR-11 é a interface padrão do container. Métodos: get(), has(). Laravel Container implementa PSR-11. Serve para DI, resolver dependência."
 
 ---
 
 ## PSR-16: Simple Cache
 
-**Что это:**
-Простой стандартный интерфейс для кэширования.
+**O que é:**
+Interface simples e padrão de cache.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Интерфейс PSR-16
+// Interface PSR-16
 namespace Psr\SimpleCache;
 
 interface CacheInterface
@@ -535,7 +535,7 @@ interface CacheInterface
     public function has(string $key): bool;
 }
 
-// Laravel Cache реализует PSR-16
+// Laravel Cache implementa PSR-16
 use Psr\SimpleCache\CacheInterface;
 
 class UserService
@@ -548,7 +548,7 @@ class UserService
     {
         $key = "user:{$id}";
 
-        // PSR-16 методы
+        // Métodos PSR-16
         if ($this->cache->has($key)) {
             return $this->cache->get($key);
         }
@@ -562,21 +562,21 @@ class UserService
 }
 ```
 
-**Когда использовать:**
-Для совместимости с разными кэш-драйверами.
+**Quando usar:**
+Para ficar compatível com qualquer driver de cache.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Cache Facade (PSR-16)
 use Illuminate\Support\Facades\Cache;
 
-// PSR-16 методы
+// Métodos PSR-16
 Cache::set('key', 'value', 3600);
 $value = Cache::get('key');
 $exists = Cache::has('key');
 Cache::delete('key');
 
-// Multiple операции
+// Operações em lote
 Cache::setMultiple([
     'user:1' => $user1,
     'user:2' => $user2,
@@ -586,57 +586,57 @@ $users = Cache::getMultiple(['user:1', 'user:2']);
 
 Cache::deleteMultiple(['user:1', 'user:2']);
 
-// DI через PSR-16
+// DI via PSR-16
 $cache = app(CacheInterface::class);
 $cache->set('key', 'value', 3600);
 
-// Можно заменить драйвер (Redis, Memcached, File)
+// Dá para trocar o driver (Redis, Memcached, File)
 // config/cache.php
 'default' => env('CACHE_DRIVER', 'redis'),
 ```
 
-**На собеседовании скажешь:**
-> "PSR-16 — простой интерфейс кэширования. Методы: get(), set(), delete(), has(). Laravel Cache реализует PSR-16. Совместимость с разными драйверами (Redis, Memcached)."
+**Na entrevista:**
+> "PSR-16 é a interface simples de cache. Métodos: get(), set(), delete(), has(). Laravel Cache implementa PSR-16. Compatível com Redis, Memcached."
 
 ---
 
-## Резюме PSR стандартов
+## Recapitulando
 
-**Основные PSR:**
-- **PSR-1** — базовый стиль кода (UTF-8, PascalCase для классов)
-- **PSR-12** — расширенный стиль (заменил PSR-2, 4 пробела, видимость)
+**Principais PSR:**
+- **PSR-1** — estilo básico (UTF-8, PascalCase nas classes)
+- **PSR-12** — estilo estendido (substituiu o PSR-2, 4 espaços, visibilidade)
 - **PSR-3** — Logger Interface (emergency, alert, error, warning, info)
-- **PSR-4** — автозагрузка (namespace = структура папок)
+- **PSR-4** — autoload (namespace = estrutura de pastas)
 - **PSR-11** — Container Interface (get, has)
 - **PSR-16** — Simple Cache (get, set, delete, has)
 - **PSR-7** — HTTP Message Interface (Request, Response)
 - **PSR-15** — HTTP Server Request Handlers (Middleware)
 
-**Зачем нужны PSR:**
-- Совместимость библиотек
-- Единый стиль кода
-- Возможность замены реализаций
+**Para que servem:**
+- Compatibilidade entre bibliotecas
+- Estilo único de código
+- Troca de implementação sem dor
 
-**Важно на собесе:**
-- Laravel следует PSR-4, PSR-3, PSR-11, PSR-16
-- PSR-12 для форматирования (PHP CS Fixer, Laravel Pint)
-- PSR-3 для логирования (LoggerInterface)
-- PSR-11 для DI (ContainerInterface)
-- PSR-4 для автозагрузки (обязательно)
+**Importante na entrevista:**
+- Laravel segue PSR-4, PSR-3, PSR-11, PSR-16
+- PSR-12 para formatar (PHP CS Fixer, Laravel Pint)
+- PSR-3 para log (LoggerInterface)
+- PSR-11 para DI (ContainerInterface)
+- PSR-4 para autoload (obrigatório)
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой Laravel Pint для PSR-12
+### Exercício 1: Configure o Laravel Pint para PSR-12
 
-Настрой Laravel Pint для автоматического форматирования кода по PSR-12.
+**Enunciado:** Configure o Laravel Pint para formatar o código automaticamente no PSR-12.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```json
-// pint.json (в корне проекта)
+// pint.json (na raiz do projeto)
 {
     "preset": "psr12",
     "rules": {
@@ -660,7 +660,7 @@ $cache->set('key', 'value', 3600);
 ```
 
 ```json
-// composer.json (добавить scripts)
+// composer.json (adicionar scripts)
 {
     "scripts": {
         "format": "pint",
@@ -670,18 +670,18 @@ $cache->set('key', 'value', 3600);
 }
 ```
 
-Использование:
+Uso:
 ```bash
-# Форматировать все файлы
+# Formatar todos os arquivos
 ./vendor/bin/pint
 
-# Или через composer
+# Ou via composer
 composer format
 
-# Проверить без изменений
+# Checar sem alterar
 composer format:test
 
-# Только измененные файлы (git)
+# Só arquivos alterados (git)
 composer format:dirty
 ```
 
@@ -716,12 +716,12 @@ jobs:
 ```
 </details>
 
-### Задание 2: Реализуй PSR-3 Logger
+### Exercício 2: Implemente um Logger PSR-3
 
-Создай кастомный Logger, который реализует PSR-3 интерфейс и пишет в файл.
+**Enunciado:** Crie um Logger customizado que implementa a interface PSR-3 e grava em arquivo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -805,7 +805,7 @@ class FileLogger implements LoggerInterface
     }
 }
 
-// Регистрация в Laravel Service Provider
+// Registro no Service Provider do Laravel
 namespace App\Providers;
 
 use App\Logging\FileLogger;
@@ -822,7 +822,7 @@ class LoggingServiceProvider extends ServiceProvider
     }
 }
 
-// Использование
+// Uso
 use Psr\Log\LoggerInterface;
 
 class UserService
@@ -833,15 +833,15 @@ class UserService
 
     public function create(array $data): User
     {
-        $this->logger->info('Creating user', ['email' => $data['email']]);
+        $this->logger->info('Criando usuário', ['email' => $data['email']]);
 
         try {
             $user = User::create($data);
-            $this->logger->info('User created', ['id' => $user->id]);
+            $this->logger->info('Usuário criado', ['id' => $user->id]);
 
             return $user;
         } catch (\Exception $e) {
-            $this->logger->error('User creation failed', [
+            $this->logger->error('Falha ao criar usuário', [
                 'error' => $e->getMessage(),
                 'data' => $data,
             ]);
@@ -853,12 +853,12 @@ class UserService
 ```
 </details>
 
-### Задание 3: Создай PSR-11 совместимый контейнер
+### Exercício 3: Crie um container compatível com PSR-11
 
-Реализуй простой DI контейнер, совместимый с PSR-11.
+**Enunciado:** Implemente um container de DI simples, compatível com PSR-11.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -882,18 +882,18 @@ class Container implements ContainerInterface
     public function singleton(string $id, callable|string $concrete): void
     {
         $this->bind($id, $concrete);
-        // Пометка как singleton
+        // Marca como singleton
         $this->bindings[$id . '.singleton'] = true;
     }
 
     public function get(string $id): mixed
     {
-        // Если есть готовый singleton
+        // Se já tem singleton pronto
         if (isset($this->instances[$id])) {
             return $this->instances[$id];
         }
 
-        // Если есть binding
+        // Se tem binding
         if (isset($this->bindings[$id])) {
             $concrete = $this->bindings[$id];
 
@@ -901,7 +901,7 @@ class Container implements ContainerInterface
                 ? $concrete($this)
                 : $this->resolve($concrete);
 
-            // Сохранить singleton
+            // Guardar singleton
             if (isset($this->bindings[$id . '.singleton'])) {
                 $this->instances[$id] = $object;
             }
@@ -909,12 +909,12 @@ class Container implements ContainerInterface
             return $object;
         }
 
-        // Попытка автоматического разрешения
+        // Tenta resolver sozinho
         if (class_exists($id)) {
             return $this->resolve($id);
         }
 
-        throw new class("Entry '{$id}' not found in container") extends \Exception implements NotFoundExceptionInterface {};
+        throw new class("Entrada '{$id}' não encontrada no container") extends \Exception implements NotFoundExceptionInterface {};
     }
 
     public function has(string $id): bool
@@ -943,7 +943,7 @@ class Container implements ContainerInterface
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                 } else {
-                    throw new \Exception("Cannot resolve {$parameter->getName()} for {$class}");
+                    throw new \Exception("Não foi possível resolver {$parameter->getName()} em {$class}");
                 }
             } else {
                 $dependencies[] = $this->get($type->getName());
@@ -954,10 +954,10 @@ class Container implements ContainerInterface
     }
 }
 
-// Использование
+// Uso
 $container = new Container();
 
-// Биндинг интерфейса к реализации
+// Bind da interface na implementação
 $container->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
 
 // Singleton
@@ -965,10 +965,10 @@ $container->singleton(DatabaseConnection::class, function ($container) {
     return new DatabaseConnection('localhost', 'mydb');
 });
 
-// Получение
+// Busca
 $repository = $container->get(UserRepositoryInterface::class);
 
-// Автоматическое разрешение зависимостей
+// Resolução automática de dependências
 class UserService
 {
     public function __construct(
@@ -978,10 +978,10 @@ class UserService
 }
 
 $service = $container->get(UserService::class);
-// Автоматически разрешит UserRepositoryInterface и LoggerInterface
+// Resolve UserRepositoryInterface e LoggerInterface sozinho
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

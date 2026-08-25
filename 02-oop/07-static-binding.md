@@ -1,70 +1,70 @@
-# 2.7 Статическое связывание (Late Static Binding)
+# 2.7 Ligação estática (Late Static Binding)
 
-## Краткое резюме
+## Resumo
 
-> **Late Static Binding** — механизм, позволяющий обращаться к вызывающему классу (static) вместо класса определения (self).
+> **Late Static Binding** — mecanismo que aponta para a classe que chamou (`static`), não para a classe onde o método foi definido (`self`).
 >
-> **Ключевые концепции:** self (класс определения), static (класс вызова), new static (экземпляр вызывающего), static::class (имя класса).
+> **Conceitos-chave:** self (classe da definição), static (classe da chamada), new static (instância de quem chamou), static::class (nome da classe).
 >
-> **Важно:** Eloquent использует static для возврата правильного типа из find(), all(). static::boot() + parent::boot() для расширения логики.
+> **Importante:** Eloquent usa static para devolver o tipo certo em find() e all(). static::boot() + parent::boot() para estender a lógica.
 
 ---
 
-## Содержание
+## Conteúdo
 
 - [self vs static](#self-vs-static)
-- [static:: в методах](#static-в-методах)
+- [static:: em métodos](#static-em-métodos)
 - [new static vs new self](#new-static-vs-new-self)
-- [parent:: с static](#parent-с-static)
-- [get_called_class() (устарела в PHP 8.0)](#get_called_class-устарела-в-php-80)
-- [Проблемы с Late Static Binding](#проблемы-с-late-static-binding)
-- [Резюме](#резюме-статического-связывания)
-- [Практические задания](#практические-задания)
+- [parent:: com static](#parent-com-static)
+- [get_called_class() (obsoleta no PHP 8.0)](#get_called_class-obsoleta-no-php-80)
+- [Problemas com Late Static Binding](#problemas-com-late-static-binding)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
 ## self vs static
 
-**Что это:**
-`self` ссылается на класс, где метод определён. `static` — на класс, где метод вызван (позднее связывание).
+**O que é:**
+`self` aponta para a classe onde o método foi definido. `static` aponta para a classe que chamou (ligação tardia).
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
     public static function getClass(): string
     {
-        return self::class;  // Animal (класс, где определён)
+        return self::class;  // Animal (classe onde foi definido)
     }
 
     public static function getCalledClass(): string
     {
-        return static::class;  // Класс, который вызвал (Late Static Binding)
+        return static::class;  // Classe que chamou (Late Static Binding)
     }
 }
 
 class Dog extends Animal {}
 
 echo Animal::getClass();  // "Animal"
-echo Dog::getClass();     // "Animal" (self — всегда Animal)
+echo Dog::getClass();     // "Animal" (self — sempre Animal)
 
 echo Animal::getCalledClass();  // "Animal"
-echo Dog::getCalledClass();     // "Dog" (static — класс вызова)
+echo Dog::getCalledClass();     // "Dog" (static — classe da chamada)
 ```
 
-**Когда использовать:**
-`static` для методов, которые должны работать с вызывающим классом (фабрики, Active Record).
+**Quando usar:**
+`static` em métodos que precisam da classe que chamou (Factory, Active Record).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Eloquent Model (упрощённо)
+// Eloquent Model (simplificado)
 class Model
 {
     public static function find(int $id): ?static
     {
-        $class = static::class;  // Получить вызывающий класс
+        $class = static::class;  // Pega a classe que chamou
         // SELECT * FROM {table} WHERE id = {$id}
-        return new $class;  // Вернуть экземпляр вызывающего класса
+        return new $class;  // Devolve instância da classe que chamou
     }
 
     public static function all(): Collection
@@ -78,35 +78,35 @@ class Model
 class User extends Model {}
 class Post extends Model {}
 
-$user = User::find(1);  // Вернёт User (не Model!)
+$user = User::find(1);  // Devolve User (não Model!)
 // static::class = User::class
 
-$post = Post::find(1);  // Вернёт Post (не Model!)
+$post = Post::find(1);  // Devolve Post (não Model!)
 // static::class = Post::class
 
-// С self было бы:
+// Com self seria:
 class ModelBad
 {
     public static function find(int $id): ?self
     {
-        return new self;  // Всегда Model (не то, что нужно!)
+        return new self;  // Sempre Model (não é o que você quer!)
     }
 }
 
-$user = User::find(1);  // Вернёт Model (не User!) ❌
+$user = User::find(1);  // Devolve Model (não User!) ❌
 ```
 
-**На собеседовании скажешь:**
-> "self ссылается на класс, где определён метод. static — на вызывающий класс (Late Static Binding). Eloquent использует static для возврата правильного типа из find(), all(). static позволяет наследникам переопределять поведение."
+**Na entrevista:**
+> "self aponta para a classe onde o método foi definido. static aponta para a classe que chamou (Late Static Binding). Eloquent usa static para devolver o tipo certo em find() e all(). Com static, a subclasse consegue sobrescrever o comportamento."
 
 ---
 
-## static:: в методах
+## static:: em métodos
 
-**Что это:**
-Вызов статических методов вызывающего класса через `static::`.
+**O que é:**
+Chamada de métodos estáticos da classe que chamou, via `static::`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Model
 {
@@ -114,12 +114,12 @@ class Model
 
     public static function getTable(): string
     {
-        return static::$table;  // Берёт $table из вызывающего класса
+        return static::$table;  // Pega $table da classe que chamou
     }
 
     public static function all(): array
     {
-        $table = static::getTable();  // Вызов метода вызывающего класса
+        $table = static::getTable();  // Chama o método da classe que chamou
         return DB::select("SELECT * FROM {$table}");
     }
 }
@@ -134,17 +134,17 @@ class Post extends Model
     protected static string $table = 'posts';
 }
 
-echo User::getTable();  // "users" (static::$table из User)
-echo Post::getTable();  // "posts" (static::$table из Post)
+echo User::getTable();  // "users" (static::$table de User)
+echo Post::getTable();  // "posts" (static::$table de Post)
 
 $users = User::all();  // SELECT * FROM users
 $posts = Post::all();  // SELECT * FROM posts
 ```
 
-**Когда использовать:**
-Для вызова методов/свойств наследников из базового класса.
+**Quando usar:**
+Para chamar métodos e propriedades da subclasse a partir da classe base.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Active Record pattern
 abstract class ActiveRecord
@@ -163,12 +163,12 @@ abstract class ActiveRecord
             return null;
         }
 
-        return static::hydrate($data);  // Создать объект вызывающего класса
+        return static::hydrate($data);  // Cria objeto da classe que chamou
     }
 
     protected static function hydrate(array $data): static
     {
-        $instance = new static();  // Создать экземпляр вызывающего класса
+        $instance = new static();  // Instância da classe que chamou
 
         foreach ($data as $key => $value) {
             $instance->$key = $value;
@@ -181,7 +181,7 @@ abstract class ActiveRecord
     {
         $table = static::$table;
 
-        // INSERT или UPDATE
+        // INSERT ou UPDATE
         return true;
     }
 }
@@ -195,32 +195,32 @@ class User extends ActiveRecord
     public string $email;
 }
 
-$user = User::find(1);  // Вернёт User (не ActiveRecord)
-// static::hydrate создаст new User()
+$user = User::find(1);  // Devolve User (não ActiveRecord)
+// static::hydrate cria new User()
 ```
 
-**На собеседовании скажешь:**
-> "static:: вызывает метод/свойство вызывающего класса. Использую в Active Record, фабриках, базовых классах. static::$property берёт значение из наследника, static::method() вызывает метод наследника."
+**Na entrevista:**
+> "static:: chama o método ou a propriedade da classe que chamou. Uso em Active Record, Factory e classe base. static::$property pega o valor da subclasse. static::method() chama o método da subclasse."
 
 ---
 
 ## new static vs new self
 
-**Что это:**
-`new self` создаёт экземпляр класса, где метод определён. `new static` — вызывающего класса.
+**O que é:**
+`new self` cria instância da classe onde o método foi definido. `new static` cria instância da classe que chamou.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
     public static function createSelf(): self
     {
-        return new self();  // Всегда Animal
+        return new self();  // Sempre Animal
     }
 
     public static function createStatic(): static
     {
-        return new static();  // Класс вызова
+        return new static();  // Classe da chamada
     }
 }
 
@@ -229,21 +229,21 @@ class Dog extends Animal {}
 $animal1 = Animal::createSelf();  // Animal
 $animal2 = Animal::createStatic();  // Animal
 
-$dog1 = Dog::createSelf();  // Animal (не Dog!) ❌
+$dog1 = Dog::createSelf();  // Animal (não Dog!) ❌
 $dog2 = Dog::createStatic();  // Dog ✅
 ```
 
-**Когда использовать:**
-`new static` для фабрик, builder'ов, методов создания объектов.
+**Quando usar:**
+`new static` em Factory, builder e método que cria objeto.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Factory method
 abstract class Model
 {
     public static function make(array $attributes = []): static
     {
-        $instance = new static();  // Создать экземпляр вызывающего класса
+        $instance = new static();  // Instância da classe que chamou
 
         foreach ($attributes as $key => $value) {
             $instance->$key = $value;
@@ -268,15 +268,15 @@ class User extends Model
 
     public function save(): void
     {
-        // Сохранение в БД
+        // Salva no banco
     }
 }
 
-$user = User::make(['name' => 'Иван', 'email' => 'ivan@mail.com']);
-// $user — это User (не Model)
+$user = User::make(['name' => 'João', 'email' => 'joao@email.com']);
+// $user é User (não Model)
 
-$user = User::create(['name' => 'Пётр', 'email' => 'petr@mail.com']);
-// Создаст и сохранит User
+$user = User::create(['name' => 'Pedro', 'email' => 'pedro@email.com']);
+// Cria e salva um User
 
 // Builder pattern
 class QueryBuilder
@@ -291,7 +291,7 @@ class QueryBuilder
 
     public function clone(): static
     {
-        return clone $this;  // Клонировать с правильным типом
+        return clone $this;  // Clona com o tipo certo
     }
 }
 
@@ -305,31 +305,31 @@ class UserQueryBuilder extends QueryBuilder
 
 $query = new UserQueryBuilder();
 $activeUsers = $query->active()->where('department_id', 5);
-// Все методы возвращают UserQueryBuilder (не QueryBuilder)
+// Todos os métodos devolvem UserQueryBuilder (não QueryBuilder)
 ```
 
-**На собеседовании скажешь:**
-> "new self создаёт экземпляр класса, где определён. new static — вызывающего класса. Использую new static для фабрик, builder'ов. Eloquent::make(), Eloquent::create() используют new static."
+**Na entrevista:**
+> "new self cria instância da classe onde o método foi definido. new static cria da classe que chamou. Uso new static em Factory e builder. Eloquent::make() e Eloquent::create() usam new static."
 
 ---
 
-## parent:: с static
+## parent:: com static
 
-**Что это:**
-Комбинация вызова родительского метода с Late Static Binding.
+**O que é:**
+Combinar a chamada do método pai com Late Static Binding.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Model
 {
     public static function boot(): void
     {
-        echo "Model booted\n";
+        echo "Model inicializado\n";
     }
 
     public static function initialize(): void
     {
-        static::boot();  // Вызовет boot() вызывающего класса
+        static::boot();  // Chama boot() da classe que chamou
     }
 }
 
@@ -337,42 +337,42 @@ class User extends Model
 {
     public static function boot(): void
     {
-        parent::boot();  // Вызов родительского boot()
-        echo "User booted\n";
+        parent::boot();  // Chama o boot() do pai
+        echo "User inicializado\n";
     }
 }
 
 User::initialize();
-// Model booted
-// User booted
+// Model inicializado
+// User inicializado
 
-// Без parent::
+// Sem parent::
 class PostBad extends Model
 {
     public static function boot(): void
     {
-        // Не вызвали parent::boot() — логика родителя пропущена!
-        echo "Post booted\n";
+        // Não chamou parent::boot() — a lógica do pai ficou de fora!
+        echo "Post inicializado\n";
     }
 }
 
 PostBad::initialize();
-// Post booted (Model booted не выполнился!)
+// Post inicializado (Model inicializado não rodou!)
 ```
 
-**Когда использовать:**
-Для расширения логики родителя в наследниках.
+**Quando usar:**
+Para estender a lógica do pai na subclasse.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Eloquent Model boot
 abstract class Model
 {
     protected static function boot(): void
     {
-        static::bootTraits();  // Загрузить traits
+        static::bootTraits();  // Carrega os traits
 
-        // Базовая логика
+        // Lógica base
     }
 
     protected static function bootTraits(): void
@@ -403,7 +403,7 @@ class Post extends Model
 
     protected static function boot(): void
     {
-        parent::boot();  // ВАЖНО: вызвать родительский boot
+        parent::boot();  // IMPORTANTE: chama o boot do pai
 
         static::creating(function ($post) {
             if (empty($post->slug)) {
@@ -413,22 +413,22 @@ class Post extends Model
     }
 }
 
-// При вызове Post::boot():
+// Ao chamar Post::boot():
 // 1. parent::boot() → Model::boot() → bootTraits() → bootSoftDeletes()
-// 2. static::creating() — добавить свою логику
+// 2. static::creating() — adiciona a lógica própria
 ```
 
-**На собеседовании скажешь:**
-> "parent::method() вызывает метод родителя, static:: — вызывающего класса. В Eloquent boot() всегда вызываю parent::boot() для загрузки traits. parent + static позволяют расширять логику родителя в наследниках."
+**Na entrevista:**
+> "parent::method() chama o método do pai. static:: chama o da classe que chamou. No Eloquent, no boot() eu sempre chamo parent::boot() para carregar os traits. parent + static deixam a subclasse estender a lógica do pai."
 
 ---
 
-## get_called_class() (устарела в PHP 8.0)
+## get_called_class() (obsoleta no PHP 8.0)
 
-**Что это:**
-Функция, возвращающая имя вызывающего класса. В PHP 8.0+ заменена на `static::class`.
+**O que é:**
+Função que devolve o nome da classe que chamou. No PHP 8.0+ o substituto é `static::class`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 class Animal
 {
@@ -438,7 +438,7 @@ class Animal
         return get_called_class();
 
         // PHP 8.0+
-        return static::class;  // Предпочтительнее
+        return static::class;  // Preferível
     }
 }
 
@@ -451,24 +451,24 @@ class Model
 {
     public static function getModelName(): string
     {
-        return static::class;  // Короче и читаемее
+        return static::class;  // Mais curto e mais legível
     }
 }
 
 echo User::getModelName();  // "User"
 ```
 
-**Когда использовать:**
-В PHP 8.0+ всегда используй `static::class` вместо `get_called_class()`.
+**Quando usar:**
+No PHP 8.0+ use sempre `static::class` no lugar de `get_called_class()`.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Logger
 class BaseService
 {
     protected function log(string $message): void
     {
-        $class = static::class;  // Класс, который вызвал
+        $class = static::class;  // Classe que chamou
         Log::info("[{$class}] {$message}");
     }
 }
@@ -477,8 +477,8 @@ class OrderService extends BaseService
 {
     public function process(): void
     {
-        $this->log('Processing order');
-        // [OrderService] Processing order
+        $this->log('Processando pedido');
+        // [OrderService] Processando pedido
     }
 }
 
@@ -486,12 +486,12 @@ class UserService extends BaseService
 {
     public function process(): void
     {
-        $this->log('Processing user');
-        // [UserService] Processing user
+        $this->log('Processando usuário');
+        // [UserService] Processando usuário
     }
 }
 
-// Routing
+// Rotas
 class Controller
 {
     public function getRoute(): string
@@ -509,19 +509,19 @@ class UserController extends Controller {}
 echo (new UserController())->getRoute();  // "/user"
 ```
 
-**На собеседовании скажешь:**
-> "get_called_class() возвращает имя вызывающего класса (устарела в PHP 8.0). Используй static::class вместо неё. static::class возвращает полное имя класса с namespace."
+**Na entrevista:**
+> "get_called_class() devolve o nome da classe que chamou (obsoleta no PHP 8.0). Uso static::class no lugar. static::class devolve o nome completo da classe, com namespace."
 
 ---
 
-## Проблемы с Late Static Binding
+## Problemas com Late Static Binding
 
-**Что это:**
-Late Static Binding может привести к неожиданному поведению, если не понимать, как работает.
+**O que é:**
+Late Static Binding pode surpreender se você não souber como ele funciona.
 
-**Проблемы:**
+**Problemas:**
 ```php
-// Проблема 1: статические свойства не наследуются правильно
+// Problema 1: propriedade estática não herda do jeito que você espera
 class Model
 {
     protected static array $instances = [];
@@ -544,11 +544,11 @@ User::register();
 User::register();
 Post::register();
 
-// Ожидаем: User — 2, Post — 1
-// Реальность: все в одном массиве Model::$instances
-var_dump(User::getInstances());  // 3 элемента (User, User, Post) ❌
+// Esperado: User — 2, Post — 1
+// Realidade: tudo no mesmo array Model::$instances
+var_dump(User::getInstances());  // 3 elementos (User, User, Post) ❌
 
-// Решение: каждый класс должен объявить своё свойство
+// Solução: cada classe declara a própria propriedade
 class UserFixed extends Model
 {
     protected static array $instances = [];
@@ -559,12 +559,12 @@ class PostFixed extends Model
     protected static array $instances = [];
 }
 
-// Проблема 2: сложность отладки
+// Problema 2: debug fica difícil
 class Base
 {
     public static function who(): string
     {
-        return static::class;  // Зависит от контекста вызова
+        return static::class;  // Depende do contexto da chamada
     }
 }
 
@@ -572,27 +572,27 @@ class Child extends Base
 {
     public static function test(): string
     {
-        return parent::who();  // Какой класс вернёт?
+        return parent::who();  // Qual classe devolve?
     }
 }
 
-echo Child::test();  // "Child" (Late Static Binding работает даже через parent)
+echo Child::test();  // "Child" (Late Static Binding vale mesmo via parent)
 ```
 
-**Когда использовать:**
-Используй осторожно, документируй поведение. Предпочитай композицию наследованию.
+**Quando usar:**
+Use com cuidado e documente o comportamento. Prefira composição a herança.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Правильное использование: Eloquent Model
+// Uso certo: Eloquent Model
 abstract class Model
 {
-    // Каждый наследник должен определить свою таблицу
+    // Cada subclasse define a própria tabela
     abstract protected static function getTable(): string;
 
     public static function all(): Collection
     {
-        $table = static::getTable();  // Вызовет метод наследника
+        $table = static::getTable();  // Chama o método da subclasse
         return DB::table($table)->get();
     }
 }
@@ -607,7 +607,7 @@ class User extends Model
 
 $users = User::all();  // SELECT * FROM users
 
-// Неправильное использование: сложная иерархия
+// Uso errado: hierarquia complicada
 class A
 {
     public static function test(): string
@@ -631,49 +631,48 @@ class B extends A
 
 class C extends B {}
 
-echo C::test();  // "A -> C" (сложно отследить логику) ❌
+echo C::test();  // "A -> C" (difícil de rastrear) ❌
 ```
 
-**На собеседовании скажешь:**
-> "Late Static Binding может усложнить отладку. Статические свойства нужно переопределять в каждом наследнике. Использую осторожно, документирую. Предпочитаю композицию наследованию для сложных случаев."
+**Na entrevista:**
+> "Late Static Binding pode complicar o debug. Propriedade estática precisa ser redeclarada em cada subclasse. Uso com cuidado e documento. Em caso complexo, prefiro composição a herança."
 
 ---
 
-## Резюме статического связывания
+## Recapitulando
 
-**Основное:**
-- `self` — класс, где метод определён
-- `static` — класс, который вызвал (Late Static Binding)
-- `new self` — создаёт экземпляр класса определения
-- `new static` — создаёт экземпляр вызывающего класса
-- `static::` — вызов метода/свойства вызывающего класса
-- `parent::` + `static` — расширение логики родителя
-- `static::class` — имя вызывающего класса (PHP 8.0+)
+- `self` — classe onde o método foi definido
+- `static` — classe que chamou (Late Static Binding)
+- `new self` — cria instância da classe da definição
+- `new static` — cria instância da classe que chamou
+- `static::` — chama método ou propriedade da classe que chamou
+- `parent::` + `static` — estende a lógica do pai
+- `static::class` — nome da classe que chamou (PHP 8.0+)
 
 **self vs static:**
 | self | static |
 |------|--------|
-| Класс определения | Класс вызова |
-| Раннее связывание | Позднее связывание |
-| Не переопределяется | Переопределяется в наследниках |
+| Classe da definição | Classe da chamada |
+| Ligação antecipada | Ligação tardia |
+| Não é sobrescrito | É sobrescrito nas subclasses |
 
-**Важно на собесе:**
-- Eloquent использует `static` для возврата правильного типа из find(), all()
-- `new static` для фабрик и builder'ов
-- `static::boot()` + `parent::boot()` для расширения логики
-- Осторожно со статическими свойствами (переопределять в каждом наследнике)
-- `static::class` вместо `get_called_class()` (PHP 8.0+)
+**Importante na entrevista:**
+- Eloquent usa `static` para devolver o tipo certo em find() e all()
+- `new static` em Factory e builder
+- `static::boot()` + `parent::boot()` para estender a lógica
+- Cuidado com propriedade estática (redeclare em cada subclasse)
+- `static::class` no lugar de `get_called_class()` (PHP 8.0+)
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Active Record с static
+### Exercício 1: Active Record com static
 
-Создай базовый `Model` с методами find(), all(), create() используя static для возврата правильного типа.
+**Enunciado:** Crie um `Model` base com find(), all() e create() usando static para devolver o tipo certo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Model
@@ -688,7 +687,7 @@ abstract class Model
         $table = static::getTable();
         echo "SELECT * FROM {$table} WHERE id = {$id}\n";
 
-        // Создаём экземпляр вызывающего класса (User/Post)
+        // Cria instância da classe que chamou (User/Post)
         $instance = new static();
         $instance->attributes = ['id' => $id, 'loaded' => true];
 
@@ -761,30 +760,30 @@ class Post extends Model
     }
 }
 
-// Использование
-$user = User::find(1);  // Вернёт User (не Model!)
+// Uso
+$user = User::find(1);  // Devolve User (não Model!)
 // SELECT * FROM users WHERE id = 1
 var_dump($user instanceof User);  // true
 
-$post = Post::find(1);  // Вернёт Post (не Model!)
+$post = Post::find(1);  // Devolve Post (não Model!)
 // SELECT * FROM posts WHERE id = 1
 var_dump($post instanceof Post);  // true
 
-$users = User::all();  // Массив User объектов
+$users = User::all();  // Array de objetos User
 // SELECT * FROM users
 var_dump($users[0] instanceof User);  // true
 
-$newUser = User::create(['name' => 'Иван']);
+$newUser = User::create(['name' => 'João']);
 // INSERT INTO users (...) VALUES (...)
 ```
 </details>
 
-### Задание 2: Factory Pattern с new static
+### Exercício 2: Factory Pattern com new static
 
-Создай базовый `Factory` класс, который использует new static для создания экземпляров.
+**Enunciado:** Crie uma classe `Factory` base que usa new static para criar instâncias.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Factory
@@ -803,7 +802,7 @@ abstract class Factory
         $method = "state" . ucfirst($name);
 
         if (!method_exists($this, $method)) {
-            throw new \Exception("State {$name} does not exist");
+            throw new \Exception("State {$name} não existe");
         }
 
         $this->$method();
@@ -818,7 +817,7 @@ abstract class Factory
     public function create(): object
     {
         $instance = $this->make();
-        echo "Saving to database...\n";
+        echo "Salvando no banco...\n";
         return $instance;
     }
 
@@ -853,8 +852,8 @@ class PostFactory extends Factory
     protected function createInstance(): object
     {
         $post = new \stdClass();
-        $post->title = $this->attributes['title'] ?? 'Default Title';
-        $post->content = $this->attributes['content'] ?? 'Default content';
+        $post->title = $this->attributes['title'] ?? 'Título padrão';
+        $post->content = $this->attributes['content'] ?? 'Conteúdo padrão';
         $post->published = $this->attributes['published'] ?? false;
         return $post;
     }
@@ -872,9 +871,9 @@ class PostFactory extends Factory
     }
 }
 
-// Использование
-$user = UserFactory::new(['name' => 'Иван'])->make();
-print_r($user);  // stdClass {name: "Иван", email: "john@example.com", ...}
+// Uso
+$user = UserFactory::new(['name' => 'João'])->make();
+print_r($user);  // stdClass {name: "João", email: "john@example.com", ...}
 
 $admin = UserFactory::new()->state('admin')->make();
 print_r($admin);  // stdClass {is_admin: true, email: "admin@example.com"}
@@ -882,22 +881,22 @@ print_r($admin);  // stdClass {is_admin: true, email: "admin@example.com"}
 $activeAdmin = UserFactory::new()
     ->state('admin')
     ->state('active')
-    ->create();  // Saving to database...
+    ->create();  // Salvando no banco...
 
-$publishedPost = PostFactory::new(['title' => 'My Post'])
+$publishedPost = PostFactory::new(['title' => 'Meu post'])
     ->state('published')
     ->make();
 print_r($publishedPost);
-// stdClass {title: "My Post", published: true, published_at: "2024-..."}
+// stdClass {title: "Meu post", published: true, published_at: "2024-..."}
 ```
 </details>
 
-### Задание 3: Boot механизм с parent::boot()
+### Exercício 3: Mecanismo de boot com parent::boot()
 
-Создай систему boot методов, где наследники расширяют логику родителя.
+**Enunciado:** Crie um sistema de métodos boot em que as subclasses estendem a lógica do pai.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 abstract class Model
@@ -907,17 +906,17 @@ abstract class Model
 
     public static function boot(): void
     {
-        // Проверка, что класс ещё не загружен
+        // Garante que a classe ainda não foi carregada
         if (isset(static::$booted[static::class])) {
             return;
         }
 
-        echo "Booting " . static::class . "\n";
+        echo "Inicializando " . static::class . "\n";
 
-        // Загрузка трейтов
+        // Carrega os traits
         static::bootTraits();
 
-        // Отметить как загруженный
+        // Marca como carregado
         static::$booted[static::class] = true;
     }
 
@@ -955,7 +954,7 @@ abstract class Model
     public function save(): void
     {
         static::fireEvent('saving', $this);
-        echo "Saving " . static::class . "\n";
+        echo "Salvando " . static::class . "\n";
         static::fireEvent('saved', $this);
     }
 }
@@ -964,10 +963,10 @@ trait SoftDeletes
 {
     protected static function bootSoftDeletes(): void
     {
-        echo "  - Booting SoftDeletes trait\n";
+        echo "  - Inicializando trait SoftDeletes\n";
 
         static::observe('deleting', function ($model) {
-            echo "  - SoftDeletes: Setting deleted_at\n";
+            echo "  - SoftDeletes: definindo deleted_at\n";
         });
     }
 }
@@ -976,10 +975,10 @@ trait HasUuid
 {
     protected static function bootHasUuid(): void
     {
-        echo "  - Booting HasUuid trait\n";
+        echo "  - Inicializando trait HasUuid\n";
 
         static::observe('creating', function ($model) {
-            echo "  - HasUuid: Generating UUID\n";
+            echo "  - HasUuid: gerando UUID\n";
         });
     }
 }
@@ -990,12 +989,12 @@ class Post extends Model
 
     public static function boot(): void
     {
-        parent::boot();  // ВАЖНО: вызвать родительский boot
+        parent::boot();  // IMPORTANTE: chama o boot do pai
 
-        echo "  - Custom Post boot logic\n";
+        echo "  - Lógica de boot customizada do Post\n";
 
         static::observe('saving', function ($post) {
-            echo "  - Post: Generating slug\n";
+            echo "  - Post: gerando slug\n";
         });
     }
 }
@@ -1008,37 +1007,37 @@ class User extends Model
     {
         parent::boot();
 
-        echo "  - Custom User boot logic\n";
+        echo "  - Lógica de boot customizada do User\n";
 
         static::observe('creating', function ($user) {
-            echo "  - User: Hashing password\n";
+            echo "  - User: gerando hash da senha\n";
         });
     }
 }
 
-// Использование
+// Uso
 Post::boot();
-// Booting Post
-//   - Booting SoftDeletes trait
-//   - Booting HasUuid trait
-//   - Custom Post boot logic
+// Inicializando Post
+//   - Inicializando trait SoftDeletes
+//   - Inicializando trait HasUuid
+//   - Lógica de boot customizada do Post
 
 echo "\n";
 
 User::boot();
-// Booting User
-//   - Booting SoftDeletes trait
-//   - Custom User boot logic
+// Inicializando User
+//   - Inicializando trait SoftDeletes
+//   - Lógica de boot customizada do User
 
 echo "\n";
 
 $post = new Post();
 $post->save();
-// - Post: Generating slug
-// Saving Post
+// - Post: gerando slug
+// Salvando Post
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

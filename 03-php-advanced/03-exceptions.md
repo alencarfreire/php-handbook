@@ -1,68 +1,68 @@
-# 3.3 Исключения и ошибки
+# 3.3 Exceções e erros
 
-## Краткое резюме
+## Resumo
 
-> **Исключения** — механизм обработки ошибок через try-catch-finally.
+> **Exceções** — tratamento de erro com try-catch-finally.
 >
-> **Основное:** `throw new Exception()`, кастомные исключения, Error (PHP 7.0+), Throwable.
+> **O essencial:** `throw new Exception()`, exceções customizadas, Error (PHP 7.0+), Throwable.
 >
-> **Laravel:** `abort()` для HTTP, `findOrFail()` для моделей, Handler для глобальной обработки.
+> **Laravel:** `abort()` para HTTP, `findOrFail()` para model, Handler para tratamento global.
 
 ---
 
-## Содержание
+## Conteúdo
 
 - [try-catch-finally](#try-catch-finally)
-- [throw (выброс исключения)](#throw-выброс-исключения)
-- [Кастомные исключения](#кастомные-исключения)
-- [Exception методы](#exception-методы)
+- [throw (lançar exceção)](#throw-lançar-exceção)
+- [Exceções customizadas](#exceções-customizadas)
+- [Métodos de Exception](#métodos-de-exception)
 - [Error (PHP 7.0+)](#error-php-70)
-- [set_exception_handler и set_error_handler](#set_exception_handler-и-set_error_handler)
-- [Резюме исключений и ошибок](#резюме-исключений-и-ошибок)
-- [Практические задания](#практические-задания)
+- [set_exception_handler e set_error_handler](#set_exception_handler-e-set_error_handler)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
 ## try-catch-finally
 
-**Что это:**
-Механизм обработки исключений.
+**O que é:**
+Mecanismo de tratamento de exceções.
 
-**Как работает:**
+**Como funciona:**
 ```php
 try {
-    // Код, который может выбросить исключение
-    $user = User::findOrFail($id);  // Выбросит ModelNotFoundException
+    // Código que pode lançar exceção
+    $user = User::findOrFail($id);  // Lança ModelNotFoundException
     $user->delete();
 } catch (ModelNotFoundException $e) {
-    // Обработка конкретного исключения
-    echo "User not found: {$e->getMessage()}";
+    // Trata a exceção específica
+    echo "Usuário não encontrado: {$e->getMessage()}";
 } catch (Exception $e) {
-    // Обработка всех остальных исключений
-    echo "Error: {$e->getMessage()}";
+    // Trata as demais exceções
+    echo "Erro: {$e->getMessage()}";
 } finally {
-    // Выполняется всегда (даже если было исключение)
+    // Roda sempre (mesmo se teve exceção)
     DB::disconnect();
-    Log::info('Operation completed');
+    Log::info('Operação concluída');
 }
 
 // finally (PHP 5.5+)
 try {
     $file = fopen('file.txt', 'r');
-    // Работа с файлом
+    // Trabalho com o arquivo
 } finally {
     if (isset($file)) {
-        fclose($file);  // Закроется в любом случае
+        fclose($file);  // Fecha de qualquer jeito
     }
 }
 ```
 
-**Когда использовать:**
-Для обработки ошибок, которые можно предвидеть (файл не найден, нет соединения с БД).
+**Quando usar:**
+Erro que você consegue prever: arquivo não existe, banco fora.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// API запрос с обработкой ошибок
+// Request de API com tratamento de erros
 public function store(Request $request)
 {
     try {
@@ -71,7 +71,7 @@ public function store(Request $request)
         $user = User::create($request->validated());
         $user->roles()->attach($request->input('roles'));
 
-        // Внешний API
+        // API externa
         $this->notificationService->send($user);
 
         DB::commit();
@@ -83,15 +83,15 @@ public function store(Request $request)
     } catch (ApiException $e) {
         DB::rollBack();
         Log::error('API error', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'Notification failed'], 500);
+        return response()->json(['error' => 'Falha ao enviar notificação'], 500);
     } catch (\Exception $e) {
         DB::rollBack();
         Log::error('Unexpected error', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'Internal error'], 500);
+        return response()->json(['error' => 'Erro interno'], 500);
     }
 }
 
-// Освобождение ресурсов
+// Liberar recursos
 public function processFile(string $path): array
 {
     $handle = fopen($path, 'r');
@@ -104,27 +104,27 @@ public function processFile(string $path): array
 
         return $data;
     } finally {
-        fclose($handle);  // Закроется в любом случае
+        fclose($handle);  // Fecha de qualquer jeito
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "try-catch обрабатывает исключения. Можно несколько catch для разных типов. finally выполняется всегда (для освобождения ресурсов). В Laravel использую для транзакций, внешних API, файловых операций."
+**Na entrevista:**
+> "try-catch trata exceções. Dá para ter vários catch, um por tipo. finally roda sempre (para liberar recurso). No Laravel eu uso em transação, API externa e arquivo."
 
 ---
 
-## throw (выброс исключения)
+## throw (lançar exceção)
 
-**Что это:**
-Создание и выброс исключения.
+**O que é:**
+Criar e lançar uma exceção.
 
-**Как работает:**
+**Como funciona:**
 ```php
 function divide(int $a, int $b): float
 {
     if ($b === 0) {
-        throw new InvalidArgumentException('Division by zero');
+        throw new InvalidArgumentException('Divisão por zero');
     }
 
     return $a / $b;
@@ -133,47 +133,47 @@ function divide(int $a, int $b): float
 try {
     $result = divide(10, 0);
 } catch (InvalidArgumentException $e) {
-    echo $e->getMessage();  // "Division by zero"
+    echo $e->getMessage();  // "Divisão por zero"
 }
 
-// Встроенные исключения PHP
-throw new Exception('General error');
-throw new RuntimeException('Runtime error');
-throw new LogicException('Logic error');
-throw new InvalidArgumentException('Invalid argument');
-throw new OutOfBoundsException('Out of bounds');
-throw new BadMethodCallException('Bad method call');
+// Exceções nativas do PHP
+throw new Exception('Erro geral');
+throw new RuntimeException('Erro de runtime');
+throw new LogicException('Erro de lógica');
+throw new InvalidArgumentException('Argumento inválido');
+throw new OutOfBoundsException('Fora dos limites');
+throw new BadMethodCallException('Chamada de método inválida');
 
-// С кодом ошибки и previous exception
+// Com código de erro e previous exception
 try {
     $result = externalApi();
 } catch (ApiException $e) {
-    throw new RuntimeException('Failed to call API', 500, $e);
+    throw new RuntimeException('Falha ao chamar a API', 500, $e);
 }
 ```
 
-**Когда использовать:**
-Когда метод не может продолжить выполнение (валидация не прошла, ресурс недоступен).
+**Quando usar:**
+Quando o método não consegue seguir: validação falhou, recurso indisponível.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация в сервисе
+// Validação no service
 class OrderService
 {
     public function create(array $data): Order
     {
         if (empty($data['user_id'])) {
-            throw new InvalidArgumentException('User ID is required');
+            throw new InvalidArgumentException('User ID é obrigatório');
         }
 
         if ($data['amount'] <= 0) {
-            throw new InvalidArgumentException('Amount must be positive');
+            throw new InvalidArgumentException('Valor precisa ser positivo');
         }
 
         $user = User::find($data['user_id']);
 
         if ($user === null) {
-            throw new RuntimeException("User {$data['user_id']} not found");
+            throw new RuntimeException("Usuário {$data['user_id']} não encontrado");
         }
 
         return Order::create($data);
@@ -181,18 +181,18 @@ class OrderService
 }
 
 // Eloquent findOrFail
-$user = User::findOrFail($id);  // Выбросит ModelNotFoundException
+$user = User::findOrFail($id);  // Lança ModelNotFoundException
 
-// abort() в Laravel (выбрасывает HttpException)
+// abort() no Laravel (lança HttpException)
 if (!auth()->check()) {
-    abort(401, 'Unauthorized');
+    abort(401, 'Não autorizado');
 }
 
 if (!Gate::allows('update', $post)) {
-    abort(403, 'Forbidden');
+    abort(403, 'Acesso negado');
 }
 
-// Кастомное исключение с контекстом
+// Exceção customizada com contexto
 class InsufficientFundsException extends Exception
 {
     public function __construct(
@@ -216,50 +216,50 @@ class InsufficientFundsException extends Exception
 
 if ($wallet->balance < $amount) {
     throw new InsufficientFundsException(
-        'Insufficient funds',
+        'Saldo insuficiente',
         $wallet->balance,
         $amount
     );
 }
 ```
 
-**На собеседовании скажешь:**
-> "throw выбрасывает исключение. Встроенные: Exception, RuntimeException, InvalidArgumentException. Laravel: abort() для HTTP ошибок, findOrFail() выбрасывает ModelNotFoundException. Создаю кастомные исключения для бизнес-логики."
+**Na entrevista:**
+> "throw lança a exceção. As nativas: Exception, RuntimeException, InvalidArgumentException. No Laravel: abort() para erro HTTP, findOrFail() lança ModelNotFoundException. Eu crio exceção customizada para regra de negócio."
 
 ---
 
-## Кастомные исключения
+## Exceções customizadas
 
-**Что это:**
-Собственные классы исключений для специфичных ошибок.
+**O que é:**
+Classes de exceção suas, para erro específico.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Базовое кастомное исключение
+// Exceção customizada base
 class OrderException extends Exception {}
 
 class PaymentFailedException extends OrderException {}
 
 class InsufficientStockException extends OrderException {}
 
-// Использование
+// Uso
 try {
     $order = $this->createOrder($data);
     $this->processPayment($order);
     $this->reserveStock($order);
 } catch (PaymentFailedException $e) {
-    // Обработка ошибки оплаты
+    // Trata erro de pagamento
     $this->refundOrder($order);
     throw $e;
 } catch (InsufficientStockException $e) {
-    // Обработка нехватки товара
+    // Trata falta de estoque
     $this->notifySupplier($e->getProduct());
 } catch (OrderException $e) {
-    // Общая обработка ошибок заказа
+    // Tratamento geral de erro do pedido
     Log::error('Order error', ['message' => $e->getMessage()]);
 }
 
-// С дополнительным контекстом
+// Com contexto extra
 class ValidationException extends Exception
 {
     public function __construct(
@@ -275,18 +275,18 @@ class ValidationException extends Exception
     }
 }
 
-throw new ValidationException('Validation failed', [
-    'email' => ['Email is invalid'],
-    'password' => ['Password is too short'],
+throw new ValidationException('Validação falhou', [
+    'email' => ['E-mail inválido'],
+    'password' => ['Senha muito curta'],
 ]);
 ```
 
-**Когда использовать:**
-Для доменных ошибок, бизнес-логики, специфичных случаев.
+**Quando usar:**
+Erro de domínio, regra de negócio, caso específico.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel HTTP исключения
+// Exceções HTTP no Laravel
 namespace App\Exceptions;
 
 use Exception;
@@ -317,17 +317,17 @@ class ApiException extends Exception
     }
 }
 
-// Использование
+// Uso
 if (!$token) {
-    throw new ApiException('Token is required', 401);
+    throw new ApiException('Token é obrigatório', 401);
 }
 
-// Доменные исключения
+// Exceções de domínio
 class UserAlreadyExistsException extends Exception
 {
     public function __construct(string $email)
     {
-        parent::__construct("User with email {$email} already exists");
+        parent::__construct("Já existe usuário com o e-mail {$email}");
     }
 }
 
@@ -335,11 +335,11 @@ class OrderNotFoundException extends Exception
 {
     public function __construct(int $orderId)
     {
-        parent::__construct("Order {$orderId} not found");
+        parent::__construct("Pedido {$orderId} não encontrado");
     }
 }
 
-// Сервис
+// Service
 public function register(array $data): User
 {
     $exists = User::where('email', $data['email'])->exists();
@@ -370,42 +370,42 @@ public function render($request, Throwable $exception)
 }
 ```
 
-**На собеседовании скажешь:**
-> "Кастомные исключения для доменных ошибок. Наследую от Exception или RuntimeException. Добавляю контекст (balance, product). В Laravel создаю ApiException, DomainException. Handler обрабатывает и возвращает JSON."
+**Na entrevista:**
+> "Exceção customizada é para erro de domínio. Eu herdo de Exception ou RuntimeException. Coloco contexto (balance, product). No Laravel crio ApiException, DomainException. O Handler trata e devolve JSON."
 
 ---
 
-## Exception методы
+## Métodos de Exception
 
-**Что это:**
-Методы объекта Exception для получения информации об ошибке.
+**O que é:**
+Métodos do objeto Exception para pegar informação do erro.
 
-**Как работает:**
+**Como funciona:**
 ```php
 try {
-    throw new Exception('Error message', 500);
+    throw new Exception('Mensagem de erro', 500);
 } catch (Exception $e) {
-    // Методы Exception
-    echo $e->getMessage();     // "Error message"
+    // Métodos de Exception
+    echo $e->getMessage();     // "Mensagem de erro"
     echo $e->getCode();        // 500
     echo $e->getFile();        // /path/to/file.php
     echo $e->getLine();        // 42
     echo $e->getTrace();       // Array (stack trace)
-    echo $e->getTraceAsString(); // String (formatted stack trace)
-    echo $e->getPrevious();    // Previous exception (или null)
+    echo $e->getTraceAsString(); // String (stack trace formatado)
+    echo $e->getPrevious();    // Previous exception (ou null)
 
     // __toString()
-    echo $e;  // Полная информация об исключении
+    echo $e;  // Informação completa da exceção
 }
 
-// Previous exception (цепочка)
+// Previous exception (cadeia)
 try {
-    throw new Exception('Original error');
+    throw new Exception('Erro original');
 } catch (Exception $original) {
-    throw new RuntimeException('Wrapped error', 0, $original);
+    throw new RuntimeException('Erro encapsulado', 0, $original);
 }
 
-// Получение цепочки
+// Percorre a cadeia
 try {
     // ...
 } catch (Exception $e) {
@@ -416,12 +416,12 @@ try {
 }
 ```
 
-**Когда использовать:**
-Для логирования, дебаггинга, создания цепочки исключений.
+**Quando usar:**
+Log, debug, cadeia de exceções.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Логирование исключений
+// Log da exceção
 try {
     $this->externalApi->call();
 } catch (ApiException $e) {
@@ -433,7 +433,7 @@ try {
         'trace' => $e->getTraceAsString(),
     ]);
 
-    throw new RuntimeException('External API failed', 0, $e);
+    throw new RuntimeException('API externa falhou', 0, $e);
 }
 
 // Laravel Exception Handler
@@ -447,14 +447,14 @@ public function report(Throwable $exception)
             'trace' => $exception->getTraceAsString(),
         ]);
 
-        // Отправка в Sentry
+        // Envio para o Sentry
         if (app()->bound('sentry')) {
             app('sentry')->captureException($exception);
         }
     }
 }
 
-// Custom exception с дополнительной информацией
+// Exceção customizada com contexto extra
 class DatabaseException extends Exception
 {
     public function __construct(
@@ -488,12 +488,12 @@ class DatabaseException extends Exception
     }
 }
 
-// Логирование с контекстом
+// Log com contexto
 try {
     DB::select($query, $bindings);
 } catch (QueryException $e) {
     $exception = new DatabaseException(
-        'Database query failed',
+        'Query no banco falhou',
         $query,
         $bindings,
         $e
@@ -504,66 +504,66 @@ try {
 }
 ```
 
-**На собеседовании скажешь:**
-> "Exception методы: getMessage(), getCode(), getFile(), getLine(), getTrace(). getPrevious() для цепочки исключений. Использую для логирования, отправки в Sentry. В кастомных исключениях добавляю getContext() для дополнительной информации."
+**Na entrevista:**
+> "Métodos de Exception: getMessage(), getCode(), getFile(), getLine(), getTrace(). getPrevious() para a cadeia. Uso no log e no Sentry. Na customizada eu coloco getContext() com informação extra."
 
 ---
 
 ## Error (PHP 7.0+)
 
-**Что это:**
-Фатальные ошибки PHP теперь выбрасывают Error (можно ловить).
+**O que é:**
+Erro fatal do PHP agora lança Error (dá para pegar).
 
-**Как работает:**
+**Como funciona:**
 ```php
-// PHP < 7.0: фатальная ошибка (нельзя поймать)
-// PHP 7.0+: выбрасывает Error (можно поймать)
+// PHP < 7.0: erro fatal (não dá para pegar)
+// PHP 7.0+: lança Error (dá para pegar)
 
 try {
     nonExistentFunction();  // ParseError
 } catch (Error $e) {
-    echo "Error: {$e->getMessage()}";
+    echo "Erro: {$e->getMessage()}";
 }
 
 try {
     $obj->nonExistentMethod();  // Error
 } catch (Error $e) {
-    echo "Error: {$e->getMessage()}";
+    echo "Erro: {$e->getMessage()}";
 }
 
-// Типы Error
+// Tipos de Error
 try {
-    // Разные ошибки
+    // Erros diferentes
 } catch (ParseError $e) {
-    // Синтаксическая ошибка
+    // Erro de sintaxe
 } catch (TypeError $e) {
-    // Ошибка типизации
+    // Erro de tipo
 } catch (ArithmeticError $e) {
-    // Арифметическая ошибка
+    // Erro aritmético
 } catch (DivisionByZeroError $e) {
-    // Деление на ноль
+    // Divisão por zero
 } catch (Error $e) {
-    // Все остальные Error
+    // Os demais Error
 }
 
 // Error vs Exception
-// Error — внутренние ошибки PHP
-// Exception — пользовательские исключения
+// Error — erro interno do PHP
+// Exception — exceção sua
 
 // Throwable (PHP 7.0+)
 try {
     // ...
 } catch (Throwable $e) {
-    // Ловит И Exception, И Error
+    // Pega Exception e Error
 }
 ```
 
-**Когда использовать:**
-Для обработки фатальных ошибок, которые раньше убивали скрипт.
+**Quando usar:**
+Erro fatal que antes matava o script.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Обработка TypeError
+// Tratamento de TypeError
 function add(int $a, int $b): int
 {
     return $a + $b;
@@ -576,7 +576,7 @@ try {
     return 0;
 }
 
-// Обработка DivisionByZeroError
+// Tratamento de DivisionByZeroError
 try {
     $result = intdiv(10, 0);  // DivisionByZeroError
 } catch (DivisionByZeroError $e) {
@@ -584,13 +584,13 @@ try {
     return null;
 }
 
-// Laravel Exception Handler (ловит всё)
+// Laravel Exception Handler (pega tudo)
 public function render($request, Throwable $exception)
 {
-    // Throwable ловит Exception и Error
+    // Throwable pega Exception e Error
 
     if ($exception instanceof ModelNotFoundException) {
-        return response()->json(['error' => 'Not found'], 404);
+        return response()->json(['error' => 'Não encontrado'], 404);
     }
 
     if ($exception instanceof TypeError) {
@@ -600,13 +600,13 @@ public function render($request, Throwable $exception)
             'line' => $exception->getLine(),
         ]);
 
-        return response()->json(['error' => 'Internal error'], 500);
+        return response()->json(['error' => 'Erro interno'], 500);
     }
 
     return parent::render($request, $exception);
 }
 
-// Универсальный обработчик
+// Handler universal
 set_exception_handler(function (Throwable $e) {
     Log::error('Unhandled exception', [
         'type' => get_class($e),
@@ -615,56 +615,56 @@ set_exception_handler(function (Throwable $e) {
         'line' => $e->getLine(),
     ]);
 
-    echo "An error occurred";
+    echo "Ocorreu um erro";
     exit(1);
 });
 ```
 
-**На собеседовании скажешь:**
-> "Error (PHP 7.0+) — фатальные ошибки PHP, которые можно ловить. TypeError, ParseError, DivisionByZeroError. Throwable — базовый интерфейс для Exception и Error. В Laravel Handler использую Throwable для обработки всех ошибок."
+**Na entrevista:**
+> "Error (PHP 7.0+) é o erro fatal do PHP, e agora dá para pegar. TypeError, ParseError, DivisionByZeroError. Throwable é a interface base de Exception e Error. No Handler do Laravel eu uso Throwable para tratar tudo."
 
 ---
 
-## set_exception_handler и set_error_handler
+## set_exception_handler e set_error_handler
 
-**Что это:**
-Глобальные обработчики исключений и ошибок.
+**O que é:**
+Handlers globais de exceção e erro.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Обработчик неперехваченных исключений
+// Handler de exceção não capturada
 set_exception_handler(function (Throwable $e) {
     error_log($e->getMessage());
-    echo "An error occurred. Please try again later.";
+    echo "Ocorreu um erro. Tente de novo mais tarde.";
     exit(1);
 });
 
 throw new Exception('Unhandled exception');
-// Выведет: "An error occurred. Please try again later."
+// Imprime: "Ocorreu um erro. Tente de novo mais tarde."
 
-// Обработчик ошибок PHP (warnings, notices)
+// Handler de erro do PHP (warnings, notices)
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
-// Теперь warnings становятся исключениями
+// Agora warning vira exceção
 try {
     $file = fopen('nonexistent.txt', 'r');  // Warning → Exception
 } catch (ErrorException $e) {
-    echo "File error: {$e->getMessage()}";
+    echo "Erro de arquivo: {$e->getMessage()}";
 }
 
-// Восстановление обработчиков
+// Restaura os handlers
 restore_exception_handler();
 restore_error_handler();
 ```
 
-**Когда использовать:**
-Для глобальной обработки ошибок (логирование, отправка в Sentry).
+**Quando usar:**
+Tratamento global: log, envio para o Sentry.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel bootstrap/app.php (упрощённо)
+// Laravel bootstrap/app.php (simplificado)
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     App\Exceptions\Handler::class
@@ -678,26 +678,26 @@ use Throwable;
 
 class Handler extends ExceptionHandler
 {
-    // Обработка всех неперехваченных исключений
+    // Trata toda exceção não capturada
     public function render($request, Throwable $exception)
     {
-        // Логирование
+        // Log
         $this->report($exception);
 
-        // JSON для API
+        // JSON para API
         if ($request->expectsJson()) {
             return response()->json([
                 'error' => $exception->getMessage(),
             ], $this->getStatusCode($exception));
         }
 
-        // HTML для браузера
+        // HTML para o browser
         return parent::render($request, $exception);
     }
 
     public function report(Throwable $exception)
     {
-        // Отправка в Sentry
+        // Envio para o Sentry
         if (app()->bound('sentry') && $this->shouldReport($exception)) {
             app('sentry')->captureException($exception);
         }
@@ -713,9 +713,9 @@ class Handler extends ExceptionHandler
     }
 }
 
-// Custom error handler
+// Error handler customizado
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
-    // Пропустить подавленные ошибки (@operator)
+    // Ignora erro suprimido (@)
     if (!(error_reporting() & $errno)) {
         return false;
     }
@@ -727,50 +727,50 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
         'line' => $errline,
     ]);
 
-    // Преобразовать в исключение
+    // Converte em exceção
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 ```
 
-**На собеседовании скажешь:**
-> "set_exception_handler обрабатывает неперехваченные исключения. set_error_handler преобразует warnings/notices в исключения. Laravel использует Handler класс для глобальной обработки. Отправляю в Sentry, логирую, возвращаю JSON для API."
+**Na entrevista:**
+> "set_exception_handler trata exceção não capturada. set_error_handler transforma warning/notice em exceção. O Laravel usa a classe Handler para o tratamento global. Eu mando para o Sentry, logo e devolvo JSON na API."
 
 ---
 
-## Резюме исключений и ошибок
+## Recapitulando
 
-**Основное:**
-- `try-catch-finally` — обработка исключений
-- `throw` — выброс исключения
-- Встроенные: Exception, RuntimeException, InvalidArgumentException
-- Кастомные исключения для доменных ошибок
-- Методы: getMessage(), getCode(), getFile(), getLine(), getTrace()
-- `Error` (PHP 7.0+) — фатальные ошибки (можно ловить)
-- `Throwable` — базовый интерфейс (Exception + Error)
-- `set_exception_handler` — глобальный обработчик
+**O essencial:**
+- `try-catch-finally` — tratamento de exceções
+- `throw` — lança a exceção
+- Nativas: Exception, RuntimeException, InvalidArgumentException
+- Exceção customizada para erro de domínio
+- Métodos: getMessage(), getCode(), getFile(), getLine(), getTrace()
+- `Error` (PHP 7.0+) — erro fatal (dá para pegar)
+- `Throwable` — interface base (Exception + Error)
+- `set_exception_handler` — handler global
 
 **Error vs Exception:**
-- Error — внутренние ошибки PHP (TypeError, ParseError)
-- Exception — пользовательские исключения
+- Error — erro interno do PHP (TypeError, ParseError)
+- Exception — exceção sua
 
-**Важно на собесе:**
-- finally выполняется всегда (освобождение ресурсов)
-- Throwable ловит Exception и Error
-- Laravel: abort() для HTTP, findOrFail() для моделей
-- Кастомные исключения с контекстом (getContext())
-- Handler для глобальной обработки, отправки в Sentry
-- Цепочка исключений через getPrevious()
+**Importante na entrevista:**
+- finally roda sempre (liberar recurso)
+- Throwable pega Exception e Error
+- Laravel: abort() para HTTP, findOrFail() para model
+- Exceção customizada com contexto (getContext())
+- Handler para tratamento global e envio ao Sentry
+- Cadeia de exceções com getPrevious()
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай кастомное исключение с контекстом
+### Exercício 1: Crie uma exceção customizada com contexto
 
-Создай исключение `InsufficientFundsException`, которое хранит баланс, требуемую сумму и предоставляет метод `getContext()`.
+**Enunciado:** Crie a exceção `InsufficientFundsException`, que guarda o saldo, o valor pedido e expõe o método `getContext()`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -785,7 +785,7 @@ class InsufficientFundsException extends Exception
         string $message,
         private int $balance,
         private int $required,
-        private string $currency = 'RUB',
+        private string $currency = 'BRL',
     ) {
         parent::__construct($message);
     }
@@ -835,14 +835,14 @@ class InsufficientFundsException extends Exception
     }
 }
 
-// Использование
+// Uso
 class WalletService
 {
     public function withdraw(Wallet $wallet, int $amount): void
     {
         if ($wallet->balance < $amount) {
             throw new InsufficientFundsException(
-                'Недостаточно средств на счёте',
+                'Saldo insuficiente na conta',
                 $wallet->balance,
                 $amount,
                 $wallet->currency
@@ -854,26 +854,26 @@ class WalletService
     }
 }
 
-// Обработка
+// Tratamento
 try {
     $walletService->withdraw($wallet, 10000);
 } catch (InsufficientFundsException $e) {
     Log::warning('Insufficient funds', $e->getContext());
 
     return response()->json([
-        'error' => 'Недостаточно средств',
+        'error' => 'Saldo insuficiente',
         'shortage' => $e->getShortage(),
     ], 422);
 }
 ```
 </details>
 
-### Задание 2: Реализуй глобальную обработку ошибок
+### Exercício 2: Implemente o tratamento global de erros
 
-Создай Laravel Exception Handler, который логирует все ошибки, отправляет критичные в Telegram, и возвращает JSON для API.
+**Enunciado:** Crie um Laravel Exception Handler que loga todos os erros, manda os críticos para o Telegram e devolve JSON na API.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -895,7 +895,7 @@ class Handler extends ExceptionHandler
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
-            // Логирование всех ошибок
+            // Log de todos os erros
             Log::error($e->getMessage(), [
                 'exception' => get_class($e),
                 'file' => $e->getFile(),
@@ -903,7 +903,7 @@ class Handler extends ExceptionHandler
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            // Критичные ошибки в Telegram
+            // Erro crítico vai para o Telegram
             if ($this->shouldReportToTelegram($e)) {
                 $this->sendToTelegram($e);
             }
@@ -912,7 +912,7 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $e): JsonResponse|\Symfony\Component\HttpFoundation\Response
     {
-        // JSON для API запросов
+        // JSON para request de API
         if ($request->expectsJson()) {
             return $this->renderJsonException($request, $e);
         }
@@ -928,7 +928,7 @@ class Handler extends ExceptionHandler
             'error' => $this->getErrorMessage($e),
         ];
 
-        // В debug режиме добавляем детали
+        // No modo debug, inclui os detalhes
         if (config('app.debug')) {
             $response['exception'] = get_class($e);
             $response['file'] = $e->getFile();
@@ -957,16 +957,16 @@ class Handler extends ExceptionHandler
     private function getErrorMessage(Throwable $e): string
     {
         return match (true) {
-            $e instanceof NotFoundHttpException => 'Resource not found',
-            $e instanceof \Illuminate\Auth\AuthenticationException => 'Unauthenticated',
-            $e instanceof \Illuminate\Auth\Access\AuthorizationException => 'Forbidden',
-            default => config('app.debug') ? $e->getMessage() : 'Internal server error',
+            $e instanceof NotFoundHttpException => 'Recurso não encontrado',
+            $e instanceof \Illuminate\Auth\AuthenticationException => 'Não autenticado',
+            $e instanceof \Illuminate\Auth\Access\AuthorizationException => 'Acesso negado',
+            default => config('app.debug') ? $e->getMessage() : 'Erro interno do servidor',
         };
     }
 
     private function shouldReportToTelegram(Throwable $e): bool
     {
-        // Только критичные ошибки
+        // Só erro crítico
         return $e instanceof \Error
             || $e instanceof \PDOException
             || $this->getStatusCode($e) >= 500;
@@ -975,16 +975,16 @@ class Handler extends ExceptionHandler
     private function sendToTelegram(Throwable $e): void
     {
         try {
-            $message = "🔴 *Error in " . config('app.name') . "*\n\n";
+            $message = "🔴 *Erro em " . config('app.name') . "*\n\n";
             $message .= "*Type:* " . get_class($e) . "\n";
             $message .= "*Message:* " . $e->getMessage() . "\n";
             $message .= "*File:* " . $e->getFile() . ":" . $e->getLine() . "\n";
             $message .= "*URL:* " . request()->fullUrl();
 
-            // Отправка в Telegram (используя пакет или HTTP клиент)
+            // Envio para o Telegram (pacote ou HTTP client)
             // TelegramService::send($message);
         } catch (\Exception $telegramException) {
-            // Игнорируем ошибки отправки в Telegram
+            // Ignora erro de envio no Telegram
             Log::warning('Failed to send to Telegram', [
                 'error' => $telegramException->getMessage(),
             ]);
@@ -994,12 +994,12 @@ class Handler extends ExceptionHandler
 ```
 </details>
 
-### Задание 3: Обработка транзакций с исключениями
+### Exercício 3: Transações com exceções
 
-Создай сервис для создания заказа с оплатой. Если оплата не прошла - откатить транзакцию и выбросить исключение.
+**Enunciado:** Crie um service que cria o pedido e cobra. Se o pagamento falhar, faça rollback da transação e lance a exceção.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -1021,7 +1021,7 @@ class OrderService
     {
         return DB::transaction(function () use ($data) {
             try {
-                // 1. Создать заказ
+                // 1. Criar o pedido
                 $order = Order::create([
                     'user_id' => $data['user_id'],
                     'amount' => $data['amount'],
@@ -1030,16 +1030,16 @@ class OrderService
 
                 Log::info('Order created', ['order_id' => $order->id]);
 
-                // 2. Зарезервировать товары
+                // 2. Reservar os produtos
                 $this->reserveProducts($order, $data['products']);
 
-                // 3. Провести оплату
+                // 3. Cobrar o pagamento
                 $payment = $this->paymentGateway->charge(
                     $order->amount,
                     $data['payment_method']
                 );
 
-                // 4. Обновить статус
+                // 4. Atualizar o status
                 $order->update([
                     'status' => 'paid',
                     'payment_id' => $payment->id,
@@ -1050,23 +1050,23 @@ class OrderService
                 return $order;
 
             } catch (PaymentFailedException $e) {
-                // Оплата не прошла - откатываем транзакцию
+                // Pagamento falhou — a transação dá rollback
                 Log::error('Payment failed', [
                     'order_id' => $order->id ?? null,
                     'error' => $e->getMessage(),
                 ]);
 
-                throw $e;  // Транзакция откатится автоматически
+                throw $e;  // A transação dá rollback sozinha
 
             } catch (\Exception $e) {
-                // Любая другая ошибка
+                // Qualquer outro erro
                 Log::error('Order creation failed', [
                     'error' => $e->getMessage(),
                     'data' => $data,
                 ]);
 
                 throw new \RuntimeException(
-                    'Failed to create order: ' . $e->getMessage(),
+                    'Falha ao criar o pedido: ' . $e->getMessage(),
                     0,
                     $e
                 );
@@ -1081,7 +1081,7 @@ class OrderService
 
             if ($product->stock < $productData['quantity']) {
                 throw new \RuntimeException(
-                    "Product {$product->name} is out of stock"
+                    "Produto {$product->name} sem estoque"
                 );
             }
 
@@ -1095,7 +1095,7 @@ class OrderService
     }
 }
 
-// Использование
+// Uso
 try {
     $order = $orderService->createAndPay([
         'user_id' => 1,
@@ -1126,4 +1126,4 @@ try {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

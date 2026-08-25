@@ -1,154 +1,154 @@
-# 11.1 Git Basics
+# 11.1 O básico do Git
 
-## Краткое резюме
+## Resumo
 
-> **Git** — распределённая система контроля версий для отслеживания изменений в коде.
+> **Git** — sistema de controle de versão distribuído. Rastreia mudanças no código.
 >
-> **Базовый workflow:** clone → checkout -b → add → commit → push.
+> **Workflow básico:** clone → checkout -b → add → commit → push.
 >
-> **Важно:** Staging area для выборочных коммитов, .gitignore для исключения файлов, reset/revert для отмены.
+> **Importante:** staging area para commits seletivos, .gitignore para ignorar arquivos, reset/revert para desfazer.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Основные команды](#основные-команды)
-- [Работа с изменениями](#работа-с-изменениями)
-- [Работа с файлами](#работа-с-файлами)
-- [Работа с remotes](#работа-с-remotes)
-- [Практические примеры](#практические-примеры)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Git — распределённая система контроля версий. Отслеживает изменения в коде, позволяет работать в команде.
-
-**Основные операции:**
-- `clone` — скачать репозиторий
-- `pull` — получить изменения
-- `add` — добавить в staging
-- `commit` — сохранить изменения
-- `push` — отправить на сервер
+- [O que é](#o-que-é)
+- [Comandos principais](#comandos-principais)
+- [Trabalhando com mudanças](#trabalhando-com-mudanças)
+- [Trabalhando com arquivos](#trabalhando-com-arquivos)
+- [Trabalhando com remotes](#trabalhando-com-remotes)
+- [Exemplos práticos](#exemplos-práticos)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Основные команды
+## O que é
 
-**Инициализация и клонирование:**
+**O que é:**
+Git é um sistema de controle de versão distribuído. Rastreia mudanças no código e deixa o time trabalhar junto.
+
+**Operações principais:**
+- `clone` — baixar o repositório
+- `pull` — trazer as mudanças
+- `add` — colocar no staging
+- `commit` — salvar as mudanças
+- `push` — enviar para o servidor
+
+---
+
+## Comandos principais
+
+**Init e clone:**
 
 ```bash
-# Создать новый репозиторий
+# Criar um repositório novo
 git init
 
-# Клонировать репозиторий
+# Clonar um repositório
 git clone https://github.com/user/repo.git
 
-# Клонировать конкретную ветку
+# Clonar uma branch específica
 git clone -b develop https://github.com/user/repo.git
 ```
 
-**Базовый workflow:**
+**Workflow básico:**
 
 ```bash
-# 1. Посмотреть статус
+# 1. Ver o status
 git status
 
-# 2. Добавить файлы в staging
-git add .                    # Все файлы
-git add src/Controller.php   # Конкретный файл
-git add *.php               # По маске
+# 2. Adicionar arquivos no staging
+git add .                    # Todos os arquivos
+git add src/Controller.php   # Um arquivo específico
+git add *.php               # Por máscara
 
-# 3. Сделать commit
-git commit -m "Add user authentication"
+# 3. Fazer o commit
+git commit -m "Adiciona autenticação de usuário"
 
-# 4. Отправить на сервер
+# 4. Enviar para o servidor
 git push origin main
 ```
 
-**Получение изменений:**
+**Trazer mudanças:**
 
 ```bash
-# Получить изменения и смержить
+# Trazer mudanças e fazer merge
 git pull origin main
 
-# Получить изменения без слияния
+# Trazer mudanças sem merge
 git fetch origin
 
-# Посмотреть что изменилось
+# Ver o que mudou
 git diff origin/main
 ```
 
 ---
 
-## Работа с изменениями
+## Trabalhando com mudanças
 
-**Просмотр изменений:**
+**Ver as mudanças:**
 
 ```bash
-# Что изменилось (unstaged)
+# O que mudou (unstaged)
 git diff
 
-# Что в staging
+# O que está no staging
 git diff --staged
 
-# История коммитов
+# Histórico de commits
 git log
 git log --oneline
 git log --graph --oneline --all
 
-# Изменения в конкретном файле
+# Mudanças em um arquivo específico
 git log -p src/Controller.php
 ```
 
-**Отмена изменений:**
+**Desfazer mudanças:**
 
 ```bash
-# Отменить изменения в файле (до add)
+# Desfazer mudanças no arquivo (antes do add)
 git checkout -- src/Controller.php
 git restore src/Controller.php
 
-# Убрать из staging (после add, до commit)
+# Tirar do staging (depois do add, antes do commit)
 git reset HEAD src/Controller.php
 git restore --staged src/Controller.php
 
-# Отменить последний commit (оставить изменения)
+# Desfazer o último commit (manter as mudanças)
 git reset --soft HEAD~1
 
-# Отменить последний commit (удалить изменения)
+# Desfazer o último commit (apagar as mudanças)
 git reset --hard HEAD~1
 
-# Отменить commit и создать новый
+# Desfazer o commit e criar um novo
 git revert abc123
 ```
 
 ---
 
-## Работа с файлами
+## Trabalhando com arquivos
 
-**Добавление и удаление:**
+**Adicionar e remover:**
 
 ```bash
-# Переименовать файл
+# Renomear arquivo
 git mv old.php new.php
 
-# Удалить файл
+# Remover arquivo
 git rm file.php
 
-# Удалить из Git, но оставить локально
+# Remover do Git, mas deixar no disco
 git rm --cached file.php
 
-# Игнорировать файлы (.gitignore)
+# Ignorar arquivos (.gitignore)
 echo ".env" >> .gitignore
 echo "vendor/" >> .gitignore
 git add .gitignore
 ```
 
-**.gitignore для Laravel:**
+**.gitignore para Laravel:**
 
 ```gitignore
 /vendor
@@ -170,133 +170,133 @@ git add .gitignore
 
 ---
 
-## Работа с remotes
+## Trabalhando com remotes
 
-**Управление удалёнными репозиториями:**
+**Gerenciar repositórios remotos:**
 
 ```bash
-# Посмотреть remotes
+# Ver os remotes
 git remote -v
 
-# Добавить remote
+# Adicionar remote
 git remote add origin https://github.com/user/repo.git
 
-# Изменить URL
+# Trocar a URL
 git remote set-url origin https://github.com/user/new-repo.git
 
-# Удалить remote
+# Remover remote
 git remote remove origin
 
-# Получить информацию о remote
+# Ver informações do remote
 git remote show origin
 ```
 
-**Push и pull:**
+**Push e pull:**
 
 ```bash
-# Push в ветку
+# Push na branch
 git push origin main
 
-# Push всех веток
+# Push de todas as branches
 git push --all
 
-# Push с тегами
+# Push com tags
 git push --tags
 
-# Force push (осторожно!)
+# Force push (cuidado!)
 git push --force origin main
 
-# Pull с rebase
+# Pull com rebase
 git pull --rebase origin main
 ```
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Типичный workflow:**
+**Workflow típico:**
 
 ```bash
-# 1. Начало работы
+# 1. Começar o trabalho
 git clone https://github.com/company/project.git
 cd project
 
-# 2. Создать ветку для задачи
+# 2. Criar a branch da tarefa
 git checkout -b feature/user-auth
 
-# 3. Внести изменения
-# ... редактируем файлы ...
+# 3. Fazer as mudanças
+# ... edita os arquivos ...
 
-# 4. Проверить что изменилось
+# 4. Conferir o que mudou
 git status
 git diff
 
-# 5. Добавить и закоммитить
+# 5. Adicionar e commitar
 git add app/Controllers/AuthController.php
 git add app/Models/User.php
-git commit -m "Add user authentication
+git commit -m "Adiciona autenticação de usuário
 
-- Add login/register methods
-- Add JWT token generation
-- Add password validation"
+- Adiciona métodos de login/register
+- Adiciona geração de token JWT
+- Adiciona validação de senha"
 
-# 6. Отправить на сервер
+# 6. Enviar para o servidor
 git push origin feature/user-auth
 ```
 
-**Работа с конфликтами:**
+**Trabalhando com conflitos:**
 
 ```bash
-# 1. Получить изменения
+# 1. Trazer as mudanças
 git pull origin main
-# Conflict в src/Controller.php
+# Conflict em src/Controller.php
 
-# 2. Открыть файл, увидишь:
+# 2. Abrir o arquivo, você vê:
 <<<<<<< HEAD
-// Твой код
+// Seu código
 public function index() {
     return view('home');
 }
 =======
-// Код из main
+// Código da main
 public function index() {
     return view('dashboard');
 }
 >>>>>>> main
 
-# 3. Исправить вручную, оставить нужное
+# 3. Corrigir na mão, deixar o que vale
 public function index() {
     return view('dashboard');
 }
 
-# 4. Добавить и закоммитить
+# 4. Adicionar e commitar
 git add src/Controller.php
-git commit -m "Resolve merge conflict"
+git commit -m "Resolve conflito de merge"
 ```
 
-**Просмотр истории:**
+**Ver o histórico:**
 
 ```bash
-# Последние 5 коммитов
+# Últimos 5 commits
 git log -5 --oneline
 
-# Коммиты за последнюю неделю
+# Commits da última semana
 git log --since="1 week ago"
 
-# Коммиты конкретного автора
+# Commits de um autor
 git log --author="John"
 
-# Изменения в файле
+# Mudanças no arquivo
 git log --follow -- src/Controller.php
 
-# Граф веток
+# Grafo das branches
 git log --graph --oneline --decorate --all
 ```
 
-**Полезные алиасы:**
+**Aliases úteis:**
 
 ```bash
-# Добавить в ~/.gitconfig
+# Colocar no ~/.gitconfig
 git config --global alias.st status
 git config --global alias.co checkout
 git config --global alias.br branch
@@ -304,161 +304,161 @@ git config --global alias.ci commit
 git config --global alias.lg "log --graph --oneline --decorate --all"
 git config --global alias.unstage "reset HEAD --"
 
-# Использование
-git st      # вместо git status
-git lg      # красивый граф
+# Uso
+git st      # no lugar de git status
+git lg      # grafo bonito
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Git — распределённая система контроля версий
-- Каждый разработчик имеет полную копию репозитория
-- Работает offline
+**O que é:**
+- Git é um sistema de controle de versão distribuído
+- Cada dev tem uma cópia completa do repositório
+- Funciona offline
 
-**Базовый workflow:**
-- `git clone` — скачать репозиторий
-- `git checkout -b` — создать ветку
-- `git add` → `git commit` — сохранить изменения
-- `git push` — отправить на сервер
-- `git pull` — получить изменения (fetch + merge)
+**Workflow básico:**
+- `git clone` — baixar o repositório
+- `git checkout -b` — criar a branch
+- `git add` → `git commit` — salvar as mudanças
+- `git push` — enviar para o servidor
+- `git pull` — trazer as mudanças (fetch + merge)
 
 **Staging area:**
-- Промежуточная зона между working directory и commit
-- Позволяет выборочно коммитить файлы
-- `git add` добавляет в staging
+- Zona entre o working directory e o commit
+- Permite commitar arquivos seletivamente
+- `git add` coloca no staging
 
-**Отмена изменений:**
-- `git reset --soft` — отменить commit, оставить изменения
-- `git reset --hard` — удалить изменения полностью
-- `git revert` — создать новый commit отмены
+**Desfazer mudanças:**
+- `git reset --soft` — desfaz o commit, mantém as mudanças
+- `git reset --hard` — apaga as mudanças de vez
+- `git revert` — cria um commit novo de reversão
 
-**Best practices:**
-- `.gitignore` для исключения файлов (.env, vendor/)
-- Atomic commits (один commit = одна задача)
-- Осмысленные commit messages
+**Boas práticas:**
+- `.gitignore` para ignorar arquivos (.env, vendor/)
+- Atomic commits (um commit = uma tarefa)
+- Commit messages com sentido
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Отмени случайный commit
+### Exercício 1: Desfaça um commit acidental
 
-Ты случайно закоммитил файл .env с секретами. Отмени commit так, чтобы файл остался в working directory, но не был в истории.
+**Enunciado:** Você commitou o .env com secrets por engano. Desfaça o commit de forma que o arquivo fique no working directory, mas saia do histórico.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Отменить последний commit (оставить изменения)
+# 1. Desfazer o último commit (manter as mudanças)
 git reset --soft HEAD~1
 
-# 2. Убрать .env из staging
+# 2. Tirar o .env do staging
 git reset HEAD .env
 
-# 3. Добавить .env в .gitignore
+# 3. Colocar o .env no .gitignore
 echo ".env" >> .gitignore
 
-# 4. Закоммитить остальные файлы
+# 4. Commitar o resto dos arquivos
 git add .
-git commit -m "Add authentication without secrets"
+git commit -m "Adiciona autenticação sem secrets"
 
-# 5. Если уже был push — нужен force push (ОПАСНО!)
-# Лучше сообщить команде и пересоздать секреты
+# 5. Se já deu push — precisa de force push (PERIGOSO!)
+# Melhor avisar o time e rotacionar os secrets
 
-# Альтернатива: удалить из истории полностью
+# Alternativa: apagar do histórico de vez
 git filter-branch --index-filter 'git rm --cached --ignore-unmatch .env' HEAD
 
-# Или через BFG Repo-Cleaner (быстрее)
+# Ou com BFG Repo-Cleaner (mais rápido)
 # java -jar bfg.jar --delete-files .env
 # git reflog expire --expire=now --all
 # git gc --prune=now --aggressive
 ```
 </details>
 
-### Задание 2: Создай осмысленный commit message
+### Exercício 2: Escreva um commit message com sentido
 
-У тебя изменения в 3 файлах: AuthController.php, User.php, CreateUsersTable.php. Создай structured commit message.
+**Enunciado:** Você tem mudanças em 3 arquivos: AuthController.php, User.php, CreateUsersTable.php. Crie um commit message estruturado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Посмотреть что изменилось
+# Ver o que mudou
 git diff
 
-# Добавить файлы по отдельности для atomic commits
+# Adicionar os arquivos separados para atomic commits
 git add app/Http/Controllers/AuthController.php
 git add app/Models/User.php
-git commit -m "Add user authentication
+git commit -m "Adiciona autenticação de usuário
 
-- Implement login/register methods in AuthController
-- Add JWT token generation
-- Add password hashing with bcrypt
-- Add email validation
+- Implementa métodos de login/register no AuthController
+- Adiciona geração de token JWT
+- Adiciona hash de senha com bcrypt
+- Adiciona validação de email
 
 Refs: PROJ-123"
 
-# Отдельный commit для миграции
+# Commit separado para a migration
 git add database/migrations/2024_01_01_create_users_table.php
-git commit -m "Add users table migration
+git commit -m "Adiciona migration da tabela users
 
-- Add email, password, name fields
-- Add unique constraint on email
-- Add timestamps
+- Adiciona campos email, password, name
+- Adiciona unique constraint no email
+- Adiciona timestamps
 
 Refs: PROJ-123"
 
-# Правила для commit message:
-# 1. Первая строка — краткое описание (до 50 символов)
-# 2. Пустая строка
-# 3. Детальное описание (что и зачем)
-# 4. Ссылка на issue/ticket
+# Regras do commit message:
+# 1. Primeira linha — resumo curto (até 50 caracteres)
+# 2. Linha em branco
+# 3. Descrição (o quê e por quê)
+# 4. Link do issue/ticket
 ```
 </details>
 
-### Задание 3: Восстанови удалённый файл
+### Exercício 3: Restaure um arquivo apagado
 
-Ты случайно удалил важный файл CommandController.php и уже закоммитил. Восстанови его из истории.
+**Enunciado:** Você apagou o CommandController.php por engano e já commitou. Restaure o arquivo pelo histórico.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Найти commit где файл был удалён
+# 1. Achar o commit em que o arquivo foi apagado
 git log --oneline -- app/Http/Controllers/CommandController.php
 
-# Выведет:
-# abc123 Remove old controller
-# def456 Add command functionality
+# Vai mostrar:
+# abc123 Remove controller antigo
+# def456 Adiciona funcionalidade de command
 # ...
 
-# 2. Посмотреть содержимое файла до удаления
+# 2. Ver o conteúdo do arquivo antes da exclusão
 git show def456:app/Http/Controllers/CommandController.php
 
-# 3. Восстановить файл из предыдущего commit
+# 3. Restaurar o arquivo do commit anterior
 git checkout def456 -- app/Http/Controllers/CommandController.php
 
-# 4. Закоммитить восстановление
+# 4. Commitar a restauração
 git add app/Http/Controllers/CommandController.php
-git commit -m "Restore CommandController.php
+git commit -m "Restaura CommandController.php
 
-File was accidentally deleted in commit abc123.
-Restored from commit def456."
+Arquivo apagado por engano no commit abc123.
+Restaurado do commit def456."
 
-# Альтернатива: восстановить из последнего состояния
+# Alternativa: restaurar do último estado
 git checkout HEAD~1 -- app/Http/Controllers/CommandController.php
 
-# Найти когда файл был удалён
+# Achar quando o arquivo foi apagado
 git rev-list -n 1 HEAD -- app/Http/Controllers/CommandController.php
-# Вернёт commit где файл последний раз существовал
+# Devolve o commit em que o arquivo existia pela última vez
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

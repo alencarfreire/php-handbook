@@ -1,82 +1,82 @@
-# 11.2 Branching и Merge Strategies
+# 11.2 Estratégias de branch e merge
 
-## Краткое резюме
+## Resumo
 
-> **Branching** — создание изоляированных веток для разработки функций без влияния на main.
+> **Branching** — criar branches isoladas para desenvolver features sem mexer na main.
 >
-> **Merge strategies:** Fast-forward (прямая линия), Three-way merge (merge commit), Squash (сжатие коммитов).
+> **Merge strategies:** Fast-forward (linha reta), Three-way merge (merge commit), Squash (junta os commits).
 >
-> **Naming:** feature/, bugfix/, hotfix/, release/ для разных типов веток.
+> **Naming:** feature/, bugfix/, hotfix/, release/ para cada tipo de branch.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Работа с ветками](#работа-с-ветками)
-- [Merge Strategies](#merge-strategies)
-- [Naming Conventions](#naming-conventions)
-- [Практические примеры](#практические-примеры)
-- [Сравнение стратегий](#сравнение-стратегий)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Branching — создание отдельных веток для разработки функций. Merge strategies — способы объединения веток.
-
-**Типы merge:**
-- Fast-forward (простое слияние)
-- Three-way merge (слияние с commit)
-- Squash merge (сжатие коммитов)
+- [O que é](#o-que-é)
+- [Trabalhando com branches](#trabalhando-com-branches)
+- [Estratégias de merge](#estratégias-de-merge)
+- [Convenções de nome](#convenções-de-nome)
+- [Exemplos práticos](#exemplos-práticos)
+- [Comparando as estratégias](#comparando-as-estratégias)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Работа с ветками
+## O que é
 
-**Создание и переключение:**
+**O que é:**
+Branching é criar branches separadas para desenvolver features. Merge strategies são as formas de juntar as branches.
+
+**Tipos de merge:**
+- Fast-forward (merge simples)
+- Three-way merge (merge com commit)
+- Squash merge (junta os commits)
+
+---
+
+## Trabalhando com branches
+
+**Criar e trocar:**
 
 ```bash
-# Создать ветку
+# Criar a branch
 git branch feature/new-api
 
-# Переключиться на ветку
+# Trocar para a branch
 git checkout feature/new-api
 
-# Создать и переключиться одной командой
+# Criar e trocar no mesmo comando
 git checkout -b feature/new-api
 
-# Посмотреть все ветки
+# Ver todas as branches
 git branch -a
 
-# Удалить ветку (локально)
+# Apagar a branch (local)
 git branch -d feature/new-api
 
-# Удалить ветку (force)
+# Apagar a branch (force)
 git branch -D feature/new-api
 
-# Удалить ветку на сервере
+# Apagar a branch no servidor
 git push origin --delete feature/new-api
 ```
 
-**Переименование ветки:**
+**Renomear a branch:**
 
 ```bash
-# Переименовать текущую ветку
+# Renomear a branch atual
 git branch -m new-name
 
-# Переименовать другую ветку
+# Renomear outra branch
 git branch -m old-name new-name
 ```
 
 ---
 
-## Merge Strategies
+## Estratégias de merge
 
-**Fast-forward (по умолчанию):**
+**Fast-forward (padrão):**
 
 ```bash
 # main: A---B
@@ -85,10 +85,10 @@ git branch -m old-name new-name
 git checkout main
 git merge feature/new-api
 
-# Результат: A---B---C---D (прямая линия)
+# Resultado: A---B---C---D (linha reta)
 ```
 
-Fast-forward происходит когда в main не было новых коммитов.
+Fast-forward acontece quando a main não ganhou commits novos.
 
 **Three-way merge:**
 
@@ -99,14 +99,14 @@ Fast-forward происходит когда в main не было новых к
 git checkout main
 git merge feature/new-api
 
-# Результат:
+# Resultado:
 # A---B---E---M
 #      \     /
 #       C---D
 # M = merge commit
 ```
 
-**Squash merge (сжатие):**
+**Squash merge (junta os commits):**
 
 ```bash
 # main: A---B
@@ -116,85 +116,85 @@ git checkout main
 git merge --squash feature/new-api
 git commit -m "Add new API (squashed)"
 
-# Результат: A---B---F
-# F содержит все изменения из C, D, E
+# Resultado: A---B---F
+# F tem todas as mudanças de C, D, E
 ```
 
 **No fast-forward:**
 
 ```bash
-# Всегда создавать merge commit
+# Sempre criar merge commit
 git merge --no-ff feature/new-api
 
-# Полезно для истории: видно где началась и закончилась ветка
+# Útil na história: dá para ver onde a branch começou e terminou
 ```
 
 ---
 
-## Naming Conventions
+## Convenções de nome
 
-**Префиксы для веток:**
+**Prefixos das branches:**
 
 ```bash
-# Новая функция
+# Feature nova
 feature/user-authentication
 feature/payment-integration
 
-# Исправление бага
+# Correção de bug
 bugfix/login-error
 fix/memory-leak
 
-# Hotfix (срочное исправление в production)
+# Hotfix (correção urgente em production)
 hotfix/security-patch
 hotfix/critical-bug
 
-# Релиз
+# Release
 release/v1.2.0
 release/2024-01-15
 
-# Эксперимент
+# Experimento
 experiment/new-architecture
 spike/performance-test
 
-# Рефакторинг
+# Refatoração
 refactor/database-queries
 ```
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
 **Feature branch workflow:**
 
 ```bash
-# 1. Создать ветку от main
+# 1. Criar a branch a partir da main
 git checkout main
 git pull origin main
 git checkout -b feature/add-comments
 
-# 2. Работать в ветке
+# 2. Trabalhar na branch
 git add .
 git commit -m "Add comment model"
 git commit -m "Add comment controller"
 git commit -m "Add comment views"
 
-# 3. Отправить на сервер
+# 3. Enviar para o servidor
 git push origin feature/add-comments
 
-# 4. Обновить из main (если main изменился)
+# 4. Atualizar a partir da main (se a main mudou)
 git checkout main
 git pull origin main
 git checkout feature/add-comments
-git merge main  # или git rebase main
+git merge main  # ou git rebase main
 
-# 5. Создать Pull Request на GitHub/GitLab
+# 5. Abrir Pull Request no GitHub/GitLab
 
-# 6. После ревью — смержить в main
+# 6. Depois do review — merge na main
 git checkout main
 git merge --no-ff feature/add-comments
 git push origin main
 
-# 7. Удалить ветку
+# 7. Apagar a branch
 git branch -d feature/add-comments
 git push origin --delete feature/add-comments
 ```
@@ -202,148 +202,148 @@ git push origin --delete feature/add-comments
 **Hotfix workflow:**
 
 ```bash
-# 1. Создать hotfix от main
+# 1. Criar o hotfix a partir da main
 git checkout main
 git checkout -b hotfix/security-fix
 
-# 2. Исправить проблему
+# 2. Corrigir o problema
 git add .
 git commit -m "Fix security vulnerability"
 
-# 3. Merge в main
+# 3. Merge na main
 git checkout main
 git merge --no-ff hotfix/security-fix
 git tag v1.2.1
 git push origin main --tags
 
-# 4. Merge в develop (если есть)
+# 4. Merge na develop (se existir)
 git checkout develop
 git merge --no-ff hotfix/security-fix
 git push origin develop
 
-# 5. Удалить ветку
+# 5. Apagar a branch
 git branch -d hotfix/security-fix
 ```
 
-**Конфликты при merge:**
+**Conflitos no merge:**
 
 ```bash
 git checkout main
 git merge feature/new-api
 
-# CONFLICT в app/Controllers/ApiController.php
+# CONFLICT em app/Controllers/ApiController.php
 # Auto-merging app/Controllers/ApiController.php
 # CONFLICT (content): Merge conflict in app/Controllers/ApiController.php
 
-# 1. Посмотреть конфликтующие файлы
+# 1. Ver os arquivos em conflito
 git status
 
-# 2. Открыть файл, исправить
+# 2. Abrir o arquivo, corrigir
 # <<<<<<< HEAD
-# код из main
+# código da main
 # =======
-# код из feature
+# código da feature
 # >>>>>>> feature/new-api
 
-# 3. Добавить исправленный файл
+# 3. Adicionar o arquivo corrigido
 git add app/Controllers/ApiController.php
 
-# 4. Завершить merge
+# 4. Terminar o merge
 git commit -m "Merge feature/new-api into main"
 
-# Отменить merge (если что-то пошло не так)
+# Abortar o merge (se algo deu errado)
 git merge --abort
 ```
 
-**Cherry-pick (взять конкретный commit):**
+**Cherry-pick (pegar um commit específico):**
 
 ```bash
-# Взять commit abc123 из другой ветки
+# Pegar o commit abc123 de outra branch
 git cherry-pick abc123
 
-# Взять несколько коммитов
+# Pegar vários commits
 git cherry-pick abc123 def456
 
-# Cherry-pick с конфликтами
+# Cherry-pick com conflitos
 git cherry-pick abc123
-# ... исправить конфликты ...
+# ... corrigir os conflitos ...
 git add .
 git cherry-pick --continue
 ```
 
 ---
 
-## Сравнение стратегий
+## Comparando as estratégias
 
 **Fast-forward:**
-- Чистая история (прямая линия)
-- Не видно где была ветка
-- Подходит для простых изменений
+- História limpa (linha reta)
+- Não dá para ver onde estava a branch
+- Serve para mudança simples
 
 **No fast-forward:**
-- Merge commit сохраняет историю ветки
-- Видно где началась и закончилась feature
-- Подходит для feature branches
+- O merge commit guarda a história da branch
+- Dá para ver onde a feature começou e terminou
+- Serve para feature branches
 
 **Squash:**
-- Один commit вместо множества
-- Чистая история в main
-- Теряется детальная история feature
-- Подходит для мелких PR
+- Um commit no lugar de vários
+- História limpa na main
+- Perde o detalhe da feature
+- Serve para PR pequeno
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Branching — изоляция изменений в отдельных ветках
-- Позволяет работать параллельно над разными задачами
-- Feature branch workflow — создать ветку, работать, merge обратно
+**O que é:**
+- Branching — isola as mudanças em branches separadas
+- Permite trabalhar em paralelo em tarefas diferentes
+- Feature branch workflow — cria a branch, trabalha, faz merge de volta
 
 **Naming conventions:**
-- `feature/` — новая функция
-- `bugfix/` — исправление бага
-- `hotfix/` — срочное исправление production
-- `release/` — подготовка релиза
+- `feature/` — feature nova
+- `bugfix/` — correção de bug
+- `hotfix/` — correção urgente em production
+- `release/` — preparação do release
 
 **Merge strategies:**
-- **Fast-forward** — прямая линия (когда main не изменился)
-- **Three-way merge** — создаёт merge commit
-- **Squash** — сжимает все коммиты в один
-- `--no-ff` — всегда создаёт merge commit (для истории)
+- **Fast-forward** — linha reta (quando a main não mudou)
+- **Three-way merge** — cria merge commit
+- **Squash** — junta todos os commits em um
+- `--no-ff` — sempre cria merge commit (para a história)
 
-**Конфликты:**
-- Решаются вручную через редактирование файла
-- `git add` + `git commit` для завершения
-- `git merge --abort` для отмены
+**Conflitos:**
+- Você resolve na mão, editando o arquivo
+- `git add` + `git commit` para terminar
+- `git merge --abort` para cancelar
 
 **Cherry-pick:**
-- Копирование конкретных коммитов между ветками
+- Copia commits específicos entre branches
 - `git cherry-pick <commit-hash>`
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Hotfix в production
+### Exercício 1: Hotfix em production
 
-В production критический баг. Создай hotfix, исправь, merge в main и develop.
+**Enunciado:** Tem um bug crítico em production. Crie o hotfix, corrija, faça merge na main e na develop.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Проверить что на main
+# 1. Conferir que está na main
 git checkout main
 git pull origin main
 
-# 2. Создать hotfix ветку
+# 2. Criar a branch de hotfix
 git checkout -b hotfix/critical-payment-bug
 
-# 3. Исправить баг
-# Редактируем app/Services/PaymentService.php
+# 3. Corrigir o bug
+# Editamos app/Services/PaymentService.php
 git add app/Services/PaymentService.php
 git commit -m "Fix critical payment processing bug
 
@@ -352,67 +352,67 @@ Solution: Fix decimal precision in PaymentService
 
 Refs: BUG-456"
 
-# 4. Запушить hotfix
+# 4. Fazer push do hotfix
 git push origin hotfix/critical-payment-bug
 
-# 5. Merge в main
+# 5. Merge na main
 git checkout main
 git merge --no-ff hotfix/critical-payment-bug
 
-# 6. Создать тег для релиза
+# 6. Criar a tag do release
 git tag -a v1.2.1 -m "Hotfix: Critical payment bug"
 git push origin main --tags
 
-# 7. Merge в develop (чтобы баг не вернулся)
+# 7. Merge na develop (para o bug não voltar)
 git checkout develop
 git pull origin develop
 git merge --no-ff hotfix/critical-payment-bug
 git push origin develop
 
-# 8. Удалить hotfix ветку
+# 8. Apagar a branch de hotfix
 git branch -d hotfix/critical-payment-bug
 git push origin --delete hotfix/critical-payment-bug
 
-# 9. Deploy в production
-# (через CI/CD или вручную)
+# 9. Deploy em production
+# (via CI/CD ou na mão)
 ```
 </details>
 
-### Задание 2: Squash множественных WIP коммитов
+### Exercício 2: Squash de vários commits WIP
 
-У тебя feature ветка с 10 коммитами: "WIP", "fix", "typo". Squash их перед PR.
+**Enunciado:** Você tem uma feature branch com 10 commits: "WIP", "fix", "typo". Faça squash antes do PR.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Текущие коммиты:
+# Commits atuais:
 git log --oneline
 # abc123 fix typo
 # def456 WIP
 # ghi789 add tests
 # jkl012 fix
 # mno345 Add user profile feature
-# ... (ещё 5 коммитов)
+# ... (mais 5 commits)
 
-# Вариант 1: Interactive rebase (рекомендуется)
+# Opção 1: Interactive rebase (recomendado)
 git rebase -i HEAD~10
 
-# Откроется редактор:
+# Abre o editor:
 pick mno345 Add user profile feature
 fixup jkl012 fix
 fixup ghi789 add tests
 fixup def456 WIP
 fixup abc123 fix typo
-# ... остальные fixup
+# ... o resto em fixup
 
-# Сохранить и выйти
-# Результат: 1 чистый commit
+# Salvar e sair
+# Resultado: 1 commit limpo
 
-# Force push (т.к. переписали историю)
+# Force push (porque reescreveu a história)
 git push --force-with-lease origin feature/user-profile
 
-# Вариант 2: Squash merge (проще)
+# Opção 2: Squash merge (mais simples)
 git checkout main
 git merge --squash feature/user-profile
 git commit -m "Add user profile feature
@@ -425,7 +425,7 @@ git commit -m "Add user profile feature
 
 Refs: FEAT-123"
 
-# Вариант 3: Soft reset + новый commit
+# Opção 3: Soft reset + commit novo
 git reset --soft HEAD~10
 git commit -m "Add user profile feature
 
@@ -436,57 +436,57 @@ git push --force-with-lease origin feature/user-profile
 ```
 </details>
 
-### Задание 3: Cherry-pick commit в release ветку
+### Exercício 3: Cherry-pick de um commit na branch de release
 
-В develop есть важный bugfix (commit abc123). Нужно добавить его в release/v1.2 без всего остального.
+**Enunciado:** Na develop tem um bugfix importante (commit abc123). Inclua só ele na release/v1.2.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# 1. Найти нужный commit в develop
+# 1. Achar o commit na develop
 git checkout develop
 git log --oneline --grep="bugfix"
 
-# Нашли: abc123 Fix validation bug in LoginController
+# Achou: abc123 Fix validation bug in LoginController
 
-# 2. Переключиться на release ветку
+# 2. Trocar para a branch de release
 git checkout release/v1.2
 
-# 3. Cherry-pick commit
+# 3. Cherry-pick do commit
 git cherry-pick abc123
 
-# Если нет конфликтов — готово
+# Se não tiver conflito — pronto
 git push origin release/v1.2
 
-# 4. Если есть конфликты
-# CONFLICT в app/Http/Controllers/LoginController.php
+# 4. Se tiver conflitos
+# CONFLICT em app/Http/Controllers/LoginController.php
 
-# Открыть файл, исправить конфликты
+# Abrir o arquivo, corrigir os conflitos
 # <<<<<<< HEAD
-# код из release
+# código da release
 # =======
-# код из cherry-pick
+# código do cherry-pick
 # >>>>>>>
 
-# Разрешить конфликт
+# Resolver o conflito
 git add app/Http/Controllers/LoginController.php
 git cherry-pick --continue
 
-# 5. Запушить
+# 5. Fazer push
 git push origin release/v1.2
 
-# Альтернатива: cherry-pick несколько коммитов
+# Alternativa: cherry-pick de vários commits
 git cherry-pick abc123 def456 ghi789
 
-# Или диапазон коммитов
+# Ou um intervalo de commits
 git cherry-pick abc123..ghi789
 
-# Отменить cherry-pick если что-то пошло не так
+# Abortar o cherry-pick se algo deu errado
 git cherry-pick --abort
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

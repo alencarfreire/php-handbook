@@ -1,35 +1,35 @@
-# 2.5 Трейты (Traits)
+# 2.5 Traits
 
-## Краткое резюме
+## Resumo
 
-> **Trait** — механизм горизонтального переиспользования кода без наследования. Трейт — набор методов, которые можно "вставить" в класс.
+> **Trait** — mecanismo de reúso horizontal de código, sem herança. Trait é um conjunto de métodos que você "encaixa" na classe.
 >
-> **Ключевые концепции:** use (подключение), множественные трейты, разрешение конфликтов (insteadof, as), изменение видимости, абстрактные методы в трейтах.
+> **Conceitos-chave:** use (incluir), vários traits, resolver conflito (insteadof, as), mudar visibilidade, métodos abstratos no trait.
 >
-> **Важно:** Решают проблему множественного наследования через композицию. Laravel использует HasFactory, SoftDeletes, Notifiable.
+> **Importante:** Resolvem herança múltipla via composição. No Laravel: HasFactory, SoftDeletes, Notifiable.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое трейт](#что-такое-трейт)
-- [Несколько трейтов](#несколько-трейтов)
-- [Конфликт имён методов](#конфликт-имён-методов)
-- [Изменение видимости методов](#изменение-видимости-методов)
-- [Трейты с абстрактными методами](#трейты-с-абстрактными-методами)
-- [Трейты со свойствами](#трейты-со-свойствами)
-- [Трейты в трейтах](#трейты-в-трейтах)
-- [Резюме](#резюме-трейтов)
-- [Практические задания](#практические-задания)
+- [O que é um trait](#o-que-é-um-trait)
+- [Vários traits](#vários-traits)
+- [Conflito de nomes de métodos](#conflito-de-nomes-de-métodos)
+- [Mudar a visibilidade dos métodos](#mudar-a-visibilidade-dos-métodos)
+- [Traits com métodos abstratos](#traits-com-métodos-abstratos)
+- [Traits com propriedades](#traits-com-propriedades)
+- [Traits dentro de traits](#traits-dentro-de-traits)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое трейт
+## O que é um trait
 
-**Что это:**
-Механизм горизонтального переиспользования кода. Трейт — это набор методов, которые можно "вставить" в класс.
+**O que é:**
+Reúso horizontal de código. Trait é um conjunto de métodos que você "encaixa" na classe.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Loggable
 {
@@ -53,36 +53,36 @@ class User
 
     public function register(): void
     {
-        $this->log('User registered');
-        echo "Created at: " . $this->createdAt();
+        $this->log('Usuário registrado');
+        echo "Criado em: " . $this->createdAt();
     }
 }
 
 $user = new User();
 $user->register();
-// [LOG] User registered
-// Created at: 2024-01-15 10:30:00
+// [LOG] Usuário registrado
+// Criado em: 2024-01-15 10:30:00
 ```
 
-**Когда использовать:**
-Когда нужно переиспользовать методы в разных классах без наследования.
+**Quando usar:**
+Quando você precisa reusar métodos em classes diferentes, sem herança.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Laravel Model traits
+// Traits de Model no Laravel
 class Post extends Model
 {
-    use HasFactory;      // Фабрики для тестов
-    use SoftDeletes;     // Мягкое удаление
-    use Notifiable;      // Уведомления
+    use HasFactory;      // Factories para testes
+    use SoftDeletes;     // Soft delete
+    use Notifiable;      // Notificações
 
-    // Получаем методы из всех трейтов:
+    // Você ganha os métodos de todos os traits:
     // - factory()
     // - trashed(), restore(), forceDelete()
     // - notify()
 }
 
-// Собственный trait
+// Trait próprio
 trait Sluggable
 {
     public static function bootSluggable(): void
@@ -99,24 +99,24 @@ class Post extends Model
 {
     use Sluggable;
 
-    // При создании автоматически создастся slug из title
+    // Na criação, o slug sai do title automaticamente
 }
 
-$post = Post::create(['title' => 'My Post']);
-echo $post->slug;  // "my-post"
+$post = Post::create(['title' => 'Meu Post']);
+echo $post->slug;  // "meu-post"
 ```
 
-**На собеседовании скажешь:**
-> "Trait — механизм горизонтального переиспользования кода. use Trait в классе добавляет методы трейта. Решает проблему множественного наследования. В Laravel модели используют HasFactory, SoftDeletes, Notifiable."
+**Na entrevista:**
+> "Trait é reúso horizontal de código. use Trait na classe adiciona os métodos do trait. Resolve herança múltipla. No Laravel, o model usa HasFactory, SoftDeletes, Notifiable."
 
 ---
 
-## Несколько трейтов
+## Vários traits
 
-**Что это:**
-Класс может использовать несколько трейтов одновременно.
+**O que é:**
+A classe pode usar vários traits ao mesmo tempo.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Loggable
 {
@@ -143,7 +143,7 @@ trait Notifiable
 {
     public function notify(string $message): void
     {
-        // Отправка уведомления
+        // Envia a notificação
     }
 }
 
@@ -153,19 +153,19 @@ class UserService
 
     public function process(User $user): void
     {
-        $this->log("Processing user {$user->id}");
+        $this->log("Processando usuário {$user->id}");
         $this->cache("user:{$user->id}", $user);
-        $this->notify("User processed");
+        $this->notify("Usuário processado");
     }
 }
 ```
 
-**Когда использовать:**
-Для композиции поведения из нескольких источников.
+**Quando usar:**
+Para montar comportamento a partir de várias fontes.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// API Controller с несколькими traits
+// API Controller com vários traits
 trait ApiResponse
 {
     protected function success(mixed $data, int $status = 200): JsonResponse
@@ -217,23 +217,23 @@ class PostController extends Controller
 }
 ```
 
-**На собеседовании скажешь:**
-> "Класс может использовать несколько трейтов через запятую: use A, B, C. Каждый трейт добавляет свои методы. Использую для композиции поведения: ApiResponse + ValidatesRequests + AuthorizesRequests."
+**Na entrevista:**
+> "A classe pode usar vários traits separados por vírgula: use A, B, C. Cada trait adiciona os métodos dele. Uso para compor comportamento: ApiResponse + ValidatesRequests + AuthorizesRequests."
 
 ---
 
-## Конфликт имён методов
+## Conflito de nomes de métodos
 
-**Что это:**
-Если два трейта имеют метод с одинаковым именем — конфликт.
+**O que é:**
+Se dois traits têm método com o mesmo nome — conflito.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait A
 {
     public function greet(): string
     {
-        return "Hello from A";
+        return "Olá do A";
     }
 }
 
@@ -241,7 +241,7 @@ trait B
 {
     public function greet(): string
     {
-        return "Hello from B";
+        return "Olá do B";
     }
 }
 
@@ -249,27 +249,27 @@ class MyClass
 {
     use A, B;  // ❌ Fatal error: Trait method greet has not been applied
 
-    // Решение 1: insteadof (выбрать один метод)
+    // Solução 1: insteadof (fica um método)
     use A, B {
-        A::greet insteadof B;  // Использовать метод из A
+        A::greet insteadof B;  // Usa o método do A
     }
 
-    // Решение 2: as (создать алиас)
+    // Solução 2: as (cria um alias)
     use A, B {
         A::greet insteadof B;
-        B::greet as greetFromB;  // Алиас для метода из B
+        B::greet as greetFromB;  // Alias do método do B
     }
 }
 
 $obj = new MyClass();
-echo $obj->greet();         // "Hello from A"
-echo $obj->greetFromB();    // "Hello from B"
+echo $obj->greet();         // "Olá do A"
+echo $obj->greetFromB();    // "Olá do B"
 ```
 
-**Когда использовать:**
-Для разрешения конфликтов имён при использовании нескольких трейтов.
+**Quando usar:**
+Para resolver conflito de nome quando a classe usa vários traits.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 trait JsonResponseTrait
 {
@@ -307,17 +307,17 @@ class ApiController extends Controller
 }
 ```
 
-**На собеседовании скажешь:**
-> "При конфликте имён использую insteadof (выбрать один метод) или as (создать алиас). insteadof A::method исключает метод из другого трейта. as создаёт алиас с другим именем."
+**Na entrevista:**
+> "No conflito de nome eu uso insteadof (fica um método) ou as (cria um alias). insteadof escolhe um e descarta o do outro trait. as cria um alias com outro nome."
 
 ---
 
-## Изменение видимости методов
+## Mudar a visibilidade dos métodos
 
-**Что это:**
-Можно изменить видимость (public/protected/private) метода трейта через `as`.
+**O que é:**
+Você pode mudar a visibilidade (public/protected/private) do método do trait com `as`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Loggable
 {
@@ -330,36 +330,36 @@ trait Loggable
 class Service
 {
     use Loggable {
-        log as protected;  // Изменить на protected
+        log as protected;  // Vira protected
     }
 
     public function process(): void
     {
-        $this->log('Processing');  // ✅ OK внутри класса
+        $this->log('Processando');  // ✅ OK dentro da classe
     }
 }
 
 $service = new Service();
-$service->log('Test');  // ❌ Error: protected method
+$service->log('Teste');  // ❌ Error: protected method
 
-// Или создать алиас с другой видимостью
+// Ou cria um alias com outra visibilidade
 class Service2
 {
     use Loggable {
-        log as protected internalLog;  // protected с алиасом
+        log as protected internalLog;  // protected com alias
     }
 
     public function process(): void
     {
-        $this->internalLog('Processing');
+        $this->internalLog('Processando');
     }
 }
 ```
 
-**Когда использовать:**
-Для контроля доступа к методам трейта извне класса.
+**Quando usar:**
+Para controlar o acesso aos métodos do trait de fora da classe.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 trait HasApiToken
 {
@@ -377,7 +377,7 @@ trait HasApiToken
 class User extends Model
 {
     use HasApiToken {
-        generateToken as private;  // Только внутри класса
+        generateToken as private;  // Só dentro da classe
     }
 
     public function refreshToken(): void
@@ -388,30 +388,30 @@ class User extends Model
 }
 
 $user = User::find(1);
-$user->refreshToken();  // ✅ OK (public метод)
+$user->refreshToken();  // ✅ OK (método public)
 $user->generateToken();  // ❌ Error (private)
 ```
 
-**На собеседовании скажешь:**
-> "Через as можно изменить видимость метода трейта: use Trait { method as private }. Использую для сокрытия внутренних методов трейта, оставляя только публичный API класса."
+**Na entrevista:**
+> "Com as você muda a visibilidade do método do trait: use Trait { method as private }. Uso para esconder método interno do trait e deixar só a API pública da classe."
 
 ---
 
-## Трейты с абстрактными методами
+## Traits com métodos abstratos
 
-**Что это:**
-Трейт может объявить абстрактный метод — класс обязан его реализовать.
+**O que é:**
+O trait pode declarar um método abstrato — a classe é obrigada a implementar.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Cacheable
 {
-    // Абстрактный метод (класс обязан реализовать)
+    // Método abstrato (a classe é obrigada a implementar)
     abstract protected function getCacheKey(): string;
 
     public function cache(mixed $value): void
     {
-        $key = $this->getCacheKey();  // Использует метод класса
+        $key = $this->getCacheKey();  // Usa o método da classe
         Cache::put($key, $value, 3600);
     }
 
@@ -433,7 +433,7 @@ class UserService
         $this->userId = $userId;
     }
 
-    // ОБЯЗАТЕЛЬНО реализовать
+    // OBRIGATÓRIO implementar
     protected function getCacheKey(): string
     {
         return "user:{$this->userId}";
@@ -446,14 +446,14 @@ class UserService
 }
 ```
 
-**Когда использовать:**
-Когда трейт нужны данные из класса, но реализация зависит от конкретного класса.
+**Quando usar:**
+Quando o trait precisa de dado da classe, mas a implementação depende da classe concreta.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 trait Sluggable
 {
-    // Класс должен указать, из какого поля генерить slug
+    // A classe diz de qual campo sai o slug
     abstract protected function getSlugSource(): string;
 
     public static function bootSluggable(): void
@@ -473,7 +473,7 @@ class Post extends Model
 
     protected function getSlugSource(): string
     {
-        return 'title';  // Slug из title
+        return 'title';  // Slug a partir do title
     }
 }
 
@@ -483,14 +483,14 @@ class Category extends Model
 
     protected function getSlugSource(): string
     {
-        return 'name';  // Slug из name
+        return 'name';  // Slug a partir do name
     }
 }
 
-// Reposit pattern
+// Repository pattern
 trait HasRepository
 {
-    abstract protected function getModel(): string;  // Класс модели
+    abstract protected function getModel(): string;  // Classe do model
 
     public function find(int $id): ?Model
     {
@@ -514,17 +514,17 @@ class UserRepository
 }
 ```
 
-**На собеседовании скажешь:**
-> "Трейт может объявить abstract метод — класс обязан реализовать. Использую, когда трейту нужны данные из класса (getCacheKey, getSlugSource). Трейт использует абстрактный метод, класс предоставляет реализацию."
+**Na entrevista:**
+> "O trait pode declarar um método abstract — a classe é obrigada a implementar. Uso quando o trait precisa de dado da classe (getCacheKey, getSlugSource). O trait chama o método abstrato, a classe entrega a implementação."
 
 ---
 
-## Трейты со свойствами
+## Traits com propriedades
 
-**Что это:**
-Трейт может содержать свойства (добавляются в класс).
+**O que é:**
+O trait pode ter propriedades (entram na classe).
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Timestampable
 {
@@ -551,14 +551,14 @@ class User
 {
     use Timestampable;
 
-    // Свойства $createdAt и $updatedAt добавлены в класс
+    // As propriedades $createdAt e $updatedAt entram na classe
 }
 
 $user = new User();
 $user->setCreatedAt();
 echo $user->getCreatedAt();  // "2024-01-15 10:30:00"
 
-// ⚠️ Нельзя переопределить свойство с другим типом/видимостью
+// ⚠️ Não dá para redeclarar a propriedade com outro tipo/visibilidade
 class Post
 {
     use Timestampable;
@@ -567,10 +567,10 @@ class Post
 }
 ```
 
-**Когда использовать:**
-Для добавления состояния (свойств) вместе с поведением (методами).
+**Quando usar:**
+Para adicionar estado (propriedades) junto com comportamento (métodos).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 trait HasUuid
 {
@@ -585,7 +585,7 @@ trait HasUuid
 
     public function getRouteKeyName(): string
     {
-        return 'uuid';  // Использовать UUID вместо ID в роутах
+        return 'uuid';  // Usa UUID no lugar do ID nas rotas
     }
 }
 
@@ -593,11 +593,11 @@ class Post extends Model
 {
     use HasUuid;
 
-    // В миграции: $table->uuid('uuid')->unique();
+    // Na migration: $table->uuid('uuid')->unique();
 }
 
 // Route: /posts/{post}
-// Вместо /posts/1 будет /posts/550e8400-e29b-41d4-a716-446655440000
+// Em vez de /posts/1 fica /posts/550e8400-e29b-41d4-a716-446655440000
 
 // Soft Deletes trait
 trait SoftDeletes
@@ -623,17 +623,17 @@ trait SoftDeletes
 }
 ```
 
-**На собеседовании скажешь:**
-> "Трейт может содержать свойства — добавляются в класс. Нельзя переопределить свойство трейта. В Laravel SoftDeletes добавляет $deleted_at, HasUuid добавляет методы для работы с UUID."
+**Na entrevista:**
+> "O trait pode ter propriedades — elas entram na classe. Não dá para redeclarar a propriedade do trait. No Laravel, SoftDeletes adiciona $deleted_at, HasUuid adiciona os métodos de UUID."
 
 ---
 
-## Трейты в трейтах
+## Traits dentro de traits
 
-**Что это:**
-Трейт может использовать другие трейты.
+**O que é:**
+Um trait pode usar outros traits.
 
-**Как работает:**
+**Como funciona:**
 ```php
 trait Loggable
 {
@@ -653,18 +653,18 @@ trait Cacheable
 
 trait ServiceHelpers
 {
-    use Loggable, Cacheable;  // Трейт использует другие трейты
+    use Loggable, Cacheable;  // O trait usa outros traits
 
     public function process(string $key, mixed $data): void
     {
-        $this->log("Processing {$key}");
+        $this->log("Processando {$key}");
         $this->cache($key, $data);
     }
 }
 
 class UserService
 {
-    use ServiceHelpers;  // Получаем методы из всех трейтов
+    use ServiceHelpers;  // Você ganha os métodos de todos os traits
 
     public function store(User $user): void
     {
@@ -673,12 +673,12 @@ class UserService
 }
 ```
 
-**Когда использовать:**
-Для создания составных трейтов из базовых.
+**Quando usar:**
+Para montar um trait composto a partir dos básicos.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Базовые трейты
+// Traits de base
 trait HasSlug
 {
     public function generateSlug(string $source): string
@@ -703,7 +703,7 @@ trait HasUuid
     }
 }
 
-// Составной трейт
+// Trait composto
 trait BlogModelHelpers
 {
     use HasSlug, HasTimestamps, HasUuid;
@@ -718,7 +718,7 @@ trait BlogModelHelpers
 
 class Post extends Model
 {
-    use BlogModelHelpers;  // Получаем всё из BlogModelHelpers
+    use BlogModelHelpers;  // Você ganha tudo do BlogModelHelpers
 
     public function save(array $options = [])
     {
@@ -728,49 +728,49 @@ class Post extends Model
 }
 ```
 
-**На собеседовании скажешь:**
-> "Трейт может использовать другие трейты через use. Использую для создания составных трейтов из базовых. Класс, использующий составной трейт, получает методы из всех вложенных трейтов."
+**Na entrevista:**
+> "O trait pode usar outros traits com use. Uso para montar trait composto a partir dos básicos. A classe que usa o trait composto ganha os métodos de todos os traits aninhados."
 
 ---
 
-## Резюме трейтов
+## Recapitulando
 
-**Основное:**
-- Trait — механизм горизонтального переиспользования кода
-- `use Trait` в классе добавляет методы трейта
-- Можно использовать несколько трейтов: `use A, B, C`
-- Конфликт имён: `insteadof` (выбрать) или `as` (алиас)
-- Изменение видимости: `use Trait { method as private }`
-- Трейты могут иметь abstract методы (класс обязан реализовать)
-- Трейты могут содержать свойства (добавляются в класс)
-- Трейты могут использовать другие трейты
+**O essencial:**
+- Trait — reúso horizontal de código
+- `use Trait` na classe adiciona os métodos do trait
+- Dá para usar vários: `use A, B, C`
+- Conflito de nome: `insteadof` (escolhe) ou `as` (alias)
+- Mudar visibilidade: `use Trait { method as private }`
+- Trait pode ter método abstract (a classe é obrigada a implementar)
+- Trait pode ter propriedades (entram na classe)
+- Trait pode usar outros traits
 
-**Важно на собесе:**
-- Решают проблему множественного наследования через композицию
-- В Laravel: HasFactory, SoftDeletes, Notifiable, HasUuid
-- Трейты добавляют код в класс (copy-paste на уровне компиляции)
-- abstract метод в трейте — класс обязан реализовать
-- Изменение видимости полезно для скрытия внутренних методов
-- Трейты != интерфейсы (trait — реализация, interface — контракт)
+**Importante na entrevista:**
+- Resolvem herança múltipla via composição
+- No Laravel: HasFactory, SoftDeletes, Notifiable, HasUuid
+- O trait cola código na classe (copy-paste na compilação)
+- Método abstract no trait — a classe é obrigada a implementar
+- Mudar visibilidade serve para esconder método interno
+- Trait != interface (trait é implementação, interface é contrato)
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Sluggable trait для моделей
+### Exercício 1: Crie um trait Sluggable para models
 
-Трейт должен автоматически генерировать slug из указанного поля при создании модели.
+**Enunciado:** O trait deve gerar o slug automaticamente a partir do campo indicado, na criação do model.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 trait Sluggable
 {
-    // Абстрактный метод — класс обязан реализовать
+    // Método abstrato — a classe é obrigada a implementar
     abstract protected function getSlugSource(): string;
 
-    // Опциональный метод для кастомизации
+    // Método opcional para customizar
     protected function getSlugColumn(): string
     {
         return 'slug';
@@ -778,10 +778,10 @@ trait Sluggable
 
     protected function generateSlug(string $value): string
     {
-        // Транслитерация + замена пробелов на дефисы
+        // Transliteração + troca espaço por hífen
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $value), '-'));
 
-        // Проверка уникальности
+        // Checagem de unicidade
         $original = $slug;
         $count = 1;
 
@@ -795,7 +795,7 @@ trait Sluggable
 
     protected function slugExists(string $slug): bool
     {
-        // Упрощённая проверка (в реальности — запрос к БД)
+        // Checagem simplificada (na vida real — query no banco)
         static $used = [];
 
         if (in_array($slug, $used)) {
@@ -816,7 +816,7 @@ trait Sluggable
         }
     }
 
-    // Boot метод (вызывается при инициализации модели)
+    // Método boot (roda na inicialização do model)
     public static function bootSluggable(): void
     {
         static::creating(function ($model) {
@@ -824,7 +824,7 @@ trait Sluggable
         });
 
         static::updating(function ($model) {
-            // Опционально: обновлять slug при обновлении source поля
+            // Opcional: atualiza o slug se o campo source mudar
             if ($model->isDirty($model->getSlugSource())) {
                 $model->setSlugFromSource();
             }
@@ -832,7 +832,7 @@ trait Sluggable
     }
 }
 
-// Базовая модель (упрощённо)
+// Model base (simplificado)
 class Model
 {
     protected array $attributes = [];
@@ -849,7 +849,7 @@ class Model
 
     public static function creating($callback)
     {
-        // Симуляция события creating
+        // Simula o evento creating
         static::$callbacks['creating'][] = $callback;
     }
 
@@ -870,56 +870,56 @@ class Model
 
     public function isDirty($key)
     {
-        return true; // Упрощённо
+        return true; // Simplificado
     }
 }
 
-// Использование в модели Post
+// Uso no model Post
 class Post extends Model
 {
     use Sluggable;
 
     protected function getSlugSource(): string
     {
-        return 'title';  // Генерировать slug из title
+        return 'title';  // Gera o slug a partir do title
     }
 }
 
-// Использование в модели Category
+// Uso no model Category
 class Category extends Model
 {
     use Sluggable;
 
     protected function getSlugSource(): string
     {
-        return 'name';  // Генерировать slug из name
+        return 'name';  // Gera o slug a partir do name
     }
 
     protected function getSlugColumn(): string
     {
-        return 'category_slug';  // Кастомное имя колонки
+        return 'category_slug';  // Nome customizado da coluna
     }
 }
 
-// Использование
+// Uso
 Post::bootSluggable();
 
 $post = new Post();
-$post->title = 'My Awesome Post';
-$post->save();  // slug: my-awesome-post
+$post->title = 'Meu Super Post';
+$post->save();  // slug: meu-super-post
 
 $post2 = new Post();
-$post2->title = 'My Awesome Post';
-$post2->save();  // slug: my-awesome-post-1
+$post2->title = 'Meu Super Post';
+$post2->save();  // slug: meu-super-post-1
 ```
 </details>
 
-### Задание 2: Разрешение конфликтов трейтов
+### Exercício 2: Resolver conflitos de traits
 
-Создай два трейта `JsonResponse` и `XmlResponse` с методом `respond()`. Используй оба в контроллере, разреши конфликт.
+**Enunciado:** Crie dois traits `JsonResponse` e `XmlResponse` com o método `respond()`. Use os dois no controller e resolva o conflito.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 trait JsonResponse
@@ -979,17 +979,17 @@ trait XmlResponse
 class ApiController
 {
     use JsonResponse, XmlResponse {
-        // Разрешение конфликта метода respond()
-        JsonResponse::respond insteadof XmlResponse;  // По умолчанию JSON
-        XmlResponse::respond as respondXml;           // XML через алиас
+        // Resolve o conflito do método respond()
+        JsonResponse::respond insteadof XmlResponse;  // JSON por padrão
+        XmlResponse::respond as respondXml;           // XML pelo alias
     }
 
     public function index(string $format = 'json'): array
     {
         $data = [
             'users' => [
-                ['id' => 1, 'name' => 'Иван'],
-                ['id' => 2, 'name' => 'Пётр'],
+                ['id' => 1, 'name' => 'João'],
+                ['id' => 2, 'name' => 'Pedro'],
             ],
         ];
 
@@ -1002,17 +1002,17 @@ class ApiController
 
     public function show(int $id, string $format = 'json'): array
     {
-        $user = ['id' => $id, 'name' => 'Иван'];
+        $user = ['id' => $id, 'name' => 'João'];
 
         if ($format === 'xml') {
             return $this->respondXml(['user' => $user]);
         }
 
-        return $this->success($user);  // Использует JsonResponse::success
+        return $this->success($user);  // Usa JsonResponse::success
     }
 }
 
-// Использование
+// Uso
 $controller = new ApiController();
 
 print_r($controller->index('json'));
@@ -1026,12 +1026,12 @@ print_r($controller->show(1, 'json'));
 ```
 </details>
 
-### Задание 3: Trait с абстрактными методами и свойствами
+### Exercício 3: Trait com métodos abstratos e propriedades
 
-Создай `Cacheable` трейт, который требует от класса метод `getCacheKey()` и добавляет кэширование.
+**Enunciado:** Crie o trait `Cacheable`, que exige da classe o método `getCacheKey()` e adiciona cache.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 trait Cacheable
@@ -1039,10 +1039,10 @@ trait Cacheable
     protected array $cache = [];
     protected int $defaultTtl = 3600;
 
-    // Абстрактный метод — класс ОБЯЗАН реализовать
+    // Método abstrato — a classe É OBRIGADA a implementar
     abstract protected function getCacheKey(): string;
 
-    // Опциональный метод — можно переопределить
+    // Método opcional — dá para sobrescrever
     protected function getCacheTtl(): int
     {
         return $this->defaultTtl;
@@ -1122,7 +1122,7 @@ trait Cacheable
     }
 }
 
-// Сервис для пользователей
+// Service de usuários
 class UserService
 {
     use Cacheable;
@@ -1134,34 +1134,34 @@ class UserService
         $this->userId = $userId;
     }
 
-    // ОБЯЗАТЕЛЬНАЯ реализация абстрактного метода
+    // Implementação OBRIGATÓRIA do método abstrato
     protected function getCacheKey(): string
     {
         return "user:{$this->userId}";
     }
 
-    // Переопределяем TTL
+    // Sobrescreve o TTL
     protected function getCacheTtl(): int
     {
-        return 7200;  // 2 часа
+        return 7200;  // 2 horas
     }
 
     public function getUser(): array
     {
         return $this->remember(function () {
-            // Дорогая операция (БД запрос)
-            echo "Fetching user {$this->userId} from database...\n";
+            // Operação cara (query no banco)
+            echo "Buscando user {$this->userId} no banco...\n";
 
             return [
                 'id' => $this->userId,
-                'name' => 'User ' . $this->userId,
-                'email' => "user{$this->userId}@example.com",
+                'name' => 'Usuário ' . $this->userId,
+                'email' => "user{$this->userId}@email.com",
             ];
         });
     }
 }
 
-// Сервис для постов
+// Repository de posts
 class PostRepository
 {
     use Cacheable;
@@ -1180,13 +1180,13 @@ class PostRepository
 
     protected function getCacheTtl(): int
     {
-        return 3600;  // 1 час
+        return 3600;  // 1 hora
     }
 
     public function findBySlug(): array
     {
         return $this->remember(function () {
-            echo "Fetching post {$this->slug} from database...\n";
+            echo "Buscando post {$this->slug} no banco...\n";
 
             return [
                 'id' => rand(1, 100),
@@ -1197,25 +1197,25 @@ class PostRepository
     }
 }
 
-// Использование
+// Uso
 $userService = new UserService(1);
 
 $user = $userService->getUser();
-// Fetching user 1 from database...
+// Buscando user 1 no banco...
 print_r($user);
 
-$user = $userService->getUser();  // Из кэша (не выведет "Fetching...")
+$user = $userService->getUser();  // Do cache (não imprime "Buscando...")
 print_r($user);
 
-$postRepo = new PostRepository('my-awesome-post');
+$postRepo = new PostRepository('meu-super-post');
 
 $post = $postRepo->findBySlug();
-// Fetching post my-awesome-post from database...
+// Buscando post meu-super-post no banco...
 
-$post = $postRepo->findBySlug();  // Из кэша
+$post = $postRepo->findBySlug();  // Do cache
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

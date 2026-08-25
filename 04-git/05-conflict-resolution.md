@@ -1,55 +1,55 @@
-# 11.5 Разрешение конфликтов
+# 11.5 Resolução de conflitos
 
-## Краткое резюме
+## Resumo
 
-> **Конфликт** — когда Git не может автоматически объединить изменения из разных веток.
+> **Conflito** — quando o Git não consegue juntar automaticamente as mudanças de branches diferentes.
 >
-> **Формат:** `<<<HEAD` (твой код), `===` (разделитель), `>>>branch` (их код).
+> **Formato:** `<<<HEAD` (seu código), `===` (separador), `>>>branch` (o código deles).
 >
-> **Разрешение:** Открыть файл, удалить маркеры, оставить нужный код, `git add`, `git commit`.
+> **Resolução:** Abra o arquivo, tire os marcadores, deixe o código certo, `git add`, `git commit`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как выглядит конфликт](#как-выглядит-конфликт)
-- [Разрешение конфликтов](#разрешение-конфликтов)
-- [Инструменты для разрешения](#инструменты-для-разрешения)
-- [Типы конфликтов](#типы-конфликтов)
-- [Практические примеры](#практические-примеры)
-- [Предотвращение конфликтов](#предотвращение-конфликтов)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Конфликт — когда Git не может автоматически объединить изменения в одном файле из разных веток.
-
-**Когда возникает:**
-- Merge веток с изменениями в одних строках
-- Rebase с конфликтующими коммитами
-- Cherry-pick коммита с конфликтами
-- Pull с удалёнными изменениями
+- [O que é](#o-que-é)
+- [Como o conflito aparece](#como-o-conflito-aparece)
+- [Resolução de conflitos](#resolução-de-conflitos)
+- [Ferramentas para resolver](#ferramentas-para-resolver)
+- [Tipos de conflito](#tipos-de-conflito)
+- [Exemplos práticos](#exemplos-práticos)
+- [Como evitar conflitos](#como-evitar-conflitos)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как выглядит конфликт
+## O que é
 
-**Формат:**
+**O que é:**
+Conflito é quando o Git não consegue juntar sozinho as mudanças no mesmo arquivo, vindas de branches diferentes.
+
+**Quando acontece:**
+- Merge de branches que mexeram nas mesmas linhas
+- Rebase com commits que conflitam
+- Cherry-pick de um commit com conflito
+- Pull com mudanças remotas
+
+---
+
+## Como o conflito aparece
+
+**Formato:**
 
 ```php
 <<<<<<< HEAD
-// Твой код (текущая ветка)
+// Seu código (branch atual)
 public function index()
 {
     return view('dashboard');
 }
 =======
-// Код из другой ветки
+// Código da outra branch
 public function index()
 {
     return view('home');
@@ -57,16 +57,16 @@ public function index()
 >>>>>>> feature/new-design
 ```
 
-**Маркеры:**
-- `<<<<<<< HEAD` — начало твоих изменений
-- `=======` — разделитель
-- `>>>>>>> branch` — конец изменений из другой ветки
+**Marcadores:**
+- `<<<<<<< HEAD` — início das suas mudanças
+- `=======` — separador
+- `>>>>>>> branch` — fim das mudanças da outra branch
 
 ---
 
-## Разрешение конфликтов
+## Resolução de conflitos
 
-**При merge:**
+**No merge:**
 
 ```bash
 git checkout main
@@ -76,7 +76,7 @@ git merge feature/new-api
 # CONFLICT (content): Merge conflict in app/Controllers/ApiController.php
 # Automatic merge failed; fix conflicts and then commit the result.
 
-# 1. Посмотреть конфликтующие файлы
+# 1. Ver os arquivos em conflito
 git status
 
 # On branch main
@@ -84,62 +84,62 @@ git status
 # Unmerged paths:
 #   both modified:   app/Controllers/ApiController.php
 
-# 2. Открыть файл и исправить
+# 2. Abrir o arquivo e corrigir
 vim app/Controllers/ApiController.php
 
-# 3. Удалить маркеры, оставить нужный код
-# Было:
+# 3. Remover os marcadores, deixar o código certo
+# Antes:
 <<<<<<< HEAD
 return response()->json(['status' => 'ok']);
 =======
 return response()->json(['success' => true]);
 >>>>>>> feature/new-api
 
-# Стало (например):
+# Depois (exemplo):
 return response()->json(['success' => true, 'status' => 'ok']);
 
-# 4. Добавить исправленный файл
+# 4. Adicionar o arquivo corrigido
 git add app/Controllers/ApiController.php
 
-# 5. Завершить merge
+# 5. Finalizar o merge
 git commit -m "Merge feature/new-api into main"
 
-# Или отменить merge
+# Ou abortar o merge
 git merge --abort
 ```
 
-**При rebase:**
+**No rebase:**
 
 ```bash
 git rebase main
 
 # CONFLICT (content): Merge conflict in app/Models/User.php
 
-# 1. Исправить конфликты
+# 1. Corrigir os conflitos
 vim app/Models/User.php
 
-# 2. Добавить файл
+# 2. Adicionar o arquivo
 git add app/Models/User.php
 
-# 3. Продолжить rebase
+# 3. Continuar o rebase
 git rebase --continue
 
-# Если ещё конфликты — повторить шаги 1-3
-# Или отменить rebase
+# Se ainda tiver conflito — repetir os passos 1-3
+# Ou abortar o rebase
 git rebase --abort
 ```
 
 ---
 
-## Инструменты для разрешения
+## Ferramentas para resolver
 
 **VS Code:**
 
 ```bash
-# Открыть в VS Code
+# Abrir no VS Code
 code app/Controllers/ApiController.php
 
-# VS Code покажет:
+# O VS Code mostra:
 # ✅ Accept Current Change (HEAD)
 # ✅ Accept Incoming Change (branch)
 # ✅ Accept Both Changes
@@ -149,16 +149,16 @@ code app/Controllers/ApiController.php
 **Merge tool:**
 
 ```bash
-# Настроить merge tool (например, vimdiff)
+# Configurar o merge tool (ex.: vimdiff)
 git config --global merge.tool vimdiff
 
-# Или p4merge
+# Ou p4merge
 git config --global merge.tool p4merge
 
-# Запустить merge tool
+# Abrir o merge tool
 git mergetool
 
-# После разрешения:
+# Depois de resolver:
 git add .
 git commit
 ```
@@ -168,20 +168,20 @@ git commit
 ```
 VCS → Git → Resolve Conflicts
 
-Показывает 3 панели:
-- Left: твоя версия
-- Center: результат
-- Right: их версия
+Mostra 3 painéis:
+- Left: sua versão
+- Center: resultado
+- Right: a versão deles
 ```
 
 ---
 
-## Типы конфликтов
+## Tipos de conflito
 
-**1. Content conflict (изменён контент):**
+**1. Content conflict (conteúdo alterado):**
 
 ```bash
-# Обе ветки изменили одну строку
+# As duas branches mudaram a mesma linha
 git merge feature
 
 # CONFLICT in file.php
@@ -192,29 +192,29 @@ $price = 150;
 >>>>>>> feature
 ```
 
-**2. Delete-modify conflict (удаление vs изменение):**
+**2. Delete-modify conflict (exclusão vs alteração):**
 
 ```bash
-# Ты удалил файл, они изменили
+# Você apagou o arquivo, eles alteraram
 git merge feature
 
 # CONFLICT (modify/delete): file.php deleted in HEAD and modified in feature
 
-# Решение:
-# Оставить удаление
+# Resolução:
+# Manter a exclusão
 git rm file.php
 
-# Или восстановить
+# Ou restaurar
 git add file.php
 
 git commit
 ```
 
-**3. Rename conflict (переименование):**
+**3. Rename conflict (renomeação):**
 
 ```bash
-# Обе ветки переименовали файл по-разному
-# Выбрать одно имя
+# As duas branches renomearam o arquivo de jeitos diferentes
+# Escolher um nome
 git mv old-name.php new-name.php
 git add .
 git commit
@@ -222,12 +222,12 @@ git commit
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Простой конфликт:**
+**Conflito simples:**
 
 ```php
-// До merge
+// Antes do merge
 // main:
 public function store(Request $request)
 {
@@ -242,7 +242,7 @@ public function store(Request $request)
     return response()->json($user, 201);
 }
 
-// Конфликт:
+// Conflito:
 <<<<<<< HEAD
 public function store(Request $request)
 {
@@ -257,7 +257,7 @@ public function store(Request $request)
 }
 >>>>>>> feature/api
 
-// Решение (взять лучшее из обоих):
+// Resolução (ficar com o melhor dos dois):
 public function store(Request $request)
 {
     $user = User::create($request->validated());
@@ -270,7 +270,7 @@ public function store(Request $request)
 }
 ```
 
-**Множественные конфликты:**
+**Vários conflitos:**
 
 ```bash
 git merge feature
@@ -280,30 +280,30 @@ git merge feature
 # - app/Models/User.php
 # - routes/web.php
 
-# Решить все конфликты по очереди
-git status  # Посмотреть что осталось
+# Resolver um conflito de cada vez
+git status  # Ver o que falta
 
 # Unmerged paths:
 #   both modified:   app/Controllers/UserController.php
 #   both modified:   app/Models/User.php
 #   both modified:   routes/web.php
 
-# После исправления всех файлов
+# Depois de corrigir todos os arquivos
 git add app/Controllers/UserController.php
 git add app/Models/User.php
 git add routes/web.php
 git commit
 ```
 
-**Конфликт в composer.lock:**
+**Conflito no composer.lock:**
 
 ```bash
-# Часто конфликтует при merge
+# Costuma conflitar no merge
 git merge develop
 
 # CONFLICT in composer.lock
 
-# Решение: пересоздать
+# Resolução: recriar
 git checkout --theirs composer.json
 git checkout --theirs composer.lock
 composer install
@@ -313,93 +313,93 @@ git commit
 
 ---
 
-## Предотвращение конфликтов
+## Como evitar conflitos
 
-**Частые pull:**
+**Pull frequente:**
 
 ```bash
-# Обновляться из main/develop регулярно
+# Atualizar de main/develop com frequência
 git pull origin main
 ```
 
-**Маленькие PR:**
+**PR pequeno:**
 
 ```bash
-# Не накапливать много изменений
-# Делать PR каждые 1-2 дня
+# Não acumular muita mudança
+# Abrir PR a cada 1-2 dias
 ```
 
-**Коммуникация:**
+**Comunicação:**
 
 ```bash
-# Предупредить команду если работаешь в тех же файлах
+# Avisar o time se você for mexer nos mesmos arquivos
 ```
 
-**Rebase вместо merge (для feature веток):**
+**Rebase em vez de merge (em feature branch):**
 
 ```bash
-# Rebase создаёт линейную историю, меньше конфликтов
+# Rebase deixa a história linear, menos conflito
 git rebase main
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Конфликт возникает когда Git не может автоматически объединить изменения
-- Обе ветки изменили одни и те же строки по-разному
-- Требует ручного разрешения
+**O que é:**
+- Conflito aparece quando o Git não consegue juntar as mudanças sozinho
+- As duas branches mudaram as mesmas linhas de jeitos diferentes
+- Precisa resolver na mão
 
-**Формат конфликта:**
-- `<<<<<<< HEAD` — начало твоих изменений
-- `=======` — разделитель
-- `>>>>>>> branch` — конец изменений из другой ветки
+**Formato do conflito:**
+- `<<<<<<< HEAD` — início das suas mudanças
+- `=======` — separador
+- `>>>>>>> branch` — fim das mudanças da outra branch
 
-**Разрешение:**
-1. Открыть файл в редакторе
-2. Удалить маркеры конфликта
-3. Оставить нужный код (или объединить оба варианта)
-4. `git add <файл>`
-5. `git commit` (при merge) или `git rebase --continue` (при rebase)
+**Resolução:**
+1. Abrir o arquivo no editor
+2. Remover os marcadores
+3. Deixar o código certo (ou juntar os dois)
+4. `git add <arquivo>`
+5. `git commit` (no merge) ou `git rebase --continue` (no rebase)
 
-**Отмена:**
-- При merge: `git merge --abort`
-- При rebase: `git rebase --abort`
+**Abortar:**
+- No merge: `git merge --abort`
+- No rebase: `git rebase --abort`
 
-**Инструменты:**
-- VS Code с визуальными кнопками
-- PhpStorm с 3-панельным view
-- `git mergetool` с vimdiff/p4merge
+**Ferramentas:**
+- VS Code com botões visuais
+- PhpStorm com view de 3 painéis
+- `git mergetool` com vimdiff/p4merge
 
-**Типы конфликтов:**
-- **Content** — изменён контент
-- **Delete-modify** — удаление vs изменение
-- **Rename** — переименование
+**Tipos de conflito:**
+- **Content** — conteúdo alterado
+- **Delete-modify** — exclusão vs alteração
+- **Rename** — renomeação
 
-**Предотвращение:**
-- Частые pull из main
-- Маленькие PR (1-2 дня)
-- Коммуникация в команде
-- Rebase для feature веток
+**Como evitar:**
+- Pull frequente de main
+- PR pequeno (1-2 dias)
+- Comunicação no time
+- Rebase em feature branch
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Разреши content conflict
+### Exercício 1: Resolva um content conflict
 
-Две ветки изменили один метод по-разному. Разреши конфликт, объединив логику.
+Duas branches mudaram o mesmo método de jeitos diferentes. Resolva o conflito juntando a lógica.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация:
-# main: метод возвращает редирект
-# feature: метод возвращает JSON
+# Situação:
+# main: o método devolve redirect
+# feature: o método devolve JSON
 
 # Merge
 git checkout main
@@ -407,10 +407,10 @@ git merge feature/api
 
 # CONFLICT in app/Controllers/UserController.php
 
-# Открыть файл
+# Abrir o arquivo
 vim app/Controllers/UserController.php
 
-# Увидим:
+# Você vai ver:
 <<<<<<< HEAD
 public function store(Request $request)
 {
@@ -436,10 +436,10 @@ public function store(Request $request)
 }
 >>>>>>> feature/api
 
-# Решение: объединить логику (взять validation из main, добавить JSON response)
+# Resolução: juntar a lógica (ficar com a validation do main, adicionar o JSON response)
 public function store(Request $request)
 {
-    // Validation из main (лучше)
+    // Validation do main (melhor)
     $validated = $request->validate([
         'name' => 'required',
         'email' => 'required|email',
@@ -447,7 +447,7 @@ public function store(Request $request)
 
     $user = User::create($validated);
 
-    // Поддержка обоих вариантов
+    // Suporte aos dois casos
     if ($request->wantsJson()) {
         return response()->json([
             'data' => $user,
@@ -459,9 +459,9 @@ public function store(Request $request)
         ->with('success', 'User created');
 }
 
-# Сохранить файл
+# Salvar o arquivo
 
-# Добавить и закоммитить
+# Adicionar e commitar
 git add app/Controllers/UserController.php
 git commit -m "Merge feature/api into main
 
@@ -470,22 +470,22 @@ Resolved conflict in UserController:
 - Add JSON response support from feature
 - Support both web and API requests"
 
-# Проверить что всё работает
+# Conferir se tudo funciona
 php artisan test
 ```
 </details>
 
-### Задание 2: Разреши delete-modify conflict
+### Exercício 2: Resolva um delete-modify conflict
 
-Ты удалил устаревший файл, но коллега его изменил. Реши что делать.
+Você apagou um arquivo antigo, mas o colega alterou. Decida o que fazer.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация:
-# main: удалил LegacyController.php (устарел)
-# feature: изменил LegacyController.php (добавил функционал)
+# Situação:
+# main: apagou LegacyController.php (legado)
+# feature: alterou LegacyController.php (adicionou funcionalidade)
 
 # Merge
 git checkout main
@@ -494,16 +494,16 @@ git merge feature/legacy-update
 # CONFLICT (modify/delete): app/Controllers/LegacyController.php
 # deleted in HEAD and modified in feature/legacy-update
 
-# Анализ ситуации
-# 1. Посмотреть что изменилось в feature
+# Analisar a situação
+# 1. Ver o que mudou na feature
 git show feature/legacy-update:app/Controllers/LegacyController.php
 
-# 2. Посмотреть почему был удалён в main
+# 2. Ver por que foi apagado no main
 git log --oneline -- app/Controllers/LegacyController.php
-# Найти commit с удалением
+# Achar o commit da exclusão
 git show abc123
 
-# Вариант А: Оставить удаление (если функционал не нужен)
+# Opção A: Manter a exclusão (se a funcionalidade não for necessária)
 git rm app/Controllers/LegacyController.php
 
 git commit -m "Merge feature/legacy-update into main
@@ -512,7 +512,7 @@ Resolved delete-modify conflict:
 - Keep file deleted (replaced by NewController)
 - Legacy functionality moved to NewController"
 
-# Вариант Б: Восстановить файл (если изменения важны)
+# Opção B: Restaurar o arquivo (se as mudanças forem importantes)
 git add app/Controllers/LegacyController.php
 
 git commit -m "Merge feature/legacy-update into main
@@ -521,18 +521,18 @@ Resolved delete-modify conflict:
 - Restore LegacyController with new changes
 - TODO: Refactor to NewController later"
 
-# Вариант В: Извлечь изменения и перенести в новый контроллер
-# 1. Посмотреть изменения
+# Opção C: Extrair as mudanças e levar para o controller novo
+# 1. Ver as mudanças
 git show feature/legacy-update:app/Controllers/LegacyController.php > /tmp/legacy.php
 
-# 2. Вручную перенести нужную логику в NewController
+# 2. Levar a lógica necessária para o NewController na mão
 vim app/Controllers/NewController.php
-# ... добавить логику из legacy ...
+# ... adicionar a lógica do legacy ...
 
-# 3. Оставить удаление
+# 3. Manter a exclusão
 git rm app/Controllers/LegacyController.php
 
-# 4. Добавить изменения в новом файле
+# 4. Adicionar as mudanças no arquivo novo
 git add app/Controllers/NewController.php
 
 git commit -m "Merge feature/legacy-update into main
@@ -544,31 +544,31 @@ Resolved delete-modify conflict:
 ```
 </details>
 
-### Задание 3: Множественные конфликты при rebase
+### Exercício 3: Vários conflitos no rebase
 
-У тебя feature ветка с 5 коммитами. При rebase на main возникли конфликты в 3 коммитах. Разреши все.
+Você tem uma feature branch com 5 commits. No rebase em cima de main, 3 commits deram conflito. Resolva todos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация:
-# feature: 5 коммитов за неделю
-# main: ушёл вперёд, изменил те же файлы
+# Situação:
+# feature: 5 commits na semana
+# main: avançou e mexeu nos mesmos arquivos
 
-# Попытка rebase
+# Tentativa de rebase
 git checkout feature/user-dashboard
 git rebase main
 
 # CONFLICT (commit 1/5): Add dashboard route
 # CONFLICT in routes/web.php
 
-# === Конфликт 1 ===
-# 1. Посмотреть конфликт
+# === Conflito 1 ===
+# 1. Ver o conflito
 git status
 # both modified: routes/web.php
 
-# 2. Открыть файл
+# 2. Abrir o arquivo
 vim routes/web.php
 
 <<<<<<< HEAD
@@ -578,16 +578,16 @@ Route::get('/profile', [ProfileController::class, 'show']);
 Route::get('/dashboard', [DashboardController::class, 'index']);
 >>>>>>> Add dashboard route
 
-# 3. Решить (оставить оба маршрута)
+# 3. Resolver (ficar com as duas rotas)
 Route::get('/home', [HomeController::class, 'index']);
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::get('/dashboard', [DashboardController::class, 'index']);
 
-# 4. Продолжить
+# 4. Continuar
 git add routes/web.php
 git rebase --continue
 
-# === Конфликт 2 ===
+# === Conflito 2 ===
 # CONFLICT (commit 2/5): Add dashboard controller
 # CONFLICT in app/Controllers/DashboardController.php
 
@@ -617,7 +617,7 @@ class DashboardController extends Controller
 }
 >>>>>>> Add dashboard controller
 
-# Решить (взять правильный view)
+# Resolver (ficar com a view certa)
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -633,38 +633,38 @@ class DashboardController extends Controller
 git add app/Controllers/DashboardController.php
 git rebase --continue
 
-# === Конфликт 3 ===
+# === Conflito 3 ===
 # CONFLICT (commit 3/5): Add dashboard tests
 # CONFLICT in tests/Feature/DashboardTest.php
 
 vim tests/Feature/DashboardTest.php
-# ... разрешить конфликт ...
+# ... resolver o conflito ...
 
 git add tests/Feature/DashboardTest.php
 git rebase --continue
 
-# === Коммиты 4-5 без конфликтов ===
+# === Commits 4-5 sem conflito ===
 # Successfully rebased and updated refs/heads/feature/user-dashboard
 
-# Force push (т.к. переписали историю)
+# Force push (porque reescreveu a história)
 git push --force-with-lease origin feature/user-dashboard
 
-# Проверить результат
+# Conferir o resultado
 git log --oneline
-# 5 коммитов теперь на актуальном main
+# 5 commits agora em cima do main atual
 
-# Если запутался в конфликтах — отменить rebase:
+# Se você se enrolar nos conflitos — abortar o rebase:
 git rebase --abort
-# Ветка вернётся в состояние до rebase
+# A branch volta ao estado de antes do rebase
 
-# Альтернатива: использовать rerere (reuse recorded resolution)
-# Автоматически применяет ранее решённые конфликты
+# Alternativa: usar rerere (reuse recorded resolution)
+# Aplica sozinho conflitos que você já resolveu
 git config --global rerere.enabled true
 
-# При повторном rebase Git вспомнит как ты решал конфликты
+# No próximo rebase o Git lembra como você resolveu
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,95 +1,95 @@
-# 3.5 Генераторы (Generators)
+# 3.5 Geradores (Generators)
 
-## Краткое резюме
+## Resumo
 
-> **Генераторы** — функции с `yield`, возвращающие итератор без загрузки всех данных в память.
+> **Geradores** — funções com `yield`, devolvem um iterator sem carregar todos os dados na memória.
 >
-> **Основное:** `yield` вместо `return`, `yield from` для делегирования, методы: send(), getReturn().
+> **O essencial:** `yield` no lugar de `return`, `yield from` para delegar, métodos: send(), getReturn().
 >
-> **Laravel:** `Eloquent::cursor()` использует генераторы для экономии памяти.
+> **Laravel:** `Eloquent::cursor()` usa geradores para economizar memória.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что такое генератор](#что-такое-генератор)
-- [yield ключевое слово](#yield-ключевое-слово)
-- [Generator методы](#generator-методы)
+- [O que é um gerador](#o-que-é-um-gerador)
+- [A palavra-chave yield](#a-palavra-chave-yield)
+- [Métodos de Generator](#métodos-de-generator)
 - [yield from (PHP 7.0+)](#yield-from-php-70)
-- [Генераторы vs массивы](#генераторы-vs-массивы)
-- [Резюме генераторов](#резюме-генераторов)
-- [Практические задания](#практические-задания)
+- [Geradores vs arrays](#geradores-vs-arrays)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что такое генератор
+## O que é um gerador
 
-**Что это:**
-Функция, которая возвращает итератор через `yield` вместо `return`. Не загружает все данные в память сразу.
+**O que é:**
+Função que devolve um iterator via `yield` em vez de `return`. Não carrega todos os dados na memória de uma vez.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Обычная функция (загружает всё в память)
+// Função comum (carrega tudo na memória)
 function getNumbers(): array
 {
     $result = [];
     for ($i = 1; $i <= 1000000; $i++) {
         $result[] = $i;
     }
-    return $result;  // 1M чисел в памяти
+    return $result;  // 1M de números na memória
 }
 
-$numbers = getNumbers();  // Займёт много памяти
+$numbers = getNumbers();  // Vai ocupar muita memória
 
-// Генератор (по одному элементу)
+// Gerador (um item por vez)
 function getNumbersGenerator(): Generator
 {
     for ($i = 1; $i <= 1000000; $i++) {
-        yield $i;  // Возвращает по одному
+        yield $i;  // Devolve um por vez
     }
 }
 
 foreach (getNumbersGenerator() as $number) {
-    echo $number;  // Обрабатываем по одному (экономия памяти)
+    echo $number;  // Processa um por vez (economia de memória)
 }
 
-// Генератор возвращает объект Generator
+// O gerador devolve um objeto Generator
 $gen = getNumbersGenerator();
 var_dump($gen);  // object(Generator)
 ```
 
-**Когда использовать:**
-Для больших выборок из БД, файлов, API (экономия памяти).
+**Quando usar:**
+Consulta grande no banco, arquivo, API (economia de memória).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Обработка большого CSV файла
+// Processar um CSV grande
 function readCsv(string $filePath): Generator
 {
     $handle = fopen($filePath, 'r');
 
     try {
         while (($line = fgets($handle)) !== false) {
-            yield str_getcsv($line);  // По одной строке
+            yield str_getcsv($line);  // Uma linha por vez
         }
     } finally {
         fclose($handle);
     }
 }
 
-// Обработка (не загружает весь файл)
+// Processamento (não carrega o arquivo inteiro)
 foreach (readCsv('large-file.csv') as $row) {
-    // Обработать строку
+    // Processar a linha
     processRow($row);
 }
 
-// Eloquent cursor() использует генераторы
+// Eloquent cursor() usa geradores
 foreach (User::cursor() as $user) {
-    // Загружает по одному пользователю из БД
+    // Carrega um usuário por vez do banco
     $this->processUser($user);
 }
 
-// Пагинация API
+// Paginação de API
 function fetchAllPages(string $url): Generator
 {
     $page = 1;
@@ -99,7 +99,7 @@ function fetchAllPages(string $url): Generator
         $data = $response->json('data');
 
         foreach ($data as $item) {
-            yield $item;  // Отдаём по одному элементу
+            yield $item;  // Entrega um item por vez
         }
 
         $page++;
@@ -107,68 +107,68 @@ function fetchAllPages(string $url): Generator
 }
 
 foreach (fetchAllPages('/api/products') as $product) {
-    // Обработка по одному
+    // Processa um por vez
 }
 ```
 
-**На собеседовании скажешь:**
-> "Генератор возвращает итератор через yield. Не загружает всё в память, отдаёт по одному элементу. Экономия памяти для больших выборок. Eloquent::cursor() использует генераторы."
+**Na entrevista:**
+> "Gerador devolve um iterator via yield. Não carrega tudo na memória, entrega um item por vez. Economia de memória em consulta grande. Eloquent::cursor() usa geradores."
 
 ---
 
-## yield ключевое слово
+## A palavra-chave yield
 
-**Что это:**
-Возвращает значение и приостанавливает выполнение функции.
+**O que é:**
+Devolve um valor e pausa a execução da função.
 
-**Как работает:**
+**Como funciona:**
 ```php
 function simpleGenerator(): Generator
 {
-    echo "Start\n";
+    echo "Início\n";
     yield 1;
-    echo "After first yield\n";
+    echo "Depois do primeiro yield\n";
     yield 2;
-    echo "After second yield\n";
+    echo "Depois do segundo yield\n";
     yield 3;
-    echo "End\n";
+    echo "Fim\n";
 }
 
 foreach (simpleGenerator() as $value) {
-    echo "Value: {$value}\n";
+    echo "Valor: {$value}\n";
 }
 
-// Вывод:
-// Start
-// Value: 1
-// After first yield
-// Value: 2
-// After second yield
-// Value: 3
-// End
+// Saída:
+// Início
+// Valor: 1
+// Depois do primeiro yield
+// Valor: 2
+// Depois do segundo yield
+// Valor: 3
+// Fim
 
-// yield с ключом
+// yield com chave
 function getKeyValue(): Generator
 {
-    yield 'name' => 'Иван';
+    yield 'name' => 'João';
     yield 'age' => 25;
-    yield 'email' => 'ivan@mail.com';
+    yield 'email' => 'joao@email.com';
 }
 
 foreach (getKeyValue() as $key => $value) {
     echo "{$key}: {$value}\n";
 }
-// name: Иван
+// name: João
 // age: 25
-// email: ivan@mail.com
+// email: joao@email.com
 ```
 
-**Когда использовать:**
-Для ленивого вычисления, бесконечных последовательностей.
+**Quando usar:**
+Cálculo sob demanda (lazy), sequências infinitas.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Генерация ID
+// Geração de IDs
 function generateIds(): Generator
 {
     $id = 1;
@@ -182,7 +182,7 @@ echo $idGenerator->current();  // 1
 $idGenerator->next();
 echo $idGenerator->current();  // 2
 
-// Fibonacci sequence
+// Sequência de Fibonacci
 function fibonacci(): Generator
 {
     $a = 0;
@@ -201,12 +201,12 @@ for ($i = 0; $i < 10; $i++) {
 }
 // 0 1 1 2 3 5 8 13 21 34
 
-// Построчное чтение лога
+// Leitura linha a linha do log
 function tailLog(string $filePath): Generator
 {
     $handle = fopen($filePath, 'r');
 
-    // Перейти в конец
+    // Ir para o final
     fseek($handle, 0, SEEK_END);
 
     while (true) {
@@ -215,27 +215,27 @@ function tailLog(string $filePath): Generator
         if ($line !== false) {
             yield $line;
         } else {
-            usleep(100000);  // 100ms задержка
+            usleep(100000);  // delay de 100ms
         }
     }
 }
 
 foreach (tailLog('/var/log/app.log') as $line) {
-    echo $line;  // Выводит новые строки по мере появления
+    echo $line;  // Imprime linhas novas conforme aparecem
 }
 ```
 
-**На собеседовании скажешь:**
-> "yield возвращает значение и приостанавливает функцию. Продолжает с того же места при следующей итерации. yield key => value для ассоциативных данных. Бесконечные генераторы для последовательностей."
+**Na entrevista:**
+> "yield devolve o valor e pausa a função. Na próxima iteração, continua de onde parou. yield key => value para dado associativo. Gerador infinito para sequência."
 
 ---
 
-## Generator методы
+## Métodos de Generator
 
-**Что это:**
-Методы объекта Generator для управления итерацией.
+**O que é:**
+Métodos do objeto Generator para controlar a iteração.
 
-**Как работает:**
+**Como funciona:**
 ```php
 function simpleGenerator(): Generator
 {
@@ -246,93 +246,93 @@ function simpleGenerator(): Generator
 
 $gen = simpleGenerator();
 
-// current() — текущее значение
+// current() — valor atual
 echo $gen->current();  // 1
 
-// next() — перейти к следующему
+// next() — avança para o próximo
 $gen->next();
 echo $gen->current();  // 2
 
-// key() — текущий ключ
+// key() — chave atual
 echo $gen->key();  // 1
 
-// valid() — есть ли ещё элементы
+// valid() — ainda tem elementos
 var_dump($gen->valid());  // true
 
-// rewind() — перезапустить (работает только для некоторых генераторов)
+// rewind() — reinicia (só funciona em alguns geradores)
 $gen->rewind();
 echo $gen->current();  // 1
 
-// send() — отправить значение в генератор
+// send() — envia um valor para o gerador
 function echoGenerator(): Generator
 {
     while (true) {
-        $value = yield;  // Получить значение
-        echo "Received: {$value}\n";
+        $value = yield;  // Recebe o valor
+        echo "Recebido: {$value}\n";
     }
 }
 
 $gen = echoGenerator();
-$gen->send(null);  // Первый вызов с null
-$gen->send('Hello');  // Received: Hello
-$gen->send('World');  // Received: World
+$gen->send(null);  // Primeira chamada com null
+$gen->send('Olá');  // Recebido: Olá
+$gen->send('Mundo');  // Recebido: Mundo
 
-// getReturn() — получить return значение (PHP 7.0+)
+// getReturn() — pega o valor do return (PHP 7.0+)
 function generatorWithReturn(): Generator
 {
     yield 1;
     yield 2;
-    return 'Done';
+    return 'Concluído';
 }
 
 $gen = generatorWithReturn();
 foreach ($gen as $value) {
     echo $value;  // 1, 2
 }
-echo $gen->getReturn();  // "Done"
+echo $gen->getReturn();  // "Concluído"
 ```
 
-**Когда использовать:**
-Для управления генераторами, двусторонней связи.
+**Quando usar:**
+Controlar o gerador, comunicação nos dois sentidos.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Обработка с контролем
+// Processamento com controle
 function processItems(array $items): Generator
 {
     foreach ($items as $item) {
-        $result = yield $item;  // Получить результат обработки
+        $result = yield $item;  // Recebe o resultado do processamento
 
         if ($result === 'skip') {
             continue;
         }
 
         if ($result === 'stop') {
-            return 'Stopped';
+            return 'Parado';
         }
     }
 
-    return 'Completed';
+    return 'Concluído';
 }
 
 $gen = processItems([1, 2, 3, 4, 5]);
-$gen->send(null);  // Первый вызов
+$gen->send(null);  // Primeira chamada
 
 foreach ($gen as $item) {
     if ($item === 3) {
-        $gen->send('skip');  // Пропустить 3
+        $gen->send('skip');  // Pula o 3
     } elseif ($item === 5) {
-        $gen->send('stop');  // Остановить на 5
+        $gen->send('stop');  // Para no 5
         break;
     } else {
         $gen->send('continue');
     }
 }
 
-echo $gen->getReturn();  // "Stopped"
+echo $gen->getReturn();  // "Parado"
 
-// Пауза и возобновление
-class Batch Processor
+// Pausa e retomada
+class BatchProcessor
 {
     private Generator $generator;
 
@@ -364,33 +364,33 @@ class Batch Processor
 
     private function process($item): void
     {
-        // Обработка элемента
+        // Processa o item
     }
 }
 
-// Использование
+// Uso
 $processor = new BatchProcessor();
 $processor->start($items);
 
 while ($processor->processNext()) {
-    // Обработать один элемент
-    // Можно прервать и продолжить потом
+    // Processa um item
+    // Dá para interromper e continuar depois
 }
 ```
 
-**На собеседовании скажешь:**
-> "Generator методы: current(), next(), key(), valid(), send(), getReturn(). send() отправляет значение в генератор (двусторонняя связь). getReturn() получает return значение после завершения."
+**Na entrevista:**
+> "Métodos do Generator: current(), next(), key(), valid(), send(), getReturn(). send() manda um valor para o gerador (comunicação nos dois sentidos). getReturn() pega o return depois que termina."
 
 ---
 
 ## yield from (PHP 7.0+)
 
-**Что это:**
-Делегирование другому генератору или массиву.
+**O que é:**
+Delegação para outro gerador ou array.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Без yield from
+// Sem yield from
 function numbers(): Generator
 {
     yield 1;
@@ -416,7 +416,7 @@ function combined(): Generator
     }
 }
 
-// С yield from (короче)
+// Com yield from (mais curto)
 function combined(): Generator
 {
     yield from numbers();
@@ -427,7 +427,7 @@ foreach (combined() as $value) {
     echo $value;  // 1, 2, 3, a, b, c
 }
 
-// yield from с массивом
+// yield from com array
 function generator(): Generator
 {
     yield from [1, 2, 3];
@@ -440,12 +440,12 @@ foreach (generator() as $value) {
 }
 ```
 
-**Когда использовать:**
-Для композиции генераторов, делегирования.
+**Quando usar:**
+Compor geradores, delegar.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Рекурсивный обход директории
+// Percorrer diretório de forma recursiva
 function scanDirectory(string $dir): Generator
 {
     $items = scandir($dir);
@@ -460,7 +460,7 @@ function scanDirectory(string $dir): Generator
         if (is_file($path)) {
             yield $path;
         } elseif (is_dir($path)) {
-            yield from scanDirectory($path);  // Рекурсия
+            yield from scanDirectory($path);  // Recursão
         }
     }
 }
@@ -469,7 +469,7 @@ foreach (scanDirectory('/app') as $file) {
     echo $file . "\n";
 }
 
-// Объединение данных из разных источников
+// Juntar dados de fontes diferentes
 function fetchUsersFromDb(): Generator
 {
     foreach (User::cursor() as $user) {
@@ -493,10 +493,10 @@ function getAllUsers(): Generator
 }
 
 foreach (getAllUsers() as $user) {
-    // Обработка пользователей из БД и API
+    // Processa usuários do banco e da API
 }
 
-// Chunk processing
+// Processamento em chunks
 function processInChunks(array $items, int $chunkSize): Generator
 {
     $chunks = array_chunk($items, $chunkSize);
@@ -514,39 +514,39 @@ function processChunk(array $chunk): Generator
 }
 ```
 
-**На собеседовании скажешь:**
-> "yield from делегирует другому генератору или массиву. Короче, чем foreach + yield. Использую для композиции генераторов, рекурсивного обхода, объединения источников данных."
+**Na entrevista:**
+> "yield from delega para outro gerador ou array. Mais curto que foreach + yield. Uso para compor geradores, percorrer em recursão, juntar fontes de dados."
 
 ---
 
-## Генераторы vs массивы
+## Geradores vs arrays
 
-**Сравнение:**
+**Comparação:**
 
-| Массив | Генератор |
+| array | Gerador |
 |--------|-----------|
-| Всё в памяти | По одному элементу |
-| return массив | yield элемент |
-| Быстрый доступ по индексу | Только последовательный |
-| Можно многократно итерировать | Итерируется один раз* |
-| array_map, array_filter | Только foreach |
+| Tudo na memória | Um item por vez |
+| return devolve array | yield devolve o item |
+| Acesso rápido por índice | Só sequencial |
+| Dá para iterar várias vezes | Itera uma vez só* |
+| array_map, array_filter | Só foreach |
 
-**Когда использовать генератор:**
-- Большие данные (БД, файлы)
-- Бесконечные последовательности
-- Ленивое вычисление
+**Quando usar gerador:**
+- Dados grandes (banco, arquivos)
+- Sequências infinitas
+- Cálculo sob demanda (lazy)
 
-**Когда использовать массив:**
-- Маленькие данные
-- Нужен быстрый доступ
-- Нужна многократная итерация
+**Quando usar array:**
+- Dados pequenos
+- Precisa de acesso rápido
+- Precisa iterar várias vezes
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// ПЛОХО: весь результат в памяти
+// RUIM: o resultado inteiro na memória
 function getAllUsers(): array
 {
-    return User::all()->toArray();  // 100k+ записей в памяти
+    return User::all()->toArray();  // 100k+ registros na memória
 }
 
 $users = getAllUsers();
@@ -554,11 +554,11 @@ foreach ($users as $user) {
     processUser($user);
 }
 
-// ХОРОШО: генератор (экономия памяти)
+// BOM: gerador (economia de memória)
 function getAllUsers(): Generator
 {
     foreach (User::cursor() as $user) {
-        yield $user;  // По одному
+        yield $user;  // Um por vez
     }
 }
 
@@ -566,66 +566,66 @@ foreach (getAllUsers() as $user) {
     processUser($user);
 }
 
-// Когда нужен массив
-$numbers = [1, 2, 3, 4, 5];  // Маленький массив — OK
+// Quando o array faz sentido
+$numbers = [1, 2, 3, 4, 5];  // Array pequeno — OK
 
-// Можно несколько раз итерировать
+// Dá para iterar várias vezes
 foreach ($numbers as $n) { /* ... */ }
 foreach ($numbers as $n) { /* ... */ }  // ✅ OK
 
-// Генератор нельзя
+// Gerador não dá
 $gen = getNumbers();
 foreach ($gen as $n) { /* ... */ }
-foreach ($gen as $n) { /* ... */ }  // ❌ Пустой (уже итерировали)
+foreach ($gen as $n) { /* ... */ }  // ❌ Vazio (já iterou)
 
-// Если нужно многократно — создать заново
+// Se precisar de novo — cria de novo
 foreach (getNumbers() as $n) { /* ... */ }
-foreach (getNumbers() as $n) { /* ... */ }  // ✅ OK (новый генератор)
+foreach (getNumbers() as $n) { /* ... */ }  // ✅ OK (gerador novo)
 
-// Или преобразовать в массив (но теряем экономию памяти)
+// Ou converte para array (mas perde a economia de memória)
 $gen = getNumbers();
 $array = iterator_to_array($gen);
 foreach ($array as $n) { /* ... */ }
 foreach ($array as $n) { /* ... */ }  // ✅ OK
 ```
 
-**На собеседовании скажешь:**
-> "Генераторы экономят память (по одному элементу), массивы — всё сразу. Генераторы для больших данных, массивы для маленьких. Генератор итерируется один раз (нужно создавать заново). iterator_to_array() преобразует в массив."
+**Na entrevista:**
+> "Gerador economiza memória (um item por vez), array carrega tudo de uma vez. Gerador para dado grande, array para dado pequeno. Gerador itera uma vez só (precisa criar de novo). iterator_to_array() converte para array."
 
 ---
 
-## Резюме генераторов
+## Recapitulando
 
-**Основное:**
-- `yield` возвращает значение и приостанавливает функцию
-- Генератор не загружает всё в память (по одному элементу)
-- `yield key => value` для ассоциативных данных
-- Методы: current(), next(), key(), valid(), send(), getReturn()
-- `yield from` делегирует другому генератору
-- `Generator` объект (возвращается из функции с yield)
+**O essencial:**
+- `yield` devolve o valor e pausa a função
+- Gerador não carrega tudo na memória (um item por vez)
+- `yield key => value` para dado associativo
+- Métodos: current(), next(), key(), valid(), send(), getReturn()
+- `yield from` delega para outro gerador
+- `Generator` é o objeto (volta da função com yield)
 
-**Генератор vs массив:**
-- Генератор — экономия памяти, последовательный доступ
-- Массив — всё в памяти, быстрый доступ по индексу
+**Gerador vs array:**
+- Gerador — economia de memória, acesso sequencial
+- array — tudo na memória, acesso rápido por índice
 
-**Важно на собесе:**
-- Eloquent::cursor() использует генераторы
-- Генераторы итерируются один раз (создавать заново для повтора)
-- yield from для композиции генераторов
-- send() для двусторонней связи
-- Бесконечные генераторы (while true + yield)
-- Экономия памяти для больших файлов, БД, API
+**Importante na entrevista:**
+- Eloquent::cursor() usa geradores
+- Gerador itera uma vez só (cria de novo se precisar repetir)
+- yield from para compor geradores
+- send() para comunicação nos dois sentidos
+- Geradores infinitos (while true + yield)
+- Economia de memória em arquivo grande, banco, API
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай генератор для обработки большого CSV
+### Exercício 1: Criar um gerador para processar CSV grande
 
-Напиши генератор, который читает большой CSV файл построчно и возвращает обработанные данные.
+**Enunciado:** Escreva um gerador que lê um CSV grande linha a linha e devolve os dados processados.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -633,13 +633,13 @@ foreach ($array as $n) { /* ... */ }  // ✅ OK
 function readCsvGenerator(string $filePath, bool $hasHeader = true): Generator
 {
     if (!file_exists($filePath)) {
-        throw new \RuntimeException("File {$filePath} not found");
+        throw new \RuntimeException("Arquivo {$filePath} não encontrado");
     }
 
     $handle = fopen($filePath, 'r');
 
     if ($handle === false) {
-        throw new \RuntimeException("Cannot open file {$filePath}");
+        throw new \RuntimeException("Não foi possível abrir o arquivo {$filePath}");
     }
 
     try {
@@ -655,9 +655,9 @@ function readCsvGenerator(string $filePath, bool $hasHeader = true): Generator
             $lineNumber++;
 
             if ($headers) {
-                // Создать ассоциативный массив
+                // Monta um array associativo
                 if (count($row) !== count($headers)) {
-                    throw new \RuntimeException("Invalid row at line {$lineNumber}");
+                    throw new \RuntimeException("Linha inválida na linha {$lineNumber}");
                 }
 
                 yield $lineNumber => array_combine($headers, $row);
@@ -670,24 +670,24 @@ function readCsvGenerator(string $filePath, bool $hasHeader = true): Generator
     }
 }
 
-// Использование
+// Uso
 // users.csv:
 // name,email,age
-// Иван,ivan@mail.com,25
-// Пётр,petr@mail.com,30
+// João,joao@email.com,25
+// Pedro,pedro@email.com,30
 
 foreach (readCsvGenerator('users.csv') as $lineNumber => $user) {
-    echo "Line {$lineNumber}: {$user['name']} ({$user['email']})\n";
+    echo "Linha {$lineNumber}: {$user['name']} ({$user['email']})\n";
 
-    // Обработка по одной строке (не загружаем весь файл в память)
+    // Processa uma linha por vez (não carrega o arquivo inteiro na memória)
     User::create($user);
 }
 
-// Или с фильтрацией
+// Ou com filtro
 function processCsvWithFilter(string $filePath): Generator
 {
     foreach (readCsvGenerator($filePath) as $lineNumber => $row) {
-        // Фильтрация: только взрослые
+        // Filtro: só maiores de idade
         if (isset($row['age']) && (int) $row['age'] >= 18) {
             yield $lineNumber => $row;
         }
@@ -695,10 +695,10 @@ function processCsvWithFilter(string $filePath): Generator
 }
 
 foreach (processCsvWithFilter('users.csv') as $lineNumber => $user) {
-    echo "Adult user: {$user['name']}\n";
+    echo "Usuário adulto: {$user['name']}\n";
 }
 
-// Laravel Command для импорта
+// Command Laravel para importar
 class ImportUsersCommand extends Command
 {
     public function handle(): void
@@ -712,23 +712,23 @@ class ImportUsersCommand extends Command
                 User::create($userData);
                 $this->output->progressAdvance();
             } catch (\Exception $e) {
-                $this->error("Error at line {$lineNumber}: {$e->getMessage()}");
+                $this->error("Erro na linha {$lineNumber}: {$e->getMessage()}");
             }
         }
 
         $this->output->progressFinish();
-        $this->info('Import completed');
+        $this->info('Importação concluída');
     }
 }
 ```
 </details>
 
-### Задание 2: Реализуй пагинацию API через генератор
+### Exercício 2: Implementar paginação de API com gerador
 
-Создай генератор для получения всех страниц API (автоматическая пагинация).
+**Enunciado:** Crie um gerador que busca todas as páginas da API (paginação automática).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -748,7 +748,7 @@ function fetchAllPagesGenerator(string $url, array $queryParams = []): Generator
         ]);
 
         if (!$response->successful()) {
-            throw new \RuntimeException("API request failed: {$response->status()}");
+            throw new \RuntimeException("Falha na requisição da API: {$response->status()}");
         }
 
         $data = $response->json();
@@ -759,12 +759,12 @@ function fetchAllPagesGenerator(string $url, array $queryParams = []): Generator
         }
 
         foreach ($items as $item) {
-            yield $item;  // Отдаём по одному элементу
+            yield $item;  // Entrega um item por vez
         }
 
         $page++;
 
-        // Проверка на последнюю страницу
+        // Checagem da última página
         $hasMore = isset($data['meta']['current_page']) && isset($data['meta']['last_page'])
             ? $data['meta']['current_page'] < $data['meta']['last_page']
             : !empty($items);
@@ -772,11 +772,11 @@ function fetchAllPagesGenerator(string $url, array $queryParams = []): Generator
     } while ($hasMore);
 }
 
-// Использование
+// Uso
 foreach (fetchAllPagesGenerator('https://api.example.com/users') as $user) {
-    // Обработка по одному пользователю
-    // Не нужно загружать все страницы сразу
-    echo "Processing user: {$user['name']}\n";
+    // Processa um usuário por vez
+    // Não precisa carregar todas as páginas de uma vez
+    echo "Processando usuário: {$user['name']}\n";
 
     LocalUser::updateOrCreate(
         ['external_id' => $user['id']],
@@ -784,7 +784,7 @@ foreach (fetchAllPagesGenerator('https://api.example.com/users') as $user) {
     );
 }
 
-// С фильтрацией
+// Com filtro
 function fetchActiveUsersGenerator(string $url): Generator
 {
     foreach (fetchAllPagesGenerator($url) as $user) {
@@ -794,7 +794,7 @@ function fetchActiveUsersGenerator(string $url): Generator
     }
 }
 
-// Laravel Job для синхронизации
+// Job Laravel para sincronizar
 class SyncUsersFromApiJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
@@ -814,24 +814,24 @@ class SyncUsersFromApiJob implements ShouldQueue
 
             $count++;
 
-            // Чтобы не перегружать память, делаем паузу каждые 1000 записей
+            // Para não estourar a memória, pausa a cada 1000 registros
             if ($count % 1000 === 0) {
                 sleep(1);
             }
         }
 
-        Log::info("Synced {$count} users from API");
+        Log::info("Sincronizados {$count} usuários da API");
     }
 }
 ```
 </details>
 
-### Задание 3: Создай генератор для обхода дерева категорий
+### Exercício 3: Criar um gerador para percorrer a árvore de categorias
 
-Реализуй рекурсивный генератор для обхода дерева категорий (вложенные структуры).
+**Enunciado:** Implemente um gerador recursivo para percorrer a árvore de categorias (estruturas aninhadas).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -850,19 +850,19 @@ class Category extends Model
     }
 }
 
-// Генератор для обхода дерева (depth-first)
+// Gerador para percorrer a árvore (depth-first)
 function traverseCategoryTreeGenerator(Category $category, int $depth = 0): Generator
 {
-    // Отдаём текущую категорию
+    // Entrega a categoria atual
     yield ['category' => $category, 'depth' => $depth];
 
-    // Рекурсивно обходим детей
+    // Percorre os filhos em recursão
     foreach ($category->children as $child) {
         yield from traverseCategoryTreeGenerator($child, $depth + 1);
     }
 }
 
-// Использование
+// Uso
 $rootCategory = Category::with('children.children.children')->find(1);
 
 foreach (traverseCategoryTreeGenerator($rootCategory) as $item) {
@@ -870,7 +870,7 @@ foreach (traverseCategoryTreeGenerator($rootCategory) as $item) {
     echo "{$indent}- {$item['category']->name}\n";
 }
 
-// Вывод:
+// Saída:
 // - Electronics
 //   - Phones
 //     - iPhone
@@ -879,11 +879,11 @@ foreach (traverseCategoryTreeGenerator($rootCategory) as $item) {
 //     - MacBook
 //     - Dell
 
-// Генератор с фильтрацией (только активные)
+// Gerador com filtro (só ativas)
 function traverseActiveCategoriesGenerator(Category $category, int $depth = 0): Generator
 {
     if (!$category->is_active) {
-        return;  // Пропускаем неактивные
+        return;  // Pula as inativas
     }
 
     yield ['category' => $category, 'depth' => $depth];
@@ -893,7 +893,7 @@ function traverseActiveCategoriesGenerator(Category $category, int $depth = 0): 
     }
 }
 
-// Собрать все ID категорий в плоский массив
+// Junta todos os IDs das categorias num array plano
 function getAllCategoryIds(Category $category): array
 {
     $ids = [];
@@ -905,12 +905,12 @@ function getAllCategoryIds(Category $category): array
     return $ids;
 }
 
-// Использование для удаления со всеми детьми
+// Uso: apagar com todos os filhos
 $category = Category::find(1);
 $ids = getAllCategoryIds($category);
 Category::whereIn('id', $ids)->delete();
 
-// Генератор breadcrumbs (путь к категории)
+// Gerador de breadcrumbs (caminho até a categoria)
 function getCategoryPathGenerator(Category $category): Generator
 {
     $current = $category;
@@ -935,4 +935,4 @@ foreach ($breadcrumbs as $item) {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
