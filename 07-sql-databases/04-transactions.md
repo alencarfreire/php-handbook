@@ -1,68 +1,68 @@
-# 6.4 Транзакции (ACID)
+# 6.4 Transações (ACID)
 
-## Краткое резюме
+## Resumo
 
-> **Транзакция** — группа SQL операций, выполняющихся как единое целое. Либо все успешно, либо все откатываются.
+> **Transação** — grupo de operações SQL que rodam como um bloco só. Ou todas passam, ou todas desfazem.
 >
-> **ACID:** Atomicity (всё или ничего), Consistency (целостность), Isolation (не мешают друг другу), Durability (после commit сохранено).
+> **ACID:** Atomicity (tudo ou nada), Consistency (integridade), Isolation (não se atrapalham), Durability (depois do commit está salvo).
 >
-> **Важно:** lockForUpdate() для pessimistic locking. Isolation levels: READ COMMITTED, REPEATABLE READ (default MySQL), SERIALIZABLE.
+> **Importante:** lockForUpdate() para pessimistic locking. Isolation levels: READ COMMITTED, REPEATABLE READ (default no MySQL), SERIALIZABLE.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [ACID свойства](#acid-свойства)
-- [Isolation Levels](#isolation-levels)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Транзакция — группа SQL операций, выполняющихся как единое целое. Либо все успешно, либо все откатываются.
-
-**ACID свойства:**
-- **Atomicity** (Атомарность) — всё или ничего
-- **Consistency** (Согласованность) — данные остаются корректными
-- **Isolation** (Изоляция) — транзакции не мешают друг другу
-- **Durability** (Долговечность) — после commit данные сохранены
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Propriedades ACID](#propriedades-acid)
+- [Níveis de isolamento](#níveis-de-isolamento)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовый синтаксис:**
+**O que é:**
+Transação é um grupo de operações SQL que rodam como um bloco só. Ou todas passam, ou todas desfazem.
+
+**Propriedades ACID:**
+- **Atomicity** (atomicidade) — tudo ou nada
+- **Consistency** (consistência) — os dados continuam corretos
+- **Isolation** (isolamento) — as transações não se atrapalham
+- **Durability** (durabilidade) — depois do commit os dados estão salvos
+
+---
+
+## Como funciona
+
+**Sintaxe básica:**
 
 ```sql
--- Начать транзакцию
+-- Começar a transação
 START TRANSACTION;
--- или
+-- ou
 BEGIN;
 
--- Выполнить операции
+-- Executar as operações
 UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 
--- Зафиксировать изменения
+-- Confirmar as alterações
 COMMIT;
 
--- Или откатить при ошибке
+-- Ou desfazer se der erro
 ROLLBACK;
 ```
 
-**В Laravel:**
+**No Laravel:**
 
 ```php
 use Illuminate\Support\Facades\DB;
 
-// Автоматическая транзакция
+// Transação automática
 DB::transaction(function () {
     $user = User::find(1);
     $user->decrement('balance', 100);
@@ -76,13 +76,13 @@ DB::transaction(function () {
         'amount' => 100,
     ]);
 });
-// Автоматически COMMIT при успехе или ROLLBACK при исключении
+// COMMIT automático se der certo, ROLLBACK se lançar exceção
 
-// Ручное управление
+// Controle manual
 DB::beginTransaction();
 
 try {
-    // Операции
+    // Operações
     $user->decrement('balance', 100);
     $recipient->increment('balance', 100);
 
@@ -95,27 +95,27 @@ try {
 
 ---
 
-## ACID свойства
+## Propriedades ACID
 
-**Atomicity (Атомарность):**
+**Atomicity (atomicidade):**
 
-Все операции выполняются полностью или не выполняются вообще.
+Todas as operações rodam por completo ou nenhuma roda.
 
 ```php
-// Пример: перевод денег
+// Exemplo: transferência de dinheiro
 DB::transaction(function () {
-    // Если любая из операций провалится, все откатятся
+    // Se qualquer operação falhar, todas desfazem
     User::where('id', 1)->decrement('balance', 100);
     User::where('id', 2)->increment('balance', 100);
     Transaction::create(['amount' => 100]);
 });
 
-// Невозможно, чтобы деньги списались, но не начислились
+// Impossível debitar sem creditar
 ```
 
-**Consistency (Согласованность):**
+**Consistency (consistência):**
 
-База остаётся в корректном состоянии (не нарушаются constraints).
+O banco fica em estado válido (constraints não quebram).
 
 ```sql
 -- Constraint: balance >= 0
@@ -123,97 +123,97 @@ ALTER TABLE users ADD CONSTRAINT check_balance CHECK (balance >= 0);
 
 START TRANSACTION;
 
--- Эта операция провалится, если balance < 100
+-- Esta operação falha se balance < 100
 UPDATE users SET balance = balance - 100 WHERE id = 1;
 
--- Транзакция откатится, balance останется >= 0
+-- A transação desfaz, balance continua >= 0
 COMMIT;
 ```
 
-**Isolation (Изоляция):**
+**Isolation (isolamento):**
 
-Одновременные транзакции не мешают друг другу.
+Transações simultâneas não se atrapalham.
 
 ```sql
--- Транзакция 1
+-- Transação 1
 START TRANSACTION;
 SELECT balance FROM users WHERE id = 1;  -- balance = 1000
 UPDATE users SET balance = balance - 100 WHERE id = 1;
--- Ещё не COMMIT
+-- Ainda sem COMMIT
 
--- Транзакция 2 (в другом подключении)
+-- Transação 2 (em outra conexão)
 START TRANSACTION;
-SELECT balance FROM users WHERE id = 1;  -- balance = 1000 (видит старое значение)
+SELECT balance FROM users WHERE id = 1;  -- balance = 1000 (vê o valor antigo)
 COMMIT;
 
--- Транзакция 1
-COMMIT;  -- Теперь balance = 900
+-- Transação 1
+COMMIT;  -- Agora balance = 900
 ```
 
-**Durability (Долговечность):**
+**Durability (durabilidade):**
 
-После COMMIT данные сохранены навсегда (даже при сбое).
+Depois do COMMIT os dados ficam salvos (mesmo se o servidor cair).
 
 ```sql
 START TRANSACTION;
 INSERT INTO orders (user_id, total) VALUES (1, 1000);
 COMMIT;
 
--- Даже если сервер упадёт сразу после COMMIT,
--- запись останется в БД после перезапуска
+-- Mesmo se o servidor cair logo após o COMMIT,
+-- o registro continua no banco depois do restart
 ```
 
 ---
 
-## Isolation Levels
+## Níveis de isolamento
 
-**Уровни изоляции (от слабого к сильному):**
+**Níveis de isolamento (do mais fraco ao mais forte):**
 
-1. READ UNCOMMITTED — видит незакоммиченные изменения
-2. READ COMMITTED — видит только закоммиченные (по умолчанию в PostgreSQL)
-3. REPEATABLE READ — фиксирует snapshot (по умолчанию в MySQL)
-4. SERIALIZABLE — полная изоляция
+1. READ UNCOMMITTED — vê mudanças ainda sem commit
+2. READ COMMITTED — vê só o que já teve commit (default no PostgreSQL)
+3. REPEATABLE READ — fixa um snapshot (default no MySQL)
+4. SERIALIZABLE — isolamento total
 
 ```sql
--- Установить уровень
+-- Definir o nível
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 ```
 
-**В Laravel:**
+**No Laravel:**
 
 ```php
-// По умолчанию REPEATABLE READ (MySQL)
+// Default: REPEATABLE READ (MySQL)
 DB::transaction(function () {
-    // Операции
+    // Operações
 });
 
-// Изменить уровень изоляции
+// Mudar o nível de isolamento
 DB::transaction(function () {
     DB::statement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
-    // Операции
+    // Operações
 });
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй транзакции когда:**
-- Несколько связанных операций (перевод денег)
-- Нужна атомарность (всё или ничего)
-- Критичная целостность данных
+**Use transação quando:**
+- Várias operações ligadas (transferência de dinheiro)
+- Precisa de atomicidade (tudo ou nada)
+- Integridade dos dados é crítica
 
-**Не используй когда:**
-- Одиночные INSERT/UPDATE
-- Только чтение (SELECT)
-- Долгие операции (блокируют таблицы)
+**Não use quando:**
+- INSERT/UPDATE isolado
+- Só leitura (SELECT)
+- Operação longa (trava tabelas)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Перевод денег:**
+**Transferência de dinheiro:**
 
 ```php
 class TransferService
@@ -221,7 +221,7 @@ class TransferService
     public function transfer(User $from, User $to, int $amount): Transaction
     {
         return DB::transaction(function () use ($from, $to, $amount) {
-            // Проверить баланс с блокировкой
+            // Checar saldo com lock
             $from = User::where('id', $from->id)
                 ->lockForUpdate()  // SELECT ... FOR UPDATE
                 ->first();
@@ -230,16 +230,16 @@ class TransferService
                 throw new InsufficientFundsException();
             }
 
-            // Списать
+            // Debitar
             $from->decrement('balance', $amount);
 
-            // Начислить
+            // Creditar
             $to = User::where('id', $to->id)
                 ->lockForUpdate()
                 ->first();
             $to->increment('balance', $amount);
 
-            // Записать транзакцию
+            // Registrar a transação
             return Transaction::create([
                 'from_user_id' => $from->id,
                 'to_user_id' => $to->id,
@@ -251,7 +251,7 @@ class TransferService
 }
 ```
 
-**Создание заказа с обновлением склада:**
+**Criar pedido e atualizar estoque:**
 
 ```php
 class OrderService
@@ -259,16 +259,16 @@ class OrderService
     public function create(User $user, array $items): Order
     {
         return DB::transaction(function () use ($user, $items) {
-            // Создать заказ
+            // Criar o pedido
             $order = Order::create([
                 'user_id' => $user->id,
                 'total' => $this->calculateTotal($items),
                 'status' => 'pending',
             ]);
 
-            // Создать items и обновить склад
+            // Criar items e atualizar estoque
             foreach ($items as $item) {
-                // Проверить наличие с блокировкой
+                // Checar estoque com lock
                 $product = Product::where('id', $item['product_id'])
                     ->lockForUpdate()
                     ->first();
@@ -277,18 +277,18 @@ class OrderService
                     throw new OutOfStockException($product->name);
                 }
 
-                // Создать order item
+                // Criar order item
                 $order->items()->create([
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price' => $product->price,
                 ]);
 
-                // Уменьшить stock
+                // Diminuir stock
                 $product->decrement('stock', $item['quantity']);
             }
 
-            // Списать с баланса
+            // Debitar o saldo
             $user->decrement('balance', $order->total);
 
             return $order;
@@ -297,52 +297,52 @@ class OrderService
 }
 ```
 
-**Вложенные транзакции (savepoints):**
+**Transações aninhadas (savepoints):**
 
 ```php
 DB::transaction(function () {
-    // Операция 1
-    User::create(['name' => 'John']);
+    // Operação 1
+    User::create(['name' => 'João']);
 
     try {
         DB::transaction(function () {
-            // Операция 2 (может провалиться)
-            Post::create(['title' => 'Invalid']);
+            // Operação 2 (pode falhar)
+            Post::create(['title' => 'Inválido']);
         });
     } catch (\Exception $e) {
-        // Операция 2 откатилась, но операция 1 сохранится
+        // Operação 2 desfez, mas a 1 continua
     }
 
-    // Операция 3
-    User::create(['name' => 'Jane']);
+    // Operação 3
+    User::create(['name' => 'Ana']);
 });
 ```
 
-**Pessimistic Locking (блокировки):**
+**Pessimistic locking (bloqueio pessimista):**
 
 ```php
-// lockForUpdate() — SELECT ... FOR UPDATE (блокирует для записи)
+// lockForUpdate() — SELECT ... FOR UPDATE (trava para escrita)
 $user = User::where('id', 1)
     ->lockForUpdate()
     ->first();
 
 $user->increment('balance', 100);
 
-// sharedLock() — SELECT ... LOCK IN SHARE MODE (блокирует для чтения)
+// sharedLock() — SELECT ... LOCK IN SHARE MODE (trava para leitura)
 $user = User::where('id', 1)
     ->sharedLock()
     ->first();
 ```
 
-**Optimistic Locking (через version):**
+**Optimistic locking (via version):**
 
 ```php
-// Миграция
+// Migration
 Schema::table('users', function (Blueprint $table) {
     $table->integer('version')->default(0);
 });
 
-// Обновление с проверкой версии
+// Update com checagem de versão
 $user = User::find(1);
 $currentVersion = $user->version;
 
@@ -358,26 +358,26 @@ if (!$updated) {
 }
 ```
 
-**Deadlock (взаимная блокировка):**
+**Deadlock (bloqueio mútuo):**
 
 ```php
-// Транзакция 1
+// Transação 1
 DB::transaction(function () {
-    User::where('id', 1)->lockForUpdate()->first();  // Блокирует user 1
+    User::where('id', 1)->lockForUpdate()->first();  // Trava o user 1
     sleep(1);
-    User::where('id', 2)->lockForUpdate()->first();  // Ждёт user 2
+    User::where('id', 2)->lockForUpdate()->first();  // Espera o user 2
 });
 
-// Транзакция 2 (одновременно)
+// Transação 2 (ao mesmo tempo)
 DB::transaction(function () {
-    User::where('id', 2)->lockForUpdate()->first();  // Блокирует user 2
+    User::where('id', 2)->lockForUpdate()->first();  // Trava o user 2
     sleep(1);
-    User::where('id', 1)->lockForUpdate()->first();  // Ждёт user 1
+    User::where('id', 1)->lockForUpdate()->first();  // Espera o user 1
 });
 
-// Результат: DEADLOCK
+// Resultado: DEADLOCK
 
-// Решение: всегда блокировать в одном порядке (сначала меньший id)
+// Solução: sempre travar na mesma ordem (menor id primeiro)
 $ids = [$fromUserId, $toUserId];
 sort($ids);
 
@@ -388,20 +388,20 @@ foreach ($ids as $id) {
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Транзакция — группа операций, выполняющихся атомарно. ACID: Atomicity (всё или ничего), Consistency (целостность), Isolation (не мешают друг другу), Durability (после commit сохранено). В Laravel: DB::transaction() автоматически commit/rollback, DB::beginTransaction/commit/rollBack вручную. lockForUpdate() для pessimistic locking (SELECT FOR UPDATE). Isolation levels: READ COMMITTED, REPEATABLE READ (default MySQL), SERIALIZABLE. Deadlock когда две транзакции ждут друг друга — решение: блокировать в одном порядке."
+> "Transação é um grupo de operações que rodam de forma atômica. ACID: Atomicity (tudo ou nada), Consistency (integridade), Isolation (não se atrapalham), Durability (depois do commit está salvo). No Laravel: DB::transaction() faz commit/rollback sozinho, DB::beginTransaction/commit/rollBack na mão. lockForUpdate() para pessimistic locking (SELECT FOR UPDATE). Isolation levels: READ COMMITTED, REPEATABLE READ (default no MySQL), SERIALIZABLE. Deadlock é quando duas transações esperam uma pela outra — solução: travar na mesma ordem."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй безопасный перевод баллов
+### Exercício 1: Transferência segura de pontos
 
-Пользователь может перевести баллы другому пользователю. Реализуй транзакцию с проверкой баланса и предотвращением race condition.
+O usuário pode transferir pontos para outro usuário. Implemente a transação com checagem de saldo e sem race condition.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class PointsTransferService
@@ -409,28 +409,28 @@ class PointsTransferService
     public function transfer(User $from, User $to, int $points): void
     {
         DB::transaction(function () use ($from, $to, $points) {
-            // Получить отправителя с блокировкой
+            // Pegar o remetente com lock
             $sender = User::where('id', $from->id)
                 ->lockForUpdate()
                 ->first();
 
-            // Проверить баланс
+            // Checar saldo
             if ($sender->points < $points) {
                 throw new InsufficientPointsException(
-                    "Недостаточно баллов. Доступно: {$sender->points}"
+                    "Pontos insuficientes. Disponível: {$sender->points}"
                 );
             }
 
-            // Получить получателя с блокировкой
+            // Pegar o destinatário com lock
             $receiver = User::where('id', $to->id)
                 ->lockForUpdate()
                 ->first();
 
-            // Выполнить перевод
+            // Fazer a transferência
             $sender->decrement('points', $points);
             $receiver->increment('points', $points);
 
-            // Записать историю
+            // Registrar o histórico
             PointsTransaction::create([
                 'from_user_id' => $sender->id,
                 'to_user_id' => $receiver->id,
@@ -442,32 +442,32 @@ class PointsTransferService
     }
 }
 
-// Тест
+// Teste
 try {
     $service = new PointsTransferService();
     $service->transfer($user1, $user2, 100);
-    echo "Перевод выполнен успешно";
+    echo "Transferência concluída";
 } catch (InsufficientPointsException $e) {
-    echo "Ошибка: " . $e->getMessage();
+    echo "Erro: " . $e->getMessage();
 } catch (\Exception $e) {
-    echo "Системная ошибка: " . $e->getMessage();
+    echo "Erro de sistema: " . $e->getMessage();
 }
 ```
 </details>
 
-### Задание 2: Исправь Deadlock
+### Exercício 2: Corrija o deadlock
 
-Две транзакции создают deadlock. Как исправить?
+Duas transações geram deadlock. Como corrigir?
 
 ```php
-// Транзакция 1
+// Transação 1
 DB::transaction(function () {
     User::where('id', 1)->lockForUpdate()->first();
     sleep(1);
     User::where('id', 2)->lockForUpdate()->first();
 });
 
-// Транзакция 2 (одновременно)
+// Transação 2 (ao mesmo tempo)
 DB::transaction(function () {
     User::where('id', 2)->lockForUpdate()->first();
     sleep(1);
@@ -476,25 +476,25 @@ DB::transaction(function () {
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблема: Deadlock
-// Транзакция 1 блокирует user 1, ждёт user 2
-// Транзакция 2 блокирует user 2, ждёт user 1
-// Результат: взаимная блокировка
+// ❌ Problema: deadlock
+// Transação 1 trava o user 1, espera o user 2
+// Transação 2 trava o user 2, espera o user 1
+// Resultado: bloqueio mútuo
 
-// ✅ Решение: Всегда блокировать в одном порядке (по ID)
+// ✅ Solução: sempre travar na mesma ordem (por ID)
 class SafeTransferService
 {
     public function transfer(User $from, User $to, int $amount): void
     {
         DB::transaction(function () use ($from, $to, $amount) {
-            // Определить порядок блокировки (меньший ID первым)
+            // Definir a ordem do lock (menor ID primeiro)
             $ids = [$from->id, $to->id];
             sort($ids);
 
-            // Заблокировать в одном порядке
+            // Travar na mesma ordem
             $users = User::whereIn('id', $ids)
                 ->orderBy('id')
                 ->lockForUpdate()
@@ -504,7 +504,7 @@ class SafeTransferService
             $sender = $users[$from->id];
             $receiver = $users[$to->id];
 
-            // Проверки и перевод
+            // Checagens e transferência
             if ($sender->balance < $amount) {
                 throw new InsufficientFundsException();
             }
@@ -515,7 +515,7 @@ class SafeTransferService
     }
 }
 
-// Альтернативное решение: Retry при deadlock
+// Solução alternativa: retry no deadlock
 class RetryableTransferService
 {
     public function transfer(User $from, User $to, int $amount): void
@@ -526,7 +526,7 @@ class RetryableTransferService
         while ($attempt < $maxRetries) {
             try {
                 DB::transaction(function () use ($from, $to, $amount) {
-                    // Ваш код транзакции
+                    // Seu código da transação
                     $sender = User::where('id', $from->id)->lockForUpdate()->first();
                     $receiver = User::where('id', $to->id)->lockForUpdate()->first();
 
@@ -534,7 +534,7 @@ class RetryableTransferService
                     $receiver->increment('balance', $amount);
                 });
 
-                return; // Успешно
+                return; // Deu certo
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($e->getCode() == 40001 || str_contains($e->getMessage(), 'Deadlock')) {
                     $attempt++;
@@ -552,35 +552,35 @@ class RetryableTransferService
 ```
 </details>
 
-### Задание 3: Optimistic vs Pessimistic Locking
+### Exercício 3: Optimistic vs Pessimistic Locking
 
-Реализуй два подхода для обновления счётчика просмотров статьи.
+Implemente as duas abordagens para atualizar o contador de views do artigo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Pessimistic Locking (блокировка на запись)
+// Pessimistic locking (trava na escrita)
 class PessimisticViewCounter
 {
     public function increment(Post $post): void
     {
         DB::transaction(function () use ($post) {
-            // Заблокировать запись
+            // Travar o registro
             $lockedPost = Post::where('id', $post->id)
                 ->lockForUpdate()
                 ->first();
 
-            // Обновить счётчик
+            // Atualizar o contador
             $lockedPost->increment('views');
         });
     }
 }
 
-// Плюсы: Гарантированная консистентность
-// Минусы: Блокирует другие транзакции (медленнее)
+// Prós: consistência garantida
+// Contras: trava outras transações (mais lento)
 
-// Optimistic Locking (проверка версии)
+// Optimistic locking (checagem de versão)
 class OptimisticViewCounter
 {
     public function increment(Post $post): void
@@ -589,55 +589,55 @@ class OptimisticViewCounter
         $attempt = 0;
 
         while ($attempt < $maxRetries) {
-            // Прочитать текущую версию
+            // Ler a versão atual
             $currentVersion = $post->version;
             $currentViews = $post->views;
 
-            // Попытаться обновить с проверкой версии
+            // Tentar o update checando a versão
             $updated = Post::where('id', $post->id)
-                ->where('version', $currentVersion) // Проверка версии
+                ->where('version', $currentVersion) // Checagem de versão
                 ->update([
                     'views' => $currentViews + 1,
                     'version' => $currentVersion + 1,
                 ]);
 
             if ($updated) {
-                return; // Успешно
+                return; // Deu certo
             }
 
-            // Если версия изменилась, повторить
+            // Se a versão mudou, tenta de novo
             $post->refresh();
             $attempt++;
         }
 
-        throw new ConcurrentModificationException('Не удалось обновить после нескольких попыток');
+        throw new ConcurrentModificationException('Não deu para atualizar depois de várias tentativas');
     }
 }
 
-// Плюсы: Не блокирует, быстрее для редких конфликтов
-// Минусы: Требует retry логики, может быть медленнее при частых конфликтах
+// Prós: não trava, mais rápido quando o conflito é raro
+// Contras: precisa de retry, pode ficar mais lento se o conflito for frequente
 
-// Миграция для optimistic locking
+// Migration para optimistic locking
 Schema::table('posts', function (Blueprint $table) {
     $table->integer('version')->default(0);
 });
 
-// Когда использовать?
-// Pessimistic: Частые конфликты, критичная целостность (переводы денег)
-// Optimistic: Редкие конфликты, высокая нагрузка (счётчики просмотров)
+// Quando usar?
+// Pessimistic: conflito frequente, integridade crítica (transferência de dinheiro)
+// Optimistic: conflito raro, carga alta (contador de views)
 
-// Гибридный подход: Без блокировки для счётчиков
+// Abordagem híbrida: sem lock para contadores
 class SimpleViewCounter
 {
     public function increment(Post $post): void
     {
-        // Прямое обновление без блокировки
+        // Update direto, sem lock
         Post::where('id', $post->id)->increment('views');
 
-        // Для более точного учёта можно использовать Redis
+        // Para contagem mais precisa, dá para usar Redis
         Redis::incr("post:{$post->id}:views");
 
-        // Периодически синхронизировать с БД
+        // Sincronizar com o banco de tempos em tempos
     }
 }
 ```
@@ -645,4 +645,4 @@ class SimpleViewCounter
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

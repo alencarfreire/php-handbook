@@ -1,54 +1,54 @@
-# 6.5 Нормализация БД
+# 6.5 Normalização de banco
 
-## Краткое резюме
+## Resumo
 
-> **Нормализация** — процесс организации данных для уменьшения избыточности и аномалий.
+> **Normalização** — organizar os dados para reduzir redundância e anomalia.
 >
-> **Нормальные формы:** 1NF (атомарные значения), 2NF (нет частичной зависимости), 3NF (нет транзитивной зависимости).
+> **Formas normais:** 1NF (valores atômicos), 2NF (sem dependência parcial), 3NF (sem dependência transitiva).
 >
-> **Важно:** Денормализация оправдана для часто читаемых данных (счётчики, статистика). Snapshot для исторических данных (цена на момент заказа).
+> **Importante:** Desnormalização vale para dado que se lê muito (contador, estatística). Snapshot para dado histórico (preço no momento do pedido).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Нормализация — процесс организации данных для уменьшения избыточности и аномалий.
-
-**Нормальные формы:**
-- **1NF** — атомарные значения
-- **2NF** — нет частичной зависимости
-- **3NF** — нет транзитивной зависимости
-- **BCNF** — каждый детерминант — ключ
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**1NF (Первая нормальная форма):**
+**O que é:**
+Normalização — organizar os dados para reduzir redundância e anomalia.
 
-Каждое поле содержит только атомарное значение (не массив, не список).
+**Formas normais:**
+- **1NF** — valores atômicos
+- **2NF** — sem dependência parcial
+- **3NF** — sem dependência transitiva
+- **BCNF** — todo determinante é chave
+
+---
+
+## Como funciona
+
+**1NF (Primeira forma normal):**
+
+Cada campo guarda só um valor atômico (não array, não lista).
 
 ```sql
--- ❌ НЕ 1NF (несколько телефонов в одном поле)
+-- ❌ NÃO é 1NF (vários telefones no mesmo campo)
 CREATE TABLE users (
     id INT,
     name VARCHAR(255),
-    phones VARCHAR(255)  -- '+79001111111, +79002222222'
+    phones VARCHAR(255)  -- '11999991111, 11999992222'
 );
 
--- ✅ 1NF (атомарные значения)
+-- ✅ 1NF (valores atômicos)
 CREATE TABLE users (
     id INT,
     name VARCHAR(255)
@@ -61,21 +61,21 @@ CREATE TABLE user_phones (
 );
 ```
 
-**2NF (Вторая нормальная форма):**
+**2NF (Segunda forma normal):**
 
-Нет частичной зависимости (все неключевые поля зависят от всего ключа).
+Sem dependência parcial (todo campo que não é chave depende da chave inteira).
 
 ```sql
--- ❌ НЕ 2NF (product_name зависит только от product_id, а не от (order_id, product_id))
+-- ❌ NÃO é 2NF (product_name depende só de product_id, não de (order_id, product_id))
 CREATE TABLE order_items (
     order_id INT,
     product_id INT,
-    product_name VARCHAR(255),  -- Зависит только от product_id
+    product_name VARCHAR(255),  -- Depende só de product_id
     quantity INT,
     PRIMARY KEY (order_id, product_id)
 );
 
--- ✅ 2NF (вынести product_name в отдельную таблицу)
+-- ✅ 2NF (extrair product_name para outra tabela)
 CREATE TABLE order_items (
     order_id INT,
     product_id INT,
@@ -91,20 +91,20 @@ CREATE TABLE products (
 );
 ```
 
-**3NF (Третья нормальная форма):**
+**3NF (Terceira forma normal):**
 
-Нет транзитивной зависимости (неключевые поля зависят только от ключа).
+Sem dependência transitiva (campo que não é chave depende só da chave).
 
 ```sql
--- ❌ НЕ 3NF (category_name зависит от category_id, а не от product_id)
+-- ❌ NÃO é 3NF (category_name depende de category_id, não de product_id)
 CREATE TABLE products (
     id INT PRIMARY KEY,
     name VARCHAR(255),
     category_id INT,
-    category_name VARCHAR(255)  -- Зависит от category_id
+    category_name VARCHAR(255)  -- Depende de category_id
 );
 
--- ✅ 3NF (вынести category в отдельную таблицу)
+-- ✅ 3NF (extrair category para outra tabela)
 CREATE TABLE products (
     id INT PRIMARY KEY,
     name VARCHAR(255),
@@ -120,48 +120,48 @@ CREATE TABLE categories (
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы нормализации:**
-- ✅ Нет избыточности (экономия места)
-- ✅ Нет аномалий обновления
-- ✅ Целостность данных
+**Prós da normalização:**
+- ✅ Sem redundância (economiza espaço)
+- ✅ Sem anomalia de update
+- ✅ Integridade dos dados
 
-**Минусы нормализации:**
-- ❌ Больше JOIN запросов (медленнее)
-- ❌ Сложнее запросы
+**Contras da normalização:**
+- ❌ Mais JOIN (mais lento)
+- ❌ Queries mais complexas
 
-**Когда денормализовать:**
-- Читается чаще, чем пишется
-- Критична производительность чтения
-- Аналитические БД (data warehouses)
+**Quando desnormalizar:**
+- Lê mais do que escreve
+- Leitura precisa ser rápida
+- Banco analítico (data warehouse)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**E-commerce нормализация:**
+**Normalização no e-commerce:**
 
 ```sql
--- ❌ Денормализованная таблица (плохо)
+-- ❌ Tabela desnormalizada (ruim)
 CREATE TABLE orders (
     id INT PRIMARY KEY,
     user_id INT,
-    user_name VARCHAR(255),       -- Дубль из users
-    user_email VARCHAR(255),      -- Дубль из users
+    user_name VARCHAR(255),       -- Cópia de users
+    user_email VARCHAR(255),      -- Cópia de users
     product_id INT,
-    product_name VARCHAR(255),    -- Дубль из products
-    product_price DECIMAL(10, 2), -- Дубль из products
+    product_name VARCHAR(255),    -- Cópia de products
+    product_price DECIMAL(10, 2), -- Cópia de products
     quantity INT,
     total DECIMAL(10, 2)
 );
 
--- Проблемы:
--- 1. При изменении user_name нужно обновить все заказы
--- 2. При изменении product_price изменятся старые заказы (!)
--- 3. Избыточность данных
+-- Problemas:
+-- 1. Se user_name mudar, precisa atualizar todos os pedidos
+-- 2. Se product_price mudar, pedidos antigos mudam também (!)
+-- 3. Redundância de dados
 
--- ✅ Нормализованная структура
+-- ✅ Estrutura normalizada
 CREATE TABLE users (
     id INT PRIMARY KEY,
     name VARCHAR(255),
@@ -186,29 +186,29 @@ CREATE TABLE order_items (
     order_id INT,
     product_id INT,
     quantity INT,
-    price DECIMAL(10, 2),  -- Цена на момент заказа (не дубль!)
+    price DECIMAL(10, 2),  -- Preço no momento do pedido (não é cópia!)
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 ```
 
-**Когда денормализация оправдана:**
+**Quando a desnormalização vale a pena:**
 
 ```php
-// Пример: кеширование счётчиков
+// Exemplo: cache de contadores
 
-// ❌ Медленно (JOIN и COUNT каждый раз)
+// ❌ Lento (JOIN e COUNT toda vez)
 $users = User::with(['posts' => function ($query) {
     $query->select('user_id', DB::raw('COUNT(*) as posts_count'))
           ->groupBy('user_id');
 }])->get();
 
-// ✅ Денормализация: хранить posts_count в users
+// ✅ Desnormalização: guardar posts_count em users
 Schema::table('users', function (Blueprint $table) {
     $table->integer('posts_count')->default(0);
 });
 
-// Обновлять при создании/удалении поста
+// Atualizar ao criar/apagar o post
 class Post extends Model
 {
     protected static function booted(): void
@@ -223,20 +223,20 @@ class Post extends Model
     }
 }
 
-// Теперь быстро
+// Agora é rápido
 $users = User::where('posts_count', '>', 10)->get();
 ```
 
-**Snapshot данных (исторические данные):**
+**Snapshot de dados (dados históricos):**
 
 ```php
-// Заказы: сохранить product_name и price на момент заказа
+// Pedidos: guardar product_name e price no momento do pedido
 Schema::create('order_items', function (Blueprint $table) {
     $table->id();
     $table->foreignId('order_id')->constrained();
     $table->foreignId('product_id')->constrained();
     $table->string('product_name');  // Snapshot
-    $table->decimal('price', 10, 2);  // Snapshot (цена на момент заказа)
+    $table->decimal('price', 10, 2);  // Snapshot (preço no momento do pedido)
     $table->integer('quantity');
 });
 
@@ -252,8 +252,8 @@ class OrderService
 
                 $order->items()->create([
                     'product_id' => $product->id,
-                    'product_name' => $product->name,      // Сохранить snapshot
-                    'price' => $product->price,            // Цена на момент заказа
+                    'product_name' => $product->name,      // Guardar o snapshot
+                    'price' => $product->price,            // Preço no momento do pedido
                     'quantity' => $item['quantity'],
                 ]);
             }
@@ -264,10 +264,10 @@ class OrderService
 }
 ```
 
-**Materialized Views (материализованные представления):**
+**Materialized Views (visões materializadas):**
 
 ```sql
--- Сложный запрос (медленно)
+-- Query pesada (lenta)
 SELECT
     users.id,
     users.name,
@@ -277,7 +277,7 @@ FROM users
 LEFT JOIN orders ON users.id = orders.user_id
 GROUP BY users.id, users.name;
 
--- Создать материализованное представление (PostgreSQL)
+-- Criar materialized view (PostgreSQL)
 CREATE MATERIALIZED VIEW user_stats AS
 SELECT
     users.id,
@@ -288,17 +288,17 @@ FROM users
 LEFT JOIN orders ON users.id = orders.user_id
 GROUP BY users.id, users.name;
 
--- Обновить данные
+-- Atualizar os dados
 REFRESH MATERIALIZED VIEW user_stats;
 
--- Теперь быстро
+-- Agora é rápido
 SELECT * FROM user_stats WHERE orders_count > 10;
 ```
 
-**В Laravel (через таблицу):**
+**No Laravel (via tabela):**
 
 ```php
-// Миграция для денормализованных данных
+// Migration para dados desnormalizados
 Schema::create('user_stats', function (Blueprint $table) {
     $table->foreignId('user_id')->primary();
     $table->integer('posts_count')->default(0);
@@ -307,7 +307,7 @@ Schema::create('user_stats', function (Blueprint $table) {
     $table->timestamp('updated_at');
 });
 
-// Команда для обновления статистики
+// Command para atualizar estatística
 class UpdateUserStats extends Command
 {
     public function handle(): void
@@ -328,23 +328,23 @@ class UpdateUserStats extends Command
     }
 }
 
-// Запускать в cron
-// schedule:run каждый час
+// Rodar no cron
+// schedule:run a cada hora
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Нормализация уменьшает избыточность. 1NF — атомарные значения, 2NF — нет частичной зависимости, 3NF — нет транзитивной зависимости. Плюсы: нет дублей, целостность. Минусы: больше JOIN, медленнее. Денормализация оправдана для часто читаемых данных (счётчики, статистика). Snapshot данных для исторических записей (цена на момент заказа). Materialized views для сложных агрегаций. В Laravel: хранить счётчики (posts_count), обновлять через events."
+> "Normalização reduz redundância. 1NF — valores atômicos, 2NF — sem dependência parcial, 3NF — sem dependência transitiva. Prós: sem duplicata, integridade. Contras: mais JOIN, mais lento. Desnormalização vale para dado que se lê muito (contador, estatística). Snapshot para registro histórico (preço no momento do pedido). Materialized view para agregação pesada. No Laravel: guardar contadores (posts_count), atualizar via events."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Нормализуй таблицу
+### Exercício 1: Normalize a tabela
 
-Приведи эту таблицу к 3NF. Какие проблемы видишь?
+**Enunciado:** Leve esta tabela para 3NF. Quais problemas você vê?
 
 ```sql
 CREATE TABLE orders (
@@ -352,26 +352,26 @@ CREATE TABLE orders (
     customer_name VARCHAR(255),
     customer_email VARCHAR(255),
     customer_phone VARCHAR(20),
-    product_names TEXT,  -- 'Product 1, Product 2, Product 3'
+    product_names TEXT,  -- 'Produto 1, Produto 2, Produto 3'
     product_prices TEXT, -- '100, 200, 300'
     total DECIMAL(10, 2),
     discount_percent INT,
-    discount_name VARCHAR(255)  -- 'VIP Discount'
+    discount_name VARCHAR(255)  -- 'Desconto VIP'
 );
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Проблемы:
--- 1. НЕ 1NF: product_names и product_prices содержат несколько значений
--- 2. НЕ 2NF: customer_* повторяются для каждого заказа
--- 3. НЕ 3NF: discount_name зависит от discount_percent
+-- Problemas:
+-- 1. NÃO é 1NF: product_names e product_prices guardam vários valores
+-- 2. NÃO é 2NF: customer_* se repetem em cada pedido
+-- 3. NÃO é 3NF: discount_name depende de discount_percent
 
--- ✅ Нормализованная структура (3NF)
+-- ✅ Estrutura normalizada (3NF)
 
--- Таблица клиентов
+-- Tabela de clientes
 CREATE TABLE customers (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
@@ -379,21 +379,21 @@ CREATE TABLE customers (
     phone VARCHAR(20)
 );
 
--- Таблица товаров
+-- Tabela de produtos
 CREATE TABLE products (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL
 );
 
--- Таблица скидок
+-- Tabela de descontos
 CREATE TABLE discounts (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     percent INT NOT NULL
 );
 
--- Таблица заказов
+-- Tabela de pedidos
 CREATE TABLE orders (
     id INT PRIMARY KEY AUTO_INCREMENT,
     customer_id INT NOT NULL,
@@ -404,18 +404,18 @@ CREATE TABLE orders (
     FOREIGN KEY (discount_id) REFERENCES discounts(id)
 );
 
--- Таблица позиций заказа
+-- Tabela de itens do pedido
 CREATE TABLE order_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
-    price DECIMAL(10, 2) NOT NULL,  -- Цена на момент заказа (snapshot)
+    price DECIMAL(10, 2) NOT NULL,  -- Preço no momento do pedido (snapshot)
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
--- В Laravel миграциях
+-- Nas migrations do Laravel
 Schema::create('customers', function (Blueprint $table) {
     $table->id();
     $table->string('name');
@@ -451,21 +451,21 @@ Schema::create('order_items', function (Blueprint $table) {
     $table->foreignId('order_id')->constrained()->onDelete('cascade');
     $table->foreignId('product_id')->constrained();
     $table->integer('quantity')->default(1);
-    $table->decimal('price', 10, 2);  // Snapshot цены
+    $table->decimal('price', 10, 2);  // Snapshot do preço
     $table->timestamps();
 });
 ```
 </details>
 
-### Задание 2: Когда денормализовать?
+### Exercício 2: Quando desnormalizar?
 
-У тебя таблица `users` и `posts`. Запрос "пользователи с количеством постов > 10" выполняется часто и медленно. Как оптимизировать?
+**Enunciado:** Você tem as tabelas `users` e `posts`. A query "usuários com mais de 10 posts" roda o tempo todo e está lenta. Como otimizar?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Медленный запрос (JOIN + COUNT каждый раз)
+// ❌ Query lenta (JOIN + COUNT toda vez)
 $users = User::select('users.*')
     ->selectRaw('COUNT(posts.id) as posts_count')
     ->leftJoin('posts', 'users.id', '=', 'posts.user_id')
@@ -473,13 +473,13 @@ $users = User::select('users.*')
     ->having('posts_count', '>', 10)
     ->get();
 
-// ✅ Решение: Денормализация - добавить счётчик в users
+// ✅ Solução: desnormalizar — adicionar contador em users
 Schema::table('users', function (Blueprint $table) {
     $table->integer('posts_count')->default(0);
-    $table->index('posts_count');  // Индекс для быстрой фильтрации
+    $table->index('posts_count');  // Índice para filtrar rápido
 });
 
-// Обновлять счётчик через Model Events
+// Atualizar o contador via Model Events
 class Post extends Model
 {
     protected static function booted(): void
@@ -492,17 +492,17 @@ class Post extends Model
             $post->user()->decrement('posts_count');
         });
 
-        // При восстановлении soft deleted
+        // Ao restaurar soft deleted
         static::restored(function (Post $post) {
             $post->user()->increment('posts_count');
         });
     }
 }
 
-// Теперь быстрый запрос (без JOIN)
+// Agora a query é rápida (sem JOIN)
 $users = User::where('posts_count', '>', 10)->get();
 
-// Или через Observer (более чистый код)
+// Ou via Observer (código mais limpo)
 class PostObserver
 {
     public function created(Post $post): void
@@ -521,13 +521,13 @@ class PostObserver
     }
 }
 
-// В AppServiceProvider
+// No AppServiceProvider
 public function boot(): void
 {
     Post::observe(PostObserver::class);
 }
 
-// Команда для пересчёта (если счётчики рассинхронизировались)
+// Command para recalcular (se os contadores dessincronizarem)
 class RecalculatePostsCounts extends Command
 {
     public function handle(): void
@@ -539,36 +539,36 @@ class RecalculatePostsCounts extends Command
             }
         });
 
-        $this->info('Posts counts recalculated');
+        $this->info('Contadores de posts recalculados');
     }
 }
 ```
 </details>
 
-### Задание 3: Snapshot исторических данных
+### Exercício 3: Snapshot de dados históricos
 
-Создай систему заказов, где цена товара может меняться, но в заказе должна храниться цена на момент покупки.
+**Enunciado:** Crie um sistema de pedidos em que o preço do produto pode mudar, mas o pedido precisa guardar o preço no momento da compra.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Миграция order_items
+// Migration de order_items
 Schema::create('order_items', function (Blueprint $table) {
     $table->id();
     $table->foreignId('order_id')->constrained()->onDelete('cascade');
     $table->foreignId('product_id')->constrained();
 
-    // Snapshot данных на момент заказа
-    $table->string('product_name');  // Название на момент заказа
-    $table->decimal('price', 10, 2);  // Цена на момент заказа
-    $table->text('product_description')->nullable();  // Описание
+    // Snapshot dos dados no momento do pedido
+    $table->string('product_name');  // Nome no momento do pedido
+    $table->decimal('price', 10, 2);  // Preço no momento do pedido
+    $table->text('product_description')->nullable();  // Descrição
 
     $table->integer('quantity')->default(1);
     $table->timestamps();
 });
 
-// Service для создания заказа
+// Service para criar o pedido
 class OrderService
 {
     public function createOrder(User $user, array $items): Order
@@ -584,11 +584,11 @@ class OrderService
             foreach ($items as $item) {
                 $product = Product::findOrFail($item['product_id']);
 
-                // Создать item со snapshot данных
+                // Criar o item com snapshot dos dados
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,  // Snapshot
-                    'price' => $product->price,  // Snapshot (текущая цена)
+                    'price' => $product->price,  // Snapshot (preço atual)
                     'product_description' => $product->description,  // Snapshot
                     'quantity' => $item['quantity'],
                 ]);
@@ -603,7 +603,7 @@ class OrderService
     }
 }
 
-// Модель OrderItem
+// Model OrderItem
 class OrderItem extends Model
 {
     protected $fillable = [
@@ -615,42 +615,42 @@ class OrderItem extends Model
         'quantity',
     ];
 
-    // Вычисляемый атрибут
+    // Atributo calculado
     public function getSubtotalAttribute(): float
     {
         return $this->price * $this->quantity;
     }
 
-    // Relationship к текущему товару (может измениться)
+    // Relationship com o produto atual (pode mudar)
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
-    // Relationship к заказу
+    // Relationship com o pedido
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 }
 
-// Использование
+// Uso
 $order = OrderService::createOrder($user, [
     ['product_id' => 1, 'quantity' => 2],
     ['product_id' => 5, 'quantity' => 1],
 ]);
 
-// Даже если цена товара изменится, в заказе останется старая
+// Mesmo se o preço do produto mudar, o pedido fica com o antigo
 $product = Product::find(1);
-$product->update(['price' => 9999]);  // Цена изменилась
+$product->update(['price' => 9999]);  // Preço mudou
 
-// В заказе цена осталась прежней
+// No pedido o preço ficou o antigo
 $orderItem = $order->items->first();
-echo $orderItem->price;  // Старая цена (snapshot)
-echo $orderItem->product->price;  // Новая цена (9999)
+echo $orderItem->price;  // Preço antigo (snapshot)
+echo $orderItem->product->price;  // Preço novo (9999)
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

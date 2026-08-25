@@ -1,71 +1,71 @@
-# 6.3 Индексы
+# 6.3 Índices
 
-## Краткое резюме
+## Resumo
 
-> **Индекс** — структура данных, ускоряющая поиск в таблице как оглавление в книге.
+> **Índice** — estrutura de dados que acelera a busca na tabela, como o índice de um livro.
 >
-> **Типы:** PRIMARY KEY (уникальный, не NULL), UNIQUE (уникальные значения), INDEX (обычный), COMPOSITE (несколько столбцов).
+> **Tipos:** PRIMARY KEY (único, não NULL), UNIQUE (valores únicos), INDEX (comum), COMPOSITE (várias colunas).
 >
-> **Важно:** Индексы ускоряют SELECT, но замедляют INSERT/UPDATE/DELETE. Composite index (A, B) работает для WHERE A, но не для WHERE B.
+> **Importante:** Índices aceleram SELECT, mas deixam INSERT/UPDATE/DELETE mais lentos. Composite index (A, B) funciona para WHERE A, mas não para WHERE B.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Индекс — структура данных, ускоряющая поиск в таблице. Аналог оглавления в книге.
-
-**Типы индексов:**
-- PRIMARY KEY — первичный ключ (уникальный, не NULL)
-- UNIQUE — уникальные значения
-- INDEX — обычный индекс
-- FULLTEXT — полнотекстовый поиск
-- COMPOSITE — составной (несколько столбцов)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Создание индексов:**
+**O que é:**
+Índice é uma estrutura de dados que acelera a busca na tabela. Analogia: o índice de um livro.
+
+**Tipos de índice:**
+- PRIMARY KEY — chave primária (único, não NULL)
+- UNIQUE — valores únicos
+- INDEX — índice comum
+- FULLTEXT — busca full-text
+- COMPOSITE — composto (várias colunas)
+
+---
+
+## Como funciona
+
+**Criar índices:**
 
 ```sql
--- PRIMARY KEY (автоматически при создании таблицы)
+-- PRIMARY KEY (automático ao criar a tabela)
 CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL
 );
 
--- UNIQUE индекс
+-- Índice UNIQUE
 CREATE UNIQUE INDEX idx_users_email ON users(email);
 ALTER TABLE users ADD UNIQUE INDEX idx_users_email (email);
 
--- Обычный INDEX
+-- INDEX comum
 CREATE INDEX idx_users_status ON users(status);
 ALTER TABLE users ADD INDEX idx_users_status (status);
 
--- COMPOSITE индекс (несколько столбцов)
+-- Índice COMPOSITE (várias colunas)
 CREATE INDEX idx_users_status_created ON users(status, created_at);
 
--- FULLTEXT (для поиска по тексту)
+-- FULLTEXT (busca em texto)
 CREATE FULLTEXT INDEX idx_posts_title_body ON posts(title, body);
 
--- Удаление индекса
+-- Remover índice
 DROP INDEX idx_users_status ON users;
 ALTER TABLE users DROP INDEX idx_users_status;
 ```
 
-**В Laravel миграциях:**
+**Nas migrations do Laravel:**
 
 ```php
 Schema::create('users', function (Blueprint $table) {
@@ -79,236 +79,236 @@ Schema::create('users', function (Blueprint $table) {
     // Composite index
     $table->index(['status', 'created_at']);
 
-    // Именованный индекс
+    // Índice nomeado
     $table->index('email', 'idx_users_email');
 
-    // Полнотекстовый
+    // Full-text
     $table->fullText(['title', 'body']);
 });
 
-// Добавить индекс к существующей таблице
+// Adicionar índice em tabela existente
 Schema::table('users', function (Blueprint $table) {
     $table->index('status');
 });
 
-// Удалить индекс
+// Remover índice
 Schema::table('users', function (Blueprint $table) {
     $table->dropIndex(['status']);
-    $table->dropIndex('idx_users_email');  // По имени
+    $table->dropIndex('idx_users_email');  // Pelo nome
 });
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы индексов:**
-- ✅ Ускоряют SELECT (WHERE, ORDER BY, JOIN)
-- ✅ Ускоряют UNIQUE проверки
-- ✅ Ускоряют MIN/MAX
+**Prós dos índices:**
+- ✅ Aceleram SELECT (WHERE, ORDER BY, JOIN)
+- ✅ Aceleram checagem UNIQUE
+- ✅ Aceleram MIN/MAX
 
-**Минусы индексов:**
-- ❌ Замедляют INSERT/UPDATE/DELETE
-- ❌ Занимают место на диске
-- ❌ Требуют обслуживания
+**Contras dos índices:**
+- ❌ Deixam INSERT/UPDATE/DELETE mais lentos
+- ❌ Ocupam espaço em disco
+- ❌ Precisam de manutenção
 
-**Когда создавать:**
-- Частые WHERE условия
-- JOIN столбцы
-- ORDER BY столбцы
+**Quando criar:**
+- Condições WHERE frequentes
+- Colunas de JOIN
+- Colunas de ORDER BY
 - Foreign keys
 
-**Когда НЕ создавать:**
-- Маленькие таблицы (< 1000 строк)
-- Столбцы с малой селективностью (например, boolean)
-- Редко используемые столбцы
-- Частые INSERT/UPDATE
+**Quando NÃO criar:**
+- Tabela pequena (< 1000 linhas)
+- Coluna com pouca seletividade (boolean, por exemplo)
+- Coluna pouco usada
+- Muito INSERT/UPDATE
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Оптимизация запросов индексами:**
+**Otimizar queries com índices:**
 
 ```sql
--- ❌ Медленно (без индекса)
-SELECT * FROM users WHERE email = 'john@example.com';
--- Сканирует всю таблицу (Full Table Scan)
+-- ❌ Lento (sem índice)
+SELECT * FROM users WHERE email = 'joao@email.com';
+-- Varre a tabela inteira (Full Table Scan)
 
--- ✅ Быстро (с индексом на email)
+-- ✅ Rápido (com índice em email)
 CREATE UNIQUE INDEX idx_users_email ON users(email);
-SELECT * FROM users WHERE email = 'john@example.com';
--- Использует индекс (Index Seek)
+SELECT * FROM users WHERE email = 'joao@email.com';
+-- Usa o índice (Index Seek)
 
--- ❌ Медленно (без составного индекса)
+-- ❌ Lento (sem índice composto)
 SELECT * FROM orders
 WHERE status = 'completed'
   AND created_at > '2024-01-01'
 ORDER BY created_at DESC
 LIMIT 100;
 
--- ✅ Быстро (с составным индексом)
+-- ✅ Rápido (com índice composto)
 CREATE INDEX idx_orders_status_created ON orders(status, created_at);
--- Индекс покрывает WHERE, ORDER BY, фильтрацию
+-- O índice cobre WHERE, ORDER BY e o filtro
 ```
 
-**Composite Index (порядок важен):**
+**Composite Index (a ordem importa):**
 
 ```sql
--- Индекс (status, created_at)
+-- Índice (status, created_at)
 CREATE INDEX idx_orders_status_created ON orders(status, created_at);
 
--- ✅ Использует индекс (начинается с status)
+-- ✅ Usa o índice (começa por status)
 SELECT * FROM orders WHERE status = 'completed';
 SELECT * FROM orders WHERE status = 'completed' AND created_at > '2024-01-01';
 
--- ❌ НЕ использует индекс (не начинается с status)
+-- ❌ NÃO usa o índice (não começa por status)
 SELECT * FROM orders WHERE created_at > '2024-01-01';
 
--- Правило: порядок столбцов в индексе важен
--- Индекс (A, B, C) работает для:
+-- Regra: a ordem das colunas no índice importa
+-- Índice (A, B, C) funciona para:
 -- - WHERE A
 -- - WHERE A AND B
 -- - WHERE A AND B AND C
--- НЕ работает для:
+-- NÃO funciona para:
 -- - WHERE B
 -- - WHERE C
 -- - WHERE B AND C
 ```
 
-**EXPLAIN (анализ запроса):**
+**EXPLAIN (análise da query):**
 
 ```sql
--- Проверить, использует ли индекс
-EXPLAIN SELECT * FROM users WHERE email = 'john@example.com';
+-- Checar se usa índice
+EXPLAIN SELECT * FROM users WHERE email = 'joao@email.com';
 
--- Результат:
--- type: const (лучший) — по PRIMARY KEY или UNIQUE
--- type: ref — по индексу
--- type: range — диапазон (BETWEEN, >, <)
--- type: index — сканирование индекса
--- type: ALL — полное сканирование таблицы (ПЛОХО)
+-- Resultado:
+-- type: const (melhor) — por PRIMARY KEY ou UNIQUE
+-- type: ref — por índice
+-- type: range — intervalo (BETWEEN, >, <)
+-- type: index — varredura do índice
+-- type: ALL — varredura completa da tabela (RUIM)
 
--- key: имя используемого индекса
--- rows: примерное количество проверяемых строк
+-- key: nome do índice usado
+-- rows: quantidade aproximada de linhas checadas
 
--- В Laravel
+-- No Laravel
 DB::connection()->enableQueryLog();
-User::where('email', 'john@example.com')->get();
+User::where('email', 'joao@email.com')->get();
 dd(DB::getQueryLog());
 ```
 
-**Covering Index (покрывающий индекс):**
+**Covering Index (índice de cobertura):**
 
 ```sql
--- Запрос выбирает только email и status
+-- A query seleciona só email e status
 SELECT email, status FROM users WHERE status = 'active';
 
--- Создать индекс, включающий все нужные столбцы
+-- Criar índice com todas as colunas necessárias
 CREATE INDEX idx_users_status_email ON users(status, email);
 
--- Теперь MySQL может получить все данные из индекса
--- без обращения к таблице (Index-Only Scan)
+-- Agora o MySQL pega tudo do índice
+-- sem ir na tabela (Index-Only Scan)
 ```
 
-**Foreign Key индексы:**
+**Índices de foreign key:**
 
 ```php
-// Laravel автоматически создаёт индекс для foreign key
+// O Laravel cria índice sozinho para foreign key
 Schema::create('orders', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('user_id')->constrained();  // Создаёт INDEX на user_id
+    $table->foreignId('user_id')->constrained();  // Cria INDEX em user_id
     $table->timestamps();
 });
 
-// Эквивалентно:
+// Equivale a:
 $table->unsignedBigInteger('user_id')->index();
 $table->foreign('user_id')->references('id')->on('users');
 ```
 
-**Fulltext поиск:**
+**Busca FULLTEXT:**
 
 ```php
-// Миграция
+// Migration
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
     $table->string('title');
     $table->text('body');
     $table->timestamps();
 
-    // Полнотекстовый индекс
+    // Índice full-text
     $table->fullText(['title', 'body']);
 });
 
-// Поиск
-$posts = Post::whereFullText(['title', 'body'], 'search query')->get();
+// Busca
+$posts = Post::whereFullText(['title', 'body'], 'texto de busca')->get();
 
 // SQL
 SELECT * FROM posts
-WHERE MATCH(title, body) AGAINST('search query' IN NATURAL LANGUAGE MODE);
+WHERE MATCH(title, body) AGAINST('texto de busca' IN NATURAL LANGUAGE MODE);
 ```
 
-**Когда индексы НЕ используются:**
+**Quando o índice NÃO é usado:**
 
 ```sql
--- Функции в WHERE (индекс не используется)
--- ❌ ПЛОХО
+-- Função no WHERE (índice não entra)
+-- ❌ RUIM
 SELECT * FROM users WHERE YEAR(created_at) = 2024;
 
--- ✅ ХОРОШО (индекс используется)
+-- ✅ BOM (usa o índice)
 SELECT * FROM users
 WHERE created_at >= '2024-01-01'
   AND created_at < '2025-01-01';
 
--- OR условия (может не использовать индекс)
--- ❌ ПЛОХО
+-- Condição OR (pode não usar o índice)
+-- ❌ RUIM
 SELECT * FROM users WHERE status = 'active' OR age > 18;
 
--- ✅ ХОРОШО (UNION)
+-- ✅ BOM (UNION)
 SELECT * FROM users WHERE status = 'active'
 UNION
 SELECT * FROM users WHERE age > 18;
 
--- LIKE с % в начале (индекс не используется)
--- ❌ ПЛОХО
+-- LIKE com % no começo (índice não entra)
+-- ❌ RUIM
 SELECT * FROM users WHERE email LIKE '%@gmail.com';
 
--- ✅ ХОРОШО (FULLTEXT или поиск справа)
-SELECT * FROM users WHERE email LIKE 'john%';
+-- ✅ BOM (FULLTEXT ou busca pela direita)
+SELECT * FROM users WHERE email LIKE 'joao%';
 ```
 
-**Мониторинг и обслуживание:**
+**Monitoramento e manutenção:**
 
 ```sql
--- Показать индексы таблицы
+-- Mostrar índices da tabela
 SHOW INDEXES FROM users;
 
--- Неиспользуемые индексы (MySQL 8.0+)
+-- Índices não usados (MySQL 8.0+)
 SELECT * FROM sys.schema_unused_indexes;
 
--- Дублирующиеся индексы
+-- Índices duplicados
 SELECT * FROM sys.schema_redundant_indexes;
 
--- Оптимизировать таблицу
+-- Otimizar a tabela
 OPTIMIZE TABLE users;
 
--- Перестроить индекс
+-- Reconstruir o índice
 ALTER TABLE users DROP INDEX idx_users_status, ADD INDEX idx_users_status (status);
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Индекс ускоряет поиск как оглавление в книге. PRIMARY KEY уникальный и не NULL, UNIQUE для уникальных значений, INDEX обычный. Composite index (A, B) работает для WHERE A или WHERE A AND B, но не WHERE B. EXPLAIN показывает plan запроса, type: const/ref/range (хорошо), ALL (плохо). Индексы замедляют INSERT/UPDATE, занимают место. Foreign keys автоматически индексируются. Fulltext для текстового поиска. Covering index содержит все нужные столбцы."
+> "Índice acelera a busca como o índice de um livro. PRIMARY KEY é único e não NULL, UNIQUE para valores únicos, INDEX é o comum. Composite index (A, B) funciona para WHERE A ou WHERE A AND B, mas não para WHERE B. EXPLAIN mostra o query plan: type const/ref/range é bom, ALL é ruim. Índice deixa INSERT/UPDATE mais lento e ocupa espaço. Foreign key ganha índice sozinho. FULLTEXT é busca em texto. Covering index tem todas as colunas que a query precisa."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Оптимизируй запрос индексами
+### Exercício 1: Otimize a query com índices
 
-У тебя медленный запрос. Какие индексы нужно создать?
+Você tem uma query lenta. Quais índices criar?
 
 ```sql
 SELECT * FROM orders
@@ -320,30 +320,30 @@ LIMIT 20;
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Оптимальный составной индекс (порядок важен!)
+-- Índice composto ótimo (a ordem importa!)
 CREATE INDEX idx_orders_user_status_created
 ON orders(user_id, status, created_at);
 
--- Почему в таком порядке?
--- 1. user_id - самая селективная колонка (= условие)
--- 2. status - второе условие (=)
--- 3. created_at - используется в ORDER BY
+-- Por que nessa ordem?
+-- 1. user_id - coluna mais seletiva (condição =)
+-- 2. status - segunda condição (=)
+-- 3. created_at - entra no ORDER BY
 
--- Этот индекс покроет:
--- - WHERE user_id = 123 (первая колонка)
--- - WHERE user_id = 123 AND status = 'pending' (первые две)
--- - WHERE user_id = 123 AND status = 'pending' AND created_at > X (все три)
--- - ORDER BY created_at (последняя колонка уже в индексе)
+-- Esse índice cobre:
+-- - WHERE user_id = 123 (primeira coluna)
+-- - WHERE user_id = 123 AND status = 'pending' (as duas primeiras)
+-- - WHERE user_id = 123 AND status = 'pending' AND created_at > X (as três)
+-- - ORDER BY created_at (última coluna já está no índice)
 
--- В миграции Laravel
+-- Na migration do Laravel
 Schema::table('orders', function (Blueprint $table) {
     $table->index(['user_id', 'status', 'created_at'], 'idx_orders_user_status_created');
 });
 
--- Проверить использование индекса
+-- Checar se o índice entra
 EXPLAIN SELECT * FROM orders
 WHERE status = 'pending'
   AND user_id = 123
@@ -351,16 +351,16 @@ WHERE status = 'pending'
 ORDER BY created_at DESC
 LIMIT 20;
 
--- Должно показать:
--- type: ref или range
+-- Deve mostrar:
+-- type: ref ou range
 -- key: idx_orders_user_status_created
--- Extra: Using index condition (хорошо)
+-- Extra: Using index condition (bom)
 ```
 </details>
 
-### Задание 2: Найди проблемы с индексами
+### Exercício 2: Encontre os problemas nos índices
 
-Что не так с этими индексами?
+O que está errado nesses índices?
 
 ```sql
 CREATE INDEX idx_users_email ON users(email);
@@ -371,98 +371,98 @@ CREATE INDEX idx_posts_status_created ON posts(status, created_at);
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Проблема 1: Дублирующиеся индексы на email
--- UNIQUE индекс уже работает как обычный INDEX
--- Решение: удалить idx_users_email
+-- Problema 1: índices duplicados em email
+-- UNIQUE já funciona como INDEX comum
+-- Solução: remover idx_users_email
 DROP INDEX idx_users_email ON users;
--- Оставить только UNIQUE
+-- Deixar só o UNIQUE
 
--- Проблема 2: Избыточный индекс на created_at
--- Индекс (status, created_at) уже покрывает запросы с created_at
--- если они используют status
--- Индекс idx_posts_created нужен только если есть запросы
--- WHERE created_at без status
+-- Problema 2: índice redundante em created_at
+-- O índice (status, created_at) já cobre queries com created_at
+-- se elas usam status
+-- idx_posts_created só precisa existir se houver query
+-- WHERE created_at sem status
 
--- Анализ:
--- Если есть запрос: WHERE created_at > '2024-01-01'
---   -> Нужен idx_posts_created
+-- Análise:
+-- Se existe query: WHERE created_at > '2024-01-01'
+--   -> Precisa de idx_posts_created
 
--- Если только: WHERE status = 'published' AND created_at > '2024-01-01'
---   -> Достаточно idx_posts_status_created
---   -> Можно удалить idx_posts_created
+-- Se só tem: WHERE status = 'published' AND created_at > '2024-01-01'
+--   -> idx_posts_status_created basta
+--   -> Pode remover idx_posts_created
 
--- В Laravel миграции
+-- Na migration do Laravel
 Schema::table('users', function (Blueprint $table) {
-    // Правильно: один UNIQUE индекс
+    // Certo: um UNIQUE index
     $table->string('email')->unique();
 });
 
 Schema::table('posts', function (Blueprint $table) {
-    // Составной индекс для частого запроса
+    // Índice composto para a query frequente
     $table->index(['status', 'created_at']);
 
-    // Отдельный индекс только если нужен
-    // $table->index('created_at'); // Только если есть запросы без status
+    // Índice separado só se precisar
+    // $table->index('created_at'); // Só se houver query sem status
 });
 
--- Проверить дубликаты индексов
+-- Checar índices duplicados
 SELECT * FROM sys.schema_redundant_indexes;
 ```
 </details>
 
-### Задание 3: Когда индекс НЕ используется?
+### Exercício 3: Quando o índice NÃO é usado?
 
-Почему эти запросы не используют индекс на email?
+Por que essas queries não usam o índice em email?
 
 ```sql
--- Индекс существует
+-- O índice existe
 CREATE INDEX idx_users_email ON users(email);
 
--- Запрос 1
-SELECT * FROM users WHERE LOWER(email) = 'john@example.com';
+-- Query 1
+SELECT * FROM users WHERE LOWER(email) = 'joao@email.com';
 
--- Запрос 2
+-- Query 2
 SELECT * FROM users WHERE email LIKE '%@gmail.com';
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Запрос 1: Функция в WHERE
--- ❌ Проблема: LOWER(email) - функция на колонке
--- MySQL не может использовать индекс, т.к. нужно вычислить функцию для каждой строки
+-- Query 1: função no WHERE
+-- ❌ Problema: LOWER(email) — função na coluna
+-- O MySQL não usa o índice: precisa calcular a função em cada linha
 
--- ✅ Решение 1: Убрать функцию (если данные в одном регистре)
-SELECT * FROM users WHERE email = 'john@example.com';
+-- ✅ Solução 1: tirar a função (se o dado já está no mesmo case)
+SELECT * FROM users WHERE email = 'joao@email.com';
 
--- ✅ Решение 2: Функциональный индекс (MySQL 8.0+)
+-- ✅ Solução 2: functional index (MySQL 8.0+)
 CREATE INDEX idx_users_email_lower ON users((LOWER(email)));
--- Теперь запрос будет использовать индекс
+-- Agora a query usa o índice
 
--- ✅ Решение 3: Хранить normalized версию (Laravel)
+-- ✅ Solução 3: guardar versão normalizada (Laravel)
 Schema::table('users', function (Blueprint $table) {
     $table->string('email_normalized')->virtualAs('LOWER(email)');
     $table->index('email_normalized');
 });
 
--- Запрос 2: LIKE с % в начале
--- ❌ Проблема: '%@gmail.com' - поиск с конца строки
--- Индекс работает как книга: можно быстро найти слова на "A",
--- но нельзя быстро найти слова заканчивающиеся на "A"
+-- Query 2: LIKE com % no começo
+-- ❌ Problema: '%@gmail.com' — busca pelo fim da string
+-- Índice funciona como livro: achar palavra que começa com "A" é rápido,
+-- achar palavra que termina com "A" não é
 
--- ✅ Решение 1: LIKE без % в начале
-SELECT * FROM users WHERE email LIKE 'john%';  -- Использует индекс
+-- ✅ Solução 1: LIKE sem % no começo
+SELECT * FROM users WHERE email LIKE 'joao%';  -- Usa o índice
 
--- ✅ Решение 2: FULLTEXT индекс
+-- ✅ Solução 2: índice FULLTEXT
 CREATE FULLTEXT INDEX idx_users_email_fulltext ON users(email);
 SELECT * FROM users
 WHERE MATCH(email) AGAINST('@gmail.com' IN BOOLEAN MODE);
 
--- ✅ Решение 3: Реверсивный индекс (для поиска по окончанию)
+-- ✅ Solução 3: índice reverso (busca pelo sufixo)
 Schema::table('users', function (Blueprint $table) {
     $table->string('email_reversed')->virtualAs('REVERSE(email)');
     $table->index('email_reversed');
@@ -471,15 +471,15 @@ Schema::table('users', function (Blueprint $table) {
 SELECT * FROM users
 WHERE email_reversed LIKE REVERSE('%@gmail.com');
 
--- В Laravel
-// ❌ Плохо
-User::whereRaw('LOWER(email) = ?', ['john@example.com'])->get();
+-- No Laravel
+// ❌ Ruim
+User::whereRaw('LOWER(email) = ?', ['joao@email.com'])->get();
 
-// ✅ Хорошо
-User::where('email', 'john@example.com')->get();
+// ✅ Bom
+User::where('email', 'joao@email.com')->get();
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

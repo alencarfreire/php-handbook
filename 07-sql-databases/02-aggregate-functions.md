@@ -1,68 +1,68 @@
-# 6.2 Агрегатные функции
+# 6.2 Funções de agregação
 
-## Краткое резюме
+## Resumo
 
-> **Агрегатные функции** — вычисления над группами строк (COUNT, SUM, AVG, MIN, MAX). Возвращают одно значение для группы.
+> **Funções de agregação** — cálculos sobre grupos de linhas (COUNT, SUM, AVG, MIN, MAX). Devolvem um valor por grupo.
 >
-> **Функции:** COUNT (количество), SUM (сумма), AVG (среднее), MIN/MAX (экстремумы).
+> **Funções:** COUNT (quantidade), SUM (soma), AVG (média), MIN/MAX (extremos).
 >
-> **Важно:** GROUP BY группирует данные, HAVING фильтрует после группировки (WHERE — до группировки).
+> **Importante:** GROUP BY agrupa os dados. HAVING filtra depois do agrupamento. WHERE filtra antes.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Агрегатные функции — вычисления над группами строк (COUNT, SUM, AVG, MIN, MAX). Возвращают одно значение для группы.
-
-**Основные функции:**
-- COUNT() — количество
-- SUM() — сумма
-- AVG() — среднее
-- MIN() — минимум
-- MAX() — максимум
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**COUNT (подсчёт):**
+**O que é:**
+Funções de agregação — cálculos sobre grupos de linhas (COUNT, SUM, AVG, MIN, MAX). Devolvem um valor por grupo.
+
+**Funções principais:**
+- COUNT() — quantidade
+- SUM() — soma
+- AVG() — média
+- MIN() — mínimo
+- MAX() — máximo
+
+---
+
+## Como funciona
+
+**COUNT (contagem):**
 
 ```sql
--- Общее количество пользователей
+-- Quantidade total de usuários
 SELECT COUNT(*) FROM users;
 
--- Количество не-NULL значений
+-- Quantidade de valores não-NULL
 SELECT COUNT(email) FROM users;
 
--- DISTINCT (уникальные значения)
+-- DISTINCT (valores únicos)
 SELECT COUNT(DISTINCT status) FROM orders;
 
--- С условием
+-- Com condição
 SELECT COUNT(*) FROM users WHERE status = 'active';
 ```
 
-**SUM (сумма):**
+**SUM (soma):**
 
 ```sql
--- Сумма всех заказов
+-- Soma de todos os pedidos
 SELECT SUM(total) FROM orders;
 
--- Сумма по условию
+-- Soma com condição
 SELECT SUM(total) FROM orders WHERE status = 'completed';
 
--- С GROUP BY
+-- Com GROUP BY
 SELECT
     user_id,
     SUM(total) AS total_spent
@@ -70,16 +70,16 @@ FROM orders
 GROUP BY user_id;
 ```
 
-**AVG (среднее):**
+**AVG (média):**
 
 ```sql
--- Средняя сумма заказа
+-- Valor médio do pedido
 SELECT AVG(total) FROM orders;
 
--- Средний возраст активных пользователей
+-- Idade média dos usuários ativos
 SELECT AVG(age) FROM users WHERE status = 'active';
 
--- С GROUP BY
+-- Com GROUP BY
 SELECT
     status,
     AVG(total) AS avg_total
@@ -87,16 +87,16 @@ FROM orders
 GROUP BY status;
 ```
 
-**MIN и MAX:**
+**MIN e MAX:**
 
 ```sql
--- Минимальная и максимальная цена
+-- Preço mínimo e máximo
 SELECT
     MIN(price) AS min_price,
     MAX(price) AS max_price
 FROM products;
 
--- По категориям
+-- Por categoria
 SELECT
     category_id,
     MIN(price) AS min_price,
@@ -104,24 +104,24 @@ SELECT
 FROM products
 GROUP BY category_id;
 
--- Самый старый и новый заказ
+-- Pedido mais antigo e mais novo
 SELECT
     MIN(created_at) AS first_order,
     MAX(created_at) AS last_order
 FROM orders;
 ```
 
-**GROUP BY (группировка):**
+**GROUP BY (agrupamento):**
 
 ```sql
--- Количество заказов по статусам
+-- Quantidade de pedidos por status
 SELECT
     status,
     COUNT(*) AS count
 FROM orders
 GROUP BY status;
 
--- Сумма заказов по пользователям
+-- Soma de pedidos por usuário
 SELECT
     user_id,
     COUNT(*) AS orders_count,
@@ -130,7 +130,7 @@ SELECT
 FROM orders
 GROUP BY user_id;
 
--- Группировка по нескольким полям
+-- Agrupamento por vários campos
 SELECT
     user_id,
     status,
@@ -139,10 +139,10 @@ FROM orders
 GROUP BY user_id, status;
 ```
 
-**HAVING (фильтр после группировки):**
+**HAVING (filtro depois do agrupamento):**
 
 ```sql
--- Пользователи с более чем 10 заказами
+-- Usuários com mais de 10 pedidos
 SELECT
     user_id,
     COUNT(*) AS orders_count
@@ -150,7 +150,7 @@ FROM orders
 GROUP BY user_id
 HAVING orders_count > 10;
 
--- Категории со средней ценой > 1000
+-- Categorias com preço médio > 1000
 SELECT
     category_id,
     AVG(price) AS avg_price
@@ -158,42 +158,42 @@ FROM products
 GROUP BY category_id
 HAVING avg_price > 1000;
 
--- Комбинация WHERE и HAVING
+-- Combinação de WHERE e HAVING
 SELECT
     user_id,
     COUNT(*) AS orders_count,
     SUM(total) AS total_spent
 FROM orders
-WHERE status = 'completed'  -- Фильтр ДО группировки
+WHERE status = 'completed'  -- Filtro ANTES do agrupamento
 GROUP BY user_id
-HAVING total_spent > 5000;  -- Фильтр ПОСЛЕ группировки
+HAVING total_spent > 5000;  -- Filtro DEPOIS do agrupamento
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **COUNT:**
-- Подсчёт записей
-- Количество элементов в группе
+- Contar registros
+- Quantidade de itens no grupo
 
 **SUM:**
-- Сумма значений (продажи, балансы)
+- Soma de valores (vendas, saldos)
 
 **AVG:**
-- Средние значения (средний чек, рейтинг)
+- Médias (ticket médio, nota)
 
 **MIN/MAX:**
-- Экстремальные значения (самый дешёвый/дорогой)
+- Extremos (mais barato / mais caro)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Статистика по заказам:**
+**Estatística de pedidos:**
 
 ```sql
--- Общая статистика
+-- Estatística geral
 SELECT
     COUNT(*) AS total_orders,
     SUM(total) AS total_revenue,
@@ -204,7 +204,7 @@ FROM orders
 WHERE status = 'completed'
   AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH);
 
--- По пользователям
+-- Por usuário
 SELECT
     user_id,
     users.name,
@@ -223,10 +223,10 @@ ORDER BY total_spent DESC
 LIMIT 100;
 ```
 
-**Аналитика товаров:**
+**Análise de produtos:**
 
 ```sql
--- Топ товаров по продажам
+-- Top produtos por vendas
 SELECT
     products.id,
     products.name,
@@ -243,10 +243,10 @@ ORDER BY total_revenue DESC
 LIMIT 20;
 ```
 
-**Временная аналитика:**
+**Análise temporal:**
 
 ```sql
--- Продажи по дням
+-- Vendas por dia
 SELECT
     DATE(created_at) AS date,
     COUNT(*) AS orders_count,
@@ -258,7 +258,7 @@ WHERE status = 'completed'
 GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
--- По месяцам
+-- Por mês
 SELECT
     YEAR(created_at) AS year,
     MONTH(created_at) AS month,
@@ -269,7 +269,7 @@ WHERE status = 'completed'
 GROUP BY YEAR(created_at), MONTH(created_at)
 ORDER BY year DESC, month DESC;
 
--- По часам (пиковые время)
+-- Por hora (horários de pico)
 SELECT
     HOUR(created_at) AS hour,
     COUNT(*) AS orders_count
@@ -279,10 +279,10 @@ GROUP BY HOUR(created_at)
 ORDER BY orders_count DESC;
 ```
 
-**Сегментация пользователей:**
+**Segmentação de usuários:**
 
 ```sql
--- RFM анализ (Recency, Frequency, Monetary)
+-- Análise RFM (Recency, Frequency, Monetary)
 SELECT
     user_id,
     users.name,
@@ -290,9 +290,9 @@ SELECT
     COUNT(orders.id) AS orders_count,
     SUM(orders.total) AS total_spent,
     CASE
-        WHEN DATEDIFF(NOW(), MAX(orders.created_at)) <= 30 THEN 'Active'
-        WHEN DATEDIFF(NOW(), MAX(orders.created_at)) <= 90 THEN 'At Risk'
-        ELSE 'Lost'
+        WHEN DATEDIFF(NOW(), MAX(orders.created_at)) <= 30 THEN 'Ativo'
+        WHEN DATEDIFF(NOW(), MAX(orders.created_at)) <= 90 THEN 'Em risco'
+        ELSE 'Perdido'
     END AS status_segment,
     CASE
         WHEN SUM(orders.total) > 10000 THEN 'VIP'
@@ -306,7 +306,7 @@ GROUP BY user_id, users.name
 HAVING orders_count > 0;
 ```
 
-**В Laravel:**
+**No Laravel:**
 
 ```php
 use Illuminate\Support\Facades\DB;
@@ -321,7 +321,7 @@ $stats = DB::table('orders')
     )
     ->first();
 
-// GROUP BY с агрегацией
+// GROUP BY com agregação
 $userStats = DB::table('orders')
     ->select(
         'user_id',
@@ -334,7 +334,7 @@ $userStats = DB::table('orders')
     ->orderBy('total_spent', 'desc')
     ->get();
 
-// Eloquent с агрегацией
+// Eloquent com agregação
 $orderCount = Order::where('user_id', $userId)->count();
 $totalSpent = Order::where('user_id', $userId)->sum('total');
 $avgOrder = Order::where('user_id', $userId)->avg('total');
@@ -350,15 +350,15 @@ $users = User::withSum('orders', 'total')
     ->get();
 
 foreach ($users as $user) {
-    echo $user->orders_sum_total;  // Сумма заказов
-    echo $user->orders_avg_total;  // Средний заказ
+    echo $user->orders_sum_total;  // Soma dos pedidos
+    echo $user->orders_avg_total;  // Pedido médio
 }
 ```
 
 **Window Functions (MySQL 8.0+):**
 
 ```sql
--- Ранжирование пользователей по тратам
+-- Ranking de usuários por gasto
 SELECT
     user_id,
     total_spent,
@@ -373,7 +373,7 @@ FROM (
     GROUP BY user_id
 ) AS user_totals;
 
--- Running total (накопительная сумма)
+-- Running total (soma acumulada)
 SELECT
     DATE(created_at) AS date,
     SUM(total) AS daily_revenue,
@@ -386,23 +386,23 @@ ORDER BY date;
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Агрегатные функции: COUNT (количество), SUM (сумма), AVG (среднее), MIN/MAX (экстремумы). GROUP BY группирует данные, HAVING фильтрует после группировки (WHERE — до). COUNT(*) считает все строки, COUNT(column) — не-NULL. В Laravel: DB::raw() для SQL агрегации, withCount/withSum/withAvg для Eloquent relationships. Window functions (ROW_NUMBER, RANK, running totals) в MySQL 8.0+."
+> "Funções de agregação: COUNT (quantidade), SUM (soma), AVG (média), MIN/MAX (extremos). GROUP BY agrupa os dados. HAVING filtra depois do agrupamento, WHERE filtra antes. COUNT(*) conta todas as linhas, COUNT(coluna) só as não-NULL. No Laravel: DB::raw() para agregação em SQL, withCount/withSum/withAvg nas relationships do Eloquent. Window functions (ROW_NUMBER, RANK, running totals) no MySQL 8.0+."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Статистика по категориям
+### Exercício 1: Estatística por categoria
 
-Выведи для каждой категории товаров: количество товаров, среднюю цену, минимальную и максимальную цену.
+**Enunciado:** Para cada categoria de produto, mostre a quantidade de produtos, o preço médio, o mínimo e o máximo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- SQL запрос
+-- Query SQL
 SELECT
     categories.id,
     categories.name,
@@ -415,7 +415,7 @@ LEFT JOIN products ON categories.id = products.category_id
 GROUP BY categories.id, categories.name
 ORDER BY products_count DESC;
 
--- В Laravel Query Builder
+-- No Laravel Query Builder
 $stats = DB::table('categories')
     ->leftJoin('products', 'categories.id', '=', 'products.category_id')
     ->select(
@@ -430,7 +430,7 @@ $stats = DB::table('categories')
     ->orderBy('products_count', 'desc')
     ->get();
 
-// Eloquent с withCount и withAvg
+// Eloquent com withCount e withAvg
 $categories = Category::withCount('products')
     ->withAvg('products', 'price')
     ->withMin('products', 'price')
@@ -439,15 +439,15 @@ $categories = Category::withCount('products')
 ```
 </details>
 
-### Задание 2: VIP клиенты
+### Exercício 2: Clientes VIP
 
-Найди пользователей, которые сделали больше 10 заказов И потратили больше 5000. Выведи их имя, количество заказов и общую сумму.
+**Enunciado:** Encontre os usuários com mais de 10 pedidos E gasto acima de R$ 5.000. Mostre nome, quantidade de pedidos e soma total.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- SQL запрос
+-- Query SQL
 SELECT
     users.id,
     users.name,
@@ -460,7 +460,7 @@ GROUP BY users.id, users.name
 HAVING orders_count > 10 AND total_spent > 5000
 ORDER BY total_spent DESC;
 
--- В Laravel Query Builder
+-- No Laravel Query Builder
 $vipUsers = DB::table('users')
     ->join('orders', 'users.id', '=', 'orders.user_id')
     ->select(
@@ -476,7 +476,7 @@ $vipUsers = DB::table('users')
     ->orderBy('total_spent', 'desc')
     ->get();
 
-// Eloquent вариант
+// Variante Eloquent
 $vipUsers = User::withCount(['orders' => function ($query) {
         $query->where('status', 'completed');
     }])
@@ -490,15 +490,15 @@ $vipUsers = User::withCount(['orders' => function ($query) {
 ```
 </details>
 
-### Задание 3: Продажи по месяцам
+### Exercício 3: Vendas por mês
 
-Выведи количество заказов и общую выручку по месяцам за последний год.
+**Enunciado:** Mostre a quantidade de pedidos e a receita total por mês no último ano.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- SQL запрос
+-- Query SQL
 SELECT
     YEAR(created_at) AS year,
     MONTH(created_at) AS month,
@@ -511,7 +511,7 @@ WHERE status = 'completed'
 GROUP BY YEAR(created_at), MONTH(created_at)
 ORDER BY year DESC, month DESC;
 
--- В Laravel Query Builder
+-- No Laravel Query Builder
 $monthlySales = DB::table('orders')
     ->select(
         DB::raw('YEAR(created_at) as year'),
@@ -526,7 +526,7 @@ $monthlySales = DB::table('orders')
     ->orderByRaw('year DESC, month DESC')
     ->get();
 
-// Форматирование для удобства
+// Formatação para ficar mais fácil de ler
 $monthlySales = $monthlySales->map(function ($item) {
     $item->month_name = \Carbon\Carbon::create()->month($item->month)->format('F');
     return $item;
@@ -536,4 +536,4 @@ $monthlySales = $monthlySales->map(function ($item) {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

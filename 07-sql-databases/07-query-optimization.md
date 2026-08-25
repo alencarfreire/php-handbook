@@ -1,113 +1,113 @@
-# 6.7 Оптимизация запросов
+# 6.7 Otimização de queries
 
-## Краткое резюме
+## Resumo
 
-> **Оптимизация запросов** — повышение скорости выполнения SQL через индексы, переписывание запросов, кеширование.
+> **Otimização de queries** — deixar o SQL mais rápido com índice, reescrita da query e cache.
 >
-> **Техники:** Индексы на WHERE/ORDER BY, select только нужные поля, eager loading, chunk/lazy для больших данных, exists() вместо count().
+> **Técnicas:** Índice em WHERE/ORDER BY, select só os campos que precisa, eager loading, chunk/lazy para volume grande, exists() no lugar de count().
 >
-> **Важно:** EXPLAIN показывает plan запроса. Composite индекс для WHERE + ORDER BY. Batch insert вместо N запросов.
+> **Importante:** EXPLAIN mostra o plano da query. Índice composto para WHERE + ORDER BY. Batch insert no lugar de N queries.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Оптимизация запросов — повышение скорости выполнения SQL через индексы, переписывание запросов, кеширование.
-
-**Основные техники:**
-- Индексы
-- SELECT только нужные поля
-- Eager Loading (N+1)
-- Chunk для больших данных
-- Кеширование
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**SELECT только нужные поля:**
+**O que é:**
+Otimização de queries — deixar o SQL mais rápido com índice, reescrita da query e cache.
+
+**Técnicas principais:**
+- Índices
+- SELECT só os campos que precisa
+- Eager loading (N+1)
+- Chunk para volume grande
+- Cache
+
+---
+
+## Como funciona
+
+**SELECT só os campos que precisa:**
 
 ```php
-// ❌ Загружает все поля (медленно)
+// ❌ Carrega todos os campos (lento)
 $users = User::all();
 
-// ✅ Загружает только нужные
+// ✅ Carrega só o que precisa
 $users = User::select('id', 'name', 'email')->get();
 
 // Eloquent relationship
 $posts = Post::with(['user' => function ($query) {
-    $query->select('id', 'name');  // Только id и name
+    $query->select('id', 'name');  // Só id e name
 }])->get();
 ```
 
-**Индексы:**
+**Índices:**
 
 ```php
-// ❌ Без индекса (Full Table Scan)
-SELECT * FROM users WHERE email = 'john@example.com';
+// ❌ Sem índice (Full Table Scan)
+SELECT * FROM users WHERE email = 'joao@email.com';
 
-// ✅ С индексом (Index Seek)
+// ✅ Com índice (Index Seek)
 Schema::table('users', function (Blueprint $table) {
     $table->index('email');
 });
 ```
 
-**Chunk для больших данных:**
+**Chunk para volume grande:**
 
 ```php
-// ❌ Загружает все в память (Memory Limit)
+// ❌ Carrega tudo na memória (Memory Limit)
 $users = User::all();
 
 foreach ($users as $user) {
     processUser($user);
 }
 
-// ✅ Обработка по частям
+// ✅ Processa em pedaços
 User::chunk(100, function ($users) {
     foreach ($users as $user) {
         processUser($user);
     }
 });
 
-// Или lazy (Generator)
+// Ou lazy (Generator)
 User::lazy()->each(function ($user) {
     processUser($user);
 });
 ```
 
-**EXISTS вместо COUNT:**
+**EXISTS no lugar de COUNT:**
 
 ```php
-// ❌ Медленно (считает все записи)
+// ❌ Lento (conta todos os registros)
 if (Post::where('user_id', $userId)->count() > 0) {
     // ...
 }
 
-// ✅ Быстро (останавливается на первой найденной)
+// ✅ Rápido (para no primeiro encontrado)
 if (Post::where('user_id', $userId)->exists()) {
     // ...
 }
 ```
 
-**Limit в подзапросах:**
+**Limit em subquery:**
 
 ```php
-// ❌ Загружает все посты, затем фильтрует
+// ❌ Carrega todos os posts e filtra depois
 $users = User::with('posts')->get();
 
-// ✅ Ограничить количество постов
+// ✅ Limita a quantidade de posts
 $users = User::with(['posts' => function ($query) {
     $query->limit(5);
 }])->get();
@@ -115,61 +115,61 @@ $users = User::with(['posts' => function ($query) {
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй оптимизацию когда:**
-- Медленные запросы (> 100ms)
-- Большие таблицы (> 10k записей)
-- Частые запросы
-- High traffic
+**Use otimização quando:**
+- Query lenta (> 100ms)
+- Tabela grande (> 10k registros)
+- Query frequente
+- Tráfego alto
 
-**Не трать время когда:**
-- Маленькие таблицы
-- Редкие запросы
-- Микрооптимизация
+**Não gaste tempo quando:**
+- Tabela pequena
+- Query rara
+- Micro-otimização
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**EXPLAIN анализ:**
+**Análise com EXPLAIN:**
 
 ```php
-// Включить Query Log
+// Liga o Query Log
 DB::enableQueryLog();
 
-User::where('email', 'john@example.com')->get();
+User::where('email', 'joao@email.com')->get();
 
 $queries = DB::getQueryLog();
 
-// Анализировать через EXPLAIN
+// Analisa com EXPLAIN
 DB::statement('EXPLAIN ' . $queries[0]['query']);
 ```
 
-**Оптимизация JOIN:**
+**Otimizar JOIN:**
 
 ```php
-// ❌ Много JOIN (медленно)
+// ❌ Muitos JOIN (lento)
 $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
     ->join('categories', 'posts.category_id', '=', 'categories.id')
     ->join('tags', 'posts.tag_id', '=', 'tags.id')
     ->get();
 
-// ✅ Eager Loading (быстрее)
+// ✅ Eager loading (mais rápido)
 $posts = Post::with(['user', 'category', 'tags'])->get();
 ```
 
-**Raw SQL для сложных запросов:**
+**Raw SQL para query complexa:**
 
 ```php
-// ❌ Eloquent (медленно для сложной логики)
+// ❌ Eloquent (lento para lógica complexa)
 $users = User::with('orders')
     ->get()
     ->filter(function ($user) {
         return $user->orders->sum('total') > 1000;
     });
 
-// ✅ Raw SQL с подзапросом
+// ✅ Raw SQL com subquery
 $users = DB::table('users')
     ->join(DB::raw('(SELECT user_id, SUM(total) as total_spent
                      FROM orders
@@ -178,16 +178,16 @@ $users = DB::table('users')
     ->where('order_totals.total_spent', '>', 1000)
     ->get();
 
-// Или Query Builder
+// Ou Query Builder
 $users = User::whereHas('orders', function ($query) {
     $query->havingRaw('SUM(total) > ?', [1000]);
 })->get();
 ```
 
-**Avoid OR (используй UNION):**
+**Evite OR (use UNION):**
 
 ```php
-// ❌ OR может не использовать индексы
+// ❌ OR pode não usar índice
 User::where('status', 'active')
     ->orWhere('is_vip', true)
     ->get();
@@ -198,15 +198,15 @@ User::where('status', 'active')
     ->get();
 ```
 
-**Денормализация для часто читаемых данных:**
+**Desnormalização para dado lido com frequência:**
 
 ```php
-// ❌ JOIN при каждом запросе
+// ❌ JOIN em toda query
 $posts = Post::join('users', 'posts.user_id', '=', 'users.id')
     ->select('posts.*', 'users.name as author_name')
     ->get();
 
-// ✅ Хранить author_name в posts
+// ✅ Guarda author_name em posts
 Schema::table('posts', function (Blueprint $table) {
     $table->string('author_name')->nullable();
 });
@@ -215,22 +215,22 @@ Post::creating(function (Post $post) {
     $post->author_name = $post->user->name;
 });
 
-// Теперь без JOIN
+// Agora sem JOIN
 $posts = Post::select('id', 'title', 'author_name')->get();
 ```
 
-**Индексы для ORDER BY:**
+**Índices para ORDER BY:**
 
 ```php
-// ❌ Без индекса на created_at (Filesort)
+// ❌ Sem índice em created_at (Filesort)
 $posts = Post::orderBy('created_at', 'desc')->paginate(20);
 
-// ✅ С индексом
+// ✅ Com índice
 Schema::table('posts', function (Blueprint $table) {
     $table->index('created_at');
 });
 
-// Составной индекс для WHERE + ORDER BY
+// Índice composto para WHERE + ORDER BY
 Schema::table('posts', function (Blueprint $table) {
     $table->index(['status', 'created_at']);
 });
@@ -240,20 +240,20 @@ $posts = Post::where('status', 'published')
     ->paginate(20);
 ```
 
-**Кеширование запросов:**
+**Cache de queries:**
 
 ```php
-// Кешировать результат
+// Cacheia o resultado
 $users = Cache::remember('users.all', 3600, function () {
     return User::all();
 });
 
-// Тегированный кеш
+// Cache com tags
 $posts = Cache::tags(['posts'])->remember('posts.published', 3600, function () {
     return Post::where('published', true)->get();
 });
 
-// Сбросить при обновлении
+// Limpa no update
 Post::created(function () {
     Cache::tags(['posts'])->flush();
 });
@@ -262,38 +262,38 @@ Post::created(function () {
 **Query caching (MySQL):**
 
 ```php
-// MySQL Query Cache (устарело в MySQL 8.0)
-// Используйте Redis/Memcached вместо этого
+// MySQL Query Cache (obsoleto no MySQL 8.0)
+// Use Redis/Memcached no lugar
 ```
 
-**Pagination вместо get():**
+**Paginação em vez de get():**
 
 ```php
-// ❌ Загружает все (медленно для больших данных)
+// ❌ Carrega tudo (lento em volume grande)
 $posts = Post::where('published', true)->get();
 
-// ✅ Пагинация
+// ✅ Paginação
 $posts = Post::where('published', true)->paginate(20);
 
-// Простая пагинация (без total count)
+// Paginação simples (sem total count)
 $posts = Post::where('published', true)->simplePaginate(20);
 
-// Cursor pagination (для больших данных)
+// Cursor pagination (volume grande)
 $posts = Post::where('published', true)->cursorPaginate(20);
 ```
 
 **Batch Insert:**
 
 ```php
-// ❌ N INSERT запросов
+// ❌ N INSERT
 foreach ($data as $item) {
     User::create($item);
 }
 
-// ✅ Один запрос
+// ✅ Um único INSERT
 User::insert($data);
 
-// Или с timestamps
+// Ou com timestamps
 $now = now();
 $data = array_map(function ($item) use ($now) {
     return array_merge($item, [
@@ -305,14 +305,14 @@ $data = array_map(function ($item) use ($now) {
 User::insert($data);
 ```
 
-**Update с условием (без загрузки модели):**
+**Update com condição (sem carregar o model):**
 
 ```php
-// ❌ Загружает модель
+// ❌ Carrega o model
 $user = User::find($id);
 $user->increment('views');
 
-// ✅ Обновляет напрямую
+// ✅ Atualiza direto
 User::where('id', $id)->increment('views');
 
 // Bulk update
@@ -321,29 +321,29 @@ User::where('status', 'pending')
     ->update(['status' => 'expired']);
 ```
 
-**Select distinct вместо pluck + unique:**
+**select distinct em vez de pluck + unique:**
 
 ```php
-// ❌ Загружает все, затем unique
+// ❌ Carrega tudo e depois unique
 $emails = User::pluck('email')->unique();
 
-// ✅ DISTINCT в SQL
+// ✅ DISTINCT no SQL
 $emails = User::select('email')->distinct()->pluck('email');
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Оптимизация: индексы на WHERE/ORDER BY/JOIN, select только нужные поля, eager loading для N+1, chunk/lazy для больших данных, exists() вместо count(), кеширование результатов. EXPLAIN показывает plan запроса. Composite индекс для WHERE + ORDER BY. Денормализация для часто читаемых данных. Batch insert вместо N запросов. Update без загрузки модели. Cursor pagination для больших данных. simplePaginate() без подсчёта total."
+> "Otimização: índice em WHERE/ORDER BY/JOIN, select só os campos que precisa, eager loading para N+1, chunk/lazy para volume grande, exists() no lugar de count(), cache do resultado. EXPLAIN mostra o plano da query. Índice composto para WHERE + ORDER BY. Desnormalização para dado lido com frequência. Batch insert no lugar de N queries. Update sem carregar o model. Cursor pagination para volume grande. simplePaginate() sem contar o total."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Оптимизируй медленный запрос
+### Exercício 1: Otimize a query lenta
 
-Запрос выполняется 5 секунд. Как оптимизировать?
+**Enunciado:** A query leva 5 segundos. Como otimizar?
 
 ```php
 $users = User::all();
@@ -360,15 +360,15 @@ foreach ($users as $user) {
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблемы:
-// 1. User::all() загружает всех пользователей в память
-// 2. N запросов для подсчёта sum (по одному на каждого пользователя)
-// 3. N запросов для update
+// ❌ Problemas:
+// 1. User::all() carrega todos os usuários na memória
+// 2. N queries para o sum (uma por usuário)
+// 3. N queries para o update
 
-// ✅ Решение 1: Один запрос с подзапросом
+// ✅ Solução 1: Uma query com subquery
 DB::table('users')
     ->update([
         'is_vip' => DB::raw('(
@@ -382,7 +382,7 @@ DB::table('users')
         )')
     ]);
 
-// ✅ Решение 2: JOIN + GROUP BY + UPDATE
+// ✅ Solução 2: JOIN + GROUP BY + UPDATE
 DB::statement('
     UPDATE users
     INNER JOIN (
@@ -395,18 +395,18 @@ DB::statement('
     SET users.is_vip = 1
 ');
 
-// ✅ Решение 3: Chunk для обработки по частям (если нужна логика в PHP)
+// ✅ Solução 3: Chunk para processar em pedaços (se a lógica precisa ficar no PHP)
 User::chunk(100, function ($users) {
     $userIds = $users->pluck('id');
 
-    // Получить суммы для всех пользователей чанка одним запросом
+    // Pega os totais de todos os usuários do chunk numa query só
     $totals = Order::select('user_id', DB::raw('SUM(total) as total_spent'))
         ->whereIn('user_id', $userIds)
         ->where('status', 'completed')
         ->groupBy('user_id')
         ->pluck('total_spent', 'user_id');
 
-    // Определить VIP пользователей
+    // Marca os VIP
     $vipIds = $totals->filter(fn($total) => $total > 1000)->keys();
 
     // Batch update
@@ -415,15 +415,15 @@ User::chunk(100, function ($users) {
     }
 });
 
-// ✅ Решение 4: Денормализация (лучшее для частых запросов)
-// Добавить поле total_spent в users
+// ✅ Solução 4: Desnormalização (melhor para query frequente)
+// Adiciona total_spent em users
 Schema::table('users', function (Blueprint $table) {
     $table->decimal('total_spent', 10, 2)->default(0);
     $table->boolean('is_vip')->default(false);
     $table->index('total_spent');
 });
 
-// Обновлять при создании заказа
+// Atualiza quando cria o pedido
 class Order extends Model
 {
     protected static function booted(): void
@@ -452,43 +452,43 @@ class User extends Model
     }
 }
 
-// Теперь быстро:
+// Agora fica rápido:
 $vipUsers = User::where('is_vip', true)->get();
 ```
 </details>
 
-### Задание 2: Оптимизируй пагинацию
+### Exercício 2: Otimize a paginação
 
-У таблицы 10 миллионов записей. Пагинация медленная на последних страницах. Почему и как исправить?
+**Enunciado:** A tabela tem 10 milhões de registros. A paginação fica lenta nas últimas páginas. Por quê e como corrigir?
 
 ```php
-// Медленно на странице 100000
+// Lento na página 100000
 $posts = Post::orderBy('created_at', 'desc')
     ->paginate(20);
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблема: OFFSET растёт
-// На странице 100000: OFFSET 2000000
-// MySQL должен прочитать и пропустить 2 млн записей
+// ❌ Problema: o OFFSET cresce
+// Na página 100000: OFFSET 2000000
+// O MySQL lê e descarta 2 milhões de registros
 
-// ✅ Решение 1: Cursor Pagination (для больших offset)
+// ✅ Solução 1: Cursor pagination (offset grande)
 $posts = Post::orderBy('created_at', 'desc')
-    ->orderBy('id', 'desc')  // Важно: добавить уникальный ключ
+    ->orderBy('id', 'desc')  // Importante: inclui uma chave única
     ->cursorPaginate(20);
 
-// Cursor использует WHERE вместо OFFSET:
+// O cursor usa WHERE no lugar de OFFSET:
 // WHERE (created_at < '2024-01-01' OR (created_at = '2024-01-01' AND id < 12345))
 // LIMIT 20
 
-// В Blade
-{{ $posts->links() }}  // Работает автоматически
+// No Blade
+{{ $posts->links() }}  // Funciona sozinho
 
-// ✅ Решение 2: Keyset Pagination (ручная реализация)
-// Запомнить последний ID
+// ✅ Solução 2: Keyset pagination (na mão)
+// Guarda o último ID
 $lastId = request('last_id');
 
 $posts = Post::where('id', '<', $lastId ?? PHP_INT_MAX)
@@ -496,44 +496,44 @@ $posts = Post::where('id', '<', $lastId ?? PHP_INT_MAX)
     ->limit(20)
     ->get();
 
-// В ответе вернуть last_id для следующей страницы
+// Devolve last_id para a próxima página
 return [
     'data' => $posts,
     'next_page' => $posts->isNotEmpty() ? $posts->last()->id : null,
 ];
 
-// ✅ Решение 3: simplePaginate (без total count)
+// ✅ Solução 3: simplePaginate (sem total count)
 $posts = Post::orderBy('created_at', 'desc')
     ->simplePaginate(20);
 
-// Не вычисляет total count (быстрее)
-// Показывает только "Назад" и "Вперёд"
+// Não calcula o total (mais rápido)
+// Mostra só "Anterior" e "Próximo"
 
-// ✅ Решение 4: Индекс для ORDER BY + LIMIT
+// ✅ Solução 4: Índice para ORDER BY + LIMIT
 Schema::table('posts', function (Blueprint $table) {
     $table->index(['created_at', 'id']);  // Composite index
 });
 
-// Теперь MySQL может использовать индекс для ORDER BY
-// и эффективно пропустить OFFSET записей
+// Agora o MySQL usa o índice no ORDER BY
+// e pula o OFFSET com eficiência
 
-// ✅ Решение 5: Денормализация + поиск
-// Для поиска по тексту + пагинация
-// Использовать Elasticsearch или Meilisearch
+// ✅ Solução 5: Desnormalização + busca
+// Busca por texto + paginação
+// Usa Elasticsearch ou Meilisearch
 $posts = Post::search(request('q'))
     ->paginate(20);
 ```
 </details>
 
-### Задание 3: Batch операции
+### Exercício 3: Operações em batch
 
-Нужно создать 10000 пользователей из CSV файла. Как сделать быстро?
+**Enunciado:** Precisa criar 10000 usuários a partir de um CSV. Como fazer rápido?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Медленно: 10000 INSERT запросов
+// ❌ Lento: 10000 INSERT
 foreach ($csvData as $row) {
     User::create([
         'name' => $row['name'],
@@ -541,7 +541,7 @@ foreach ($csvData as $row) {
     ]);
 }
 
-// ✅ Решение 1: Batch Insert
+// ✅ Solução 1: Batch Insert
 $users = [];
 foreach ($csvData as $row) {
     $users[] = [
@@ -552,10 +552,10 @@ foreach ($csvData as $row) {
     ];
 }
 
-// Один INSERT запрос
+// Um único INSERT
 User::insert($users);
 
-// ✅ Решение 2: Chunk для больших данных
+// ✅ Solução 2: Chunk para volume grande
 collect($csvData)->chunk(1000)->each(function ($chunk) {
     $users = $chunk->map(fn($row) => [
         'name' => $row['name'],
@@ -567,18 +567,18 @@ collect($csvData)->chunk(1000)->each(function ($chunk) {
     User::insert($users);
 });
 
-// ✅ Решение 3: Bulk Insert с upsert (Laravel 8+)
+// ✅ Solução 3: Bulk insert com upsert (Laravel 8+)
 User::upsert(
     $users,
-    ['email'],  // Уникальное поле
-    ['name', 'updated_at']  // Обновить если существует
+    ['email'],  // Campo único
+    ['name', 'updated_at']  // Atualiza se já existir
 );
 
-// ✅ Решение 4: LOAD DATA INFILE (самый быстрый)
-// 1. Сохранить CSV
+// ✅ Solução 4: LOAD DATA INFILE (o mais rápido)
+// 1. Salva o CSV
 $csvPath = storage_path('app/users.csv');
 
-// 2. Загрузить через MySQL
+// 2. Carrega pelo MySQL
 DB::statement("
     LOAD DATA LOCAL INFILE '{$csvPath}'
     INTO TABLE users
@@ -590,7 +590,7 @@ DB::statement("
     SET created_at = NOW(), updated_at = NOW()
 ");
 
-// ✅ Решение 5: Queue для фоновой обработки
+// ✅ Solução 5: Queue para processar em background
 ImportUsersFromCsv::dispatch($csvPath);
 
 // Job
@@ -613,13 +613,13 @@ class ImportUsersFromCsv implements ShouldQueue
     }
 }
 
-// Сравнение производительности:
-// create() x 10000: ~30 секунд
-// insert() (batch): ~2 секунды
-// LOAD DATA INFILE: ~0.5 секунды
+// Comparação de performance:
+// create() x 10000: ~30 segundos
+// insert() (batch): ~2 segundos
+// LOAD DATA INFILE: ~0.5 segundo
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

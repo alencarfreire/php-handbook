@@ -1,46 +1,46 @@
-# 6.6 N+1 проблема
+# 6.6 Problema N+1
 
-## Краткое резюме
+## Resumo
 
-> **N+1 проблема** — 1 запрос для списка + N запросов для каждого элемента. Частая проблема производительности.
+> **Problema N+1** — 1 query para a lista + N queries para cada item. Problema clássico de performance.
 >
-> **Решение:** Eager Loading через `with()`. Для вложенных: `with('posts.comments')`. Для счётчиков: `withCount('posts')`.
+> **Solução:** Eager Loading com `with()`. Aninhado: `with('posts.comments')`. Contadores: `withCount('posts')`.
 >
-> **Важно:** `preventLazyLoading()` в development детектирует N+1. Laravel Debugbar/Telescope для мониторинга.
+> **Importante:** `preventLazyLoading()` em development detecta N+1. Laravel Debugbar/Telescope para monitorar.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-N+1 — частая проблема производительности, когда выполняется 1 запрос для получения списка + N запросов для каждого элемента.
-
-**Пример:**
-- 1 запрос: получить всех пользователей
-- N запросов: получить посты каждого пользователя
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**❌ Проблема N+1:**
+**O que é:**
+N+1 é um problema clássico de performance: 1 query para a lista + N queries para cada item.
+
+**Exemplo:**
+- 1 query: buscar todos os usuários
+- N queries: buscar os posts de cada usuário
+
+---
+
+## Como funciona
+
+**❌ Problema N+1:**
 
 ```php
-// 1 запрос: получить пользователей
+// 1 query: buscar os usuários
 $users = User::all();  // SELECT * FROM users
 
-// N запросов: для каждого пользователя получить посты
+// N queries: posts de cada usuário
 foreach ($users as $user) {
     echo $user->posts->count();  // SELECT * FROM posts WHERE user_id = 1
                                  // SELECT * FROM posts WHERE user_id = 2
@@ -48,55 +48,55 @@ foreach ($users as $user) {
                                  // ...
 }
 
-// Итого: 1 + N запросов (если 100 пользователей = 101 запрос!)
+// Total: 1 + N queries (100 usuários = 101 queries!)
 ```
 
-**✅ Решение: Eager Loading:**
+**✅ Solução: Eager Loading:**
 
 ```php
-// 2 запроса: пользователи + все их посты
+// 2 queries: usuários + todos os posts deles
 $users = User::with('posts')->get();
 // SELECT * FROM users
 // SELECT * FROM posts WHERE user_id IN (1, 2, 3, ...)
 
 foreach ($users as $user) {
-    echo $user->posts->count();  // Без запросов (уже загружены)
+    echo $user->posts->count();  // Sem query extra (já veio no eager load)
 }
 
-// Итого: 2 запроса (независимо от количества пользователей)
+// Total: 2 queries (não importa quantos usuários)
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Eager Loading когда:**
-- Итерация по коллекции с доступом к relationships
-- Выводишь список с вложенными данными
+**Use Eager Loading quando:**
+- Você itera a coleção e acessa relationships
+- Você monta uma lista com dados aninhados
 
-**Не используй когда:**
-- Relationship не всегда нужен
-- Conditional loading (загрузка по условию)
+**Não use quando:**
+- A relationship nem sempre é necessária
+- Conditional loading (carrega só sob condição)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
 **Nested Eager Loading:**
 
 ```php
-// ❌ N+1 на трёх уровнях
+// ❌ N+1 em três níveis
 $users = User::all();
 
 foreach ($users as $user) {
-    foreach ($user->posts as $post) {  // N запросов
-        foreach ($post->comments as $comment) {  // N * M запросов
+    foreach ($user->posts as $post) {  // N queries
+        foreach ($post->comments as $comment) {  // N * M queries
             echo $comment->body;
         }
     }
 }
 
-// ✅ Вложенный Eager Loading
+// ✅ Eager Loading aninhado
 $users = User::with(['posts.comments'])->get();
 // SELECT * FROM users
 // SELECT * FROM posts WHERE user_id IN (...)
@@ -106,7 +106,7 @@ $users = User::with(['posts.comments'])->get();
 **Conditional Eager Loading:**
 
 ```php
-// Загрузить только опубликованные посты
+// Carregar só posts publicados
 $users = User::with(['posts' => function ($query) {
     $query->where('published', true)
           ->orderBy('created_at', 'desc')
@@ -114,35 +114,35 @@ $users = User::with(['posts' => function ($query) {
 }])->get();
 ```
 
-**Lazy Eager Loading (загрузка после):**
+**Lazy Eager Loading (carregar depois):**
 
 ```php
 $users = User::all();
 
-// Позже понадобились посты
+// Depois precisou dos posts
 if ($needPosts) {
-    $users->load('posts');  // Догрузить
+    $users->load('posts');  // Carrega agora
 }
 
-// Загрузить только если не загружены
+// Carrega só se ainda não estiver carregado
 $users->loadMissing('posts');
 ```
 
 **Counting Related Models:**
 
 ```php
-// ❌ N+1 (для каждого пользователя COUNT запрос)
+// ❌ N+1 (COUNT por usuário)
 $users = User::all();
 
 foreach ($users as $user) {
     echo $user->posts()->count();  // SELECT COUNT(*) FROM posts WHERE user_id = 1
 }
 
-// ✅ withCount (1 запрос с LEFT JOIN и COUNT)
+// ✅ withCount (1 query com LEFT JOIN e COUNT)
 $users = User::withCount('posts')->get();
 
 foreach ($users as $user) {
-    echo $user->posts_count;  // Без запросов
+    echo $user->posts_count;  // Sem query extra
 }
 ```
 
@@ -154,14 +154,14 @@ $users = User::all();
 
 foreach ($users as $user) {
     if ($user->posts()->exists()) {  // SELECT EXISTS(...)
-        echo "Has posts";
+        echo "Tem posts";
     }
 }
 
-// ✅ whereHas (1 запрос)
+// ✅ whereHas (1 query)
 $users = User::whereHas('posts')->get();
 
-// Или с условием
+// Ou com condição
 $users = User::whereHas('posts', function ($query) {
     $query->where('published', true);
 })->get();
@@ -170,39 +170,39 @@ $users = User::whereHas('posts', function ($query) {
 **Polymorphic Relations:**
 
 ```php
-// ❌ N+1 с morphTo
+// ❌ N+1 com morphTo
 $comments = Comment::all();
 
 foreach ($comments as $comment) {
-    echo $comment->commentable->title;  // N запросов к разным таблицам
+    echo $comment->commentable->title;  // N queries em tabelas diferentes
 }
 
-// ✅ with на polymorphic
+// ✅ with no polymorphic
 $comments = Comment::with('commentable')->get();
 ```
 
 **BelongsToMany with Pivot:**
 
 ```php
-// ❌ N+1 на pivot данные
+// ❌ N+1 nos dados do pivot
 $users = User::all();
 
 foreach ($users as $user) {
     foreach ($user->roles as $role) {
-        echo $role->pivot->expires_at;  // Pivot уже загружен, OK
+        echo $role->pivot->expires_at;  // Pivot já veio, OK
     }
 }
 
-// ✅ Eager load с pivot
+// ✅ Eager load com pivot
 $users = User::with(['roles' => function ($query) {
     $query->withPivot('expires_at', 'is_active');
 }])->get();
 ```
 
-**API Resource с Relationships:**
+**API Resource com Relationships:**
 
 ```php
-// ❌ N+1 в Resource
+// ❌ N+1 no Resource
 class PostResource extends JsonResource
 {
     public function toArray($request): array
@@ -210,8 +210,8 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'author' => new UserResource($this->user),  // N запросов
-            'comments_count' => $this->comments()->count(),  // N запросов
+            'author' => new UserResource($this->user),  // N queries
+            'comments_count' => $this->comments()->count(),  // N queries
         ];
     }
 }
@@ -223,7 +223,7 @@ public function index()
     return PostResource::collection($posts);  // N+1!
 }
 
-// ✅ Eager load в контроллере
+// ✅ Eager load no controller
 public function index()
 {
     $posts = Post::with('user')
@@ -255,10 +255,10 @@ class PostResource extends JsonResource
 
 ```php
 // 1. Laravel Debugbar
-// Показывает все запросы и дубликаты
+// Mostra todas as queries e as duplicatas
 
 // 2. Telescope
-// Queries tab показывает все запросы
+// A aba Queries mostra todas as queries
 
 // 3. QueryLog
 DB::enableQueryLog();
@@ -270,10 +270,10 @@ User::all()->each(function ($user) {
 dd(DB::getQueryLog());
 
 // 4. Package: beyondcode/laravel-query-detector
-// Автоматически детектирует N+1 в development
+// Detecta N+1 sozinho em development
 
 // 5. Prevent Lazy Loading (Laravel 8.43+)
-// В AppServiceProvider
+// No AppServiceProvider
 use Illuminate\Database\Eloquent\Model;
 
 public function boot(): void
@@ -281,35 +281,35 @@ public function boot(): void
     Model::preventLazyLoading(! app()->isProduction());
 }
 
-// Теперь lazy loading выкинет исключение
+// Agora lazy loading lança exceção
 ```
 
-**Global Scopes для Eager Loading:**
+**Global Scopes para Eager Loading:**
 
 ```php
-// Автоматически загружать relationship
+// Carregar a relationship automaticamente
 class Post extends Model
 {
     protected $with = ['user', 'category'];
 
-    // Теперь Post::all() автоматически загрузит user и category
+    // Agora Post::all() já traz user e category
 }
 
-// Отключить для конкретного запроса
+// Desligar em uma query específica
 $posts = Post::without('user')->get();
 ```
 
-**Subquery Select (альтернатива withCount):**
+**Subquery Select (alternativa ao withCount):**
 
 ```php
-// Добавить подзапрос в SELECT
+// Colocar subquery no SELECT
 $users = User::select([
     'users.*',
     'posts_count' => Post::selectRaw('COUNT(*)')
         ->whereColumn('posts.user_id', 'users.id')
 ])->get();
 
-// Эквивалентно withCount, но больше контроля
+// Equivale ao withCount, mas com mais controle
 $users = User::addSelect([
     'latest_post_created_at' => Post::select('created_at')
         ->whereColumn('posts.user_id', 'users.id')
@@ -320,17 +320,17 @@ $users = User::addSelect([
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "N+1 проблема — 1 запрос для списка + N запросов для каждого элемента. Решение: Eager Loading через with(). with('posts.comments') для вложенных. withCount('posts') для счётчиков без загрузки данных. whereHas() для фильтрации по relationship. lazy() для загрузки после. preventLazyLoading() в development детектирует N+1. Laravel Debugbar/Telescope для мониторинга. whenLoaded() в API Resources для условной загрузки."
+> "N+1 é 1 query para a lista + N queries para cada item. Solução: Eager Loading com with(). with('posts.comments') para aninhado. withCount('posts') para contador sem carregar os dados. whereHas() para filtrar pela relationship. load() para carregar depois. preventLazyLoading() em development detecta N+1. Laravel Debugbar/Telescope para monitorar. whenLoaded() no API Resource para carga condicional."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Найди и исправь N+1
+### Exercício 1: Encontre e corrija o N+1
 
-Что не так с этим кодом? Сколько запросов выполнится?
+O que está errado neste código? Quantas queries vão rodar?
 
 ```php
 public function index()
@@ -343,54 +343,54 @@ public function index()
 // Blade view
 @foreach ($posts as $post)
     <h2>{{ $post->title }}</h2>
-    <p>Автор: {{ $post->user->name }}</p>
-    <p>Категория: {{ $post->category->name }}</p>
-    <p>Комментариев: {{ $post->comments->count() }}</p>
+    <p>Autor: {{ $post->user->name }}</p>
+    <p>Categoria: {{ $post->category->name }}</p>
+    <p>Comentários: {{ $post->comments->count() }}</p>
 @endforeach
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблема: 1 + 3N запросов
-// 1 запрос: SELECT * FROM posts WHERE published = 1
-// N запросов: SELECT * FROM users WHERE id = ? (для каждого поста)
-// N запросов: SELECT * FROM categories WHERE id = ? (для каждого поста)
-// N запросов: SELECT * FROM comments WHERE post_id = ? (для каждого поста)
+// ❌ Problema: 1 + 3N queries
+// 1 query: SELECT * FROM posts WHERE published = 1
+// N queries: SELECT * FROM users WHERE id = ? (para cada post)
+// N queries: SELECT * FROM categories WHERE id = ? (para cada post)
+// N queries: SELECT * FROM comments WHERE post_id = ? (para cada post)
 
-// Если 100 постов = 1 + 300 = 301 запрос!
+// 100 posts = 1 + 300 = 301 queries!
 
-// ✅ Решение: Eager Loading
+// ✅ Solução: Eager Loading
 public function index()
 {
     $posts = Post::where('published', true)
-        ->with(['user', 'category'])  // Загрузить user и category
-        ->withCount('comments')  // Подсчитать комментарии
+        ->with(['user', 'category'])  // Carrega user e category
+        ->withCount('comments')  // Conta os comentários
         ->get();
 
     return view('posts.index', compact('posts'));
 }
 
-// Теперь всего 4 запроса:
+// Agora são 4 queries:
 // 1. SELECT * FROM posts WHERE published = 1
 // 2. SELECT * FROM users WHERE id IN (...)
 // 3. SELECT * FROM categories WHERE id IN (...)
 // 4. SELECT post_id, COUNT(*) FROM comments WHERE post_id IN (...) GROUP BY post_id
 
-// В Blade
+// No Blade
 @foreach ($posts as $post)
     <h2>{{ $post->title }}</h2>
-    <p>Автор: {{ $post->user->name }}</p>
-    <p>Категория: {{ $post->category->name }}</p>
-    <p>Комментариев: {{ $post->comments_count }}</p>  {{-- Из withCount --}}
+    <p>Autor: {{ $post->user->name }}</p>
+    <p>Categoria: {{ $post->category->name }}</p>
+    <p>Comentários: {{ $post->comments_count }}</p>  {{-- Vem do withCount --}}
 @endforeach
 ```
 </details>
 
-### Задание 2: API Resource с N+1
+### Exercício 2: API Resource com N+1
 
-Исправь N+1 проблему в API эндпоинте.
+Corrija o N+1 no endpoint da API.
 
 ```php
 class PostController extends Controller
@@ -423,10 +423,10 @@ class PostResource extends JsonResource
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ✅ Исправленный контроллер
+// ✅ Controller corrigido
 class PostController extends Controller
 {
     public function index()
@@ -439,7 +439,7 @@ class PostController extends Controller
     }
 }
 
-// ✅ Исправленный Resource с whenLoaded
+// ✅ Resource corrigido com whenLoaded
 class PostResource extends JsonResource
 {
     public function toArray($request): array
@@ -448,7 +448,7 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
 
-            // whenLoaded предотвращает N+1 если relationship не загружен
+            // whenLoaded evita N+1 se a relationship não veio no eager load
             'author' => $this->whenLoaded('user', function () {
                 return [
                     'id' => $this->user->id,
@@ -458,7 +458,7 @@ class PostResource extends JsonResource
 
             'category' => $this->whenLoaded('category', fn() => $this->category->name),
 
-            // Используем withCount (не вызываем count() в Resource)
+            // Usa withCount (não chama count() no Resource)
             'comments_count' => $this->when(
                 isset($this->comments_count),
                 $this->comments_count
@@ -476,7 +476,7 @@ class PostResource extends JsonResource
     }
 }
 
-// Альтернатива: отдельный Resource для User
+// Alternativa: Resource separado para User
 class PostResource extends JsonResource
 {
     public function toArray($request): array
@@ -495,9 +495,9 @@ class PostResource extends JsonResource
 ```
 </details>
 
-### Задание 3: Вложенные relationships
+### Exercício 3: Relationships aninhadas
 
-Оптимизируй загрузку: пользователи → посты → комментарии → автор комментария.
+Otimize o carregamento: usuários → posts → comentários → autor do comentário.
 
 ```php
 $users = User::all();
@@ -512,34 +512,34 @@ foreach ($users as $user) {
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблема: Вложенный N+1
-// 1 запрос: users
-// N запросов: posts для каждого user
-// N*M запросов: comments для каждого post
-// N*M*K запросов: user для каждого comment
-// Если 10 users, 100 posts, 1000 comments = тысячи запросов!
+// ❌ Problema: N+1 aninhado
+// 1 query: users
+// N queries: posts de cada user
+// N*M queries: comments de cada post
+// N*M*K queries: user de cada comment
+// 10 users, 100 posts, 1000 comments = milhares de queries!
 
-// ✅ Решение 1: Nested Eager Loading
+// ✅ Solução 1: Nested Eager Loading
 $users = User::with(['posts.comments.user'])->get();
 
-// Всего 4 запроса:
+// São 4 queries:
 // 1. SELECT * FROM users
 // 2. SELECT * FROM posts WHERE user_id IN (...)
 // 3. SELECT * FROM comments WHERE post_id IN (...)
-// 4. SELECT * FROM users WHERE id IN (...) -- для авторов комментариев
+// 4. SELECT * FROM users WHERE id IN (...) -- autores dos comentários
 
 foreach ($users as $user) {
     foreach ($user->posts as $post) {
         foreach ($post->comments as $comment) {
-            echo $comment->user->name;  // Без запросов
+            echo $comment->user->name;  // Sem query extra
         }
     }
 }
 
-// ✅ Решение 2: С условиями
+// ✅ Solução 2: Com condições
 $users = User::with([
     'posts' => function ($query) {
         $query->where('published', true)
@@ -549,16 +549,16 @@ $users = User::with([
     'posts.comments' => function ($query) {
         $query->latest()->limit(10);
     },
-    'posts.comments.user:id,name'  // Загрузить только id и name
+    'posts.comments.user:id,name'  // Carrega só id e name
 ])->get();
 
-// ✅ Решение 3: Lazy Eager Loading (если забыли загрузить)
+// ✅ Solução 3: Lazy Eager Loading (se você esqueceu de carregar)
 $users = User::all();
 
-// Позже понадобились вложенные данные
+// Depois precisou dos dados aninhados
 $users->load(['posts.comments.user']);
 
-// ✅ Решение 4: Только счётчики (без загрузки данных)
+// ✅ Solução 4: Só contadores (sem carregar os dados)
 $users = User::withCount([
     'posts',
     'posts as published_posts_count' => function ($query) {
@@ -567,19 +567,19 @@ $users = User::withCount([
 ])->get();
 
 foreach ($users as $user) {
-    echo "{$user->name}: {$user->posts_count} постов";
+    echo "{$user->name}: {$user->posts_count} posts";
 }
 
-// ✅ Решение 5: preventLazyLoading для детекции N+1
-// В AppServiceProvider::boot()
+// ✅ Solução 5: preventLazyLoading para detectar N+1
+// No AppServiceProvider::boot()
 use Illuminate\Database\Eloquent\Model;
 
 Model::preventLazyLoading(! app()->isProduction());
 
-// Теперь при lazy loading будет исключение в development
+// Agora lazy loading lança exceção em development
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

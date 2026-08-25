@@ -1,83 +1,83 @@
-# 6.9 Кеширование
+# 6.9 Cache
 
-## Краткое резюме
+## Resumo
 
-> **Кеширование** — сохранение часто используемых данных для быстрого доступа. Уменьшает нагрузку на БД и ускоряет приложение.
+> **Cache** — guardar dados usados com frequência para acesso rápido. Reduz a carga no banco e acelera o app.
 >
-> **Драйверы:** file, database, redis (рекомендуется), memcached, array.
+> **Drivers:** file, database, redis (recomendado), memcached, array.
 >
-> **Важно:** Cache::remember() — если нет в кеше, выполнить callback и сохранить. Tags для группировки. Инвалидация через observers.
+> **Importante:** Cache::remember() — se não está no cache, executa o callback e guarda. Tags para agrupar. Invalidação via observers.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Кеширование — сохранение часто используемых данных для быстрого доступа. Уменьшает нагрузку на БД и ускоряет приложение.
+**O que é:**
+Cache — guardar dados usados com frequência para acesso rápido. Reduz a carga no banco e acelera o app.
 
-**Драйверы кеша в Laravel:**
-- file — файлы (по умолчанию)
-- database — таблица БД
-- redis — Redis (рекомендуется)
+**Drivers de cache no Laravel:**
+- file — arquivos (default)
+- database — tabela no banco
+- redis — Redis (recomendado)
 - memcached — Memcached
-- array — в памяти (для тестов)
+- array — na memória (para testes)
 
 ---
 
-## Как работает
+## Como funciona
 
-**Базовые операции:**
+**Operações básicas:**
 
 ```php
 use Illuminate\Support\Facades\Cache;
 
-// Сохранить навсегда
+// Guardar para sempre
 Cache::put('key', 'value');
 
-// Сохранить с TTL (секунды)
-Cache::put('key', 'value', 3600);  // 1 час
+// Guardar com TTL (segundos)
+Cache::put('key', 'value', 3600);  // 1 hora
 
-// Или через now()
+// Ou via now()
 Cache::put('key', 'value', now()->addMinutes(60));
 
-// Получить
+// Buscar
 $value = Cache::get('key');
 
-// С дефолтом
+// Com default
 $value = Cache::get('key', 'default');
 
-// С Closure
+// Com Closure
 $value = Cache::get('key', function () {
-    return 'default value';
+    return 'valor padrão';
 });
 
-// Проверить существование
+// Checar se existe
 if (Cache::has('key')) {
-    // Ключ существует
+    // A chave existe
 }
 
-// Удалить
+// Remover
 Cache::forget('key');
 
-// Очистить весь кеш
+// Limpar o cache inteiro
 Cache::flush();
 ```
 
-**Remember (кеширование с callback):**
+**Remember (cache com callback):**
 
 ```php
-// Если есть в кеше — вернёт, если нет — выполнит callback и сохранит
+// Se está no cache, devolve. Se não está, executa o callback e guarda
 $users = Cache::remember('users.all', 3600, function () {
     return User::all();
 });
@@ -87,59 +87,59 @@ $settings = Cache::rememberForever('settings', function () {
     return Setting::pluck('value', 'key');
 });
 
-// Pull (получить и удалить)
+// Pull (buscar e remover)
 $value = Cache::pull('key');
 ```
 
 **Increment / Decrement:**
 
 ```php
-// Инкремент
+// Increment
 Cache::increment('page:views');  // +1
 Cache::increment('page:views', 5);  // +5
 
-// Декремент
+// Decrement
 Cache::decrement('page:views');  // -1
 Cache::decrement('page:views', 3);  // -3
 ```
 
-**Tags (группировка кеша):**
+**Tags (agrupar o cache):**
 
 ```php
-// Сохранить с тегами (только Redis/Memcached)
-Cache::tags(['people', 'artists'])->put('John', 'Artist', 600);
-Cache::tags(['people', 'authors'])->put('Jane', 'Author', 600);
+// Guardar com tags (só Redis/Memcached)
+Cache::tags(['people', 'artists'])->put('John', 'Artista', 600);
+Cache::tags(['people', 'authors'])->put('Jane', 'Autor', 600);
 
-// Получить
+// Buscar
 $value = Cache::tags(['people', 'artists'])->get('John');
 
-// Удалить все с тегом
-Cache::tags(['people'])->flush();  // Удалит John и Jane
-Cache::tags(['artists'])->flush();  // Удалит только John
+// Remover tudo com a tag
+Cache::tags(['people'])->flush();  // Remove John e Jane
+Cache::tags(['artists'])->flush();  // Remove só o John
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Кешируй когда:**
-- Данные читаются часто, меняются редко
-- Дорогие вычисления (сложные запросы, API)
-- Статичные данные (настройки, конфиг)
+**Use cache quando:**
+- Dados lidos com frequência, mudam pouco
+- Cálculo caro (query pesada, API)
+- Dados estáticos (settings, config)
 
-**Не кешируй когда:**
-- Данные часто меняются
-- Персональные данные (могут устареть)
-- Критичная актуальность
+**Não use cache quando:**
+- Dados mudam o tempo todo
+- Dados pessoais (ficam velhos)
+- Precisa estar sempre atualizado
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Кеширование запросов:**
+**Cache de queries:**
 
 ```php
-// Список постов
+// Lista de posts
 $posts = Cache::remember('posts.published', 3600, function () {
     return Post::where('published', true)
         ->with('user', 'category')
@@ -147,7 +147,7 @@ $posts = Cache::remember('posts.published', 3600, function () {
         ->get();
 });
 
-// Инвалидация при изменении
+// Invalidar quando muda
 class Post extends Model
 {
     protected static function booted(): void
@@ -163,21 +163,21 @@ class Post extends Model
 }
 ```
 
-**Кеширование с тегами:**
+**Cache com tags:**
 
 ```php
-// Кеш с тегами
+// Cache com tags
 $post = Cache::tags(['posts', 'post:' . $id])->remember("post:{$id}", 3600, function () use ($id) {
     return Post::with('user', 'comments')->find($id);
 });
 
-// Инвалидация всех постов
+// Invalidar todos os posts
 Cache::tags(['posts'])->flush();
 
-// Инвалидация конкретного поста
+// Invalidar um post específico
 Cache::tags(['post:' . $id])->flush();
 
-// Observer для автоматической инвалидации
+// Observer para invalidar automaticamente
 class PostObserver
 {
     public function saved(Post $post): void
@@ -195,7 +195,7 @@ class PostObserver
 **View caching:**
 
 ```php
-// Кешировать view
+// Cachear a view
 public function show(Post $post)
 {
     $html = Cache::remember("views.post.{$post->id}", 3600, function () use ($post) {
@@ -205,7 +205,7 @@ public function show(Post $post)
     return $html;
 }
 
-// Или через Response cache middleware
+// Ou via middleware de response cache
 Route::get('/posts/{post}', [PostController::class, 'show'])
     ->middleware('cache.response:3600');
 ```
@@ -215,7 +215,7 @@ Route::get('/posts/{post}', [PostController::class, 'show'])
 ```php
 class User extends Model
 {
-    // Кешировать computed attribute
+    // Cachear computed attribute
     public function getFullNameAttribute(): string
     {
         return Cache::remember("user:{$this->id}:full_name", 3600, function () {
@@ -223,7 +223,7 @@ class User extends Model
         });
     }
 
-    // Кешировать relationship count
+    // Cachear o count do relationship
     public function getPostsCountAttribute(): int
     {
         return Cache::remember("user:{$this->id}:posts_count", 3600, function () {
@@ -233,24 +233,24 @@ class User extends Model
 }
 ```
 
-**Cache warming (прогрев кеша):**
+**Cache warming (aquecer o cache):**
 
 ```php
-// Команда для прогрева кеша
+// Command para aquecer o cache
 class WarmCache extends Command
 {
     public function handle(): void
     {
-        // Прогреть популярные данные
+        // Aquecer dados populares
         Cache::remember('settings', 3600, fn() => Setting::all());
         Cache::remember('users.top', 3600, fn() => User::withCount('posts')->orderBy('posts_count', 'desc')->limit(100)->get());
         Cache::remember('posts.popular', 3600, fn() => Post::orderBy('views', 'desc')->limit(50)->get());
 
-        $this->info('Cache warmed successfully');
+        $this->info('Cache aquecido com sucesso');
     }
 }
 
-// Запускать после deploy
+// Rodar depois do deploy
 php artisan cache:warm
 ```
 
@@ -270,7 +270,7 @@ class UserRepository
     {
         $user->save();
 
-        // Инвалидировать кеш
+        // Invalidar o cache
         Cache::forget("user:{$user->id}");
     }
 }
@@ -283,40 +283,40 @@ class UserRepository
 {
     public function update(User $user): void
     {
-        // 1. Обновить БД
+        // 1. Atualizar o banco
         $user->save();
 
-        // 2. Обновить кеш
+        // 2. Atualizar o cache
         Cache::put("user:{$user->id}", $user, 3600);
     }
 }
 ```
 
-**Cache lock (предотвратить cache stampede):**
+**Cache lock (evitar cache stampede):**
 
 ```php
 $post = Cache::remember("post:{$id}", 3600, function () use ($id) {
-    // Если кеш истёк и много запросов одновременно,
-    // все будут запрашивать БД (cache stampede)
+    // Se o cache expirou e chegam muitos requests ao mesmo tempo,
+    // todos batem no banco (cache stampede)
 
     return Post::find($id);
 });
 
-// Решение: Lock
+// Solução: Lock
 $post = Cache::flexible("post:{$id}", [3600, 600], function () use ($id) {
     // 3600 — TTL, 600 — grace period
-    // При истечении первый запрос обновит кеш,
-    // остальные получат старый кеш на grace period
+    // Quando expira, o primeiro request atualiza o cache,
+    // os outros recebem o cache velho no grace period
     return Post::find($id);
 });
 ```
 
-**Мониторинг кеша:**
+**Monitorar o cache:**
 
 ```php
-// Laravel Telescope автоматически логирует кеш операции
+// O Laravel Telescope loga as operações de cache automaticamente
 
-// Метрики
+// Métricas
 class CacheMetrics
 {
     public static function trackHit(string $key): void
@@ -340,7 +340,7 @@ class CacheMetrics
 }
 ```
 
-**Cache strategies:**
+**Estratégias de cache:**
 
 ```php
 // 1. Cache aside (lazy loading)
@@ -350,40 +350,40 @@ if (!$user) {
     Cache::put("user:{$id}", $user, 3600);
 }
 
-// 2. Read-through (через helper)
+// 2. Read-through (via helper)
 $user = Cache::remember("user:{$id}", 3600, fn() => User::find($id));
 
-// 3. Write-through (обновление кеша при записи)
+// 3. Write-through (atualiza o cache na escrita)
 $user->save();
 Cache::put("user:{$user->id}", $user, 3600);
 
-// 4. Write-behind (отложенная запись в БД)
+// 4. Write-behind (grava no banco depois)
 Cache::put("user:{$id}", $user, 3600);
 dispatch(new SyncUserToDatabase($user));
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Кеширование ускоряет приложение и снижает нагрузку на БД. Драйверы: file, database, redis (лучший). Cache::remember() — если нет в кеше, выполнить callback и сохранить. Tags для группировки (Cache::tags(['posts'])->flush()). Инвалидация через observers (saved, deleted). Cache aside pattern — проверить кеш → загрузить из БД → сохранить. Write-through — обновить БД и кеш. Cache stampede решается через flexible() или lock. Hit rate для мониторинга эффективности. Прогрев кеша после deploy."
+> "Cache acelera o app e reduz carga no banco. Drivers: file, database, redis (o melhor). Cache::remember() — se não está no cache, executa o callback e guarda. Tags para agrupar (Cache::tags(['posts'])->flush()). Invalidação via observers (saved, deleted). Cache aside — checa o cache → carrega do banco → guarda. Write-through — atualiza banco e cache. Cache stampede se resolve com flexible() ou lock. Hit rate para monitorar se está valendo. Aquecer o cache depois do deploy."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй кеширование с автоинвалидацией
+### Exercício 1: Implemente cache com invalidação automática
 
-Кешируй список постов блога. При создании/обновлении/удалении поста автоматически очищай кеш.
+Coloque em cache a lista de posts do blog. Ao criar/atualizar/apagar um post, limpe o cache automaticamente.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Repository с кешированием
+// Repository com cache
 class PostRepository
 {
-    protected int $cacheTtl = 3600; // 1 час
+    protected int $cacheTtl = 3600; // 1 hora
 
     public function getPublished(): Collection
     {
@@ -413,7 +413,7 @@ class PostRepository
     }
 }
 
-// Observer для автоматической инвалидации
+// Observer para invalidar automaticamente
 class PostObserver
 {
     public function __construct(protected PostRepository $repository)
@@ -441,7 +441,7 @@ class PostObserver
     }
 }
 
-// Регистрация Observer
+// Registrar o Observer
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
@@ -450,7 +450,7 @@ class AppServiceProvider extends ServiceProvider
     }
 }
 
-// Альтернатива: Model Events
+// Alternativa: Model Events
 class Post extends Model
 {
     protected static function booted(): void
@@ -465,7 +465,7 @@ class Post extends Model
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 class PostController extends Controller
 {
     public function __construct(protected PostRepository $repository)
@@ -487,24 +487,24 @@ class PostController extends Controller
 ```
 </details>
 
-### Задание 2: Предотврати Cache Stampede
+### Exercício 2: Evite o Cache Stampede
 
-1000 запросов одновременно обращаются к кешу, который только что истёк. Все 1000 запросов идут в БД. Как предотвратить?
+1000 requests batem no cache ao mesmo tempo, e ele acabou de expirar. Os 1000 vão no banco. Como evitar?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ Проблема: Cache Stampede (Dog-Piling)
-// Кеш истёк → все запросы одновременно идут в БД
+// ❌ Problema: Cache Stampede (Dog-Piling)
+// Cache expirou → todos os requests vão no banco ao mesmo tempo
 
 $posts = Cache::remember('posts', 3600, function () {
-    // Если 1000 запросов пришли одновременно после истечения кеша,
-    // все выполнят этот тяжёлый запрос
+    // Se 1000 requests chegam juntos depois que o cache expirou,
+    // todos executam essa query pesada
     return Post::with('user', 'category')->get();
 });
 
-// ✅ Решение 1: Lock (только первый обновит кеш)
+// ✅ Solução 1: Lock (só o primeiro atualiza o cache)
 public function getPosts(): Collection
 {
     $posts = Cache::get('posts');
@@ -513,12 +513,12 @@ public function getPosts(): Collection
         return $posts;
     }
 
-    // Попытаться получить блокировку
+    // Tentar pegar o lock
     $lock = Cache::lock('posts:refresh', 10);
 
     if ($lock->get()) {
         try {
-            // Только первый запрос выполнит запрос к БД
+            // Só o primeiro request consulta o banco
             $posts = Post::with('user', 'category')->get();
             Cache::put('posts', $posts, 3600);
             return $posts;
@@ -526,24 +526,24 @@ public function getPosts(): Collection
             $lock->release();
         }
     } else {
-        // Другие запросы ждут и пытаются получить из кеша
+        // Os outros esperam e tentam pegar do cache
         sleep(1);
         return Cache::get('posts') ?? collect();
     }
 }
 
-// ✅ Решение 2: flexible() (grace period)
+// ✅ Solução 2: flexible() (grace period)
 $posts = Cache::flexible('posts', [3600, 600], function () {
-    // 3600 - основной TTL
-    // 600 - grace period (10 минут)
+    // 3600 - TTL principal
+    // 600 - grace period (10 minutos)
 
-    // После истечения основного TTL:
-    // - Первый запрос обновит кеш
-    // - Остальные получат старый кеш из grace period
+    // Depois que o TTL principal expira:
+    // - O primeiro request atualiza o cache
+    // - Os outros recebem o cache velho no grace period
     return Post::with('user', 'category')->get();
 });
 
-// ✅ Решение 3: Вероятностное обновление (probabilistic early expiration)
+// ✅ Solução 3: Refresh probabilístico (probabilistic early expiration)
 class CacheService
 {
     public function remember(string $key, int $ttl, Closure $callback, float $beta = 1.0)
@@ -557,11 +557,11 @@ class CacheService
                 $now = time();
                 $timeToExpire = $expiresAt - $now;
 
-                // Вероятность обновления растёт по мере приближения к истечению
+                // A chance de refresh sobe conforme chega perto de expirar
                 $probability = $beta * log(mt_rand() / mt_getrandmax());
 
                 if ($timeToExpire < $probability) {
-                    // Обновить досрочно
+                    // Atualizar antes da hora
                     return $this->refreshCache($key, $ttl, $callback);
                 }
             }
@@ -587,32 +587,32 @@ class CacheService
             }
         }
 
-        // Если не получили lock, вернуть старый кеш
+        // Se não pegou o lock, devolve o cache velho
         return Cache::get($key);
     }
 }
 
-// ✅ Решение 4: Фоновое обновление (scheduled task)
+// ✅ Solução 4: Refresh em background (scheduled task)
 class WarmCacheCommand extends Command
 {
     public function handle(): void
     {
-        // Обновлять кеш каждый час, не дожидаясь истечения
+        // Atualizar o cache a cada hora, sem esperar expirar
         $posts = Post::with('user', 'category')->get();
         Cache::put('posts', $posts, 3600);
 
-        $this->info('Cache warmed successfully');
+        $this->info('Cache aquecido com sucesso');
     }
 }
 
-// В Kernel.php
+// No Kernel.php
 protected function schedule(Schedule $schedule): void
 {
-    // Обновлять за 5 минут до истечения
+    // Atualizar 5 minutos antes de expirar
     $schedule->command('cache:warm')->everyFiftyFiveMinutes();
 }
 
-// ✅ Решение 5: Stale-While-Revalidate
+// ✅ Solução 5: Stale-While-Revalidate
 class StaleWhileRevalidate
 {
     public function get(string $key, int $ttl, int $staleTime, Closure $callback)
@@ -622,17 +622,17 @@ class StaleWhileRevalidate
 
         $now = time();
 
-        // Если кеш свежий, вернуть
+        // Se o cache está fresco, devolve
         if ($value && $expiresAt && $expiresAt > $now) {
             return $value;
         }
 
-        // Если кеш устаревший, но в stale периоде
+        // Se o cache está velho, mas ainda no período stale
         $staleExpiresAt = Cache::get("{$key}:stale_expires_at");
 
         if ($value && $staleExpiresAt && $staleExpiresAt > $now) {
-            // Вернуть устаревший кеш
-            // Асинхронно обновить в фоне
+            // Devolver o cache velho
+            // Atualizar em background, assíncrono
             dispatch(function () use ($key, $ttl, $staleTime, $callback) {
                 $this->refresh($key, $ttl, $staleTime, $callback);
             })->afterResponse();
@@ -640,7 +640,7 @@ class StaleWhileRevalidate
             return $value;
         }
 
-        // Кеш полностью истёк, обновить синхронно
+        // Cache expirou de vez, atualiza síncrono
         return $this->refresh($key, $ttl, $staleTime, $callback);
     }
 
@@ -659,30 +659,30 @@ class StaleWhileRevalidate
 ```
 </details>
 
-### Задание 3: Многоуровневое кеширование
+### Exercício 3: Cache em camadas
 
-Реализуй двухуровневый кеш: L1 (array в памяти процесса) + L2 (Redis).
+Implemente cache em dois níveis: L1 (array na memória do processo) + L2 (Redis).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Двухуровневый кеш для одного request
+// Cache em dois níveis para um request
 class TwoLevelCache
 {
     protected array $localCache = [];
 
     public function remember(string $key, int $ttl, Closure $callback)
     {
-        // L1: Проверить local cache (array в памяти)
+        // L1: Checar o local cache (array na memória)
         if (isset($this->localCache[$key])) {
             return $this->localCache[$key];
         }
 
-        // L2: Проверить Redis
+        // L2: Checar o Redis
         $value = Cache::remember($key, $ttl, $callback);
 
-        // Сохранить в L1
+        // Guardar no L1
         $this->localCache[$key] = $value;
 
         return $value;
@@ -701,7 +701,7 @@ class TwoLevelCache
     }
 }
 
-// Использование
+// Uso
 class PostRepository
 {
     public function __construct(protected TwoLevelCache $cache)
@@ -716,7 +716,7 @@ class PostRepository
     }
 }
 
-// Регистрация в Service Container
+// Registro no Service Container
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
@@ -725,16 +725,16 @@ class AppServiceProvider extends ServiceProvider
     }
 }
 
-// Более продвинутая версия с TTL для L1
+// Versão mais avançada com TTL no L1
 class AdvancedTwoLevelCache
 {
     protected array $localCache = [];
     protected array $expiresAt = [];
-    protected int $localTtl = 60; // L1 cache 60 секунд
+    protected int $localTtl = 60; // L1 cache 60 segundos
 
     public function remember(string $key, int $ttl, Closure $callback)
     {
-        // L1: Проверить local cache
+        // L1: Checar o local cache
         if ($this->hasValidLocalCache($key)) {
             return $this->localCache[$key];
         }
@@ -742,7 +742,7 @@ class AdvancedTwoLevelCache
         // L2: Redis cache
         $value = Cache::remember($key, $ttl, $callback);
 
-        // Сохранить в L1
+        // Guardar no L1
         $this->storeInLocalCache($key, $value);
 
         return $value;
@@ -768,21 +768,21 @@ class AdvancedTwoLevelCache
     }
 }
 
-// Middleware для очистки L1 кеша между requests (если используете octane)
+// Middleware para limpar o L1 entre requests (se você usa Octane)
 class ClearLocalCacheMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
 
-        // Очистить L1 кеш после каждого запроса
+        // Limpar o L1 depois de cada request
         app(TwoLevelCache::class)->flush();
 
         return $response;
     }
 }
 
-// Пример использования в реальном приложении
+// Exemplo num app de verdade
 class UserService
 {
     public function __construct(protected TwoLevelCache $cache)
@@ -791,9 +791,9 @@ class UserService
 
     public function getUser(int $id): ?User
     {
-        // При 1000 вызовов в одном request:
-        // - Первый: Redis запрос
-        // - Остальные 999: из array (мгновенно)
+        // Em 1000 chamadas no mesmo request:
+        // - Primeira: request no Redis
+        // - As outras 999: do array (na hora)
         return $this->cache->remember("user:{$id}", 3600, function () use ($id) {
             return User::find($id);
         });
@@ -802,17 +802,17 @@ class UserService
     public function getManyUsers(array $ids): Collection
     {
         return collect($ids)->map(function ($id) {
-            return $this->getUser($id); // L1 кеш предотвратит дубли
+            return $this->getUser($id); // O L1 evita duplicata
         })->filter();
     }
 }
 
-// Тест производительности
-// Без L1: 1000 вызовов = 1000 Redis запросов (~100ms)
-// С L1: 1000 вызовов = 1 Redis запрос + 999 array lookups (~5ms)
+// Teste de performance
+// Sem L1: 1000 chamadas = 1000 requests no Redis (~100ms)
+// Com L1: 1000 chamadas = 1 request no Redis + 999 lookups no array (~5ms)
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

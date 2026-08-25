@@ -1,156 +1,156 @@
 # 6.8 Redis
 
-## Краткое резюме
+## Resumo
 
-> **Redis** — in-memory key-value база данных для кеширования, очередей, сессий, real-time данных.
+> **Redis** — banco in-memory key-value para cache, queues, sessões e dados real-time.
 >
-> **Структуры:** strings, hashes, lists, sets, sorted sets. Хранит данные в RAM (очень быстро).
+> **Estruturas:** strings, hashes, lists, sets, sorted sets. Guarda os dados na RAM (muito rápido).
 >
-> **Важно:** В Laravel: Cache::store('redis'), SESSION_DRIVER=redis, QUEUE_CONNECTION=redis. Leaderboards через sorted sets (zadd, zrevrange).
+> **Importante:** No Laravel: Cache::store('redis'), SESSION_DRIVER=redis, QUEUE_CONNECTION=redis. Leaderboards com sorted sets (zadd, zrevrange).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Redis — in-memory база данных (key-value store). Используется для кеширования, очередей, сессий, real-time данных.
-
-**Основное:**
-- Хранит данные в RAM (очень быстро)
-- Key-value структура
-- Поддерживает структуры: strings, lists, sets, hashes
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Установка и настройка:**
+**O que é:**
+Redis — banco in-memory (key-value store). Serve para cache, queues, sessões e dados real-time.
+
+**O essencial:**
+- Guarda os dados na RAM (muito rápido)
+- Estrutura key-value
+- Estruturas: strings, lists, sets, hashes
+
+---
+
+## Como funciona
+
+**Instalação e config:**
 
 ```bash
-# Установить Redis
+# Instalar Redis
 brew install redis  # macOS
 apt-get install redis  # Ubuntu
 
-# Запустить
+# Iniciar
 redis-server
 
-# Laravel подключение (.env)
+# Conexão no Laravel (.env)
 REDIS_HOST=127.0.0.1
 REDIS_PASSWORD=null
 REDIS_PORT=6379
 ```
 
-**Базовые операции:**
+**Operações básicas:**
 
 ```php
 use Illuminate\Support\Facades\Redis;
 
-// SET (установить значение)
-Redis::set('user:1:name', 'John Doe');
+// SET (definir o valor)
+Redis::set('user:1:name', 'João Silva');
 
-// GET (получить значение)
-$name = Redis::get('user:1:name');  // 'John Doe'
+// GET (ler o valor)
+$name = Redis::get('user:1:name');  // 'João Silva'
 
-// SETEX (с TTL в секундах)
-Redis::setex('temp:data', 3600, 'value');  // Истечёт через 1 час
+// SETEX (com TTL em segundos)
+Redis::setex('temp:data', 3600, 'value');  // Expira em 1 hora
 
-// DEL (удалить)
+// DEL (apagar)
 Redis::del('user:1:name');
 
-// EXISTS (проверить существование)
+// EXISTS (checar se existe)
 if (Redis::exists('user:1:name')) {
-    // Ключ существует
+    // A chave existe
 }
 
-// INCR / DECR (инкремент/декремент)
+// INCR / DECR (incremento/decremento)
 Redis::incr('page:views');  // +1
 Redis::incrby('page:views', 10);  // +10
 Redis::decr('page:views');  // -1
 ```
 
-**Структуры данных:**
+**Estruturas de dados:**
 
 ```php
-// HASH (ассоциативный массив)
-Redis::hset('user:1', 'name', 'John');
-Redis::hset('user:1', 'email', 'john@example.com');
-Redis::hget('user:1', 'name');  // 'John'
-Redis::hgetall('user:1');  // ['name' => 'John', 'email' => '...']
+// HASH (array associativo)
+Redis::hset('user:1', 'name', 'João');
+Redis::hset('user:1', 'email', 'joao@email.com');
+Redis::hget('user:1', 'name');  // 'João'
+Redis::hgetall('user:1');  // ['name' => 'João', 'email' => '...']
 
-// LIST (список)
-Redis::rpush('queue', 'job1');  // Добавить в конец
+// LIST (lista)
+Redis::rpush('queue', 'job1');  // Adicionar no fim
 Redis::rpush('queue', 'job2');
-Redis::lpop('queue');  // Извлечь с начала ('job1')
-Redis::lrange('queue', 0, -1);  // Все элементы
+Redis::lpop('queue');  // Tirar do começo ('job1')
+Redis::lrange('queue', 0, -1);  // Todos os elementos
 
-// SET (множество уникальных элементов)
+// SET (conjunto de elementos únicos)
 Redis::sadd('tags', 'php');
 Redis::sadd('tags', 'laravel');
-Redis::sadd('tags', 'php');  // Дубль не добавится
+Redis::sadd('tags', 'php');  // Duplicata não entra
 Redis::smembers('tags');  // ['php', 'laravel']
 Redis::sismember('tags', 'php');  // true
 
-// SORTED SET (отсортированное множество)
+// SORTED SET (conjunto ordenado)
 Redis::zadd('leaderboard', 100, 'user1');
 Redis::zadd('leaderboard', 250, 'user2');
 Redis::zadd('leaderboard', 150, 'user3');
-Redis::zrevrange('leaderboard', 0, 9);  // Топ 10 (по убыванию)
+Redis::zrevrange('leaderboard', 0, 9);  // Top 10 (decrescente)
 // ['user2', 'user3', 'user1']
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Redis для:**
-- Кеширование (часто читаемые данные)
-- Сессии (быстрый доступ)
-- Очереди (Jobs)
+**Use Redis para:**
+- Cache (dados lidos com frequência)
+- Sessões (acesso rápido)
+- Queues (Jobs)
 - Rate limiting
-- Real-time данные (leaderboards, counters)
+- Dados real-time (leaderboards, counters)
 - Pub/Sub (Broadcasting)
 
-**Не используй для:**
-- Постоянное хранение (Redis in-memory, данные теряются при рестарте без persistence)
-- Большие объёмы данных (ограничено RAM)
-- Сложные запросы (нет SQL)
+**Não use para:**
+- Persistência permanente (Redis é in-memory; sem persistence, os dados somem no restart)
+- Volumes grandes (limitado pela RAM)
+- Queries complexas (não tem SQL)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Кеширование данных:**
+**Cache de dados:**
 
 ```php
-// Кешировать результат запроса
+// Cachear o resultado da query
 use Illuminate\Support\Facades\Cache;
 
 $users = Cache::remember('users.all', 3600, function () {
     return User::all();
 });
 
-// С Redis драйвером (.env: CACHE_DRIVER=redis)
+// Com o driver Redis (.env: CACHE_DRIVER=redis)
 $users = Cache::store('redis')->remember('users.all', 3600, function () {
     return User::all();
 });
 
-// Тегированный кеш
+// Cache com tags
 $posts = Cache::tags(['posts', 'published'])->remember('posts.published', 3600, function () {
     return Post::where('published', true)->get();
 });
 
-// Сбросить тег
+// Limpar a tag
 Cache::tags(['posts'])->flush();
 ```
 
@@ -159,20 +159,20 @@ Cache::tags(['posts'])->flush();
 ```php
 use Illuminate\Support\Facades\RateLimiter;
 
-// Ограничить попытки логина
+// Limitar tentativas de login
 if (RateLimiter::tooManyAttempts('login:' . $email, 5)) {
     $seconds = RateLimiter::availableIn('login:' . $email);
-    throw new TooManyRequestsException("Try again in {$seconds} seconds");
+    throw new TooManyRequestsException("Tente de novo em {$seconds} segundos");
 }
 
-RateLimiter::hit('login:' . $email, 60);  // +1 попытка, TTL 60 секунд
+RateLimiter::hit('login:' . $email, 60);  // +1 tentativa, TTL 60 segundos
 
-// После успешного логина
+// Depois do login com sucesso
 RateLimiter::clear('login:' . $email);
 
 // API rate limiting
 Route::middleware('throttle:60,1')->group(function () {
-    // 60 запросов в минуту
+    // 60 requests por minuto
 });
 ```
 
@@ -182,36 +182,36 @@ Route::middleware('throttle:60,1')->group(function () {
 // .env
 SESSION_DRIVER=redis
 
-// Сессии автоматически хранятся в Redis
+// Sessões vão automaticamente para o Redis
 session(['key' => 'value']);
 $value = session('key');
 ```
 
-**Queues (очереди):**
+**Queues (filas):**
 
 ```php
 // .env
 QUEUE_CONNECTION=redis
 
-// Job автоматически в Redis очередь
+// Job vai automaticamente para a queue no Redis
 SendEmail::dispatch($user);
 
-// Запустить worker
+// Iniciar o worker
 php artisan queue:work redis
 ```
 
-**Counters (счётчики):**
+**Counters (contadores):**
 
 ```php
-// Счётчик просмотров
+// Contador de views
 class PostController extends Controller
 {
     public function show(Post $post)
     {
-        // Инкремент в Redis
+        // Incremento no Redis
         Redis::incr("post:{$post->id}:views");
 
-        // Периодически синхронизировать с БД (в фоне)
+        // Sincronizar com o banco de vez em quando (em background)
         dispatch(new SyncPostViews($post));
 
         return view('posts.show', compact('post'));
@@ -219,12 +219,12 @@ class PostController extends Controller
 
     public function getViews(Post $post): int
     {
-        // Быстро из Redis
+        // Leitura rápida no Redis
         return (int) Redis::get("post:{$post->id}:views") ?: 0;
     }
 }
 
-// Job для синхронизации
+// Job de sincronização
 class SyncPostViews implements ShouldQueue
 {
     public function handle(): void
@@ -242,20 +242,20 @@ class SyncPostViews implements ShouldQueue
 }
 ```
 
-**Leaderboard (топ игроков):**
+**Leaderboard (top de jogadores):**
 
 ```php
 class LeaderboardService
 {
     public function addScore(User $user, int $score): void
     {
-        // Добавить в sorted set
+        // Adicionar no sorted set
         Redis::zadd('leaderboard', $score, $user->id);
     }
 
     public function getTop(int $limit = 10): Collection
     {
-        // Топ N по убыванию
+        // Top N em ordem decrescente
         $userIds = Redis::zrevrange('leaderboard', 0, $limit - 1);
 
         return User::whereIn('id', $userIds)
@@ -267,7 +267,7 @@ class LeaderboardService
 
     public function getUserRank(User $user): int
     {
-        // Позиция пользователя (с конца)
+        // Posição do usuário (do maior para o menor)
         $rank = Redis::zrevrank('leaderboard', $user->id);
 
         return $rank !== null ? $rank + 1 : 0;
@@ -275,29 +275,29 @@ class LeaderboardService
 }
 ```
 
-**Lock (блокировка):**
+**Lock (bloqueio):**
 
 ```php
 use Illuminate\Support\Facades\Cache;
 
-// Получить блокировку
-$lock = Cache::lock('process-orders', 10);  // 10 секунд
+// Pegar o lock
+$lock = Cache::lock('process-orders', 10);  // 10 segundos
 
 if ($lock->get()) {
     try {
-        // Критическая секция (только один процесс)
+        // Seção crítica (só um processo)
         processOrders();
     } finally {
         $lock->release();
     }
 } else {
-    // Не удалось получить блокировку
-    Log::info('Another process is already running');
+    // Não conseguiu o lock
+    Log::info('Outro processo já está rodando');
 }
 
-// Или с автоматическим освобождением
+// Ou com release automático
 Cache::lock('process-orders', 10)->block(5, function () {
-    // Ждать до 5 секунд, затем выполнить
+    // Espera até 5 segundos, depois executa
     processOrders();
 });
 ```
@@ -307,14 +307,14 @@ Cache::lock('process-orders', 10)->block(5, function () {
 ```php
 // Publisher
 Redis::publish('notifications', json_encode([
-    'message' => 'New order created',
+    'message' => 'Novo pedido criado',
     'order_id' => $order->id,
 ]));
 
-// Subscriber (в отдельном процессе)
+// Subscriber (em processo separado)
 Redis::subscribe(['notifications'], function (string $message) {
     $data = json_decode($message, true);
-    Log::info('Received notification', $data);
+    Log::info('Notificação recebida', $data);
 });
 ```
 
@@ -325,18 +325,18 @@ class UserRepository
 {
     public function find(int $id): ?User
     {
-        // 1. Проверить кеш
+        // 1. Checar o cache
         $cached = Redis::get("user:{$id}");
 
         if ($cached) {
             return unserialize($cached);
         }
 
-        // 2. Загрузить из БД
+        // 2. Carregar do banco
         $user = User::find($id);
 
         if ($user) {
-            // 3. Сохранить в кеш
+            // 3. Guardar no cache
             Redis::setex("user:{$id}", 3600, serialize($user));
         }
 
@@ -345,13 +345,13 @@ class UserRepository
 
     public function update(User $user): void
     {
-        // 1. Обновить БД
+        // 1. Atualizar o banco
         $user->save();
 
-        // 2. Инвалидировать кеш
+        // 2. Invalidar o cache
         Redis::del("user:{$user->id}");
 
-        // Или обновить кеш
+        // Ou atualizar o cache
         Redis::setex("user:{$user->id}", 3600, serialize($user));
     }
 }
@@ -359,23 +359,23 @@ class UserRepository
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Redis — in-memory key-value база для кеширования, очередей, сессий. Структуры: strings, hashes, lists, sets, sorted sets. В Laravel: Cache::store('redis'), SESSION_DRIVER=redis, QUEUE_CONNECTION=redis. Rate limiting через RateLimiter. Leaderboards через sorted sets (zadd, zrevrange). Lock через Cache::lock() для критических секций. Pub/Sub для real-time. Cache aside pattern: проверить кеш → загрузить из БД → сохранить в кеш."
+> "Redis é um banco in-memory key-value para cache, queues e sessões. Estruturas: strings, hashes, lists, sets, sorted sets. No Laravel: Cache::store('redis'), SESSION_DRIVER=redis, QUEUE_CONNECTION=redis. Rate limiting com RateLimiter. Leaderboards com sorted sets (zadd, zrevrange). Lock com Cache::lock() para seção crítica. Pub/Sub para real-time. Cache aside: checa o cache → carrega do banco → guarda no cache."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Rate Limiting для API
+### Exercício 1: Rate Limiting na API
 
-Ограничь API endpoint: максимум 10 запросов в минуту на IP. При превышении вернуть 429 ошибку.
+Limite o endpoint da API: no máximo 10 requests por minuto por IP. Se passar, devolva 429.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Middleware для rate limiting
+// Middleware de rate limiting
 class RateLimitMiddleware
 {
     public function handle(Request $request, Closure $next, int $maxAttempts = 10, int $decayMinutes = 1)
@@ -386,7 +386,7 @@ class RateLimitMiddleware
             $seconds = RateLimiter::availableIn($key);
 
             return response()->json([
-                'message' => 'Too many requests. Please try again later.',
+                'message' => 'Muitas requisições. Tente de novo mais tarde.',
                 'retry_after' => $seconds,
             ], 429)->header('Retry-After', $seconds);
         }
@@ -416,27 +416,27 @@ class RateLimitMiddleware
     }
 }
 
-// Использование в routes
+// Uso nas routes
 Route::middleware(['rate.limit:10,1'])->group(function () {
     Route::get('/api/posts', [PostController::class, 'index']);
 });
 
-// Или встроенный throttle middleware
+// Ou o throttle middleware nativo
 Route::middleware('throttle:10,1')->group(function () {
     Route::get('/api/posts', [PostController::class, 'index']);
 });
 
-// Для авторизованных пользователей (по user_id)
+// Para usuários autenticados (por user_id)
 Route::middleware('auth:sanctum', 'throttle:60,1')->group(function () {
     Route::post('/api/posts', [PostController::class, 'store']);
 });
 
-// В RouteServiceProvider для кастомного лимита
+// No RouteServiceProvider para limite customizado
 RateLimiter::for('api', function (Request $request) {
     return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
 });
 
-// Разные лимиты для разных пользователей
+// Limites diferentes por tipo de usuário
 RateLimiter::for('api', function (Request $request) {
     return $request->user()?->is_premium
         ? Limit::perMinute(1000)->by($request->user()->id)
@@ -445,35 +445,35 @@ RateLimiter::for('api', function (Request $request) {
 ```
 </details>
 
-### Задание 2: Реализуй Leaderboard (топ игроков)
+### Exercício 2: Leaderboard (top de jogadores)
 
-Создай систему рейтинга игроков с возможностью получить топ-100 и позицию конкретного игрока.
+Crie um ranking de jogadores. Precisa devolver o top 100 e a posição de um jogador específico.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class LeaderboardService
 {
     protected string $key = 'game:leaderboard';
 
-    // Добавить/обновить счёт игрока
+    // Adicionar/atualizar o score do jogador
     public function updateScore(User $user, int $score): void
     {
-        // zadd добавляет или обновляет score
+        // zadd adiciona ou atualiza o score
         Redis::zadd($this->key, $score, $user->id);
     }
 
-    // Увеличить счёт
+    // Incrementar o score
     public function incrementScore(User $user, int $points): int
     {
         return Redis::zincrby($this->key, $points, $user->id);
     }
 
-    // Получить топ N игроков
+    // Pegar o top N
     public function getTop(int $limit = 100): Collection
     {
-        // zrevrange возвращает от большего к меньшему
+        // zrevrange devolve do maior para o menor
         $userIds = Redis::zrevrange($this->key, 0, $limit - 1, 'WITHSCORES');
 
         // $userIds = ['user1' => 1000, 'user2' => 950, ...]
@@ -489,7 +489,7 @@ class LeaderboardService
         })->values();
     }
 
-    // Получить позицию игрока
+    // Pegar a posição do jogador
     public function getUserRank(User $user): ?int
     {
         $rank = Redis::zrevrank($this->key, $user->id);
@@ -497,13 +497,13 @@ class LeaderboardService
         return $rank !== null ? $rank + 1 : null;
     }
 
-    // Получить счёт игрока
+    // Pegar o score do jogador
     public function getUserScore(User $user): int
     {
         return (int) Redis::zscore($this->key, $user->id) ?: 0;
     }
 
-    // Получить игроков вокруг пользователя
+    // Pegar os jogadores em volta do usuário
     public function getSurroundingPlayers(User $user, int $range = 5): Collection
     {
         $userRank = $this->getUserRank($user);
@@ -528,27 +528,27 @@ class LeaderboardService
         })->values();
     }
 
-    // Очистить leaderboard
+    // Limpar o leaderboard
     public function clear(): void
     {
         Redis::del($this->key);
     }
 }
 
-// Использование
+// Uso
 $leaderboard = new LeaderboardService();
 
-// Обновить счёт
+// Atualizar o score
 $leaderboard->updateScore($user, 1500);
 $leaderboard->incrementScore($user, 100);
 
-// Топ 10
+// Top 10
 $top10 = $leaderboard->getTop(10);
 
-// Позиция игрока
+// Posição do jogador
 $rank = $leaderboard->getUserRank($user);
 
-// Игроки вокруг
+// Jogadores em volta
 $surrounding = $leaderboard->getSurroundingPlayers($user, 3);
 
 // API endpoint
@@ -567,15 +567,15 @@ public function leaderboard()
 ```
 </details>
 
-### Задание 3: Реализуй Distributed Lock
+### Exercício 3: Distributed Lock
 
-Создай систему блокировок для предотвращения одновременного выполнения задачи несколькими процессами.
+Crie um sistema de locks para impedir que vários processos executem a mesma tarefa ao mesmo tempo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Базовое использование Cache::lock()
+// Uso básico do Cache::lock()
 class OrderProcessor
 {
     public function processOrder(Order $order): void
@@ -584,25 +584,25 @@ class OrderProcessor
 
         if ($lock->get()) {
             try {
-                // Только один процесс выполнит этот код
+                // Só um processo executa este código
                 $this->doProcessing($order);
             } finally {
                 $lock->release();
             }
         } else {
-            Log::info("Order {$order->id} is already being processed");
+            Log::info("Pedido {$order->id} já está em processamento");
         }
     }
 }
 
-// С автоматическим ожиданием
+// Com espera automática
 class EmailSender
 {
     public function sendBulkEmails(Collection $users): void
     {
         Cache::lock('send-bulk-emails', 60)->block(5, function () use ($users) {
-            // Ждать до 5 секунд получения блокировки
-            // Если получили - выполнить, иначе throw LockTimeoutException
+            // Espera até 5 segundos pelo lock
+            // Se pegou — executa; senão throw LockTimeoutException
             foreach ($users as $user) {
                 Mail::to($user)->send(new NewsletterEmail());
             }
@@ -610,12 +610,12 @@ class EmailSender
     }
 }
 
-// Продление блокировки (для долгих операций)
+// Renovar o lock (operações longas)
 class DataImporter
 {
     public function import(string $file): void
     {
-        $lock = Cache::lock('data-import', 120);  // 2 минуты
+        $lock = Cache::lock('data-import', 120);  // 2 minutos
 
         if ($lock->get()) {
             try {
@@ -624,9 +624,9 @@ class DataImporter
                 foreach ($lines as $line) {
                     $this->processLine($line);
 
-                    // Продлить блокировку каждые 100 строк
+                    // Renovar o lock a cada 100 linhas
                     if ($line % 100 === 0) {
-                        $lock->get();  // Обновить TTL
+                        $lock->get();  // Atualizar o TTL
                     }
                 }
             } finally {
@@ -636,7 +636,7 @@ class DataImporter
     }
 }
 
-// Кастомная реализация с Redis
+// Implementação custom com Redis
 class CustomLock
 {
     protected string $key;
@@ -653,7 +653,7 @@ class CustomLock
     {
         $this->owner = Str::random(20);
 
-        // SET NX EX - установить если не существует с TTL
+        // SET NX EX — seta se não existir, com TTL
         $acquired = Redis::set(
             $this->key,
             $this->owner,
@@ -667,7 +667,7 @@ class CustomLock
 
     public function release(): bool
     {
-        // Удалить только если мы владелец (Lua script для атомарности)
+        // Apagar só se formos o dono (Lua script para atomicidade)
         $script = <<<'LUA'
             if redis.call("get", KEYS[1]) == ARGV[1] then
                 return redis.call("del", KEYS[1])
@@ -685,21 +685,21 @@ class CustomLock
     }
 }
 
-// Использование кастомного lock
+// Uso do lock custom
 $lock = new CustomLock('critical-section', 30);
 
 if ($lock->acquire()) {
     try {
-        // Критическая секция
+        // Seção crítica
         processCriticalTask();
     } finally {
         $lock->release();
     }
 } else {
-    Log::info('Could not acquire lock');
+    Log::info('Não conseguiu o lock');
 }
 
-// Distributed lock для scheduled tasks
+// Distributed lock para scheduled tasks
 class ScheduledTaskLock
 {
     public function handle(): void
@@ -707,7 +707,7 @@ class ScheduledTaskLock
         $lock = Cache::lock('scheduled:daily-report', 3600);
 
         if ($lock->get()) {
-            // Только один сервер выполнит эту задачу
+            // Só um servidor executa esta tarefa
             try {
                 $this->generateDailyReport();
             } finally {
@@ -717,12 +717,12 @@ class ScheduledTaskLock
     }
 }
 
-// В Kernel.php
+// No Kernel.php
 protected function schedule(Schedule $schedule): void
 {
     $schedule->call(function () {
         Cache::lock('scheduled:cleanup', 3600)->get(function () {
-            // Cleanup логика
+            // Lógica de cleanup
         });
     })->daily();
 }
@@ -731,4 +731,4 @@ protected function schedule(Schedule $schedule): void
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

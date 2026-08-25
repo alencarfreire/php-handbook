@@ -1,59 +1,59 @@
-# 6.1 Основы SQL (SELECT, WHERE, JOIN)
+# 6.1 Fundamentos de SQL (SELECT, WHERE, JOIN)
 
-## Краткое резюме
+## Resumo
 
-> **SQL (Structured Query Language)** — язык запросов к реляционным БД. SELECT читает данные, WHERE фильтрует, JOIN соединяет таблицы.
+> **SQL (Structured Query Language)** — linguagem de consulta para bancos relacionais. SELECT lê os dados, WHERE filtra, JOIN junta tabelas.
 >
-> **Основные команды:** SELECT (выбор), WHERE (фильтр), JOIN (соединение), ORDER BY (сортировка), LIMIT (ограничение).
+> **Comandos principais:** SELECT (selecionar), WHERE (filtrar), JOIN (juntar), ORDER BY (ordenar), LIMIT (limitar).
 >
-> **Важно:** INNER JOIN возвращает только совпадения, LEFT JOIN — все из левой таблицы + совпадения справа.
+> **Importante:** INNER JOIN devolve só os matches. LEFT JOIN devolve tudo da tabela da esquerda + os matches da direita.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-SQL — язык запросов к реляционным БД. SELECT читает данные, WHERE фильтрует, JOIN соединяет таблицы.
-
-**Основные команды:**
-- SELECT — выбрать данные
-- WHERE — фильтровать
-- JOIN — соединить таблицы
-- ORDER BY — сортировать
-- LIMIT — ограничить количество
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
+
+**O que é:**
+SQL é a linguagem de consulta para bancos relacionais. SELECT lê os dados, WHERE filtra, JOIN junta tabelas.
+
+**Comandos principais:**
+- SELECT — selecionar dados
+- WHERE — filtrar
+- JOIN — juntar tabelas
+- ORDER BY — ordenar
+- LIMIT — limitar a quantidade
+
+---
+
+## Como funciona
 
 **SELECT:**
 
 ```sql
--- Выбрать все столбцы
+-- Selecionar todas as colunas
 SELECT * FROM users;
 
--- Выбрать конкретные столбцы
+-- Selecionar colunas específicas
 SELECT id, name, email FROM users;
 
--- С алиасом
+-- Com alias
 SELECT
     id,
     name AS full_name,
     email AS user_email
 FROM users;
 
--- DISTINCT (уникальные значения)
+-- DISTINCT (valores únicos)
 SELECT DISTINCT status FROM orders;
 
 -- COUNT
@@ -61,28 +61,28 @@ SELECT COUNT(*) FROM users;
 SELECT COUNT(DISTINCT status) FROM orders;
 ```
 
-**WHERE (фильтрация):**
+**WHERE (filtro):**
 
 ```sql
--- Равенство
+-- Igualdade
 SELECT * FROM users WHERE id = 1;
 SELECT * FROM users WHERE status = 'active';
 
--- Неравенство
+-- Comparação
 SELECT * FROM users WHERE age > 18;
 SELECT * FROM users WHERE age >= 18;
 SELECT * FROM users WHERE status != 'banned';
 
--- LIKE (поиск по шаблону)
-SELECT * FROM users WHERE name LIKE 'John%';  -- Начинается с John
-SELECT * FROM users WHERE email LIKE '%@gmail.com';  -- Заканчивается на @gmail.com
-SELECT * FROM users WHERE name LIKE '%son%';  -- Содержит son
+-- LIKE (busca por padrão)
+SELECT * FROM users WHERE name LIKE 'João%';  -- Começa com João
+SELECT * FROM users WHERE email LIKE '%@gmail.com';  -- Termina com @gmail.com
+SELECT * FROM users WHERE name LIKE '%silva%';  -- Contém silva
 
--- IN (в списке значений)
+-- IN (está na lista)
 SELECT * FROM users WHERE id IN (1, 2, 3);
 SELECT * FROM users WHERE status IN ('active', 'pending');
 
--- BETWEEN (в диапазоне)
+-- BETWEEN (no intervalo)
 SELECT * FROM users WHERE age BETWEEN 18 AND 65;
 SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31';
 
@@ -97,43 +97,43 @@ WHERE status = 'active' AND age > 18;
 SELECT * FROM users
 WHERE status = 'active' OR status = 'pending';
 
--- Комбинация
+-- Combinação
 SELECT * FROM users
 WHERE (status = 'active' OR status = 'pending')
   AND age > 18;
 ```
 
-**ORDER BY (сортировка):**
+**ORDER BY (ordenação):**
 
 ```sql
--- По возрастанию (ASC)
+-- Crescente (ASC)
 SELECT * FROM users ORDER BY name ASC;
 
--- По убыванию (DESC)
+-- Decrescente (DESC)
 SELECT * FROM users ORDER BY created_at DESC;
 
--- По нескольким столбцам
+-- Por várias colunas
 SELECT * FROM users
 ORDER BY status ASC, created_at DESC;
 ```
 
-**LIMIT и OFFSET (пагинация):**
+**LIMIT e OFFSET (paginação):**
 
 ```sql
--- Первые 10 записей
+-- Primeiros 10 registros
 SELECT * FROM users LIMIT 10;
 
--- Записи с 11 по 20 (пагинация)
+-- Registros de 11 a 20 (paginação)
 SELECT * FROM users LIMIT 10 OFFSET 10;
 
--- Короткая форма
+-- Forma curta
 SELECT * FROM users LIMIT 10, 10;  -- OFFSET 10, LIMIT 10
 ```
 
-**JOIN (соединение таблиц):**
+**JOIN (juntar tabelas):**
 
 ```sql
--- INNER JOIN (только совпадения)
+-- INNER JOIN (só os matches)
 SELECT
     users.id,
     users.name,
@@ -142,7 +142,7 @@ SELECT
 FROM users
 INNER JOIN orders ON users.id = orders.user_id;
 
--- LEFT JOIN (все из левой таблицы)
+-- LEFT JOIN (tudo da tabela da esquerda)
 SELECT
     users.id,
     users.name,
@@ -151,14 +151,14 @@ FROM users
 LEFT JOIN orders ON users.id = orders.user_id
 GROUP BY users.id, users.name;
 
--- RIGHT JOIN (все из правой таблицы)
+-- RIGHT JOIN (tudo da tabela da direita)
 SELECT
     orders.id,
     users.name
 FROM users
 RIGHT JOIN orders ON users.id = orders.user_id;
 
--- Множественные JOIN
+-- Vários JOINs
 SELECT
     users.name,
     orders.id AS order_id,
@@ -172,28 +172,28 @@ INNER JOIN products ON order_items.product_id = products.id;
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **SELECT:**
-- Чтение данных из БД
+- Ler dados do banco
 
 **WHERE:**
-- Фильтрация по условиям
+- Filtrar por condição
 
 **JOIN:**
-- Связывание данных из разных таблиц
-- INNER JOIN — только совпадения
-- LEFT JOIN — все из левой + совпадения справа
-- RIGHT JOIN — все из правой + совпадения слева
+- Juntar dados de tabelas diferentes
+- INNER JOIN — só os matches
+- LEFT JOIN — tudo da esquerda + matches da direita
+- RIGHT JOIN — tudo da direita + matches da esquerda
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**E-commerce запросы:**
+**Queries de e-commerce:**
 
 ```sql
--- Активные пользователи с заказами
+-- Usuários ativos com pedidos
 SELECT
     users.id,
     users.name,
@@ -209,7 +209,7 @@ HAVING total_orders > 5
 ORDER BY total_spent DESC
 LIMIT 100;
 
--- Товары без заказов (LEFT JOIN + IS NULL)
+-- Produtos sem pedidos (LEFT JOIN + IS NULL)
 SELECT
     products.id,
     products.name,
@@ -219,7 +219,7 @@ LEFT JOIN order_items ON products.id = order_items.product_id
 WHERE order_items.id IS NULL
   AND products.is_active = 1;
 
--- Заказы с деталями
+-- Pedidos com detalhes
 SELECT
     orders.id AS order_id,
     orders.number AS order_number,
@@ -237,10 +237,10 @@ WHERE orders.created_at >= '2024-01-01'
 ORDER BY orders.created_at DESC;
 ```
 
-**Подзапросы:**
+**Subquery:**
 
 ```sql
--- Пользователи с заказами выше среднего
+-- Usuários com pedidos acima da média
 SELECT
     users.id,
     users.name,
@@ -259,7 +259,7 @@ WHERE (
     FROM orders
 );
 
--- IN с подзапросом
+-- IN com subquery
 SELECT * FROM users
 WHERE id IN (
     SELECT user_id
@@ -267,7 +267,7 @@ WHERE id IN (
     WHERE total > 1000
 );
 
--- EXISTS (проверка существования)
+-- EXISTS (checar se existe)
 SELECT * FROM users
 WHERE EXISTS (
     SELECT 1
@@ -277,10 +277,10 @@ WHERE EXISTS (
 );
 ```
 
-**GROUP BY и HAVING:**
+**GROUP BY e HAVING:**
 
 ```sql
--- Группировка по статусу
+-- Agrupar por status
 SELECT
     status,
     COUNT(*) AS count,
@@ -288,7 +288,7 @@ SELECT
 FROM orders
 GROUP BY status;
 
--- HAVING (фильтр после группировки)
+-- HAVING (filtro depois do GROUP BY)
 SELECT
     user_id,
     COUNT(*) AS orders_count,
@@ -298,21 +298,21 @@ GROUP BY user_id
 HAVING orders_count > 10 AND total_spent > 5000;
 ```
 
-**UNION (объединение результатов):**
+**UNION (unir resultados):**
 
 ```sql
--- Объединить активных и VIP пользователей
+-- Unir usuários active e VIP
 SELECT id, name, 'active' AS type FROM users WHERE status = 'active'
 UNION
 SELECT id, name, 'vip' AS type FROM users WHERE is_vip = 1;
 
--- UNION ALL (с дубликатами)
+-- UNION ALL (com duplicatas)
 SELECT id, name FROM customers
 UNION ALL
 SELECT id, name FROM suppliers;
 ```
 
-**CASE (условная логика):**
+**CASE (lógica condicional):**
 
 ```sql
 SELECT
@@ -328,10 +328,10 @@ SELECT
 FROM orders;
 ```
 
-**В Laravel Query Builder:**
+**No Laravel Query Builder:**
 
 ```php
-// SELECT с WHERE
+// SELECT com WHERE
 $users = DB::table('users')
     ->select('id', 'name', 'email')
     ->where('status', 'active')
@@ -348,14 +348,14 @@ $orders = DB::table('orders')
     ->where('orders.status', 'completed')
     ->get();
 
-// LEFT JOIN с COUNT
+// LEFT JOIN com COUNT
 $users = DB::table('users')
     ->leftJoin('orders', 'users.id', '=', 'orders.user_id')
     ->select('users.*', DB::raw('COUNT(orders.id) as orders_count'))
     ->groupBy('users.id')
     ->get();
 
-// Подзапрос
+// Subquery
 $averageTotal = DB::table('orders')->avg('total');
 $users = DB::table('users')
     ->whereIn('id', function ($query) use ($averageTotal) {
@@ -369,28 +369,28 @@ $users = DB::table('users')
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "SELECT читает данные, WHERE фильтрует (=, >, <, LIKE, IN, BETWEEN, IS NULL). ORDER BY сортирует, LIMIT ограничивает. JOIN соединяет таблицы: INNER JOIN (только совпадения), LEFT JOIN (все из левой), RIGHT JOIN (все из правой). GROUP BY для агрегации, HAVING для фильтрации после группировки. Подзапросы в WHERE, SELECT. В Laravel использую Query Builder: DB::table(), where(), join(), orderBy(), limit()."
+> "SELECT lê os dados, WHERE filtra (=, >, <, LIKE, IN, BETWEEN, IS NULL). ORDER BY ordena, LIMIT limita. JOIN junta tabelas: INNER JOIN (só os matches), LEFT JOIN (tudo da esquerda), RIGHT JOIN (tudo da direita). GROUP BY para agregar, HAVING para filtrar depois do agrupamento. Subquery no WHERE e no SELECT. No Laravel eu uso Query Builder: DB::table(), where(), join(), orderBy(), limit()."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Найди пользователей с заказами
+### Exercício 1: Encontre usuários com pedidos
 
-Напиши запрос, который выберет всех пользователей у которых есть хотя бы один заказ. Используй два способа: JOIN и подзапрос.
+**Enunciado:** Escreva uma query que traga todos os usuários com pelo menos um pedido. Use dois jeitos: JOIN e subquery.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- Способ 1: INNER JOIN
+-- Forma 1: INNER JOIN
 SELECT DISTINCT users.id, users.name, users.email
 FROM users
 INNER JOIN orders ON users.id = orders.user_id;
 
--- Способ 2: EXISTS (эффективнее для больших таблиц)
+-- Forma 2: EXISTS (mais eficiente em tabelas grandes)
 SELECT id, name, email
 FROM users
 WHERE EXISTS (
@@ -399,7 +399,7 @@ WHERE EXISTS (
     WHERE orders.user_id = users.id
 );
 
--- Способ 3: IN с подзапросом
+-- Forma 3: IN com subquery
 SELECT id, name, email
 FROM users
 WHERE id IN (
@@ -407,27 +407,27 @@ WHERE id IN (
     FROM orders
 );
 
--- В Laravel Query Builder
+-- No Laravel Query Builder
 $users = DB::table('users')
     ->join('orders', 'users.id', '=', 'orders.user_id')
     ->select('users.id', 'users.name', 'users.email')
     ->distinct()
     ->get();
 
-// Или через whereHas
+// Ou com whereHas
 $users = User::whereHas('orders')->get();
 ```
 </details>
 
-### Задание 2: Топ 5 товаров по продажам
+### Exercício 2: Top 5 produtos por vendas
 
-Выведи топ 5 товаров с наибольшим количеством продаж (сумма quantity из order_items).
+**Enunciado:** Traga os 5 produtos com mais vendas (soma de quantity em order_items).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
--- SQL запрос
+-- Query SQL
 SELECT
     products.id,
     products.name,
@@ -438,7 +438,7 @@ GROUP BY products.id, products.name
 ORDER BY total_sold DESC
 LIMIT 5;
 
--- В Laravel Query Builder
+-- No Laravel Query Builder
 $topProducts = DB::table('products')
     ->join('order_items', 'products.id', '=', 'order_items.product_id')
     ->select(
@@ -451,7 +451,7 @@ $topProducts = DB::table('products')
     ->limit(5)
     ->get();
 
-// Eloquent вариант
+// Variante Eloquent
 $topProducts = Product::select('products.*')
     ->selectRaw('SUM(order_items.quantity) as total_sold')
     ->join('order_items', 'products.id', '=', 'order_items.product_id')
@@ -462,12 +462,12 @@ $topProducts = Product::select('products.*')
 ```
 </details>
 
-### Задание 3: Найди товары без заказов
+### Exercício 3: Encontre produtos sem pedidos
 
-Выведи все товары, которые ни разу не были заказаны.
+**Enunciado:** Traga todos os produtos que nunca foram pedidos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```sql
 -- LEFT JOIN + IS NULL
@@ -479,7 +479,7 @@ FROM products
 LEFT JOIN order_items ON products.id = order_items.product_id
 WHERE order_items.id IS NULL;
 
--- NOT EXISTS (эффективнее)
+-- NOT EXISTS (mais eficiente)
 SELECT id, name, price
 FROM products
 WHERE NOT EXISTS (
@@ -488,7 +488,7 @@ WHERE NOT EXISTS (
     WHERE order_items.product_id = products.id
 );
 
--- NOT IN (может быть медленнее)
+-- NOT IN (pode ser mais lento)
 SELECT id, name, price
 FROM products
 WHERE id NOT IN (
@@ -496,17 +496,17 @@ WHERE id NOT IN (
     FROM order_items
 );
 
--- В Laravel
+-- No Laravel
 $unusedProducts = Product::leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
     ->whereNull('order_items.id')
     ->select('products.*')
     ->get();
 
-// Или через doesntHave
+// Ou com doesntHave
 $unusedProducts = Product::doesntHave('orderItems')->get();
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
