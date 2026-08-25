@@ -1,13 +1,13 @@
-# 16.3 Debugging Scenarios
+# 16.3 Cenários de debug
 
-## Сценарии debugging на собеседованиях
+## Cenários de debug na entrevista
 
-### Сценарий 1: N+1 Query Problem
+### Cenário 1: N+1 Query Problem
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Пользователь жалуется: "Страница со списком постов грузится 5 секунд"
+// Usuário reclama: "A página da lista de posts demora 5 segundos"
 
 class PostController extends Controller
 {
@@ -23,26 +23,26 @@ class PostController extends Controller
 @foreach ($posts as $post)
     <div>
         <h2>{{ $post->title }}</h2>
-        <p>By: {{ $post->user->name }}</p>  // N queries!
-        <p>Comments: {{ $post->comments->count() }}</p>  // N queries!
+        <p>Por: {{ $post->user->name }}</p>  // N queries!
+        <p>Comentários: {{ $post->comments->count() }}</p>  // N queries!
     </div>
 @endforeach
 
-// Итого: 1 + 100 + 100 = 201 query для 100 постов
+// Total: 1 + 100 + 100 = 201 queries para 100 posts
 ```
 
 **Debugging:**
 
 ```php
-// 1. Включить Query Log
+// 1. Ligar o Query Log
 DB::enableQueryLog();
 
-// Загрузить страницу
+// Carregar a página
 
-// 2. Посмотреть queries
+// 2. Ver as queries
 dd(DB::getQueryLog());
 
-// Увидим:
+// Vamos ver:
 // SELECT * FROM posts
 // SELECT * FROM users WHERE id = 1
 // SELECT * FROM users WHERE id = 2
@@ -50,7 +50,7 @@ dd(DB::getQueryLog());
 // ...
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 class PostController extends Controller
@@ -64,14 +64,14 @@ class PostController extends Controller
     }
 }
 
-// Теперь: 3 queries вместо 201
+// Agora: 3 queries no lugar de 201
 ```
 
 ---
 
-### Сценарий 2: Memory Limit Exceeded
+### Cenário 2: Memory Limit Exceeded
 
-**Проблема:**
+**Problema:**
 
 ```php
 // Fatal error: Allowed memory size of 134217728 bytes exhausted
@@ -80,7 +80,7 @@ class ExportController extends Controller
 {
     public function exportUsers()
     {
-        $users = User::all();  // 1 миллион пользователей в памяти!
+        $users = User::all();  // 1 milhão de usuários na memória!
 
         $csv = '';
         foreach ($users as $user) {
@@ -96,14 +96,14 @@ class ExportController extends Controller
 **Debugging:**
 
 ```php
-// Посмотреть текущее использование памяти
+// Ver o uso atual de memória
 echo memory_get_usage() / 1024 / 1024 . ' MB';
 
-// Проверить limit
+// Checar o limit
 echo ini_get('memory_limit'); // 128M
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 class ExportController extends Controller
@@ -115,10 +115,10 @@ class ExportController extends Controller
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'w');
 
-            // Header
-            fputcsv($handle, ['ID', 'Name', 'Email']);
+            // Cabeçalho
+            fputcsv($handle, ['ID', 'Nome', 'Email']);
 
-            // Chunk вместо all()
+            // chunk() no lugar de all()
             User::chunk(1000, function ($users) use ($handle) {
                 foreach ($users as $user) {
                     fputcsv($handle, [
@@ -134,17 +134,17 @@ class ExportController extends Controller
     }
 }
 
-// Теперь: постоянная память ~5 MB
+// Agora: memória estável ~5 MB
 ```
 
 ---
 
-### Сценарий 3: Slow Database Query
+### Cenário 3: Query lenta no banco
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Запрос выполняется 10+ секунд
+// A query leva 10+ segundos
 
 $orders = Order::where('status', 'pending')
     ->where('created_at', '>=', now()->subDays(30))
@@ -161,53 +161,53 @@ WHERE status = 'pending'
 AND created_at >= '2024-01-01'
 ORDER BY total DESC;
 
--- Результат:
--- type: ALL (full table scan - плохо!)
--- rows: 1000000 (сканирует всю таблицу)
--- Extra: Using where; Using filesort (нет индекса)
+-- Resultado:
+-- type: ALL (full table scan — ruim!)
+-- rows: 1000000 (varre a tabela inteira)
+-- Extra: Using where; Using filesort (sem índice)
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
-// Миграция: добавить индексы
+// Migration: adicionar índices
 Schema::table('orders', function (Blueprint $table) {
     $table->index(['status', 'created_at', 'total']);
-    // Composite index в порядке WHERE, ORDER BY
+    // Composite index na ordem do WHERE, ORDER BY
 });
 
-// Теперь EXPLAIN покажет:
-// type: range (использует индекс)
-// rows: 1000 (только нужные строки)
-// Extra: Using index condition (быстро!)
+// Agora o EXPLAIN mostra:
+// type: range (usa o índice)
+// rows: 1000 (só as linhas necessárias)
+// Extra: Using index condition (rápido!)
 ```
 
 ---
 
-### Сценарий 4: Race Condition
+### Cenário 4: Race Condition
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Два пользователя одновременно покупают последний товар
+// Dois usuários compram o último item ao mesmo tempo
 
 class CheckoutController extends Controller
 {
     public function checkout(Request $request, Product $product)
     {
-        // User A и User B одновременно здесь
+        // User A e User B chegam aqui ao mesmo tempo
         if ($product->stock > 0) {
-            // Оба видят stock = 1
+            // Os dois veem stock = 1
 
-            // Создать заказ
+            // Criar o pedido
             Order::create([
                 'user_id' => auth()->id(),
                 'product_id' => $product->id,
             ]);
 
-            // Уменьшить stock
+            // Decrementar o stock
             $product->decrement('stock');
-            // Теперь stock = -1 (oversold!)
+            // Agora stock = -1 (oversold!)
         }
     }
 }
@@ -216,17 +216,17 @@ class CheckoutController extends Controller
 **Debugging:**
 
 ```bash
-# Воспроизвести race condition
+# Reproduzir a race condition
 ab -n 100 -c 10 http://localhost/checkout/1
 
-# После: stock = -5 (oversold на 5 штук)
+# Depois: stock = -5 (oversold em 5 unidades)
 ```
 
-**Решение 1: Database Lock**
+**Solução 1: Database Lock**
 
 ```php
 DB::transaction(function () use ($product, $request) {
-    // Lock для чтения
+    // Lock na leitura
     $product = Product::where('id', $product->id)
         ->lockForUpdate()
         ->first();
@@ -240,7 +240,7 @@ DB::transaction(function () use ($product, $request) {
 });
 ```
 
-**Решение 2: Optimistic Locking**
+**Solução 2: Optimistic Locking**
 
 ```php
 class Product extends Model
@@ -257,7 +257,7 @@ $originalVersion = $product->version;
 if ($product->stock > 0) {
     Order::create([...]);
 
-    // Update только если version не изменился
+    // Update só se a version não mudou
     $updated = Product::where('id', $product->id)
         ->where('version', $originalVersion)
         ->update([
@@ -266,68 +266,68 @@ if ($product->stock > 0) {
         ]);
 
     if (!$updated) {
-        throw new ConcurrentUpdateException('Product was updated by another user');
+        throw new ConcurrentUpdateException('Produto foi atualizado por outro usuário');
     }
 }
 ```
 
 ---
 
-### Сценарий 5: Session Issues After Deployment
+### Cenário 5: Problemas de session depois do deploy
 
-**Проблема:**
+**Problema:**
 
 ```
-После деплоя на production пользователи жалуются:
-"Постоянно выкидывает из системы"
+Depois do deploy em production os usuários reclamam:
+"Fica deslogando o tempo todo"
 ```
 
 **Debugging:**
 
 ```php
-// 1. Проверить driver
+// 1. Checar o driver
 // config/session.php
 'driver' => env('SESSION_DRIVER', 'file'),
 
-// 2. Проверить где хранятся файлы
+// 2. Checar onde os arquivos ficam
 'files' => storage_path('framework/sessions'),
 
-// 3. Проверить права
+// 3. Checar as permissões
 ls -la storage/framework/sessions
 # drwxr-xr-x  www-data www-data
 ```
 
-**Проблема:**
+**Problema:**
 
 ```
 Load Balancer
-├─ Server 1 (sessions в /var/www/storage)
-├─ Server 2 (sessions в /var/www/storage)
-└─ Server 3 (sessions в /var/www/storage)
+├─ Server 1 (sessions em /var/www/storage)
+├─ Server 2 (sessions em /var/www/storage)
+└─ Server 3 (sessions em /var/www/storage)
 
-Request 1 → Server 1 (создал session)
-Request 2 → Server 2 (нет session - logout)
+Request 1 → Server 1 (criou a session)
+Request 2 → Server 2 (sem session — logout)
 ```
 
-**Решение:**
+**Solução:**
 
 ```env
 # .env
 SESSION_DRIVER=redis
 REDIS_HOST=redis-cluster.example.com
 
-# Теперь все серверы используют общий Redis
+# Agora todos os servidores usam o mesmo Redis
 ```
 
 ---
 
-### Сценарий 6: Memory Leak in Queue Worker
+### Cenário 6: Memory leak no queue worker
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Queue worker использует всё больше памяти
-// После 1000 jobs: 2GB памяти
+// O queue worker usa cada vez mais memória
+// Depois de 1000 jobs: 2GB de memória
 
 class ProcessImageJob implements ShouldQueue
 {
@@ -335,21 +335,21 @@ class ProcessImageJob implements ShouldQueue
     {
         $image = Image::find($this->imageId);
 
-        // Обработка изображения
+        // Processar a imagem
         $processed = $this->processImage($image->path);
 
-        // Сохранение
+        // Salvar
         $image->update(['processed_path' => $processed]);
 
-        // ❌ НЕ очищается из памяти!
+        // ❌ NÃO sai da memória!
     }
 
     private function processImage($path)
     {
-        $img = imagecreatefromjpeg($path);  // Большой объект в памяти
-        // ... обработка ...
+        $img = imagecreatefromjpeg($path);  // Objeto grande na memória
+        // ... processamento ...
         return $newPath;
-        // $img НЕ освобождён!
+        // $img NÃO foi liberado!
     }
 }
 ```
@@ -357,13 +357,13 @@ class ProcessImageJob implements ShouldQueue
 **Debugging:**
 
 ```bash
-# Мониторинг памяти worker
+# Monitorar a memória do worker
 watch -n 1 'ps aux | grep "queue:work"'
 
-# Память растёт: 50MB → 100MB → 500MB → 2GB
+# A memória sobe: 50MB → 100MB → 500MB → 2GB
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 class ProcessImageJob implements ShouldQueue
@@ -374,7 +374,7 @@ class ProcessImageJob implements ShouldQueue
         $processed = $this->processImage($image->path);
         $image->update(['processed_path' => $processed]);
 
-        // Очистить память
+        // Limpar a memória
         unset($image);
         gc_collect_cycles();
     }
@@ -382,25 +382,25 @@ class ProcessImageJob implements ShouldQueue
     private function processImage($path)
     {
         $img = imagecreatefromjpeg($path);
-        // ... обработка ...
+        // ... processamento ...
         $newPath = $this->save($img);
 
-        // ✅ Освободить ресурс
+        // ✅ Liberar o resource
         imagedestroy($img);
 
         return $newPath;
     }
 }
 
-// Или перезапускать worker после N jobs
+// Ou reiniciar o worker depois de N jobs
 php artisan queue:work --max-jobs=1000
 ```
 
 ---
 
-### Сценарий 7: CORS Error
+### Cenário 7: Erro de CORS
 
-**Проблема:**
+**Problema:**
 
 ```javascript
 // Frontend
@@ -416,7 +416,7 @@ fetch('http://api.example.com/users')
 **Debugging:**
 
 ```bash
-# Проверить headers
+# Checar os headers
 curl -H "Origin: http://frontend.example.com" \
      -H "Access-Control-Request-Method: POST" \
      -H "Access-Control-Request-Headers: Content-Type" \
@@ -424,10 +424,10 @@ curl -H "Origin: http://frontend.example.com" \
      http://api.example.com/users -v
 
 # Response headers:
-# (пусто - CORS не настроен)
+# (vazio — CORS não está configurado)
 ```
 
-**Решение:**
+**Solução:**
 
 ```php
 // config/cors.php
@@ -439,7 +439,7 @@ return [
     'supports_credentials' => true,
 ];
 
-// Или middleware
+// Ou middleware
 class CorsMiddleware
 {
     public function handle($request, Closure $next)
@@ -454,32 +454,32 @@ class CorsMiddleware
 
 ---
 
-## Общие debugging техники
+## Técnicas gerais de debug
 
-**1. Логирование:**
+**1. Logs:**
 
 ```php
-// Добавить логи
+// Adicionar logs
 Log::info('User checkout', [
     'user_id' => auth()->id(),
     'product_id' => $product->id,
     'stock' => $product->stock,
 ]);
 
-// Tail logs в реальном времени
+// Tail dos logs em tempo real
 tail -f storage/logs/laravel.log
 ```
 
-**2. dd() и dump():**
+**2. dd() e dump():**
 
 ```php
-// Stop execution
+// Para a execução
 dd($variable);
 
-// Continue execution
+// Continua a execução
 dump($variable);
 
-// Ray (paid tool)
+// Ray (ferramenta paga)
 ray($variable);
 ```
 
@@ -500,13 +500,16 @@ php artisan telescope:install
 xdebug.mode=debug
 xdebug.start_with_request=yes
 
-# Breakpoint в PhpStorm
-# Step through code
+# Breakpoint no PhpStorm
+# Passar o código passo a passo
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Debugging: N+1 решается через eager loading (with). Memory limit: chunk вместо all(), stream для export. Slow query: EXPLAIN для анализа, добавить индексы. Race condition: lockForUpdate или optimistic locking. Session issues на multiple серверах: Redis вместо file. Memory leak: unset(), imagedestroy(), --max-jobs. CORS: config/cors.php или middleware. Инструменты: Query Log, Telescope, Xdebug, logs (tail -f)."
+> "Debug: N+1 se resolve com eager loading (with). Memory limit: chunk no lugar de all(), stream no export. Query lenta: EXPLAIN para analisar, adicionar índices. Race condition: lockForUpdate ou optimistic locking. Session em vários servidores: Redis no lugar de file. Memory leak: unset(), imagedestroy(), --max-jobs. CORS: config/cors.php ou middleware. Ferramentas: Query Log, Telescope, Xdebug, logs (tail -f)."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

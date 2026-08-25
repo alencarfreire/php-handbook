@@ -1,108 +1,109 @@
-# 15.3 Техническое собеседование
+# 15.3 Entrevista técnica
 
-## Что это
+## O que é
 
-**Типы собеседований:**
+**Tipos de entrevista:**
 
 ```
-1. HR screening (15-30мин)
-   - О тебе, опыт, мотивация
+1. HR screening (15-30 min)
+   - Sobre você, experiência, motivação
 
-2. Technical interview (1-2ч)
-   - Теория, практика, алгоритмы
+2. Technical interview (1-2 h)
+   - Teoria, prática, algoritmos
 
 3. Coding challenge / Live coding
-   - Решение задач в реальном времени
+   - Resolver problemas ao vivo
 
-4. System design (для Senior+)
-   - Проектирование архитектуры
+4. System design (para Senior+)
+   - Projetar a arquitetura
 
 5. Cultural fit
-   - Подходишь ли в команду
+   - Se você encaixa no time
 ```
 
 ---
 
-## Подготовка
+## Preparação
 
-**Что повторить:**
+**O que revisar:**
 
 ```
-✓ PHP основы (типы, ООП, namespace, PSR)
-✓ Laravel (routing, middleware, Eloquent, events, jobs)
-✓ SQL (JOIN, индексы, оптимизация)
-✓ Алгоритмы (сортировка, поиск, рекурсия)
-✓ Структуры данных (массивы, стеки, очереди)
-✓ Паттерны (Repository, Factory, Observer)
-✓ Git (branching, merge, rebase, конфликты)
+✓ PHP básico (tipos, OOP, namespace, PSR)
+✓ Laravel (rotas, middleware, Eloquent, events, jobs)
+✓ SQL (JOIN, índices, otimização)
+✓ Algoritmos (ordenação, busca, recursão)
+✓ Estruturas de dados (arrays, pilhas, filas)
+✓ Padrões (Repository, Factory, Observer)
+✓ Git (branching, merge, rebase, conflitos)
 ✓ Testing (Unit, Feature, TDD)
-✓ Безопасность (XSS, SQL injection, CSRF)
-✓ Performance (кеширование, N+1, индексы)
+✓ Segurança (XSS, SQL injection, CSRF)
+✓ Performance (cache, N+1, índices)
 ```
 
-**Проекты:**
+**Projetos:**
 
 ```
-✓ Подготовь 2-3 проекта для обсуждения
-✓ Знай архитектуру своих проектов
-✓ Помни сложности и как их решал
-✓ Будь готов показать код на GitHub
-```
-
----
-
-## Типичные вопросы
-
-**О тебе:**
-
-```
-"Расскажи о себе"
-✅ Хороший ответ:
-"Я PHP/Laravel разработчик с 2 годами опыта.
-Работал над e-commerce проектом с 100k пользователей.
-Занимался оптимизацией производительности, добавлял
-новые функции, писал тесты. Интересуюсь архитектурой
-и чистым кодом. Недавно изучал Event Sourcing и DDD."
-
-❌ Плохой ответ:
-"Я учился в университете, потом работал... эээ...
-ну, на разных проектах. Laravel знаю хорошо."
-```
-
-**Почему хочешь сменить работу:**
-
-```
-✅ Хорошо:
-"Хочу работать над более сложными задачами
-и развиваться в архитектуре"
-"Интересен ваш продукт и технологический стек"
-
-❌ Плохо:
-"Маленькая зарплата"
-"Плохая команда"
-"Много legacy кода"
+✓ Prepare 2-3 projetos para discutir
+✓ Saiba a arquitetura dos seus projetos
+✓ Lembre dos problemas difíceis e como você resolveu
+✓ Esteja pronto para mostrar código no GitHub
 ```
 
 ---
 
-## Технические вопросы
+## Perguntas típicas
+
+**Sobre você:**
+
+```
+"Fala um pouco sobre você"
+✅ Resposta boa:
+"Sou desenvolvedor PHP/Laravel com 2 anos de experiência.
+Trabalhei num e-commerce com 100 mil usuários.
+Fiz otimização de performance, implementei
+funcionalidades novas, escrevi testes. Me interesso por
+arquitetura e código limpo. Recentemente estudei
+Event Sourcing e DDD."
+
+❌ Resposta ruim:
+"Eu estudei na faculdade, depois trabalhei... ééé...
+em vários projetos. Laravel eu conheço bem."
+```
+
+**Por que você quer mudar de emprego:**
+
+```
+✅ Bom:
+"Quero trabalhar em problemas mais complexos
+e crescer em arquitetura"
+"O produto de vocês e o stack me interessam"
+
+❌ Ruim:
+"Salário baixo"
+"Time ruim"
+"Muito código legacy"
+```
+
+---
+
+## Perguntas técnicas
 
 **PHP:**
 
 ```php
-Q: "В чём разница между == и ===?"
-A: "== сравнивает значения с приведением типов,
-=== сравнивает значения и типы.
-Пример: '5' == 5 (true), '5' === 5 (false)"
+Q: "Qual a diferença entre == e ===?"
+A: "== compara o valor e converte o tipo.
+=== compara valor e tipo, sem conversão.
+Exemplo: '5' == 5 (true), '5' === 5 (false)"
 
-Q: "Что такое PSR?"
-A: "PHP Standards Recommendations. Стандарты для:
+Q: "O que é PSR?"
+A: "PHP Standards Recommendations. Padrões para:
 - PSR-1, PSR-12: Code Style
 - PSR-4: Autoloading
 - PSR-7: HTTP message interfaces"
 
-Q: "Что такое namespace?"
-A: "Изоляция классов. Позволяет избежать конфликтов имён:
+Q: "O que é namespace?"
+A: "Isola classes. Evita conflito de nomes:
 namespace App\Services;
 class UserService {}"
 ```
@@ -110,48 +111,48 @@ class UserService {}"
 **Laravel:**
 
 ```php
-Q: "Что такое Service Container?"
-A: "DI контейнер для управления зависимостями.
-Автоматически инъектирует зависимости через type-hinting:
+Q: "O que é Service Container?"
+A: "Service Container (container de serviços) é o
+container de DI. Injeta dependências sozinho via type-hint:
 public function __construct(UserRepository $repo)"
 
-Q: "В чём разница между Facade и DI?"
-A: "Facade — статический прокси к классу в контейнере.
-DI — инъекция зависимости через конструктор.
-DI лучше для тестирования, так как можно mock."
+Q: "Qual a diferença entre Facade e DI?"
+A: "Facade é um proxy estático para a classe no container.
+DI injeta a dependência no construtor.
+DI é melhor para teste: você consegue mockar."
 
-Q: "Что такое N+1 проблема?"
-A: "Запрос для списка + N запросов для связей.
-Решение: eager loading через with()"
+Q: "O que é o problema N+1?"
+A: "Uma query da lista + N queries das relações.
+Solução: eager loading com with()"
 ```
 
 **SQL:**
 
 ```sql
-Q: "В чём разница между INNER JOIN и LEFT JOIN?"
-A: "INNER JOIN возвращает только совпадения.
-LEFT JOIN возвращает все строки из левой таблицы
-+ совпадения из правой (или NULL)"
+Q: "Qual a diferença entre INNER JOIN e LEFT JOIN?"
+A: "INNER JOIN devolve só as linhas que batem.
+LEFT JOIN devolve todas as linhas da tabela da esquerda
++ as que batem na da direita (ou NULL)"
 
-Q: "Зачем нужны индексы?"
-A: "Ускоряют поиск в WHERE, ORDER BY, JOIN.
-Но замедляют INSERT/UPDATE/DELETE.
-Нужны на foreign keys, часто фильтруемых колонках"
+Q: "Para que servem os índices?"
+A: "Aceleram busca em WHERE, ORDER BY, JOIN.
+Mas deixam INSERT/UPDATE/DELETE mais lentos.
+Use em foreign keys e colunas que você filtra muito"
 ```
 
 ---
 
 ## Live Coding
 
-**Типичные задачи:**
+**Tarefas típicas:**
 
 **1. FizzBuzz:**
 
 ```php
-// Вывести числа 1-100
-// Кратные 3: Fizz
-// Кратные 5: Buzz
-// Кратные 3 и 5: FizzBuzz
+// Imprimir números de 1 a 100
+// Múltiplos de 3: Fizz
+// Múltiplos de 5: Buzz
+// Múltiplos de 3 e 5: FizzBuzz
 
 function fizzBuzz(int $n): array
 {
@@ -173,7 +174,7 @@ function fizzBuzz(int $n): array
 }
 ```
 
-**2. Палиндром:**
+**2. Palíndromo:**
 
 ```php
 function isPalindrome(string $str): bool
@@ -182,45 +183,45 @@ function isPalindrome(string $str): bool
     return $str === strrev($str);
 }
 
-// Тесты
-isPalindrome('A man a plan a canal Panama'); // true
-isPalindrome('hello'); // false
+// Testes
+isPalindrome('A grama é amarga'); // true
+isPalindrome('teste'); // false
 ```
 
-**3. Массивы:**
+**3. Arrays:**
 
 ```php
-// Найти дубликаты
+// Encontrar duplicatas
 function findDuplicates(array $arr): array
 {
     $counts = array_count_values($arr);
     return array_keys(array_filter($counts, fn($c) => $c > 1));
 }
 
-// Убрать дубликаты (сохранить порядок)
+// Remover duplicatas (manter a ordem)
 function unique(array $arr): array
 {
     return array_values(array_unique($arr));
 }
 
-// Пересечение массивов
+// Interseção de arrays
 function intersection(array $a, array $b): array
 {
     return array_values(array_intersect($a, $b));
 }
 ```
 
-**4. Laravel задачи:**
+**4. Tarefas Laravel:**
 
 ```php
-// Найти users с > 10 заказами за последний месяц
+// Users com mais de 10 pedidos no último mês
 User::has('orders', '>', 10)
     ->whereHas('orders', function ($q) {
         $q->where('created_at', '>=', now()->subMonth());
     })
     ->get();
 
-// Топ 5 самых продаваемых продуктов
+// Top 5 produtos mais vendidos
 Product::withCount('orderItems')
     ->orderBy('order_items_count', 'desc')
     ->limit(5)
@@ -229,53 +230,53 @@ Product::withCount('orderItems')
 
 ---
 
-## Советы для Live Coding
+## Dicas para Live Coding
 
-**Процесс:**
-
-```
-1. Уточни задачу
-   "Нужно учитывать регистр?"
-   "Строка только латиница?"
-
-2. Обсуди подход
-   "Можно решить через массив или regex.
-    Предлагаю использовать..."
-
-3. Напиши решение
-   Проговаривай вслух что делаешь
-
-4. Протестируй
-   "Проверим edge cases: пустая строка, null..."
-
-5. Оптимизируй (если есть время)
-   "Можно улучшить сложность с O(n²) до O(n)"
-```
-
-**Что делать если застрял:**
+**Processo:**
 
 ```
-✓ Проговори проблему вслух
-✓ Попроси hint
-✓ Начни с простого решения (brute force)
-✓ Можно использовать Google / документацию (если разрешено)
+1. Confirme o enunciado
+   "Precisa considerar maiúscula e minúscula?"
+   "A string é só ASCII?"
+
+2. Discuta a abordagem
+   "Dá para resolver com array ou regex.
+    Sugiro usar..."
+
+3. Escreva a solução
+   Fale em voz alta o que você está fazendo
+
+4. Teste
+   "Vamos ver os edge cases: string vazia, null..."
+
+5. Otimize (se der tempo)
+   "Dá para baixar a complexidade de O(n²) para O(n)"
+```
+
+**Se você travar:**
+
+```
+✓ Fale o problema em voz alta
+✓ Peça um hint
+✓ Comece pela solução simples (brute force)
+✓ Pode usar Google / documentação (se for permitido)
 ```
 
 ---
 
-## System Design (для Middle+/Senior)
+## System Design (para Middle+/Senior)
 
-**Типичная задача:**
+**Tarefa típica:**
 
 ```
-"Спроектируй систему для Twitter-like приложения"
+"Projete um sistema tipo Twitter"
 
-1. Уточни требования
-   - Сколько пользователей?
+1. Confirme os requisitos
+   - Quantos usuários?
    - QPS (queries per second)?
-   - Функции: tweets, likes, follows?
+   - Features: tweets, likes, follows?
 
-2. High-level архитектура
+2. Arquitetura high-level
    Users → Load Balancer → App Servers → Database
 
 3. Database schema
@@ -289,95 +290,98 @@ Product::withCount('orderItems')
    GET /timeline (feed)
 
 5. Scaling
-   - Кеширование timeline в Redis
-   - Read replicas для БД
-   - CDN для media
-   - Queue для асинхронных задач
+   - Cache do timeline no Redis
+   - Read replicas no banco
+   - CDN para mídia
+   - Queue para tarefas assíncronas
 ```
 
 ---
 
-## Поведенческие вопросы
+## Perguntas comportamentais
 
-**STAR метод:**
-
-```
-Situation: Ситуация
-Task: Задача
-Action: Действие
-Result: Результат
-```
-
-**Примеры:**
+**Método STAR:**
 
 ```
-Q: "Расскажи про сложную техническую проблему"
+Situation: Situação
+Task: Tarefa
+Action: Ação
+Result: Resultado
+```
+
+**Exemplos:**
+
+```
+Q: "Fale de um problema técnico difícil"
 
 A: (STAR)
-S: "В проекте e-commerce были медленные запросы (5+ сек)"
-T: "Нужно было оптимизировать до < 1 сек"
-A: "Нашёл N+1 проблему через Laravel Debugbar,
-    добавил eager loading, создал индексы на БД"
-R: "Время запроса сократилось до 200ms,
-    пользователи перестали жаловаться на медленную работу"
+S: "No e-commerce as queries estavam lentas (5+ segundos)"
+T: "Precisava baixar para menos de 1 segundo"
+A: "Achei N+1 no Laravel Debugbar,
+    coloquei eager loading, criei índices no banco"
+R: "A query caiu para 200ms,
+    os usuários pararam de reclamar da lentidão"
 
-Q: "Конфликт в команде?"
+Q: "Conflito no time?"
 
 A: (STAR)
-S: "Разногласия с коллегой о подходе к рефакторингу"
-T: "Нужно было прийти к решению"
-A: "Обсудили оба подхода, сделали POC обоих вариантов,
-    протестировали производительность"
-R: "Выбрали оптимальное решение на основе данных,
-    оба были довольны результатом"
+S: "Discordância com um colega sobre o jeito de refatorar"
+T: "Precisávamos chegar numa decisão"
+A: "Discutimos as duas abordagens, fizemos POC das duas,
+    medimos a performance"
+R: "Escolhemos a melhor opção com base nos dados,
+    os dois ficaram ok com o resultado"
 ```
 
 ---
 
-## Вопросы работодателю
+## Perguntas para o empregador
 
-**Хорошие вопросы:**
-
-```
-О проекте:
-- Какой технический стек используется?
-- Какая архитектура приложения?
-- Размер команды разработки?
-- Как организован процесс разработки? (Agile/Scrum?)
-
-О Code Quality:
-- Проводите Code Review?
-- Покрытие тестами?
-- CI/CD есть?
-
-О развитии:
-- Есть ли менторинг для Junior?
-- Обучение за счёт компании?
-- Возможность роста?
-
-О команде:
-- С кем буду работать?
-- Как принимаются технические решения?
-```
-
----
-
-## Красные флаги
-
-**От работодателя:**
+**Perguntas boas:**
 
 ```
-❌ "У нас нет времени на тесты"
-❌ "Code review? Это замедляет разработку"
-❌ "Работаем в основном на выходных"
-❌ "Legacy код, но мы его не трогаем"
-❌ "Документации нет, спрашивай Васю"
-❌ Агрессивные или высокомерные интервьюеры
+Sobre o projeto:
+- Qual o stack?
+- Qual a arquitetura da app?
+- Qual o tamanho do time?
+- Como é o processo de desenvolvimento? (Agile/Scrum?)
+
+Sobre Code Quality:
+- Vocês fazem Code Review?
+- Qual a cobertura de testes?
+- Tem CI/CD?
+
+Sobre crescimento:
+- Tem mentoria para Junior?
+- A empresa paga curso/estudo?
+- Tem espaço para crescer?
+
+Sobre o time:
+- Com quem eu vou trabalhar?
+- Como as decisões técnicas são tomadas?
 ```
 
 ---
 
-## На собеседовании скажешь
+## Red flags
 
-> "Техническое собеседование проверяет теорию (PHP, Laravel, SQL), практику (live coding), архитектуру (system design для Senior). Подготовка: повторить основы, алгоритмы, паттерны, проекты. Live coding: уточнить задачу, обсудить подход, протестировать. Поведенческие вопросы: STAR метод (Situation, Task, Action, Result). Вопросы работодателю: стек, процесс, развитие, команда. Красные флаги: нет тестов, code review, work-life balance."
+**Do empregador:**
 
+```
+❌ "A gente não tem tempo para teste"
+❌ "Code review? Isso atrasa o desenvolvimento"
+❌ "A gente trabalha bastante no fim de semana"
+❌ "Tem código legacy, mas a gente não mexe"
+❌ "Não tem documentação, pergunta pro João"
+❌ Entrevistadores agressivos ou arrogantes
+```
+
+---
+
+## Na entrevista
+
+> "Entrevista técnica testa teoria (PHP, Laravel, SQL), prática (live coding) e arquitetura (system design para Senior). Preparação: revisar o básico, algoritmos, padrões, seus projetos. Live coding: confirme o enunciado, discuta a abordagem, teste. Pergunta comportamental: método STAR (Situation, Task, Action, Result). Pergunte para a empresa: stack, processo, crescimento, time. Red flags: sem teste, sem code review, work-life balance ruim."
+
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

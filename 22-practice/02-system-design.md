@@ -1,64 +1,64 @@
 # 16.2 System Design
 
-## Подход к System Design
+## Abordagem de System Design
 
-**Процесс:**
+**Processo:**
 
 ```
-1. Уточнить требования (5-10 мин)
-2. High-level архитектура (10-15 мин)
-3. Детальный дизайн (15-20 мин)
-4. Масштабирование (10 мин)
-5. Trade-offs обсуждение (5 мин)
+1. Esclarecer requisitos (5-10 min)
+2. Arquitetura high-level (10-15 min)
+3. Design detalhado (15-20 min)
+4. Scaling (10 min)
+5. Discussão de trade-offs (5 min)
 ```
 
 ---
 
-## Задача 1: URL Shortener (типа bit.ly)
+## Exercício 1: URL Shortener (tipo bit.ly)
 
-**1. Требования:**
+**1. Requisitos:**
 
 ```
-Functional:
-- Сократить длинный URL в короткий
-- Redirect с короткого на длинный
-- Custom aliases (опционально)
-- Analytics (опционально)
+Funcionais:
+- Encurtar URL longa em URL curta
+- Redirect da curta para a longa
+- Custom aliases (opcional)
+- Analytics (opcional)
 
-Non-functional:
-- 100M URLs в месяц
+Não-funcionais:
+- 100M URLs por mês
 - Low latency (< 100ms)
 - High availability (99.9%)
-- URL живёт вечно (no expiration)
+- URL vive para sempre (sem expiration)
 ```
 
-**2. Расчёты:**
+**2. Cálculos:**
 
 ```
-Пользователи:
-- 100M новых URLs / месяц
-- 3M URLs / день
-- ~35 URLs / секунду
+Usuários:
+- 100M URLs novas / mês
+- 3M URLs / dia
+- ~35 URLs / segundo
 
-Чтение vs Запись:
-- 100:1 ratio (больше читают)
-- 3500 reads / секунду
+Leitura vs Escrita:
+- ratio 100:1 (lê mais do que escreve)
+- 3500 reads / segundo
 
-Хранилище:
-- Средний URL: 500 bytes
-- 100M * 500 bytes = 50 GB / месяц
-- 50 GB * 12 = 600 GB / год
-- За 5 лет: 3 TB
+Storage:
+- URL média: 500 bytes
+- 100M * 500 bytes = 50 GB / mês
+- 50 GB * 12 = 600 GB / ano
+- Em 5 anos: 3 TB
 ```
 
 **3. API Design:**
 
 ```php
-// Создать короткий URL
+// Criar URL curta
 POST /api/shorten
 Body: {
     "long_url": "https://example.com/very/long/url",
-    "custom_alias": "my-link" // optional
+    "custom_alias": "my-link" // opcional
 }
 Response: {
     "short_url": "https://short.ly/abc123",
@@ -93,10 +93,10 @@ CREATE TABLE clicks (
 );
 ```
 
-**5. Генерация short code:**
+**5. Geração do short code:**
 
 ```php
-// Вариант 1: Base62 encoding ID
+// Opção 1: Base62 encoding do ID
 function encodeBase62(int $id): string
 {
     $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -113,7 +113,7 @@ function encodeBase62(int $id): string
 
 // ID 12345 → "3D7"
 
-// Вариант 2: Random + collision check
+// Opção 2: Random + checagem de colisão
 function generateShortCode(): string
 {
     do {
@@ -138,39 +138,39 @@ Cache (Redis) → Database (MySQL)
 Analytics (Queue → ClickHouse)
 ```
 
-**7. Масштабирование:**
+**7. Scaling:**
 
 ```
-- Cache Redis: кешировать популярные URLs (80/20 rule)
-- Database: sharding по short_code range
-- Read replicas для чтения
-- CDN для статики
-- Rate limiting для защиты
+- Cache Redis: cachear URLs populares (regra 80/20)
+- Database: sharding por range de short_code
+- Read replicas para leitura
+- CDN para estáticos
+- Rate limiting para proteção
 ```
 
 ---
 
-## Задача 2: Instagram Feed
+## Exercício 2: Instagram Feed
 
-**1. Требования:**
+**1. Requisitos:**
 
 ```
-Functional:
-- Показать feed (posts от followed users)
+Funcionais:
+- Mostrar o feed (posts de usuários followed)
 - Pagination
-- Refresh feed
+- Refresh do feed
 - Like/comment
 
-Non-functional:
+Não-funcionais:
 - 500M daily active users
-- Average 20 follows per user
-- Average 2 posts per day per user
+- Média de 20 follows por usuário
+- Média de 2 posts por dia por usuário
 ```
 
 **2. API:**
 
 ```php
-// Получить feed
+// Buscar o feed
 GET /api/feed?page=1&per_page=20
 Response: {
     "posts": [
@@ -215,10 +215,10 @@ CREATE TABLE posts (
 
 **4. Feed Generation:**
 
-**Approach 1: Pull (compute on read)**
+**Approach 1: Pull (compute na leitura)**
 
 ```php
-// ❌ Медленно при большом количестве follows
+// ❌ Lento com muitos follows
 function getFeed(User $user)
 {
     $followingIds = $user->following()->pluck('id');
@@ -230,10 +230,10 @@ function getFeed(User $user)
 }
 ```
 
-**Approach 2: Push (pre-compute)**
+**Approach 2: Push (pré-computa)**
 
 ```php
-// Когда user создаёт post
+// Quando o usuário cria um post
 class PostCreated
 {
     public function handle(Post $post)
@@ -241,13 +241,13 @@ class PostCreated
         $followerIds = $post->user->followers()->pluck('id');
 
         foreach ($followerIds as $followerId) {
-            // Добавить в pre-computed feed
+            // Adicionar no feed pré-computado
             Redis::zadd("feed:$followerId", $post->created_at->timestamp, $post->id);
         }
     }
 }
 
-// Чтение feed
+// Leitura do feed
 function getFeed(User $user)
 {
     $postIds = Redis::zrevrange("feed:{$user->id}", 0, 19);
@@ -255,27 +255,27 @@ function getFeed(User $user)
 }
 ```
 
-**Hybrid approach (Instagram реально использует):**
+**Hybrid approach (é o que o Instagram usa de verdade):**
 
 ```
-- Push для users с малым количеством followers (< 1M)
-- Pull для celebrities с большим количеством followers
-- Pre-compute только recent posts (last 3 days)
+- Push para users com poucos followers (< 1M)
+- Pull para celebrities com muitos followers
+- Pre-compute só posts recentes (últimos 3 dias)
 ```
 
 ---
 
-## Задача 3: Rate Limiter
+## Exercício 3: Rate Limiter
 
-**1. Требования:**
+**1. Requisitos:**
 
 ```
-- Ограничить пользователя до N requests в период
-- Разные limits для разных endpoints
-- Вернуть 429 Too Many Requests
+- Limitar o usuário a N requests no período
+- Limits diferentes por endpoint
+- Devolver 429 Too Many Requests
 ```
 
-**2. Алгоритмы:**
+**2. Algoritmos:**
 
 **Fixed Window:**
 
@@ -286,13 +286,13 @@ function checkRateLimit(string $userId, int $limit): bool
     $count = Redis::incr($key);
 
     if ($count === 1) {
-        Redis::expire($key, 3600); // 1 hour
+        Redis::expire($key, 3600); // 1 hora
     }
 
     return $count <= $limit;
 }
 
-// Проблема: burst в начале окна
+// Problema: burst no início da janela
 ```
 
 **Sliding Window Log:**
@@ -304,10 +304,10 @@ function checkRateLimitSliding(string $userId, int $limit, int $window): bool
     $now = microtime(true);
     $cutoff = $now - $window;
 
-    // Удалить старые
+    // Remover os antigos
     Redis::zremrangebyscore($key, 0, $cutoff);
 
-    // Подсчитать текущие
+    // Contar os atuais
     $count = Redis::zcard($key);
 
     if ($count < $limit) {
@@ -326,7 +326,7 @@ function checkRateLimitSliding(string $userId, int $limit, int $window): bool
 class TokenBucket
 {
     private int $capacity;
-    private float $refillRate; // tokens per second
+    private float $refillRate; // tokens por segundo
 
     public function allowRequest(string $userId): bool
     {
@@ -358,16 +358,16 @@ class TokenBucket
 
 ---
 
-## Задача 4: Chat System
+## Exercício 4: Chat System
 
-**1. Требования:**
+**1. Requisitos:**
 
 ```
-- 1-on-1 chat
-- Group chat
-- Real-time delivery
-- Message history
-- Online/offline status
+- Chat 1-a-1
+- Chat em grupo
+- Entrega em real-time
+- Histórico de mensagens
+- Status online/offline
 ```
 
 **2. Architecture:**
@@ -429,7 +429,7 @@ Echo.private(`conversation.${conversationId}`)
 
 ---
 
-## Общие компоненты
+## Componentes comuns
 
 **Load Balancer:**
 ```
@@ -457,17 +457,17 @@ Redis/Memcached
 **Queue:**
 ```
 Redis/RabbitMQ/SQS
-- Async processing
-- Email sending
+- Processamento async
+- Envio de email
 - Notifications
 ```
 
 **CDN:**
 ```
 CloudFlare/CloudFront
-- Static files
-- Images
-- Videos
+- Arquivos estáticos
+- Imagens
+- Vídeos
 ```
 
 ---
@@ -494,15 +494,18 @@ NoSQL (MongoDB, DynamoDB):
 **Caching:**
 
 ```
-✓ Fast reads
-✓ Reduce DB load
-❌ Stale data
-❌ Cache invalidation complexity
+✓ Leituras rápidas
+✓ Reduz carga no DB
+❌ Dado stale
+❌ Complexidade de cache invalidation
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "System Design процесс: уточнить требования, расчёты (QPS, storage), API design, database schema, high-level архитектура, масштабирование. URL Shortener: Base62 encoding, Redis cache, sharding. Instagram Feed: push vs pull, hybrid approach. Rate Limiter: Fixed Window, Sliding Window, Token Bucket. Chat: WebSocket, queue, sharding по conversation_id. Компоненты: Load Balancer, Cache (Redis), DB (replicas, sharding), Queue, CDN. Trade-offs: SQL vs NoSQL, cache vs consistency."
+> "System Design processo: esclarecer requisitos, cálculos (QPS, storage), API design, database schema, arquitetura high-level, scaling. URL Shortener: Base62 encoding, Redis cache, sharding. Instagram Feed: push vs pull, hybrid approach. Rate Limiter: Fixed Window, Sliding Window, Token Bucket. Chat: WebSocket, queue, sharding por conversation_id. Componentes: Load Balancer, Cache (Redis), DB (replicas, sharding), Queue, CDN. Trade-offs: SQL vs NoSQL, cache vs consistency."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

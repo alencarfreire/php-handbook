@@ -1,27 +1,27 @@
-# 16.5 Real-World Cases
+# 16.5 Casos reais
 
-## Реальные кейсы с собеседований
+## Casos reais de entrevista
 
-### Кейс 1: E-commerce Flash Sale
+### Caso 1: Flash sale de e-commerce
 
-**Задача:**
+**Enunciado:**
 
 ```
-Магазин запускает flash sale: 100 товаров по скидке
-за 1 час. 10,000 пользователей одновременно пытаются купить.
+A loja lança um flash sale: 100 produtos com desconto
+por 1 hora. 10.000 usuários tentam comprar ao mesmo tempo.
 
-Проблемы:
-- Overselling (продали больше чем было)
+Problemas:
+- Overselling (vendeu mais do que tinha)
 - Race conditions
-- Медленная работа сайта
-- Сервер падает от нагрузки
+- Site lento
+- Servidor cai com a carga
 
-Как бы ты решил эту задачу?
+Como você resolveria isso?
 ```
 
-**Решение:**
+**Solução:**
 
-**1. Предотвратить overselling:**
+**1. Impedir overselling:**
 
 ```php
 // Pessimistic locking
@@ -38,7 +38,7 @@ DB::transaction(function () use ($productId) {
     $product->decrement('stock');
 });
 
-// Или Redis atomic operations
+// Ou operações atômicas no Redis
 Redis::watch("product:$productId:stock");
 
 $stock = Redis::get("product:$productId:stock");
@@ -51,63 +51,63 @@ if ($stock > 0) {
 }
 ```
 
-**2. Queue для checkout:**
+**2. Queue para o checkout:**
 
 ```php
-// Не обрабатывать checkout синхронно
+// Não processar o checkout de forma síncrona
 Route::post('/checkout', function (Request $request) {
-    // Быстро добавить в queue
+    // Mandar pra queue rápido
     ProcessCheckout::dispatch($request->all());
 
     return response()->json([
-        'message' => 'Your order is being processed',
+        'message' => 'Seu pedido está sendo processado',
         'queue_position' => Queue::size('checkouts') + 1
     ]);
 });
 
-// Job обработает асинхронно
+// O job processa de forma assíncrona
 class ProcessCheckout implements ShouldQueue
 {
     public function handle()
     {
-        // Проверить stock
-        // Создать заказ
-        // Оплата
+        // Checar stock
+        // Criar o pedido
+        // Pagamento
         // Email
     }
 }
 ```
 
-**3. Кеширование:**
+**3. Cache:**
 
 ```php
-// Product страница
+// Página do produto
 Route::get('/product/{id}', function ($id) {
     return Cache::remember("product.$id", 300, function () use ($id) {
         return Product::with('category')->find($id);
     });
 });
 
-// Stock через Redis
+// Stock via Redis
 $stock = Redis::get("product:$id:stock");
 ```
 
 **4. Rate limiting:**
 
 ```php
-// Ограничить requests per user
+// Limitar requests por usuário
 Route::middleware(['throttle:10,1'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store']);
 });
 
-// 10 requests в минуту
+// 10 requests por minuto
 ```
 
-**5. CDN для статики:**
+**5. CDN para estáticos:**
 
 ```
-CloudFlare / CloudFront кеширует:
-- Изображения товаров
+CloudFlare / CloudFront faz cache de:
+- Imagens dos produtos
 - CSS/JS
 - Product pages (stale-while-revalidate)
 ```
@@ -128,26 +128,26 @@ Shared:
 
 ---
 
-### Кейс 2: Social Media Feed Performance
+### Caso 2: Performance do feed de rede social
 
-**Задача:**
+**Enunciado:**
 
 ```
-Instagram-like приложение. Feed загружается 5+ секунд
-для пользователей с большим количеством follows.
+App estilo Instagram. O feed demora 5+ segundos
+para usuários com muitos follows.
 
-User follows 1000 человек
-Нужно показать последние 20 постов
+O usuário segue 1000 pessoas
+Precisa mostrar os últimos 20 posts
 
-Как оптимизировать?
+Como otimizar?
 ```
 
-**Решение:**
+**Solução:**
 
-**1. Проблема (Pull model):**
+**1. O problema (Pull model):**
 
 ```php
-// ❌ Медленно
+// ❌ Lento
 function getFeed(User $user)
 {
     $followingIds = $user->following()->pluck('id'); // 1000 IDs
@@ -157,21 +157,21 @@ function getFeed(User $user)
         ->orderBy('created_at', 'desc')
         ->limit(20)
         ->get();
-    // Query сканирует миллионы постов
+    // A query varre milhões de posts
 }
 ```
 
-**2. Push model (pre-compute feed):**
+**2. Push model (pre-compute do feed):**
 
 ```php
-// Когда user создаёт post
+// Quando o usuário cria um post
 class PostCreated
 {
     public function handle(Post $post)
     {
         $followerIds = $post->user->followers()->pluck('id');
 
-        // Push в pre-computed feeds
+        // Push nos feeds pré-computados
         foreach ($followerIds->chunk(1000) as $chunk) {
             PushPostToFeeds::dispatch($post->id, $chunk);
         }
@@ -189,13 +189,13 @@ class PushPostToFeeds implements ShouldQueue
                 $this->post->id
             );
 
-            // Keep only last 1000
+            // Manter só os últimos 1000
             Redis::zremrangebyrank("feed:$followerId", 0, -1001);
         }
     }
 }
 
-// Чтение feed
+// Leitura do feed
 function getFeed(User $user)
 {
     $postIds = Redis::zrevrange("feed:{$user->id}", 0, 19);
@@ -205,18 +205,18 @@ function getFeed(User $user)
         ->get()
         ->sortByDesc('created_at');
 }
-// Очень быстро!
+// Muito rápido!
 ```
 
-**3. Hybrid для celebrities:**
+**3. Hybrid para celebrities:**
 
 ```php
 function getFeed(User $user)
 {
-    // Pre-computed feed для обычных users
+    // Feed pré-computado para users comuns
     $preComputedIds = Redis::zrevrange("feed:{$user->id}", 0, 19);
 
-    // Live query для celebrities
+    // Live query para celebrities
     $celebrityIds = $user->following()
         ->where('followers_count', '>', 1000000)
         ->pluck('id');
@@ -225,7 +225,7 @@ function getFeed(User $user)
         ->where('created_at', '>', now()->subDays(3))
         ->pluck('id');
 
-    // Merge и sort
+    // Merge e sort
     $allIds = collect($preComputedIds)->merge($liveIds)
         ->unique()
         ->take(20);
@@ -234,10 +234,10 @@ function getFeed(User $user)
 }
 ```
 
-**4. Кеширование:**
+**4. Cache:**
 
 ```php
-// User feed на 5 минут
+// Feed do usuário por 5 minutos
 Route::get('/api/feed', function () {
     $userId = auth()->id();
 
@@ -249,33 +249,33 @@ Route::get('/api/feed', function () {
 
 ---
 
-### Кейс 3: Payment Gateway Timeout
+### Caso 3: Timeout no payment gateway
 
-**Задача:**
+**Enunciado:**
 
 ```
-Интеграция с платёжным gateway (Stripe).
-Иногда request timeout (30+ секунд).
+Integração com payment gateway (Stripe).
+Às vezes o request dá timeout (30+ segundos).
 
-Пользователь ждёт, потом получает 504 Gateway Timeout.
-Но деньги могут быть списаны!
+O usuário espera e depois recebe 504 Gateway Timeout.
+Mas o dinheiro pode ter sido cobrado!
 
-Как обработать?
+Como tratar?
 ```
 
-**Решение:**
+**Solução:**
 
-**1. Асинхронная обработка:**
+**1. Processamento assíncrono:**
 
 ```php
-// ❌ Синхронно (плохо)
+// ❌ Síncrono (ruim)
 public function checkout(Request $request)
 {
-    $charge = Stripe::charges()->create([...]); // Может зависнуть
+    $charge = Stripe::charges()->create([...]); // Pode travar
     return redirect('/success');
 }
 
-// ✅ Асинхронно (хорошо)
+// ✅ Assíncrono (bom)
 public function checkout(Request $request)
 {
     $order = Order::create([...]);
@@ -283,7 +283,7 @@ public function checkout(Request $request)
     ProcessPayment::dispatch($order);
 
     return response()->json([
-        'message' => 'Payment is being processed',
+        'message' => 'O pagamento está sendo processado',
         'order_id' => $order->id,
         'status_url' => "/orders/{$order->id}/status"
     ]);
@@ -304,17 +304,17 @@ class ProcessPayment implements ShouldQueue
                 'stripe_charge_id' => $charge->id
             ]);
         } catch (\Stripe\Exception\ApiConnectionException $e) {
-            // Retry автоматически
+            // Retry automático
             throw $e;
         }
     }
 }
 ```
 
-**2. Webhook для confirmation:**
+**2. Webhook para confirmation:**
 
 ```php
-// Stripe webhook
+// Webhook do Stripe
 Route::post('/webhooks/stripe', function (Request $request) {
     $event = $request->all();
 
@@ -332,31 +332,31 @@ Route::post('/webhooks/stripe', function (Request $request) {
 **3. Idempotency key:**
 
 ```php
-// Предотвратить duplicate charges
+// Impedir charges duplicados
 $idempotencyKey = "order-{$order->id}-" . now()->timestamp;
 
 $charge = Stripe::charges()->create([
     'amount' => $order->total * 100,
-    'currency' => 'usd',
+    'currency' => 'brl',
     'source' => $token,
 ], [
     'idempotency_key' => $idempotencyKey
 ]);
 
-// Повторный request с тем же key не создаст новый charge
+// Request repetido com a mesma key não cria um charge novo
 ```
 
-**4. Timeout настройки:**
+**4. Config de timeout:**
 
 ```php
-// Client timeout
+// Timeout do client
 $stripe = new \Stripe\StripeClient([
     'api_key' => config('stripe.secret'),
-    'timeout' => 10, // 10 секунд
+    'timeout' => 10, // 10 segundos
     'connect_timeout' => 5,
 ]);
 
-// Server timeout (nginx)
+// Timeout do server (nginx)
 // location /checkout {
 //     proxy_read_timeout 30s;
 //     proxy_connect_timeout 10s;
@@ -365,25 +365,25 @@ $stripe = new \Stripe\StripeClient([
 
 ---
 
-### Кейс 4: Database Migration Zero-Downtime
+### Caso 4: Migration zero-downtime
 
-**Задача:**
+**Enunciado:**
 
 ```
-Нужно переименовать колонку в production без downtime:
+Precisa renomear uma coluna em production sem downtime:
 users.name → users.full_name
 
-Проблема:
-- Старая версия кода читает `name`
-- Новая версия кода читает `full_name`
-- Развёртывание происходит постепенно (rolling update)
+Problema:
+- A versão antiga do código lê `name`
+- A versão nova lê `full_name`
+- O deploy é gradual (rolling update)
 
-Как сделать?
+Como fazer?
 ```
 
-**Решение (Expand-Contract):**
+**Solução (Expand-Contract):**
 
-**Phase 1: Expand (добавить новую колонку):**
+**Fase 1: Expand (adicionar a coluna nova):**
 
 ```php
 // Migration 1
@@ -391,16 +391,16 @@ Schema::table('users', function (Blueprint $table) {
     $table->string('full_name')->nullable()->after('name');
 });
 
-// Копировать данные
+// Copiar os dados
 DB::table('users')->update([
     'full_name' => DB::raw('name')
 ]);
 ```
 
-**Phase 2: Dual Write (писать в обе):**
+**Fase 2: Dual Write (escrever nas duas):**
 
 ```php
-// v1.1 код (читает name, пишет в обе)
+// Código v1.1 (lê name, escreve nas duas)
 class User extends Model
 {
     protected static function boot()
@@ -414,18 +414,18 @@ class User extends Model
 }
 
 // Deploy v1.1
-// Теперь обе колонки синхронизированы
+// Agora as duas colunas ficam sincronizadas
 ```
 
-**Phase 3: Switch Read (читать из новой):**
+**Fase 3: Switch Read (ler da nova):**
 
 ```php
-// v1.2 код (читает full_name, пишет в обе)
+// Código v1.2 (lê full_name, escreve nas duas)
 class User extends Model
 {
     protected $appends = ['name'];
 
-    // Accessor для backward compatibility
+    // Accessor para backward compatibility
     public function getNameAttribute()
     {
         return $this->full_name;
@@ -436,7 +436,7 @@ class User extends Model
         parent::boot();
 
         static::saving(function ($user) {
-            // Sync обе колонки
+            // Sync das duas colunas
             if (isset($user->attributes['full_name'])) {
                 $user->name = $user->full_name;
             } else if (isset($user->attributes['name'])) {
@@ -449,13 +449,13 @@ class User extends Model
 // Deploy v1.2
 ```
 
-**Phase 4: Contract (удалить старую):**
+**Fase 4: Contract (remover a antiga):**
 
 ```php
-// v1.3 код (только full_name)
+// Código v1.3 (só full_name)
 class User extends Model
 {
-    // Убрать accessor, убрать boot
+    // Tirar o accessor, tirar o boot
 }
 
 // Migration 2
@@ -469,74 +469,74 @@ Schema::table('users', function (Blueprint $table) {
 **Timeline:**
 
 ```
-Week 1: Phase 1 (expand)
-Week 2: Phase 2 (dual write) + deploy
-Week 3: Monitor, verify data
-Week 4: Phase 3 (switch read) + deploy
-Week 5: Monitor
-Week 6: Phase 4 (contract) + deploy
+Semana 1: Fase 1 (expand)
+Semana 2: Fase 2 (dual write) + deploy
+Semana 3: Monitorar, verificar os dados
+Semana 4: Fase 3 (switch read) + deploy
+Semana 5: Monitorar
+Semana 6: Fase 4 (contract) + deploy
 ```
 
 ---
 
-### Кейс 5: Legacy Code Refactoring
+### Caso 5: Refatoração de código legado
 
-**Задача:**
-
-```
-Унаследовал проект:
-- 1 файл 5000 строк (God Class)
-- Нет тестов
-- Нет документации
-- Production работает, но нужно добавить новую функцию
-
-С чего начать?
-```
-
-**Решение:**
-
-**1. Понять что делает код:**
+**Enunciado:**
 
 ```
-- Запустить локально
-- Протестировать вручную основные сценарии
-- Нарисовать диаграмму flow
-- Найти entry points
+Você herdou o projeto:
+- 1 arquivo com 5000 linhas (God Class)
+- Sem testes
+- Sem documentação
+- Production funciona, mas precisa adicionar uma feature nova
+
+Por onde começar?
 ```
 
-**2. Добавить тесты (Characterization Tests):**
+**Solução:**
+
+**1. Entender o que o código faz:**
+
+```
+- Rodar local
+- Testar na mão os fluxos principais
+- Desenhar o diagrama de flow
+- Achar os entry points
+```
+
+**2. Adicionar testes (Characterization Tests):**
 
 ```php
-// Тесты для существующего поведения
+// Testes do comportamento atual
 public function test_user_can_login()
 {
     $response = $this->post('/login', [
-        'email' => 'test@example.com',
+        'email' => 'joao@email.com',
         'password' => 'password'
     ]);
 
     $response->assertRedirect('/dashboard');
 }
 
-// Покрыть тестами критичные пути
-// - Регистрация
-// - Логин
+// Cobrir os caminhos críticos
+// - Cadastro
+// - Login
 // - Checkout
 // - etc
 ```
 
-**3. Рефакторинг постепенно:**
+**3. Refatorar aos poucos:**
 
 ```php
-// Было: 1 класс 5000 строк
+// Era: 1 classe com 5000 linhas
 class LegacyController
 {
-    public function checkout() { /* 500 строк */ }
-    public function processPayment() { /* 300 строк */ }
+    public function checkout() { /* 500 linhas */ }
+    public function processPayment() { /* 300 linhas */ }
     // ...
 }
 
-// Шаг 1: Extract Method
+// Passo 1: Extract Method
 class LegacyController
 {
     public function checkout()
@@ -551,7 +551,7 @@ class LegacyController
     private function calculateTotal() { /* ... */ }
 }
 
-// Шаг 2: Extract Class
+// Passo 2: Extract Class
 class CheckoutService
 {
     public function process() { /* ... */ }
@@ -565,7 +565,7 @@ class LegacyController
     }
 }
 
-// Шаг 3: Dependency Injection
+// Passo 3: Dependency Injection
 class LegacyController
 {
     public function __construct(
@@ -582,22 +582,25 @@ class LegacyController
 **4. Strangler Fig Pattern:**
 
 ```
-Новый код живёт рядом со старым:
+O código novo vive ao lado do antigo:
 
-routes/legacy.php (старые роуты)
-routes/api.php (новые роуты)
+routes/legacy.php (rotas antigas)
+routes/api.php (rotas novas)
 
-Постепенно мигрировать пользователей:
-- 10% → новая версия
-- 50% → новая версия
-- 100% → новая версия
+Migrar os usuários aos poucos:
+- 10% → versão nova
+- 50% → versão nova
+- 100% → versão nova
 
-Когда все на новой версии: удалить legacy код
+Quando todo mundo estiver na nova: apagar o código legacy
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Real-world cases: Flash sale — Redis atomic ops, queue для checkout, rate limiting, horizontal scaling. Feed — push model (pre-compute), hybrid для celebrities, кеш. Payment timeout — асинхронно через queue, webhooks, idempotency keys. Zero-downtime migration — Expand-Contract pattern (добавить колонку → dual write → switch read → удалить старую). Legacy refactoring — characterization tests, постепенный рефакторинг (Extract Method → Extract Class → DI), Strangler Fig pattern."
+> "Casos reais: Flash sale — Redis atomic ops, queue no checkout, rate limiting, horizontal scaling. Feed — push model (pre-compute), hybrid para celebrities, cache. Timeout de pagamento — assíncrono via queue, webhooks, idempotency keys. Migration zero-downtime — Expand-Contract (adicionar coluna → dual write → switch read → remover a antiga). Refatoração de legado — characterization tests, refatoração gradual (Extract Method → Extract Class → DI), Strangler Fig."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

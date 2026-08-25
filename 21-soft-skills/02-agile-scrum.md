@@ -1,18 +1,18 @@
-# 15.2 Agile и Scrum
+# 15.2 Agile e Scrum
 
-## Краткое резюме
+## Resumo
 
-> **Agile** — гибкая методология разработки с итеративным подходом и фокусом на адаптацию. **Scrum** — популярный фреймворк для Agile.
+> **Agile** — metodologia de desenvolvimento flexível, com iteração e foco em adaptação. **Scrum** — o framework Agile mais usado.
 >
-> **Роли:** Product Owner (backlog), Scrum Master (процесс), Development Team (разработка). **Спринт:** обычно 2 недели.
+> **Papéis:** Product Owner (backlog), Scrum Master (processo), Development Team (desenvolvimento). **Sprint:** em geral 2 semanas.
 >
-> **События:** Sprint Planning, Daily Standup (15мин), Sprint Review (демо), Retrospective (обсуждение процесса).
+> **Eventos:** Sprint Planning, Daily Standup (15 min), Sprint Review (demo), Retrospective (conversa sobre o processo).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Agile Manifesto](#agile-manifesto)
 - [Scrum Framework](#scrum-framework)
 - [Sprint](#sprint)
@@ -25,228 +25,228 @@
 - [Kanban Board](#kanban-board)
 - [Definition of Done (DoD)](#definition-of-done-dod)
 - [Velocity](#velocity)
-- [Практические советы](#практические-советы)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Dicas práticas](#dicas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Agile:**
-Гибкая методология разработки с итеративным подходом, фокусом на адаптацию и сотрудничество.
+Metodologia flexível, com entrega iterativa, adaptação e colaboração.
 
 **Scrum:**
-Популярный фреймворк для Agile разработки с фиксированными спринтами и ролями.
+Framework Agile mais comum. Sprint de tamanho fixo e papéis definidos.
 
 ---
 
 ## Agile Manifesto
 
-**4 ценности:**
+**4 valores:**
 
 ```
-1. Люди и взаимодействие важнее процессов и инструментов
-2. Работающий продукт важнее исчерпывающей документации
-3. Сотрудничество с заказчиком важнее согласования условий контракта
-4. Готовность к изменениям важнее следования первоначальному плану
+1. Pessoas e interação valem mais que processos e ferramentas
+2. Produto funcionando vale mais que documentação exaustiva
+3. Colaboração com o cliente vale mais que negociar contrato
+4. Responder a mudança vale mais que seguir o plano original
 ```
 
-**12 принципов:**
+**12 princípios:**
 
 ```
-- Удовлетворение заказчика через раннюю и непрерывную поставку
-- Изменения приветствуются даже на поздних стадиях
-- Работающий софт доставляется часто (недели, а не месяцы)
-- Бизнес и разработчики работают вместе ежедневно
-- Простота — искусство минимизации лишней работы
+- Satisfazer o cliente com entrega cedo e contínua
+- Mudança é bem-vinda, mesmo no fim
+- Software funcionando sai com frequência (semanas, não meses)
+- Negócio e devs trabalham juntos todo dia
+- Simplicidade — a arte de cortar trabalho que não precisa
 ```
 
 ---
 
 ## Scrum Framework
 
-**Роли:**
+**Papéis:**
 
 ```
 Product Owner (PO)
-- Владелец продукта
-- Управляет backlog
-- Приоритизирует задачи
-- Принимает решения о функциональности
+- Dono do produto
+- Gerencia o backlog
+- Prioriza as tarefas
+- Decide o que entra de funcionalidade
 
 Scrum Master
-- Фасилитатор процесса
-- Убирает препятствия
-- Защищает команду от внешних помех
-- Следит за соблюдением Scrum
+- Facilita o processo
+- Remove impedimentos
+- Protege o time de interferência externa
+- Garante que o Scrum seja seguido
 
 Development Team
-- Разработчики, тестировщики, дизайнеры
-- Самоорганизующаяся команда
-- Кросс-функциональная
-- 3-9 человек
+- Devs, testers, designers
+- Time auto-organizado
+- Cross-functional
+- 3 a 9 pessoas
 ```
 
 ---
 
 ## Sprint
 
-**Что это:**
-Фиксированный период (обычно 2 недели) для разработки набора функций.
+**O que é:**
+Período fixo (em geral 2 semanas) para entregar um conjunto de funções.
 
-**Структура спринта:**
+**Estrutura do sprint:**
 
 ```
-Sprint (2 недели)
-├─ Day 1: Sprint Planning (4ч)
-├─ Daily: Daily Standup (15мин)
-├─ Last Day: Sprint Review (2ч)
-└─ Last Day: Sprint Retrospective (1.5ч)
+Sprint (2 semanas)
+├─ Dia 1: Sprint Planning (4h)
+├─ Daily: Daily Standup (15 min)
+├─ Último dia: Sprint Review (2h)
+└─ Último dia: Sprint Retrospective (1,5h)
 ```
 
 **Sprint Planning:**
 
 ```
-Цель: Определить что будет сделано в спринте
+Objetivo: Definir o que entra no sprint
 
-Участники: Вся команда
+Participantes: Time inteiro
 
-Результат:
-- Sprint Goal (цель спринта)
-- Sprint Backlog (выбранные задачи)
-- Оценка задач (Story Points)
+Resultado:
+- Sprint Goal (objetivo do sprint)
+- Sprint Backlog (tarefas escolhidas)
+- Estimativa das tarefas (Story Points)
 
-Пример:
-Sprint Goal: "Реализовать систему оплаты"
+Exemplo:
+Sprint Goal: "Implementar o sistema de pagamento"
 Tasks:
-- Интеграция со Stripe [8 SP]
-- UI страницы оплаты [5 SP]
-- Тесты оплаты [3 SP]
-- Email уведомления [2 SP]
+- Integração com Stripe [8 SP]
+- UI da página de pagamento [5 SP]
+- Testes de pagamento [3 SP]
+- Notificações por email [2 SP]
 ```
 
 ---
 
 ## Daily Standup
 
-**Формат:**
+**Formato:**
 
 ```
-Каждый отвечает на 3 вопроса:
+Cada um responde 3 perguntas:
 
-1. Что я сделал вчера?
-   "Закончил интеграцию со Stripe API"
+1. O que eu fiz ontem?
+   "Terminei a integração com a API do Stripe"
 
-2. Что я буду делать сегодня?
-   "Добавлю обработку ошибок оплаты"
+2. O que eu vou fazer hoje?
+   "Vou tratar os erros de pagamento"
 
-3. Есть ли препятствия?
-   "Жду доступы к тестовому аккаунту Stripe"
+3. Tem algum impedimento?
+   "Estou esperando acesso à conta de teste do Stripe"
 ```
 
-**Правила:**
+**Regras:**
 
 ```
-✓ 15 минут максимум
-✓ Все стоят (чтобы не затягивать)
-✓ Не обсуждать решения (это после встречи)
-✓ Фокус на прогрессе и блокерах
-✓ Можно пропустить если нечего сказать
+✓ No máximo 15 minutos
+✓ Todo mundo em pé (para não alongar)
+✓ Não discute solução (isso é depois)
+✓ Foco em progresso e blockers
+✓ Pode pular se não tiver o que falar
 ```
 
 ---
 
 ## Sprint Review
 
-**Что это:**
-Демонстрация результатов спринта заказчику и stakeholders.
+**O que é:**
+Demo do que o sprint entregou para o cliente e os stakeholders.
 
-**Формат:**
+**Formato:**
 
 ```
-1. Показать что сделано
-   - Live demo на staging
-   - Прохождение сценариев
+1. Mostrar o que foi feito
+   - Live demo no staging
+   - Passar pelos cenários
 
-2. Что не сделано и почему
-   "Интеграция с PayPal отложена из-за..."
+2. O que não foi feito e por quê
+   "Integração com PayPal ficou para depois porque..."
 
-3. Обсуждение обратной связи
-   Product Owner и stakeholders дают фидбек
+3. Discutir o feedback
+   Product Owner e stakeholders dão feedback
 
-4. Обновление Product Backlog
-   Новые приоритеты на основе фидбека
+4. Atualizar o Product Backlog
+   Prioridades novas com base no feedback
 ```
 
 ---
 
 ## Sprint Retrospective
 
-**Что это:**
-Встреча команды для обсуждения процесса и улучшений.
+**O que é:**
+Reunião do time para falar do processo e melhorar.
 
-**Формат:**
+**Formato:**
 
 ```
-1. Что прошло хорошо? ✅
-   "Хорошо взаимодействовали с дизайнерами"
-   "Code review стал быстрее"
+1. O que foi bem? ✅
+   "A comunicação com o design fluiu"
+   "Code review ficou mais rápido"
 
-2. Что можно улучшить? 🔧
-   "Много времени на баги в production"
-   "Тесты не покрывают edge cases"
+2. O que dá para melhorar? 🔧
+   "Muito tempo em bug de production"
+   "Testes não cobrem edge cases"
 
 3. Action items 🎯
-   "Добавить pre-commit hooks для тестов"
-   "Проводить mini code review до PR"
+   "Adicionar pre-commit hooks para os testes"
+   "Fazer mini code review antes do PR"
 ```
 
-**Форматы ретро:**
+**Formatos de retro:**
 
 ```
 Start / Stop / Continue:
-- Start: Начать делать
-- Stop: Прекратить делать
-- Continue: Продолжать делать
+- Start: Começar a fazer
+- Stop: Parar de fazer
+- Continue: Continuar fazendo
 
 4L's:
-- Liked (понравилось)
-- Learned (узнал)
-- Lacked (не хватало)
-- Longed for (хотел бы)
+- Liked (gostei)
+- Learned (aprendi)
+- Lacked (faltou)
+- Longed for (queria ter)
 ```
 
 ---
 
 ## User Stories
 
-**Формат:**
+**Formato:**
 
 ```
-As a [role]
-I want [feature]
-So that [benefit]
+Como um [papel]
+Eu quero [feature]
+Para que [benefício]
 
-Пример:
-As a customer
-I want to save my payment methods
-So that I can checkout faster next time
+Exemplo:
+Como um cliente
+Eu quero salvar meus métodos de pagamento
+Para que eu consiga finalizar a compra mais rápido da próxima vez
 ```
 
 **Acceptance Criteria:**
 
 ```php
-Story: User Registration
+Story: Cadastro de usuário
 
 Acceptance Criteria:
-✓ User can register with email and password
-✓ Password must be at least 8 characters
-✓ Email must be unique
-✓ Confirmation email is sent
-✓ User can't login until email is confirmed
+✓ Usuário consegue se cadastrar com email e senha
+✓ Senha precisa ter no mínimo 8 caracteres
+✓ Email precisa ser único
+✓ Email de confirmação é enviado
+✓ Usuário não entra até confirmar o email
 
-// Тесты
+// Testes
 public function test_user_can_register()
 {
     $response = $this->post('/register', [
@@ -263,29 +263,29 @@ public function test_user_can_register()
 
 ## Story Points
 
-**Что это:**
-Относительная оценка сложности задачи.
+**O que é:**
+Estimativa relativa da complexidade da tarefa.
 
 **Fibonacci scale:**
 
 ```
-1 point   - Очень просто (30мин - 1ч)
-2 points  - Просто (2-3ч)
-3 points  - Средне (полдня)
-5 points  - Сложно (день)
-8 points  - Очень сложно (1-2 дня)
-13 points - Слишком большая задача (разбить на несколько)
+1 point   - Muito simples (30 min - 1h)
+2 points  - Simples (2-3h)
+3 points  - Médio (meio dia)
+5 points  - Difícil (um dia)
+8 points  - Muito difícil (1-2 dias)
+13 points - Tarefa grande demais (quebrar em várias)
 ```
 
 **Planning Poker:**
 
 ```
-1. PO описывает задачу
-2. Команда задаёт вопросы
-3. Каждый выбирает карту с оценкой (скрыто)
-4. Все показывают карты одновременно
-5. Обсуждение крайних оценок
-6. Повторить пока не придут к консенсусу
+1. PO descreve a tarefa
+2. Time faz perguntas
+3. Cada um escolhe uma carta com a nota (escondido)
+4. Todo mundo mostra ao mesmo tempo
+5. Discute as notas extremas
+6. Repete até chegar em consenso
 ```
 
 ---
@@ -295,83 +295,83 @@ public function test_user_can_register()
 **Product Backlog:**
 
 ```
-Список всех задач проекта (приоритизирован PO)
+Lista de todas as tarefas do projeto (priorizada pelo PO)
 
-1. [High] User authentication
-2. [High] Payment integration
-3. [Medium] Email notifications
-4. [Low] Dark theme
-5. [Low] Export to PDF
+1. [High] Autenticação de usuário
+2. [High] Integração de pagamento
+3. [Medium] Notificações por email
+4. [Low] Tema escuro
+5. [Low] Exportar para PDF
 ```
 
 **Sprint Backlog:**
 
 ```
-Задачи выбранные для текущего спринта
+Tarefas escolhidas para o sprint atual
 
 Sprint 5 Backlog:
-□ Setup Stripe integration [8 SP]
-  ├─ Create StripeService [3 SP]
-  ├─ Add payment UI [3 SP]
-  └─ Write tests [2 SP]
-□ Add email notifications [5 SP]
+□ Setup da integração Stripe [8 SP]
+  ├─ Criar StripeService [3 SP]
+  ├─ Adicionar UI de pagamento [3 SP]
+  └─ Escrever testes [2 SP]
+□ Adicionar notificações por email [5 SP]
 ```
 
 ---
 
 ## Kanban Board
 
-**Колонки:**
+**Colunas:**
 
 ```
 TODO → In Progress → Code Review → Testing → Done
 
-Пример:
+Exemplo:
 TODO:
-- Add pagination to posts
-- Fix email template
+- Adicionar paginação nos posts
+- Corrigir o template de email
 
 In Progress:
-- Integrate Stripe (John)
-- Add user roles (Sarah)
+- Integrar Stripe (John)
+- Adicionar papéis de usuário (Sarah)
 
 Code Review:
-- Payment processing (PR #123)
+- Processamento de pagamento (PR #123)
 
 Testing:
-- Login with 2FA
+- Login com 2FA
 
 Done:
-- User registration ✅
-- Password reset ✅
+- Cadastro de usuário ✅
+- Redefinição de senha ✅
 ```
 
 ---
 
 ## Definition of Done (DoD)
 
-**Критерии готовности задачи:**
+**Critérios de prontidão da tarefa:**
 
 ```
-✓ Code написан
-✓ Unit tests написаны и проходят
-✓ Feature tests написаны и проходят
-✓ Code review пройдён
-✓ CI/CD пайплайн зелёный
-✓ Deployed на staging
-✓ Протестирован вручную
-✓ Документация обновлена (если нужно)
-✓ Product Owner принял
+✓ Código escrito
+✓ Unit tests escritos e passando
+✓ Feature tests escritos e passando
+✓ Code review feito
+✓ Pipeline de CI/CD verde
+✓ Deploy no staging
+✓ Testado manualmente
+✓ Documentação atualizada (se precisar)
+✓ Product Owner aceitou
 ```
 
 ---
 
 ## Velocity
 
-**Что это:**
-Среднее количество Story Points, выполняемых за спринт.
+**O que é:**
+Média de Story Points que o time entrega por sprint.
 
-**Пример:**
+**Exemplo:**
 
 ```
 Sprint 1: 21 SP
@@ -381,74 +381,74 @@ Sprint 4: 20 SP
 
 Velocity = (21 + 18 + 24 + 20) / 4 = 20.75 SP
 
-Использование:
-"Наша velocity 21 SP, значит в следующий
-спринт можем взять ~21 SP задач"
+Uso:
+"Nossa velocity é 21 SP, então no próximo
+sprint dá para puxar ~21 SP de tarefas"
 ```
 
 ---
 
-## Практические советы
+## Dicas práticas
 
-**Для Junior разработчика:**
+**Para o dev Junior:**
 
 ```
-✓ Активно участвуй в Daily Standup
-✓ Задавай вопросы на Planning
-✓ Просто голосуй Story Points (даже если не уверен)
-✓ Предлагай идеи на Retrospective
-✓ Обновляй статус задач в Jira/Trello
-✓ Говори о блокерах сразу, не жди
+✓ Participe do Daily Standup
+✓ Faça perguntas no Planning
+✓ Vote nos Story Points (mesmo sem ter certeza)
+✓ Traga ideia na Retrospective
+✓ Atualize o status das tarefas no Jira/Trello
+✓ Fale do blocker na hora, não espere
 ```
 
 **Red flags:**
 
 ```
-❌ "Нет времени на тесты, спринт горит"
-❌ "PO постоянно меняет требования в спринте"
-❌ "Daily standup длится 1 час"
-❌ "Ретроспектива формальная, ничего не меняется"
-❌ "Разработчики не участвуют в Planning"
+❌ "Não tem tempo para teste, o sprint está pegando fogo"
+❌ "PO muda requisito o tempo todo no meio do sprint"
+❌ "Daily standup dura 1 hora"
+❌ "Retro é formalidade, nada muda"
+❌ "Devs não entram no Planning"
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Agile — итеративная разработка с фокусом на адаптацию. Scrum — фреймворк с ролями (PO, Scrum Master, Team) и спринтами (обычно 2 недели). Sprint Planning выбирает задачи, Daily Standup — синхронизация (15мин), Sprint Review — демо, Retrospective — обсуждение процесса. User Stories с Acceptance Criteria. Story Points оценивают сложность (Fibonacci). Velocity — средний объём работы за спринт. Definition of Done — критерии готовности. Kanban Board для визуализации."
+> "Agile é desenvolvimento iterativo com foco em adaptação. Scrum é o framework: papéis (PO, Scrum Master, Team) e sprints (em geral 2 semanas). Sprint Planning escolhe as tarefas, Daily Standup sincroniza (15 min), Sprint Review é a demo, Retrospective fala do processo. User Stories com Acceptance Criteria. Story Points estimam complexidade (Fibonacci). Velocity é o volume médio por sprint. Definition of Done são os critérios de pronto. Kanban Board visualiza o fluxo."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Напиши User Story
+### Exercício 1: Escreva uma User Story
 
-Создай User Story для функции "Сброс пароля" с Acceptance Criteria.
+Crie uma User Story para a feature "Redefinição de senha" com Acceptance Criteria.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 **User Story:**
 
 ```
-As a user
-I want to reset my password
-So that I can access my account if I forget my password
+Como um usuário
+Eu quero redefinir minha senha
+Para que eu consiga acessar a conta se eu esquecer a senha
 ```
 
 **Acceptance Criteria:**
 
 ```
-✓ User can request password reset from login page
-✓ System sends password reset link to user's email
-✓ Reset link expires after 1 hour
-✓ User can set new password (min 8 characters)
-✓ Old password becomes invalid after reset
-✓ User is logged in after successful reset
-✓ Email notification sent after password changed
+✓ Usuário pede redefinição de senha na página de login
+✓ Sistema envia o link de reset para o email
+✓ Link expira em 1 hora
+✓ Usuário define senha nova (mínimo 8 caracteres)
+✓ Senha antiga deixa de valer depois do reset
+✓ Usuário entra logado depois do reset
+✓ Email de aviso é enviado depois da senha mudar
 ```
 
-**Тесты:**
+**Testes:**
 
 ```php
 public function test_user_can_request_password_reset()
@@ -484,7 +484,7 @@ public function test_reset_link_expires_after_one_hour()
     $user = User::factory()->create();
     $token = Password::createToken($user);
 
-    // Travel 61 minutes forward
+    // Avança 61 minutos
     $this->travel(61)->minutes();
 
     $response = $this->post('/reset-password', [
@@ -498,144 +498,144 @@ public function test_reset_link_expires_after_one_hour()
 }
 ```
 
-**Story Points:** 3 SP (средняя сложность)
+**Story Points:** 3 SP (complexidade média)
 
 </details>
 
-### Задание 2: Planning Poker оценка
+### Exercício 2: Estimativa no Planning Poker
 
-Оцени следующие задачи по Story Points (1, 2, 3, 5, 8, 13):
+Estime as tarefas abaixo em Story Points (1, 2, 3, 5, 8, 13):
 
-1. Добавить поле "phone" в форму регистрации
-2. Интегрировать платёжную систему Stripe
-3. Исправить баг: typo в тексте кнопки
-4. Создать систему уведомлений (email, SMS, push)
+1. Adicionar o campo "phone" no formulário de cadastro
+2. Integrar o Stripe
+3. Corrigir bug: typo no texto do botão
+4. Criar sistema de notificações (email, SMS, push)
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**1. Добавить поле "phone" в форму регистрации**
-- **2 SP** (просто)
-- Изменения: migration, validation rule, форма, тесты
-- Время: 2-3 часа
+**1. Adicionar o campo "phone" no formulário de cadastro**
+- **2 SP** (simples)
+- Mudanças: migration, validation rule, formulário, testes
+- Tempo: 2-3 horas
 
-**2. Интегрировать платёжную систему Stripe**
-- **8 SP** (очень сложно)
-- Изменения: Stripe SDK, payment service, webhooks, UI, тесты, обработка ошибок
-- Время: 1-2 дня
-- Неопределённость: работа с внешним API
+**2. Integrar o Stripe**
+- **8 SP** (muito difícil)
+- Mudanças: Stripe SDK, payment service, webhooks, UI, testes, tratamento de erro
+- Tempo: 1-2 dias
+- Incerteza: API externa
 
-**3. Исправить баг: typo в тексте кнопки**
-- **1 SP** (очень просто)
-- Изменения: 1 строка в blade файле
-- Время: 5 минут
+**3. Corrigir bug: typo no texto do botão**
+- **1 SP** (muito simples)
+- Mudanças: 1 linha no arquivo Blade
+- Tempo: 5 minutos
 
-**4. Создать систему уведомлений (email, SMS, push)**
-- **13 SP** (слишком большая задача!)
-- **Рекомендация:** разбить на подзадачи:
+**4. Criar sistema de notificações (email, SMS, push)**
+- **13 SP** (tarefa grande demais!)
+- **Recomendação:** quebrar em subtarefas:
   - Email notifications [3 SP]
   - SMS notifications [5 SP]
   - Push notifications [5 SP]
 
-**Обоснование оценок:**
-- Учитывается сложность разработки
-- Количество изменений
-- Неопределённость / риски
-- Время на тесты
-- Code review iterations
+**Por que essas notas:**
+- Complexidade de desenvolvimento
+- Volume de mudança
+- Incerteza / risco
+- Tempo de teste
+- Iterações de code review
 
 </details>
 
-### Задание 3: Retrospective Action Items
+### Exercício 3: Action Items da Retrospective
 
-После спринта команда выявила проблемы. Предложи Action Items:
+Depois do sprint o time achou problemas. Proponha Action Items:
 
-**Проблемы:**
-- Code review затягивается на 2-3 дня
-- Много багов находится в production
-- Тесты не покрывают edge cases
-- Не хватает времени на рефакторинг
+**Problemas:**
+- Code review atrasa 2-3 dias
+- Muito bug aparece em production
+- Testes não cobrem edge cases
+- Não sobra tempo para refatorar
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 **Action Items:**
 
-**1. Code Review затягивается:**
+**1. Code review atrasa:**
 
 ```
-Problem: PR лежат без ревью 2-3 дня
+Problema: PR fica 2-3 dias sem review
 
 Action Items:
-✓ [John] Установить SLA: ревью в течение 4 часов
-✓ [Sarah] Настроить автоматические напоминания в Slack
-✓ [Team] Выделить "Code Review Hour" ежедневно (15:00-16:00)
-✓ [Team] PR должны быть < 300 строк (иначе разбить)
-✓ [Scrum Master] Отслеживать метрику "time to review"
+✓ [John] Definir SLA: review em até 4 horas
+✓ [Sarah] Configurar lembrete automático no Slack
+✓ [Team] Reservar "Code Review Hour" todo dia (15:00-16:00)
+✓ [Team] PR com menos de 300 linhas (senão quebrar)
+✓ [Scrum Master] Acompanhar a métrica "time to review"
 
-Expected Result:
-- PR ревьюятся в тот же день
-- Меньше context switching
+Resultado esperado:
+- PR revisado no mesmo dia
+- Menos troca de contexto
 ```
 
-**2. Много багов в production:**
+**2. Muito bug em production:**
 
 ```
-Problem: Баги находятся пользователями, не тестами
+Problema: Usuário acha o bug, teste não acha
 
 Action Items:
-✓ [Team] Добавить pre-commit hook для запуска тестов
-✓ [Alice] Написать чек-лист manual testing для каждого PR
-✓ [Bob] Настроить Sentry для tracking errors в production
-✓ [Team] Definition of Done включает: staging testing
-✓ [PO] Выделить 20% capacity спринта на bug fixing
+✓ [Team] Adicionar pre-commit hook para rodar os testes
+✓ [Alice] Escrever checklist de teste manual para cada PR
+✓ [Bob] Configurar Sentry para tracking de erro em production
+✓ [Team] Definition of Done inclui: teste no staging
+✓ [PO] Reservar 20% da capacity do sprint para bugfix
 
-Expected Result:
-- Меньше bugs escaping to production
-- Быстрее находим и фиксим bugs
+Resultado esperado:
+- Menos bug vazando para production
+- Acha e corrige mais rápido
 ```
 
-**3. Тесты не покрывают edge cases:**
+**3. Testes não cobrem edge cases:**
 
 ```
-Problem: Coverage есть, но edge cases не протестированы
+Problema: Tem coverage, mas edge case não está testado
 
 Action Items:
-✓ [Team] Code review checklist: проверить edge cases
-✓ [John] Провести workshop "Testing Edge Cases"
-✓ [Team] При каждом production bug — написать регресс тест
-✓ [Sarah] Добавить mutation testing (Infection PHP)
-✓ [Team] Примеры edge cases в Definition of Done
+✓ [Team] Checklist de code review: olhar edge cases
+✓ [John] Fazer workshop "Testing Edge Cases"
+✓ [Team] Cada bug de production vira teste de regressão
+✓ [Sarah] Adicionar mutation testing (Infection PHP)
+✓ [Team] Exemplos de edge case no Definition of Done
 
-Expected Result:
-- Тесты находят больше bugs
-- Confidence в деплое повышается
+Resultado esperado:
+- Testes acham mais bug
+- Mais confiança no deploy
 ```
 
-**4. Не хватает времени на рефакторинг:**
+**4. Não sobra tempo para refatorar:**
 
 ```
-Problem: Technical debt растёт, код сложнее поддерживать
+Problema: Débito técnico cresce, código fica mais difícil de manter
 
 Action Items:
-✓ [PO] Выделить 10-15% capacity на technical debt
-✓ [Team] "Refactoring Friday" — каждую пятницу 2 часа
-✓ [Scrum Master] Добавить "Tech Debt" в Product Backlog
-✓ [Team] При каждом изменении: "Leave code better than found"
-✓ [John] Вести Tech Debt Register (приоритизировать)
+✓ [PO] Reservar 10-15% da capacity para débito técnico
+✓ [Team] "Refactoring Friday" — toda sexta, 2 horas
+✓ [Scrum Master] Colocar "Tech Debt" no Product Backlog
+✓ [Team] Em cada mudança: "deixe o código melhor do que encontrou"
+✓ [John] Manter um Tech Debt Register (priorizar)
 
-Expected Result:
-- Code quality улучшается постепенно
-- Меньше времени на debugging legacy code
+Resultado esperado:
+- Qualidade do código sobe aos poucos
+- Menos tempo fazendo debug de código legado
 ```
 
-**Tracking:**
-- Revisit action items на следующей Retrospective
-- Измерить метрики: time to review, bugs in production, test coverage
-- Celebrate improvements!
+**Acompanhamento:**
+- Revisitar os action items na próxima Retrospective
+- Medir: time to review, bugs em production, test coverage
+- Celebrar as melhorias!
 
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

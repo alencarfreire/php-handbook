@@ -1,51 +1,51 @@
-# 16.4 Code Refactoring
+# 16.4 Refatoração de código
 
-## Примеры рефакторинга на собеседованиях
+## Exemplos de refatoração na entrevista
 
-### Пример 1: God Controller
+### Exemplo 1: God Controller
 
-**❌ Было (плохо):**
+**❌ Antes (ruim):**
 
 ```php
 class UserController extends Controller
 {
     public function store(Request $request)
     {
-        // 1. Валидация
+        // 1. Validação
         if (!$request->has('name') || strlen($request->name) < 3) {
-            return back()->withErrors(['name' => 'Name too short']);
+            return back()->withErrors(['name' => 'Nome muito curto']);
         }
         if (!filter_var($request->email, FILTER_VALIDATE_EMAIL)) {
-            return back()->withErrors(['email' => 'Invalid email']);
+            return back()->withErrors(['email' => 'Email inválido']);
         }
         if (User::where('email', $request->email)->exists()) {
-            return back()->withErrors(['email' => 'Email taken']);
+            return back()->withErrors(['email' => 'Email já cadastrado']);
         }
 
-        // 2. Создание пользователя
+        // 2. Criar o usuário
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // 3. Создание профиля
+        // 3. Criar o perfil
         $profile = new Profile();
         $profile->user_id = $user->id;
         $profile->avatar = 'default.png';
         $profile->bio = '';
         $profile->save();
 
-        // 4. Отправка email
+        // 4. Enviar email
         $to = $user->email;
-        $subject = 'Welcome!';
-        $message = "Hi {$user->name}, welcome to our site!";
+        $subject = 'Bem-vindo!';
+        $message = "Olá, {$user->name}, bem-vindo ao nosso site!";
         mail($to, $subject, $message);
 
-        // 5. Логирование
-        Log::info("User registered: {$user->id}");
+        // 5. Log
+        Log::info("Usuário registrado: {$user->id}");
 
-        // 6. Increment counter
+        // 6. Incrementar o contador
         Cache::increment('users.total');
 
         return redirect('/dashboard');
@@ -53,20 +53,20 @@ class UserController extends Controller
 }
 ```
 
-**Проблемы:**
+**Problemas:**
 
 ```
-- Слишком много ответственностей
-- Нет тестов (сложно)
-- Дублирование логики
-- Нет переиспользования
-- Нарушение SOLID
+- Responsabilidades demais
+- Sem testes (difícil de testar)
+- Lógica duplicada
+- Sem reúso
+- Quebra o SOLID
 ```
 
-**✅ Стало (хорошо):**
+**✅ Depois (bom):**
 
 ```php
-// 1. Request validation
+// 1. Validação do request
 class StoreUserRequest extends FormRequest
 {
     public function rules()
@@ -92,20 +92,20 @@ class UserService
         DB::beginTransaction();
 
         try {
-            // Создать user
+            // Criar o user
             $user = $this->users->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
 
-            // Создать profile
+            // Criar o profile
             $user->profile()->create([
                 'avatar' => 'default.png',
                 'bio' => '',
             ]);
 
-            // Email через queue
+            // Email pela queue
             $this->mail->sendWelcome($user);
 
             // Event
@@ -121,17 +121,17 @@ class UserService
     }
 }
 
-// 3. Observer для side effects
+// 3. Observer para side effects
 class UserObserver
 {
     public function created(User $user)
     {
-        Log::info("User registered: {$user->id}");
+        Log::info("Usuário registrado: {$user->id}");
         Cache::increment('users.total');
     }
 }
 
-// 4. Controller (тонкий)
+// 4. Controller (fino)
 class UserController extends Controller
 {
     public function __construct(
@@ -147,21 +147,21 @@ class UserController extends Controller
 }
 ```
 
-**Преимущества:**
+**Vantagens:**
 
 ```
-✓ Единая ответственность
-✓ Переиспользуемый код
-✓ Легко тестировать
-✓ Следует SOLID
+✓ Responsabilidade única
+✓ Código reutilizável
+✓ Fácil de testar
+✓ Segue SOLID
 ✓ DRY
 ```
 
 ---
 
-### Пример 2: Nested If-Else Hell
+### Exemplo 2: Inferno de if-else aninhado
 
-**❌ Было:**
+**❌ Antes:**
 
 ```php
 public function calculateDiscount(User $user, Order $order)
@@ -190,7 +190,7 @@ public function calculateDiscount(User $user, Order $order)
 }
 ```
 
-**✅ Стало (Early Return):**
+**✅ Depois (Early Return):**
 
 ```php
 public function calculateDiscount(User $user, Order $order): float
@@ -204,7 +204,7 @@ public function calculateDiscount(User $user, Order $order): float
         return $order->total > 50 ? $order->total * 0.05 : 0;
     }
 
-    // VIP logic
+    // Lógica VIP
     if ($order->total <= 100) {
         return $order->total * 0.10;
     }
@@ -215,7 +215,7 @@ public function calculateDiscount(User $user, Order $order): float
 }
 ```
 
-**Ещё лучше (Strategy Pattern):**
+**Ainda melhor (Strategy Pattern):**
 
 ```php
 interface DiscountStrategy
@@ -276,9 +276,9 @@ class DiscountCalculator
 
 ---
 
-### Пример 3: Duplicate Code
+### Exemplo 3: Duplicate Code
 
-**❌ Было:**
+**❌ Antes:**
 
 ```php
 class OrderController extends Controller
@@ -316,7 +316,7 @@ class OrderController extends Controller
 }
 ```
 
-**✅ Стало:**
+**✅ Depois:**
 
 ```php
 // Repository
@@ -360,16 +360,16 @@ class OrderController extends Controller
 
 ---
 
-### Пример 4: Long Method
+### Exemplo 4: Long Method
 
-**❌ Было:**
+**❌ Antes:**
 
 ```php
 public function processOrder(Order $order)
 {
-    // 150 строк кода...
+    // 150 linhas de código...
 
-    // Валидация
+    // Validação
     if ($order->total < 0) {
         throw new InvalidOrderException();
     }
@@ -377,7 +377,7 @@ public function processOrder(Order $order)
         throw new EmptyOrderException();
     }
 
-    // Inventory check
+    // Checar estoque
     foreach ($order->items as $item) {
         $product = Product::find($item->product_id);
         if ($product->stock < $item->quantity) {
@@ -385,36 +385,36 @@ public function processOrder(Order $order)
         }
     }
 
-    // Payment
+    // Pagamento
     $stripe = new \Stripe\StripeClient(config('stripe.key'));
     try {
         $charge = $stripe->charges->create([
             'amount' => $order->total * 100,
-            'currency' => 'usd',
+            'currency' => 'brl',
             'source' => $order->payment_method_id,
         ]);
     } catch (\Stripe\Exception\CardException $e) {
         throw new PaymentFailedException($e->getMessage());
     }
 
-    // Update inventory
+    // Atualizar estoque
     foreach ($order->items as $item) {
         $product = Product::find($item->product_id);
         $product->stock -= $item->quantity;
         $product->save();
     }
 
-    // Create shipment
+    // Criar o envio
     $shipment = new Shipment();
     $shipment->order_id = $order->id;
     $shipment->address = $order->shipping_address;
     $shipment->save();
 
-    // Send emails
+    // Enviar emails
     Mail::to($order->user)->send(new OrderConfirmation($order));
     Mail::to('admin@example.com')->send(new NewOrderNotification($order));
 
-    // Update order
+    // Atualizar o pedido
     $order->status = 'paid';
     $order->paid_at = now();
     $order->save();
@@ -423,7 +423,7 @@ public function processOrder(Order $order)
 }
 ```
 
-**✅ Стало:**
+**✅ Depois:**
 
 ```php
 class OrderProcessor
@@ -463,9 +463,9 @@ class OrderProcessor
 
 ---
 
-### Пример 5: Magic Numbers
+### Exemplo 5: Magic Numbers
 
-**❌ Было:**
+**❌ Antes:**
 
 ```php
 if ($user->age >= 18) {
@@ -477,13 +477,13 @@ if ($order->total > 100) {
 }
 
 if ($subscription->type === 1) {
-    // Pro subscription
+    // Assinatura Pro
 }
 
 Cache::remember('products', 3600, fn() => Product::all());
 ```
 
-**✅ Стало:**
+**✅ Depois:**
 
 ```php
 class User extends Model
@@ -519,18 +519,18 @@ enum SubscriptionType: int
 }
 
 if ($subscription->type === SubscriptionType::PRO) {
-    // Pro subscription
+    // Assinatura Pro
 }
 
-// Config для времени кеша
+// Config do TTL do cache
 Cache::remember('products', config('cache.ttl.products'), fn() => Product::all());
 ```
 
 ---
 
-### Пример 6: Primitive Obsession
+### Exemplo 6: Primitive Obsession
 
-**❌ Было:**
+**❌ Antes:**
 
 ```php
 class User
@@ -540,12 +540,12 @@ class User
 
 function sendEmail(string $email)
 {
-    // Нет валидации, можно передать "invalid-email"
+    // Sem validação, dá para passar "invalid-email"
     mail($email, ...);
 }
 ```
 
-**✅ Стало:**
+**✅ Depois:**
 
 ```php
 class Email
@@ -579,37 +579,37 @@ class User
 
 function sendEmail(Email $email)
 {
-    // Email гарантированно валидный
+    // Email garantido válido
     mail($email->getValue(), ...);
 }
 ```
 
 ---
 
-## Принципы рефакторинга
+## Princípios de refatoração
 
 **1. DRY (Don't Repeat Yourself):**
 
 ```
-Дублирующийся код → Функция/Метод/Класс
+Código duplicado → Função/Método/Classe
 ```
 
 **2. KISS (Keep It Simple, Stupid):**
 
 ```
-Сложный код → Простые маленькие функции
+Código complexo → Funções pequenas e simples
 ```
 
 **3. YAGNI (You Aren't Gonna Need It):**
 
 ```
-Удали неиспользуемый код
+Apague código que não usa
 ```
 
 **4. Extract Method:**
 
 ```
-Длинный метод → Несколько коротких
+Método longo → Vários métodos curtos
 ```
 
 **5. Replace Conditional with Polymorphism:**
@@ -621,27 +621,30 @@ if/else → Strategy Pattern / Inheritance
 **6. Introduce Parameter Object:**
 
 ```
-Много параметров → Объект
+Muitos parâmetros → Objeto
 ```
 
 ---
 
 ## Code Smells
 
-**1. Long Method** (> 20 строк)
-**2. Large Class** (> 200 строк)
-**3. Long Parameter List** (> 3-4 параметра)
+**1. Long Method** (> 20 linhas)
+**2. Large Class** (> 200 linhas)
+**3. Long Parameter List** (> 3-4 parâmetros)
 **4. Duplicate Code**
-**5. Dead Code** (неиспользуемый)
-**6. Comments** (вместо читаемого кода)
+**5. Dead Code** (não usado)
+**6. Comments** (no lugar de código legível)
 **7. Magic Numbers**
 **8. Temporary Field**
-**9. Feature Envy** (метод использует больше данных другого класса)
-**10. Data Clumps** (группы данных всегда вместе)
+**9. Feature Envy** (o método usa mais dados de outra classe)
+**10. Data Clumps** (grupos de dados que sempre andam juntos)
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Refactoring: God Controller → тонкий контроллер + Service + Repository. Nested if-else → Early Return или Strategy Pattern. Duplicate code → Extract Method, DRY. Long Method → разбить на маленькие методы. Magic Numbers → константы или enum. Primitive Obsession → Value Objects. Принципы: DRY, KISS, YAGNI, SOLID. Code smells: Long Method, Large Class, Duplicate Code, Dead Code. Рефакторинг должен сохранять функциональность (тесты!)."
+> "Refatoração: God Controller vira Thin Controller + Service + Repository. Nested if-else vira Early Return ou Strategy Pattern. Código duplicado: Extract Method, DRY. Long Method: quebra em métodos pequenos. Magic Numbers: constantes ou enum. Primitive Obsession: Value Objects. Princípios: DRY, KISS, YAGNI, SOLID. Code smells: Long Method, Large Class, Duplicate Code, Dead Code. Refatoração tem que manter o comportamento (testes!)."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,294 +1,294 @@
 # 15.1 Code Review
 
-## Краткое резюме
+## Resumo
 
-> **Code Review** — процесс проверки кода другими разработчиками для улучшения качества, поиска багов, обмена знаниями.
+> **Code Review** — outros devs revisam o código antes do merge. Melhora qualidade, acha bug, espalha conhecimento.
 >
-> **Что проверять:** функциональность, читаемость, производительность (N+1), безопасность (SQL injection, XSS), архитектуру (SOLID).
+> **O que checar:** funcionalidade, legibilidade, performance (N+1), segurança (SQL injection, XSS), arquitetura (SOLID).
 >
-> **Комментарии:** конструктивные с объяснением и решением. Хороший PR: 100-300 строк, описание, checklist, тесты.
+> **Comentários:** construtivos, com explicação e solução. PR bom: 100-300 linhas, descrição, checklist, testes.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как проводить Code Review](#как-проводить-code-review)
-- [Примеры комментариев](#примеры-комментариев)
-- [Checklist для reviewer](#checklist-для-reviewer)
-- [Типичные проблемы](#типичные-проблемы)
-- [Как принимать Code Review](#как-принимать-code-review)
-- [Pull Request Best Practices](#pull-request-best-practices)
-- [Автоматизация Code Review](#автоматизация-code-review)
-- [Инструменты](#инструменты)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Code Review — процесс проверки кода другими разработчиками перед слиянием в основную ветку.
-
-**Цели:**
-- Найти баги и уязвимости
-- Улучшить качество кода
-- Обмен знаниями в команде
-- Поддержание стандартов
+- [O que é](#o-que-é)
+- [Como fazer Code Review](#como-fazer-code-review)
+- [Exemplos de comentários](#exemplos-de-comentários)
+- [Checklist do reviewer](#checklist-do-reviewer)
+- [Problemas típicos](#problemas-típicos)
+- [Como receber Code Review](#como-receber-code-review)
+- [Boas práticas de Pull Request](#boas-práticas-de-pull-request)
+- [Automatizar o Code Review](#automatizar-o-code-review)
+- [Ferramentas](#ferramentas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как проводить Code Review
+## O que é
 
-**Что проверять:**
+**O que é:**
+Code Review — outros devs revisam o código antes de entrar na branch principal.
+
+**Objetivos:**
+- Achar bugs e vulnerabilidades
+- Melhorar a qualidade do código
+- Trocar conhecimento no time
+- Manter o padrão
+
+---
+
+## Como fazer Code Review
+
+**O que checar:**
 
 ```
-1. Функциональность
-   ✓ Код делает то, что заявлено?
-   ✓ Есть тесты?
-   ✓ Edge cases учтены?
+1. Funcionalidade
+   ✓ O código faz o que o PR promete?
+   ✓ Tem testes?
+   ✓ Edge cases cobertos?
 
-2. Читаемость
-   ✓ Понятные имена переменных/функций?
-   ✓ Нет дублирования?
-   ✓ Комментарии где нужно?
+2. Legibilidade
+   ✓ Nomes de variável/função claros?
+   ✓ Sem duplicação?
+   ✓ Comentário onde precisa?
 
-3. Производительность
-   ✓ Нет N+1 запросов?
-   ✓ Оптимальные алгоритмы?
-   ✓ Кеширование где нужно?
+3. Performance
+   ✓ Sem N+1?
+   ✓ Algoritmo ok?
+   ✓ Cache onde precisa?
 
-4. Безопасность
-   ✓ SQL injection защита?
-   ✓ XSS защита?
-   ✓ Нет хардкод секретов?
+4. Segurança
+   ✓ Proteção contra SQL injection?
+   ✓ Proteção contra XSS?
+   ✓ Sem secret hardcoded?
 
-5. Архитектура
-   ✓ Соответствует паттернам проекта?
-   ✓ SOLID принципы?
-   ✓ Не нарушает существующий дизайн?
+5. Arquitetura
+   ✓ Segue os padrões do projeto?
+   ✓ Princípios SOLID?
+   ✓ Não quebra o design atual?
 ```
 
 ---
 
-## Примеры комментариев
+## Exemplos de comentários
 
-**❌ Плохие комментарии:**
+**❌ Comentários ruins:**
 
 ```
-"Это плохо"
-"Не работает"
-"Переделай"
-"Кто это писал?"
+"Isso está ruim"
+"Não funciona"
+"Refaz"
+"Quem escreveu isso?"
 ```
 
-**✅ Хорошие комментарии:**
+**✅ Comentários bons:**
 
 ```php
-// ❌ Найдена проблема
-// "Здесь будет N+1 проблема"
+// ❌ Achou o problema
+// "Aqui vai ter N+1"
 
-// ✅ С объяснением и решением
-"Здесь возникнет N+1 проблема, так как для каждого поста
-будет отдельный запрос за пользователем.
-Предлагаю использовать:
+// ✅ Com explicação e solução
+"Aqui nasce um N+1: cada post dispara
+uma query extra pro user.
+Sugestão:
 Post::with('user')->get()"
 
-// ❌ Критика без конструктива
-// "Плохо названа функция"
+// ❌ Crítica sem construtivo
+// "Nome da função está ruim"
 
-// ✅ Конструктивное предложение
-"Имя getUserData() слишком общее. Предлагаю
-getUserProfileWithOrders(), так как функция
-загружает именно профиль с заказами"
+// ✅ Sugestão construtiva
+"getUserData() está genérico demais. Sugiro
+getUserProfileWithOrders(), porque a função
+carrega o perfil com os pedidos"
 
-// ✅ Вопросы вместо утверждений
-"Почему здесь используется whereRaw вместо where?
-Это может не использовать индекс"
+// ✅ Pergunta em vez de afirmação
+"Por que whereRaw em vez de where?
+Isso pode não usar o índice"
 
-// ✅ Похвала хорошего кода
-"Отличное использование Early Return!
-Код стал намного читабельнее"
+// ✅ Elogio de código bom
+"Early Return bem usado!
+O código ficou bem mais legível"
 ```
 
 ---
 
-## Checklist для reviewer
+## Checklist do reviewer
 
-**Перед началом:**
-
-```
-□ Понял ли я задачу?
-□ Прочитал ли описание PR?
-□ Посмотрел ли связанные issues?
-□ Запустил ли код локально?
-```
-
-**Во время ревью:**
+**Antes de começar:**
 
 ```
-□ Тесты есть и проходят?
-□ Код читабельный и понятный?
-□ Нет дублирования (DRY)?
-□ Нет N+1 запросов?
-□ Миграции безопасны (backward compatible)?
-□ Нет SQL injection / XSS?
-□ Нет хардкод credentials?
-□ Соблюдён code style проекта?
-□ Обработаны ошибки?
-□ Документация обновлена (если нужно)?
+□ Entendi a tarefa?
+□ Li a descrição do PR?
+□ Olhei as issues ligadas?
+□ Rodei o código local?
+```
+
+**Durante o review:**
+
+```
+□ Tem testes e eles passam?
+□ Código legível e claro?
+□ Sem duplicação (DRY)?
+□ Sem N+1?
+□ Migrations seguras (backward compatible)?
+□ Sem SQL injection / XSS?
+□ Sem credentials no código?
+□ Code style do projeto ok?
+□ Erros tratados?
+□ Documentação atualizada (se precisar)?
 ```
 
 ---
 
-## Типичные проблемы
+## Problemas típicos
 
 **1. N+1 Query:**
 
 ```php
-// ❌ Проблема
+// ❌ Problema
 $posts = Post::all();
 foreach ($posts as $post) {
     echo $post->user->name;  // N+1
 }
 
-// ✅ Комментарий
-"N+1 проблема: для каждого поста отдельный запрос
-за пользователем. Используйте:
+// ✅ Comentário
+"N+1: cada post dispara uma query extra
+pro user. Use:
 Post::with('user')->get()"
 ```
 
-**2. Нет валидации:**
+**2. Sem validação:**
 
 ```php
-// ❌ Проблема
+// ❌ Problema
 public function update(Request $request, User $user)
 {
-    $user->update($request->all());  // Любые поля!
+    $user->update($request->all());  // Qualquer campo!
 }
 
-// ✅ Комментарий
-"Нужна валидация и указание конкретных полей:
+// ✅ Comentário
+"Falta validação e lista explícita de campos:
 $request->validate(['name' => 'required|max:255']);
 $user->update($request->only(['name', 'email']));"
 ```
 
-**3. Хардкод:**
+**3. Hardcode:**
 
 ```php
-// ❌ Проблема
+// ❌ Problema
 if ($user->role === 'admin') {
     // ...
 }
 
-// ✅ Комментарий
-"Предлагаю вынести роли в enum или константы:
+// ✅ Comentário
+"Sugiro tirar o role pra enum ou constante:
 if ($user->role === UserRole::Admin->value)
-или
+ou
 if ($user->hasRole('admin'))"
 ```
 
-**4. Нет обработки ошибок:**
+**4. Sem tratamento de erro:**
 
 ```php
-// ❌ Проблема
+// ❌ Problema
 public function charge(User $user, int $amount)
 {
     $this->stripeClient->charge($amount);
 }
 
-// ✅ Комментарий
-"Нужна обработка ошибок от Stripe:
+// ✅ Comentário
+"Falta tratar erro do Stripe:
 try {
     $this->stripeClient->charge($amount);
 } catch (StripeException $e) {
-    Log::error('Payment failed', ['user' => $user->id]);
+    Log::error('Pagamento falhou', ['user' => $user->id]);
     throw new PaymentFailedException($e->getMessage());
 }"
 ```
 
 ---
 
-## Как принимать Code Review
+## Como receber Code Review
 
-**✅ Хорошая реакция:**
-
-```
-"Спасибо за замечание! Действительно,
-здесь N+1. Сейчас исправлю"
-
-"Хороший вопрос. Я использовал whereRaw потому что...
-Но вы правы, можно через where(). Поменяю"
-
-"Не подумал про этот edge case. Добавлю проверку"
-```
-
-**❌ Плохая реакция:**
+**✅ Boa reação:**
 
 ```
-"Это не баг, это фича"
-"Так работает"
-"У нас всегда так делают"
-"Не критично"
-"Потом исправлю"
+"Valeu pelo ponto! É N+1 mesmo.
+Já corrijo"
+
+"Boa pergunta. Usei whereRaw porque...
+Mas você tem razão, dá pra ir de where(). Mudo"
+
+"Não pensei nesse edge case. Vou adicionar a checagem"
 ```
 
-**Если не согласен:**
+**❌ Reação ruim:**
 
 ```
-"Понимаю ваше замечание, но здесь есть нюанс...
-[объяснение]. Как думаете, имеет смысл оставить
-текущий вариант или всё же поменять?"
+"Isso não é bug, é feature"
+"É assim que funciona"
+"Aqui sempre foi assim"
+"Não é crítico"
+"Depois eu corrijo"
+```
+
+**Se você não concorda:**
+
+```
+"Entendi o ponto, mas tem um detalhe...
+[explicação]. Faz sentido manter
+como está ou você ainda prefere mudar?"
 ```
 
 ---
 
-## Pull Request Best Practices
+## Boas práticas de Pull Request
 
-**Хороший PR:**
+**PR bom:**
 
 ```markdown
-## Описание
-Добавлена система двухфакторной аутентификации для пользователей
+## Descrição
+Adicionada autenticação em dois fatores para os usuários
 
-## Изменения
-- Добавлена таблица `user_two_factor`
-- Новые методы `enableTwoFactor()` / `verifyTwoFactorCode()`
+## Mudanças
+- Tabela `user_two_factor`
+- Métodos novos `enableTwoFactor()` / `verifyTwoFactorCode()`
 - Middleware `RequiresTwoFactor`
-- Тесты для всех сценариев
+- Testes para todos os cenários
 
-## Как протестировать
-1. Зарегистрировать пользователя
-2. Включить 2FA в профиле
-3. Выйти и войти снова
-4. Должен запросить 2FA код
+## Como testar
+1. Registrar um usuário
+2. Ativar 2FA no perfil
+3. Sair e entrar de novo
+4. Deve pedir o código 2FA
 
 ## Screenshots
-[Скриншоты UI]
+[Capturas da UI]
 
 ## Checklist
-- [x] Тесты добавлены
-- [x] Миграции backward compatible
-- [x] Документация обновлена
+- [x] Testes adicionados
+- [x] Migrations backward compatible
+- [x] Documentação atualizada
 ```
 
-**Размер PR:**
+**Tamanho do PR:**
 
 ```
-✅ Хорошо: 100-300 строк
-⚠️  Средне: 300-500 строк
-❌ Плохо: 1000+ строк
+✅ Bom: 100-300 linhas
+⚠️  Médio: 300-500 linhas
+❌ Ruim: 1000+ linhas
 
-Большой PR → Split на несколько:
-- PR #1: Модели и миграции
-- PR #2: Контроллеры и роуты
+PR grande → quebre em vários:
+- PR #1: Models e migrations
+- PR #2: Controllers e rotas
 - PR #3: UI
 ```
 
 ---
 
-## Автоматизация Code Review
+## Automatizar o Code Review
 
 **GitHub Actions:**
 
@@ -321,10 +321,10 @@ jobs:
         run: php artisan test
 ```
 
-**Автокомментарии:**
+**Comentários automáticos:**
 
 ```yaml
-# Автоматически комментировать при проблемах
+# Comentar automaticamente quando falhar
 - name: Comment PR
   if: failure()
   uses: actions/github-script@v6
@@ -334,19 +334,19 @@ jobs:
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
-        body: '❌ Code quality checks failed. Please fix before merging.'
+        body: '❌ Checagens de qualidade falharam. Corrija antes do merge.'
       })
 ```
 
 ---
 
-## Инструменты
+## Ferramentas
 
 **Code Review Tools:**
 
 ```
 - GitHub / GitLab / Bitbucket (built-in)
-- Gerrit (для крупных проектов)
+- Gerrit (projetos grandes)
 - Phabricator / Differential
 - Review Board
 ```
@@ -354,26 +354,26 @@ jobs:
 **Code Analysis:**
 
 ```
-- PHPStan (статический анализ)
+- PHPStan (análise estática)
 - Psalm (static analysis)
 - Laravel Pint (code style)
 - PHP CS Fixer (code style)
-- SonarQube (комплексный анализ)
+- SonarQube (análise completa)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Code Review проверяет функциональность, читаемость, производительность, безопасность, архитектуру. Комментарии должны быть конструктивными с объяснением и предложением решения. Reviewer проверяет тесты, N+1, валидацию, SQL injection, code style. Хороший PR: 100-300 строк, описание, checklist. Автоматизация: PHPStan, Pint, тесты в CI/CD. Принимать ревью нужно конструктивно, не защищаться."
+> "Code Review checa funcionalidade, legibilidade, performance, segurança e arquitetura. Comentário tem que ser construtivo: explica o problema e sugere a solução. O reviewer olha teste, N+1, validação, SQL injection, code style. PR bom: 100-300 linhas, descrição, checklist. Automatizo com PHPStan, Pint e testes no CI/CD. Receber review é ouvir, não se defender."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Найди проблемы в коде
+### Exercício 1: Encontre os problemas no código
 
-Проведи code review следующего кода и укажи все проблемы:
+**Enunciado:** Faça o code review do código abaixo e liste todos os problemas:
 
 ```php
 public function updateUser(Request $request, $id)
@@ -389,37 +389,37 @@ public function updateUser(Request $request, $id)
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Проблемы:**
+**Problemas:**
 
-1. **Нет валидации** — любые данные могут быть сохранены
-2. **Нет проверки существования** — если user не найден, будет ошибка
-3. **Пароль не хешируется** — сохраняется в plain text
-4. **Mass assignment vulnerability** — можно перезаписать любые поля
-5. **Нет authorization** — кто угодно может изменить любого пользователя
-6. **Нет обработки ошибок**
+1. **Sem validação** — qualquer dado entra
+2. **Sem checagem de existência** — se o user não existir, quebra
+3. **Password sem hash** — grava em texto puro
+4. **Mass assignment** — dá pra sobrescrever qualquer campo
+5. **Sem autorização** — qualquer um altera qualquer usuário
+6. **Sem tratamento de erro**
 
-**Исправленный код:**
+**Código corrigido:**
 
 ```php
 public function updateUser(UpdateUserRequest $request, User $user)
 {
-    // Authorization
+    // Autorização
     $this->authorize('update', $user);
 
-    // Validated data
+    // Dados validados
     $validated = $request->validated();
 
-    // Hash password if provided
+    // Hash da senha se veio no request
     if (isset($validated['password'])) {
         $validated['password'] = Hash::make($validated['password']);
     }
 
-    // Update only allowed fields
+    // Atualiza só os campos permitidos
     $user->update($validated);
 
-    return redirect('/users')->with('success', 'User updated');
+    return redirect('/users')->with('success', 'Usuário atualizado');
 }
 
 // UpdateUserRequest
@@ -434,9 +434,9 @@ public function rules()
 ```
 </details>
 
-### Задание 2: Напиши конструктивный комментарий
+### Exercício 2: Escreva um comentário construtivo
 
-Тебе на ревью пришёл такой код. Напиши конструктивный комментарий:
+**Enunciado:** Esse código chegou no seu review. Escreva um comentário construtivo:
 
 ```php
 $posts = Post::all();
@@ -447,96 +447,95 @@ foreach ($posts as $post) {
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Плохой комментарий:**
+**Comentário ruim:**
 ```
-"Это N+1 проблема, переделай"
+"Isso é N+1, refaz"
 ```
 
-**Хороший комментарий:**
+**Comentário bom:**
 ```
-"Здесь возникнет N+1 проблема: для каждого поста будет отдельный
-запрос для получения user и category. Если постов 100, то будет
-1 + 100 + 100 = 201 запрос к БД.
+"Aqui nasce um N+1: cada post dispara uma query
+extra pra user e outra pra category. Com 100 posts
+viram 1 + 100 + 100 = 201 queries no banco.
 
-Предлагаю использовать eager loading:
+Sugestão: eager loading:
 
 $posts = Post::with(['user', 'category'])->get();
 
-Это сократит количество запросов до 3:
+Isso cai pra 3 queries:
 1. SELECT * FROM posts
 2. SELECT * FROM users WHERE id IN (...)
 3. SELECT * FROM categories WHERE id IN (...)
 
-Производительность улучшится в десятки раз."
+A performance sobe várias vezes."
 ```
 
-**Почему хорошо:**
-- Объясняет проблему
-- Показывает последствия (201 запрос)
-- Предлагает конкретное решение
-- Объясняет как решение работает
+**Por que funciona:**
+- Explica o problema
+- Mostra o impacto (201 queries)
+- Oferece solução concreta
+- Explica como a solução funciona
 </details>
 
-### Задание 3: Checklist для PR
+### Exercício 3: Checklist do PR
 
-Создай checklist для проверки Pull Request с новой функцией регистрации пользователя.
+**Enunciado:** Monte um checklist para um Pull Request de cadastro de usuário.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Checklist для User Registration PR:**
+**Checklist do PR de User Registration:**
 
-**Функциональность:**
-- [ ] User может зарегистрироваться с email и password
-- [ ] Password минимум 8 символов
-- [ ] Email уникален (validation + DB constraint)
-- [ ] Confirmation email отправляется
-- [ ] User не может войти пока email не подтверждён
-- [ ] Тесты покрывают все сценарии
+**Funcionalidade:**
+- [ ] User consegue se registrar com email e password
+- [ ] Password com no mínimo 8 caracteres
+- [ ] Email único (validation + constraint no banco)
+- [ ] Email de confirmação é enviado
+- [ ] User não entra enquanto o email não for confirmado
+- [ ] Testes cobrem todos os cenários
 
-**Безопасность:**
-- [ ] Password хешируется (Hash::make или bcrypt)
-- [ ] Нет SQL injection (используется Eloquent)
-- [ ] CSRF protection (middleware)
-- [ ] Email sanitized (validation)
-- [ ] Rate limiting на /register (throttle middleware)
-- [ ] Нет хардкод credentials
+**Segurança:**
+- [ ] Password com hash (Hash::make ou bcrypt)
+- [ ] Sem SQL injection (usa Eloquent)
+- [ ] Proteção CSRF (middleware)
+- [ ] Email sanitizado (validation)
+- [ ] Rate limiting em /register (throttle middleware)
+- [ ] Sem credentials no código
 
-**Производительность:**
-- [ ] Email отправка через queue (не блокирует request)
-- [ ] Нет N+1 запросов
-- [ ] Индексы на users.email
+**Performance:**
+- [ ] Email vai pela queue (não trava o request)
+- [ ] Sem N+1
+- [ ] Índice em users.email
 
 **Code Quality:**
-- [ ] FormRequest для validation
-- [ ] Service/Action для бизнес-логики
-- [ ] Event/Listener для side effects (email, лог)
+- [ ] FormRequest para validação
+- [ ] Service/Action para a regra de negócio
+- [ ] Event/Listener para side effects (email, log)
 - [ ] Code style (Laravel Pint)
-- [ ] PHPDoc где нужно
-- [ ] Нет дублирования кода
+- [ ] PHPDoc onde precisa
+- [ ] Sem código duplicado
 
 **Testing:**
-- [ ] Feature test: успешная регистрация
-- [ ] Feature test: валидация (email required, unique, password min length)
-- [ ] Feature test: confirmation email отправлен
+- [ ] Feature test: registro com sucesso
+- [ ] Feature test: validação (email required, unique, password min length)
+- [ ] Feature test: email de confirmação enviado
 - [ ] Unit test: UserService
-- [ ] Edge cases покрыты
+- [ ] Edge cases cobertos
 
-**Документация:**
-- [ ] README обновлён (если нужно)
-- [ ] API docs обновлены (Swagger)
-- [ ] Migration комментирована
+**Documentação:**
+- [ ] README atualizado (se precisar)
+- [ ] API docs atualizados (Swagger)
+- [ ] Migration comentada
 
-**Миграции:**
-- [ ] Rollback работает
-- [ ] Indexes созданы
-- [ ] Foreign keys с onDelete cascade
+**Migrations:**
+- [ ] Rollback funciona
+- [ ] Indexes criados
+- [ ] Foreign keys com onDelete cascade
 - [ ] Backward compatible
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

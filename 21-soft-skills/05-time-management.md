@@ -1,404 +1,407 @@
-# 15.5 Time Management и Приоритизация
+# 15.5 Time Management e Priorização
 
-## Что это
+## O que é
 
 **Time Management:**
-Эффективное управление временем для достижения максимальной продуктивности.
+Gestão eficiente do tempo para ter o máximo de produtividade.
 
-**Приоритизация:**
-Определение важности и срочности задач для правильного распределения времени.
-
----
-
-## Матрица Эйзенхауэра
-
-**Модель:**
-
-```
-┌─────────────────────┬─────────────────────┐
-│ СРОЧНО + ВАЖНО      │ НЕ СРОЧНО + ВАЖНО   │
-│ (Делать сейчас)     │ (Планировать)       │
-├─────────────────────┼─────────────────────┤
-│ Production bug      │ Рефакторинг         │
-│ Критичный deadlin   │ Обучение            │
-│ Клиент ждёт         │ Документация        │
-└─────────────────────┴─────────────────────┘
-┌─────────────────────┬─────────────────────┐
-│ СРОЧНО + НЕ ВАЖНО   │ НЕ СРОЧНО + НЕ ВАЖНО│
-│ (Делегировать)      │ (Удалить)           │
-├─────────────────────┼─────────────────────┤
-│ Некоторые встречи   │ Бесцельный серфинг  │
-│ Телефонные звонки   │ Социальные сети     │
-│ Отвлечения          │ Прокрастинация      │
-└─────────────────────┴─────────────────────┘
-```
-
-**Примеры для разработчика:**
-
-```
-Квадрант 1 (Срочно + Важно):
-- Production упал
-- Критичный bug перед релизом
-- Deadline спринта завтра
-
-Квадрант 2 (Не срочно + Важно):
-- Написать тесты
-- Refactoring legacy кода
-- Изучить новую технологию
-- Оптимизация производительности
-
-Квадрант 3 (Срочно + Не важно):
-- Ответить на некритичные сообщения
-- Участие во всех встречах
-
-Квадрант 4 (Не срочно + Не важно):
-- Reddit, Twitter в рабочее время
-- Настройка IDE вместо работы
-```
+**Priorização:**
+Definir importância e urgência das tarefas para gastar o tempo no lugar certo.
 
 ---
 
-## Методы управления временем
+## Matriz de Eisenhower
+
+**Modelo:**
+
+```
+┌─────────────────────────────┬─────────────────────────────┐
+│ URGENTE + IMPORTANTE        │ NÃO URGENTE + IMPORTANTE    │
+│ (Fazer agora)               │ (Planejar)                  │
+├─────────────────────────────┼─────────────────────────────┤
+│ Production bug              │ Refactoring                 │
+│ Deadline crítico            │ Estudo                      │
+│ Cliente esperando           │ Documentação                │
+└─────────────────────────────┴─────────────────────────────┘
+┌─────────────────────────────┬─────────────────────────────┐
+│ URGENTE + NÃO IMPORTANTE    │ NÃO URGENTE + NÃO IMPORTANTE│
+│ (Delegar)                   │ (Eliminar)                  │
+├─────────────────────────────┼─────────────────────────────┤
+│ Algumas reuniões            │ Navegação sem propósito     │
+│ Ligações                    │ Redes sociais               │
+│ Distrações                  │ Procrastinação              │
+└─────────────────────────────┴─────────────────────────────┘
+```
+
+**Exemplos para o desenvolvedor:**
+
+```
+Quadrante 1 (Urgente + Importante):
+- Produção caiu
+- Bug crítico antes do release
+- Deadline do sprint é amanhã
+
+Quadrante 2 (Não urgente + Importante):
+- Escrever testes
+- Refactoring de código legacy
+- Estudar uma tecnologia nova
+- Otimizar performance
+
+Quadrante 3 (Urgente + Não importante):
+- Responder mensagem que não é crítica
+- Entrar em toda reunião
+
+Quadrante 4 (Não urgente + Não importante):
+- Reddit, Twitter no horário de trabalho
+- Ajustar a IDE em vez de trabalhar
+```
+
+---
+
+## Métodos de gestão de tempo
 
 **Pomodoro:**
 
 ```
-25 минут работы → 5 минут отдыха
+25 minutos de trabalho → 5 minutos de pausa
 
-Цикл:
-1. Выбрать задачу
-2. Таймер на 25 минут
-3. Работать без отвлечений
-4. 5 минут отдыха
-5. Повторить
-6. После 4 циклов: 15-30 минут длинный перерыв
+Ciclo:
+1. Escolher a tarefa
+2. Timer de 25 minutos
+3. Trabalhar sem distração
+4. 5 minutos de pausa
+5. Repetir
+6. Depois de 4 ciclos: pausa longa de 15-30 minutos
 
-Для разработчиков:
-✓ 25 минут фокуса на одну задачу
-✓ В перерыв: встать, вода, не соцсети
-✓ Если прервали: начать заново
+Para desenvolvedores:
+✓ 25 minutos de foco em uma tarefa
+✓ Na pausa: levantar, água, sem rede social
+✓ Se for interrompido: recomeçar
 ```
 
 **Time Blocking:**
 
 ```
-Расписание на день:
+Agenda do dia:
 
-09:00-11:00  Deep work (сложные задачи)
-11:00-11:15  Break
+09:00-11:00  Deep work (tarefas difíceis)
+11:00-11:15  Pausa
 11:15-12:00  Code review, emails
-12:00-13:00  Lunch
-13:00-14:00  Meetings
-14:00-16:00  Deep work (feature development)
-16:00-16:15  Break
-16:15-17:00  Testing, документация
-17:00-18:00  Learning / side projects
+12:00-13:00  Almoço
+13:00-14:00  Reuniões
+14:00-16:00  Deep work (desenvolvimento de feature)
+16:00-16:15  Pausa
+16:15-17:00  Testes, documentação
+17:00-18:00  Estudo / side projects
 ```
 
 **Eat The Frog:**
 
 ```
-Самую сложную/неприятную задачу делать первой.
+A tarefa mais difícil/chata vai primeiro.
 
-Пример:
-❌ Утром: emails, Slack, мелкие задачи
-   После обеда: сложный рефакторинг (уже устал)
+Exemplo:
+❌ De manhã: emails, Slack, tarefa pequena
+   Depois do almoço: refactoring difícil (já cansou)
 
-✅ Утром: сложный рефакторинг (свежая голова)
-   После обеда: emails, code review
+✅ De manhã: refactoring difícil (cabeça fresca)
+   Depois do almoço: emails, code review
 ```
 
 ---
 
-## Приоритизация задач
+## Priorização de tarefas
 
-**MoSCoW метод:**
+**Método MoSCoW:**
 
 ```
-Must have (Должно быть):
-- Авторизация пользователей
-- Оплата заказов
-- Отправка заказов
+Must have (tem que ter):
+- Autenticação de usuários
+- Pagamento de pedidos
+- Envio de pedidos
 
-Should have (Должно бы быть):
-- Email уведомления
-- История заказов
-- Фильтры продуктов
+Should have (deveria ter):
+- Notificações por email
+- Histórico de pedidos
+- Filtros de produtos
 
-Could have (Могло бы быть):
-- Избранное
-- Отзывы
+Could have (poderia ter):
+- Favoritos
+- Avaliações
 - Wishlist
 
-Won't have (Не будет сейчас):
-- Социальные функции
-- Чат с продавцом
-- AR примерка
+Won't have (não entra agora):
+- Funções sociais
+- Chat com o vendedor
+- Provador AR
 ```
 
 **Value vs Effort:**
 
 ```
-High Value + Low Effort:
-→ Делать сейчас
+Alto valor + baixo esforço:
+→ Fazer agora
 
-High Value + High Effort:
-→ Планировать (разбить на части)
+Alto valor + alto esforço:
+→ Planejar (quebrar em partes)
 
-Low Value + Low Effort:
-→ Делать когда есть время
+Baixo valor + baixo esforço:
+→ Fazer quando sobrar tempo
 
-Low Value + High Effort:
-→ Не делать
+Baixo valor + alto esforço:
+→ Não fazer
 ```
 
 ---
 
-## Борьба с прокрастинацией
+## Combate à procrastinação
 
-**Почему прокрастинируем:**
+**Por que procrastinamos:**
 
 ```
-1. Задача слишком большая
-   → Разбить на маленькие шаги
+1. A tarefa é grande demais
+   → Quebrar em passos pequenos
 
-2. Не знаю с чего начать
-   → Начать с самой простой части
+2. Não sei por onde começar
+   → Começar pela parte mais simples
 
-3. Боюсь сделать плохо
+3. Medo de fazer mal feito
    → "Done is better than perfect"
 
-4. Задача скучная
-   → Награда после выполнения
+4. A tarefa é chata
+   → Recompensa depois de concluir
 
-5. Отвлечения
-   → Убрать источники отвлечений
+5. Distrações
+   → Tirar as fontes de distração
 ```
 
-**Техники:**
+**Técnicas:**
 
 ```
-✓ 2-минутное правило:
-  Если задача < 2 минут → делать сразу
+✓ Regra dos 2 minutos:
+  Se a tarefa leva menos de 2 minutos → faça agora
 
-✓ 5-минутное правило:
-  Начать работать 5 минут, потом можно бросить
-  (обычно втягиваешься и продолжаешь)
+✓ Regra dos 5 minutos:
+  Comece a trabalhar 5 minutos, depois pode parar
+  (geralmente você entra no ritmo e continua)
 
 ✓ Accountability:
-  Сказать коллеге "Сделаю это к обеду"
+  Fale para o colega: "Termino isso até o almoço"
 
-✓ Убрать отвлечения:
-  - Телефон в другую комнату
-  - Закрыть Slack/Email
-  - Блокировщик сайтов (Freedom, Cold Turkey)
+✓ Tirar distrações:
+  - Celular em outro cômodo
+  - Fechar Slack/Email
+  - Bloqueador de sites (Freedom, Cold Turkey)
 ```
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Планирование спринта:**
+**Planejamento do sprint:**
 
 ```markdown
-Sprint Goal: Implement payment system
+Sprint Goal: Implementar sistema de pagamento
 
 Day 1-2 (High Priority):
 □ Setup Stripe SDK [3h]
-□ Create Payment model & migration [2h]
-□ Implement charge() method [4h]
+□ Criar model Payment e migration [2h]
+□ Implementar o método charge() [4h]
 
 Day 3-4 (Medium Priority):
-□ Add payment UI [5h]
-□ Handle webhooks [3h]
+□ Adicionar UI de pagamento [5h]
+□ Tratar webhooks [3h]
 □ Error handling [2h]
 
 Day 5-6 (Low Priority):
-□ Write tests [4h]
-□ Refund functionality [3h]
+□ Escrever testes [4h]
+□ Funcionalidade de reembolso [3h]
 □ Admin dashboard [2h]
 
 Buffer:
 Day 7-8: Bug fixes, code review
 ```
 
-**Ежедневное планирование:**
+**Planejamento diário:**
 
 ```markdown
-# Today's Plan (2024-01-15)
+# Plano de hoje (2024-01-15)
 
-## Top 3 Goals:
-1. Fix critical production bug [High]
-2. Finish payment integration [High]
-3. Write tests for UserService [Medium]
+## Top 3 metas:
+1. Corrigir bug crítico em produção [High]
+2. Terminar integração de pagamento [High]
+3. Escrever testes do UserService [Medium]
 
-## Schedule:
-09:00-09:30  Planning & emails
-09:30-11:30  🐸 Fix production bug
-11:30-12:00  Code review for team
-12:00-13:00  Lunch
-13:00-15:00  Payment integration
-15:00-15:30  Meeting: Sprint planning
-15:30-17:00  Write tests
-17:00-17:30  Slack, updates, planning tomorrow
+## Agenda:
+09:00-09:30  Planejamento e emails
+09:30-11:30  🐸 Corrigir bug em produção
+11:30-12:00  Code review do time
+12:00-13:00  Almoço
+13:00-15:00  Integração de pagamento
+15:00-15:30  Reunião: Sprint planning
+15:30-17:00  Escrever testes
+17:00-17:30  Slack, updates, planejar amanhã
 
-## Notes:
-- Block time for deep work (no Slack)
-- Pomodoro for testing
+## Notas:
+- Bloquear horário para deep work (sem Slack)
+- Pomodoro para testes
 ```
 
 ---
 
-## Meetings Management
+## Gestão de reuniões
 
-**Эффективные встречи:**
-
-```
-Перед встречей:
-□ Есть ли agenda?
-□ Действительно ли мне нужно присутствовать?
-□ Может ли это быть письмом?
-
-Во время встречи:
-□ Придерживаться agenda
-□ Записывать action items
-□ Назначать ответственных
-
-После встречи:
-□ Записать action items в задачи
-□ Follow up если нужно
-```
-
-**Когда отказаться:**
+**Reuniões eficientes:**
 
 ```
-✓ "Спасибо за приглашение, но я не смогу внести
-   ценный вклад. Можно просто прислать summary?"
+Antes da reunião:
+□ Tem agenda?
+□ Eu realmente preciso estar?
+□ Isso poderia ser um email?
 
-✓ "У меня critical deadline. Можем перенести на завтра?"
+Durante a reunião:
+□ Seguir a agenda
+□ Anotar action items
+□ Definir responsáveis
 
-✓ "Давайте лучше async обсудим в Slack?"
+Depois da reunião:
+□ Passar action items para tarefas
+□ Follow up se precisar
+```
+
+**Quando recusar:**
+
+```
+✓ "Obrigado pelo convite, mas eu não vou conseguir
+   contribuir de forma útil. Pode mandar só o summary?"
+
+✓ "Tenho um deadline crítico. Dá para deixar para amanhã?"
+
+✓ "Melhor a gente discutir async no Slack?"
 ```
 
 ---
 
-## Оценка задач
+## Estimativa de tarefas
 
-**Закон Хофштадтера:**
-
-```
-"Всё занимает больше времени, чем ожидается,
-даже если учесть закон Хофштадтера"
-
-Практика:
-Твоя оценка: 2 часа
-Реальность: 4-6 часов
-
-Решение: Умножай оценку на 2-3x
-```
-
-**Факторы для оценки:**
+**Lei de Hofstadter:**
 
 ```
-Базовая разработка:          [3h]
-+ Тесты:                     [1h]
-+ Code review iterations:    [0.5h]
-+ Неожиданные баги:          [1h]
-+ Интеграция с другими:      [1h]
+"Tudo leva mais tempo do que o esperado,
+mesmo levando em conta a lei de Hofstadter"
+
+Na prática:
+Sua estimativa: 2 horas
+Realidade: 4-6 horas
+
+Solução: multiplique a estimativa por 2-3x
+```
+
+**Fatores da estimativa:**
+
+```
+Desenvolvimento base:        [3h]
++ Testes:                    [1h]
++ Iterações de code review:  [0.5h]
++ Bugs inesperados:          [1h]
++ Integração com outros:     [1h]
 ─────────────────────────────────
-Total:                       [6.5h] ≈ 1 день
+Total:                       [6.5h] ≈ 1 dia
 ```
 
 ---
 
 ## Work-Life Balance
 
-**Границы:**
+**Limites:**
 
 ```
-✓ Рабочее время: 09:00-18:00 (не до полуночи)
-✓ Не отвечать на Slack вечером/выходные
-✓ Обеденный перерыв 1 час (не работа)
-✓ Отпуск = отпуск (не проверять почту)
+✓ Horário de trabalho: 09:00-18:00 (não até meia-noite)
+✓ Não responder Slack à noite/fim de semana
+✓ Intervalo de almoço de 1 hora (não é trabalho)
+✓ Férias = férias (não checar email)
 
-Burnout признаки:
-❌ Постоянная усталость
-❌ Нет мотивации
-❌ Раздражительность
-❌ Плохой сон
-❌ Ошибки в коде
-→ Нужен отдых!
+Sinais de burnout:
+❌ Cansaço constante
+❌ Sem motivação
+❌ Irritabilidade
+❌ Sono ruim
+❌ Erros no código
+→ Precisa de descanso!
 ```
 
-**Перерывы:**
+**Pausas:**
 
 ```
-✓ Каждые 25-50 минут: 5-10 минут
-✓ Встать, размяться, вода
-✓ Обед: 1 час, уйти от компьютера
-✓ Вечером: переключиться на хобби
-✓ Выходные: отдыхать, не работать
+✓ A cada 25-50 minutos: 5-10 minutos
+✓ Levantar, alongar, água
+✓ Almoço: 1 hora, sair do computador
+✓ À noite: trocar para um hobby
+✓ Fim de semana: descansar, não trabalhar
 ```
 
 ---
 
-## Инструменты
+## Ferramentas
 
 **Task Management:**
 
 ```
-- Todoist (личные задачи)
-- Notion (проекты, заметки)
-- Trello / Jira (командные задачи)
-- GitHub Projects (dev задачи)
+- Todoist (tarefas pessoais)
+- Notion (projetos, notas)
+- Trello / Jira (tarefas do time)
+- GitHub Projects (tarefas de dev)
 ```
 
 **Time Tracking:**
 
 ```
 - Toggl Track
-- RescueTime (автоматический)
+- RescueTime (automático)
 - Clockify
 ```
 
 **Focus:**
 
 ```
-- Forest (блокирует телефон)
-- Freedom (блокирует сайты)
+- Forest (bloqueia o celular)
+- Freedom (bloqueia sites)
 - Pomodoro Timer
 - Do Not Disturb mode
 ```
 
 ---
 
-## Советы для Junior
+## Dicas para Junior
 
-**Что важно:**
-
-```
-✓ Учиться оценивать задачи реалистично
-✓ Говорить если задача займёт дольше
-✓ Просить помощи если застрял > 30 минут
-✓ Не брать больше задач чем можешь
-✓ Фокус на качество, не скорость
-✓ Work-life balance с начала карьеры
-```
-
-**Чего избегать:**
+**O que importa:**
 
 ```
-❌ "Сделаю быстро" (потом 3 дня)
-❌ Работать до полуночи регулярно
-❌ Браться за всё подряд
-❌ Не планировать день
-❌ Постоянно отвлекаться
-❌ Игнорировать отдых
+✓ Aprender a estimar tarefas de forma realista
+✓ Falar se a tarefa vai levar mais tempo
+✓ Pedir ajuda se travar mais de 30 minutos
+✓ Não pegar mais tarefas do que você consegue
+✓ Foco em qualidade, não velocidade
+✓ Work-life balance desde o início da carreira
+```
+
+**O que evitar:**
+
+```
+❌ "Faço rápido" (depois leva 3 dias)
+❌ Trabalhar até meia-noite com frequência
+❌ Aceitar tudo que aparece
+❌ Não planejar o dia
+❌ Se distrair o tempo todo
+❌ Ignorar o descanso
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Time management: матрица Эйзенхауэра для приоритизации (срочно/важно). Методы: Pomodoro (25мин работа + 5мин отдых), Time Blocking (блоки времени), Eat The Frog (сложное утром). MoSCoW для приоритизации задач. Борьба с прокрастинацией: разбить на части, убрать отвлечения, 2-минутное правило. Оценка задач: умножить на 2-3x. Work-life balance важен. Инструменты: Todoist, Toggl, Pomodoro timers."
+> "Time management: matriz de Eisenhower para priorizar (urgente/importante). Métodos: Pomodoro (25 min de trabalho + 5 min de pausa), Time Blocking (blocos de tempo), Eat The Frog (o difícil de manhã). MoSCoW para priorizar tarefas. Combate à procrastinação: quebrar em partes, tirar distrações, regra dos 2 minutos. Estimativa: multiplique por 2-3x. Work-life balance importa. Ferramentas: Todoist, Toggl, timers de Pomodoro."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

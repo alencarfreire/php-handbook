@@ -1,56 +1,56 @@
-# 15.4 Документация
+# 15.4 Documentação
 
-## Что это
+## O que é
 
-**Типы документации:**
+**Tipos de documentação:**
 
 ```
-1. Code comments (комментарии в коде)
+1. Code comments (comentários no código)
 2. API documentation (Swagger/OpenAPI)
-3. README (обзор проекта)
-4. Technical documentation (архитектура)
-5. User documentation (для пользователей)
+3. README (visão geral do projeto)
+4. Technical documentation (arquitetura)
+5. User documentation (para usuários)
 ```
 
 ---
 
-## Code Comments
+## Comentários no código
 
-**Когда комментировать:**
+**Quando comentar:**
 
 ```php
-✅ ХОРОШО: Объяснение "почему"
+✅ BOM: explicar o "porquê"
 
-// Используем MD5 hash для backward compatibility с legacy API
-// TODO: Migrate to bcrypt in v2.0
+// Hash MD5 por compatibilidade com a API legacy
+// TODO: migrar para bcrypt na v2.0
 $hash = md5($password);
 
-// Workaround для бага в PHP 8.0 (https://bugs.php.net/bug.php?id=12345)
+// Workaround para bug no PHP 8.0 (https://bugs.php.net/bug.php?id=12345)
 if (version_compare(PHP_VERSION, '8.0', '>=')) {
-    // альтернативный код
+    // código alternativo
 }
 
-// Бизнес-логика: скидка 10% для VIP клиентов на заказы > $100
+// Regra de negócio: 10% de desconto para clientes VIP em pedidos > R$ 100
 if ($user->isVip() && $order->total > 100) {
     $discount = 0.10;
 }
 ```
 
 ```php
-❌ ПЛОХО: Комментирование очевидного
+❌ RUIM: comentar o óbvio
 
-// Получить пользователя по ID
+// Buscar o usuário pelo ID
 $user = User::find($id);
 
-// Установить имя
+// Definir o nome
 $user->name = $name;
 
-// Сохранить пользователя
+// Salvar o usuário
 $user->save();
 ```
 
 ```php
-✅ ЛУЧШЕ: Само-документирующийся код
+✅ MELHOR: código autoexplicativo
 
 function applyVipDiscount(Order $order, User $user): void
 {
@@ -64,14 +64,14 @@ function applyVipDiscount(Order $order, User $user): void
 
 ## PHPDoc
 
-**Для классов:**
+**Para classes:**
 
 ```php
 /**
- * Service for processing user payments
+ * Service para processar pagamentos de usuários
  *
- * Handles payment processing through multiple gateways
- * (Stripe, PayPal) with automatic retry logic and fraud detection.
+ * Processa pagamento em vários gateways
+ * (Stripe, PayPal), com retry automático e detecção de fraude.
  *
  * @package App\Services
  * @author John Doe <john@example.com>
@@ -82,22 +82,21 @@ class PaymentService
 }
 ```
 
-**Для методов:**
+**Para métodos:**
 
 ```php
 /**
- * Process payment for an order
+ * Processa o pagamento de um pedido
  *
- * Charges the customer's payment method and creates a payment
- * record in the database. Automatically retries failed payments
- * up to 3 times with exponential backoff.
+ * Cobra o meio de pagamento do cliente e cria o registro
+ * no banco. Se falhar, tenta de novo até 3 vezes com exponential backoff.
  *
- * @param Order $order The order to process payment for
- * @param PaymentMethod $method Customer's payment method
- * @return Payment The created payment record
+ * @param Order $order Pedido a ser cobrado
+ * @param PaymentMethod $method Meio de pagamento do cliente
+ * @return Payment Registro do pagamento criado
  *
- * @throws PaymentFailedException If payment fails after all retries
- * @throws InsufficientFundsException If customer has insufficient funds
+ * @throws PaymentFailedException Se o pagamento falhar depois de todas as tentativas
+ * @throws InsufficientFundsException Se o cliente não tiver saldo
  *
  * @example
  * $payment = $paymentService->processPayment($order, $card);
@@ -108,18 +107,18 @@ public function processPayment(Order $order, PaymentMethod $method): Payment
 }
 ```
 
-**Для сложных параметров:**
+**Para parâmetros complexos:**
 
 ```php
 /**
- * Create a new user with additional data
+ * Cria um usuário com dados extras
  *
- * @param array $data User data
- * @param array $data['name'] string User's full name
- * @param array $data['email'] string User's email address
- * @param array $data['roles'] array<string> Optional array of role names
- * @param array $data['profile'] array Optional profile data
- * @param array $data['profile']['avatar'] string Optional avatar URL
+ * @param array $data Dados do usuário
+ * @param array $data['name'] string Nome completo
+ * @param array $data['email'] string Email do usuário
+ * @param array $data['roles'] array<string> Array opcional de nomes de role
+ * @param array $data['profile'] array Dados opcionais de perfil
+ * @param array $data['profile']['avatar'] string URL opcional do avatar
  *
  * @return User
  */
@@ -131,7 +130,7 @@ public function createUser(array $data): User
 
 ---
 
-## API Documentation
+## Documentação de API
 
 **OpenAPI (Swagger):**
 
@@ -139,7 +138,7 @@ public function createUser(array $data): User
 /**
  * @OA\Get(
  *     path="/api/users/{id}",
- *     summary="Get user by ID",
+ *     summary="Buscar usuário por ID",
  *     tags={"Users"},
  *     @OA\Parameter(
  *         name="id",
@@ -149,12 +148,12 @@ public function createUser(array $data): User
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Successful operation",
+ *         description="Sucesso",
  *         @OA\JsonContent(ref="#/components/schemas/User")
  *     ),
  *     @OA\Response(
  *         response=404,
- *         description="User not found"
+ *         description="Usuário não encontrado"
  *     )
  * )
  */
@@ -164,17 +163,17 @@ public function show(int $id)
 }
 ```
 
-**Laravel API Resources (альтернатива):**
+**Laravel API Resources (alternativa):**
 
 ```php
 // app/Http/Resources/UserResource.php
 /**
- * User resource representation
+ * Representação do resource de usuário
  *
- * @property int $id User ID
- * @property string $name User's full name
- * @property string $email User's email
- * @property Carbon $created_at Account creation date
+ * @property int $id ID do usuário
+ * @property string $name Nome completo
+ * @property string $email Email do usuário
+ * @property Carbon $created_at Data de criação da conta
  */
 class UserResource extends JsonResource
 {
@@ -194,19 +193,19 @@ class UserResource extends JsonResource
 
 ## README.md
 
-**Структура:**
+**Estrutura:**
 
 ```markdown
-# Project Name
+# Nome do projeto
 
-Brief description of what the project does.
+Descrição curta do que o projeto faz.
 
 ## Features
 
-- User authentication
-- Payment processing
-- Real-time notifications
-- Admin dashboard
+- Autenticação de usuários
+- Processamento de pagamentos
+- Notificações em tempo real
+- Dashboard admin
 
 ## Requirements
 
@@ -218,29 +217,29 @@ Brief description of what the project does.
 ## Installation
 
 ```bash
-# Clone repository
+# Clonar o repositório
 git clone https://github.com/user/project.git
 cd project
 
-# Install dependencies
+# Instalar dependências
 composer install
 npm install
 
-# Setup environment
+# Configurar o ambiente
 cp .env.example .env
 php artisan key:generate
 
-# Setup database
+# Configurar o banco
 php artisan migrate --seed
 
-# Build assets
+# Build dos assets
 npm run build
 ```
 
 ## Configuration
 
 ### Database
-Edit `.env`:
+Edite o `.env`:
 ```
 DB_HOST=localhost
 DB_DATABASE=myapp
@@ -255,30 +254,30 @@ php artisan queue:work
 
 ## Usage
 
-### Running locally
+### Rodar local
 ```bash
 php artisan serve
 npm run dev
 ```
 
-Visit http://localhost:8000
+Acesse http://localhost:8000
 
-### Running tests
+### Rodar testes
 ```bash
 php artisan test
 ```
 
 ## API Documentation
 
-API docs available at: http://localhost:8000/api/documentation
+Docs da API em: http://localhost:8000/api/documentation
 
 ## Contributing
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
+1. Faça fork do repositório
+2. Crie a feature branch (`git checkout -b feature/amazing`)
+3. Faça commit (`git commit -m 'Adiciona feature incrível'`)
+4. Dê push na branch (`git push origin feature/amazing`)
+5. Abra o Pull Request
 
 ## License
 
@@ -287,16 +286,16 @@ MIT License
 
 ---
 
-## Technical Documentation
+## Documentação técnica
 
-**Architecture Overview:**
+**Visão da arquitetura:**
 
 ```markdown
 # Architecture
 
 ## Overview
 
-The application follows a layered architecture:
+A app segue uma arquitetura em camadas:
 
 ```
 ┌─────────────────────────────────┐
@@ -313,54 +312,54 @@ The application follows a layered architecture:
 ## Layers
 
 ### Controllers
-Handle HTTP requests, validate input, return responses.
-Located in: `app/Http/Controllers`
+Recebem o HTTP request, validam o input, devolvem o response.
+Fica em: `app/Http/Controllers`
 
 ### Services
-Contain business logic, orchestrate operations.
-Located in: `app/Services`
+Guardam a regra de negócio, orquestram as operações.
+Fica em: `app/Services`
 
 ### Repositories
-Abstract database access, implement queries.
-Located in: `app/Repositories`
+Abstraem o acesso ao banco, implementam as queries.
+Fica em: `app/Repositories`
 
 ### Models
-Eloquent models representing database tables.
-Located in: `app/Models`
+Models Eloquent que representam as tabelas.
+Fica em: `app/Models`
 
 ## Key Components
 
 ### Payment Processing
-Handled by `PaymentService` which supports:
-- Stripe integration
-- PayPal integration
-- Retry logic (3 attempts)
-- Webhook handling
+Fica no `PaymentService`, que cobre:
+- Integração Stripe
+- Integração PayPal
+- Retry (3 tentativas)
+- Tratamento de webhook
 
 ### Notification System
-Uses Laravel Notifications with channels:
+Usa Laravel Notifications com os canais:
 - Email (via queue)
 - SMS (via Twilio)
 - Push notifications (via FCM)
 
 ### Caching Strategy
-- User data: 1 hour
-- Product catalog: 24 hours
-- Configuration: Until deployment
+- Dados do usuário: 1 hora
+- Catálogo de produtos: 24 horas
+- Configuração: até o deploy
 ```
 
 ---
 
-## Database Schema
+## Schema do banco
 
-**Документирование миграций:**
+**Documentando migrations:**
 
 ```php
 /**
- * Create users table
+ * Cria a tabela users
  *
- * Stores user account information including authentication credentials
- * and profile data. Related tables: orders, posts, comments.
+ * Guarda conta do usuário: credenciais de autenticação
+ * e dados de perfil. Tabelas relacionadas: orders, posts, comments.
  */
 class CreateUsersTable extends Migration
 {
@@ -369,17 +368,17 @@ class CreateUsersTable extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email')->unique();  // Used for login
-            $table->timestamp('email_verified_at')->nullable();  // Email confirmation
-            $table->string('password');  // Hashed with bcrypt
-            $table->enum('role', ['user', 'admin'])->default('user');  // Access control
-            $table->rememberToken();  // "Remember me" functionality
+            $table->string('email')->unique();  // Usado no login
+            $table->timestamp('email_verified_at')->nullable();  // Confirmação de email
+            $table->string('password');  // Hash com bcrypt
+            $table->enum('role', ['user', 'admin'])->default('user');  // Controle de acesso
+            $table->rememberToken();  // Funcionalidade "lembrar de mim"
             $table->timestamps();
-            $table->softDeletes();  // Soft delete support
+            $table->softDeletes();  // Suporte a soft delete
 
             // Indexes
-            $table->index('email');  // Speed up login queries
-            $table->index(['role', 'created_at']);  // Admin filters
+            $table->index('email');  // Acelera as queries de login
+            $table->index(['role', 'created_at']);  // Filtros do admin
         });
     }
 }
@@ -389,42 +388,42 @@ class CreateUsersTable extends Migration
 
 ## ADR (Architecture Decision Records)
 
-**Формат:**
+**Formato:**
 
 ```markdown
-# ADR-001: Use Redis for Session Storage
+# ADR-001: Usar Redis para session storage
 
 ## Status
 Accepted
 
 ## Context
-We need to scale horizontally with multiple app servers.
-File-based sessions don't work across servers.
+Precisamos escalar na horizontal com vários app servers.
+Sessão em arquivo não funciona entre servers.
 
 ## Decision
-Use Redis for session storage.
+Usar Redis para session storage.
 
 ## Consequences
 
 ### Positive
-- Sessions shared across all servers
-- Fast read/write performance
-- Supports session persistence
+- Sessão compartilhada entre todos os servers
+- Leitura e escrita rápidas
+- Dá para persistir a sessão
 
 ### Negative
-- Additional dependency (Redis server)
-- Slightly more complex setup
-- Need to monitor Redis availability
+- Dependência a mais (Redis)
+- Setup um pouco mais complexo
+- Precisa monitorar se o Redis está no ar
 
 ## Alternatives Considered
 
 1. **Database sessions**
-   - Pros: Already have DB
-   - Cons: Slower than Redis
+   - Pros: o banco já existe
+   - Cons: mais lento que Redis
 
 2. **Sticky sessions**
-   - Pros: No changes needed
-   - Cons: Uneven load distribution
+   - Pros: não muda nada
+   - Cons: carga desigual
 
 ## Implementation
 ```php
@@ -441,87 +440,87 @@ Use Redis for session storage.
 
 ## Changelog
 
-**Формат:**
+**Formato:**
 
 ```markdown
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Todas as mudanças relevantes deste projeto ficam neste arquivo.
 
 ## [1.2.0] - 2024-01-15
 
 ### Added
-- Two-factor authentication for users
-- Export orders to CSV
-- Dark mode theme
+- Autenticação em dois fatores para usuários
+- Exportar pedidos para CSV
+- Tema dark mode
 
 ### Changed
-- Updated payment processing to use Stripe v2 API
-- Improved dashboard loading performance (5x faster)
+- Pagamento passou a usar Stripe API v2
+- Dashboard carrega 5x mais rápido
 
 ### Fixed
-- Memory leak in queue worker
-- XSS vulnerability in comment system
+- Memory leak no queue worker
+- XSS no sistema de comentários
 
 ### Security
-- Updated dependencies with security patches
+- Dependências atualizadas com patches de segurança
 
 ## [1.1.0] - 2023-12-20
 
 ### Added
-- Email notifications for order status changes
+- Notificações por email quando o status do pedido muda
 
 ### Fixed
-- Bug in password reset flow
+- Bug no fluxo de reset de senha
 ```
 
 ---
 
-## Практические советы
+## Dicas práticas
 
-**Для чего НЕ нужны комментарии:**
+**Para que NÃO serve comentário:**
 
 ```php
-// ❌ Повторение кода
-// Get all users
+// ❌ Repetir o código
+// Buscar todos os usuários
 $users = User::all();
 
-// ❌ Закомментированный код
+// ❌ Código comentado
 // $oldImplementation = doSomething();
 $newImplementation = doSomethingBetter();
 
-// ❌ Очевидное
-// Loop through users
+// ❌ Óbvio
+// Percorrer os usuários
 foreach ($users as $user) {
     // ...
 }
 ```
 
-**Где комментарии нужны:**
+**Onde o comentário faz falta:**
 
 ```php
-// ✅ Неочевидная логика
-// VAT calculation: 20% for EU, 0% for outside EU
+// ✅ Lógica não óbvia
+// Imposto: 20% na UE, 0% fora da UE
 $vat = $country->isEU() ? 0.20 : 0.00;
 
 // ✅ TODO/FIXME
-// TODO: Refactor this to use Strategy pattern
-// FIXME: Memory leak when processing large files
+// TODO: refatorar para o pattern Strategy
+// FIXME: memory leak ao processar arquivos grandes
 
 // ✅ Workarounds
-// Hack: Safari doesn't support this CSS property
-// Using polyfill instead
+// Hack: o Safari não suporta essa propriedade CSS
+// Usa polyfill no lugar
 
-// ✅ Сложные регулярки
-// Match email: user@domain.com, user+tag@domain.co.uk
+// ✅ Regex complexa
+// Casa email: user@domain.com, user+tag@domain.co.uk
 $pattern = '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i';
 ```
 
 ---
 
-## Инструменты
+## Ferramentas
 
-**Генерация документации:**
+**Gerando a documentação:**
 
 ```bash
 # PHPDoc
@@ -539,7 +538,10 @@ php artisan generate:erd
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Документация: code comments для "почему", не "что". PHPDoc для классов/методов с @param, @return, @throws. API documentation через OpenAPI/Swagger или Laravel API Resources. README с установкой, конфигурацией, примерами. Architecture documentation описывает слои и компоненты. ADR для архитектурных решений. Changelog для версий. Инструменты: phpdocumentor, l5-swagger. Само-документирующийся код лучше комментариев."
+> "Documentação: code comments para o 'porquê', não para o 'o quê'. PHPDoc em classes e métodos com @param, @return, @throws. API documentation com OpenAPI/Swagger ou Laravel API Resources. README com instalação, configuração e exemplos. Documentação de arquitetura descreve camadas e componentes. ADR para decisões de arquitetura. Changelog para versões. Ferramentas: phpdocumentor, l5-swagger. Código autoexplicativo vale mais que comentário."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

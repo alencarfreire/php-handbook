@@ -1,10 +1,10 @@
 # 16.1 Coding Challenges
 
-## Типичные задачи на собеседованиях
+## Tarefas típicas na entrevista
 
-### 1. Работа со строками
+### 1. Trabalho com strings
 
-**Палиндром:**
+**Palíndromo:**
 
 ```php
 function isPalindrome(string $str): bool
@@ -13,13 +13,13 @@ function isPalindrome(string $str): bool
     return $str === strrev($str);
 }
 
-// Тесты
+// Testes
 isPalindrome('A man a plan a canal Panama'); // true
 isPalindrome('racecar'); // true
 isPalindrome('hello'); // false
 ```
 
-**Анаграммы:**
+**Anagramas:**
 
 ```php
 function areAnagrams(string $str1, string $str2): bool
@@ -36,25 +36,25 @@ function areAnagrams(string $str1, string $str2): bool
     return $chars1 === $chars2;
 }
 
-// Тесты
+// Testes
 areAnagrams('listen', 'silent'); // true
 areAnagrams('hello', 'world'); // false
 ```
 
-**Первый уникальный символ:**
+**Primeiro caractere único:**
 
 ```php
 function firstUniqChar(string $s): int
 {
     $counts = [];
 
-    // Подсчёт
+    // Contagem
     for ($i = 0; $i < strlen($s); $i++) {
         $char = $s[$i];
         $counts[$char] = ($counts[$char] ?? 0) + 1;
     }
 
-    // Найти первый с count = 1
+    // Achar o primeiro com count = 1
     for ($i = 0; $i < strlen($s); $i++) {
         if ($counts[$s[$i]] === 1) {
             return $i;
@@ -64,19 +64,19 @@ function firstUniqChar(string $s): int
     return -1;
 }
 
-// Тесты
+// Testes
 firstUniqChar('leetcode'); // 0 ('l')
 firstUniqChar('loveleetcode'); // 2 ('v')
 ```
 
 ---
 
-### 2. Работа с массивами
+### 2. Trabalho com arrays
 
-**Два числа с суммой:**
+**Dois números com a soma:**
 
 ```php
-// Найти два числа, сумма которых = target
+// Achar dois números cuja soma = target
 function twoSum(array $nums, int $target): array
 {
     $map = [];
@@ -94,12 +94,12 @@ function twoSum(array $nums, int $target): array
     return [];
 }
 
-// Тесты
+// Testes
 twoSum([2, 7, 11, 15], 9); // [0, 1] (2 + 7 = 9)
 twoSum([3, 2, 4], 6); // [1, 2] (2 + 4 = 6)
 ```
 
-**Найти дубликаты:**
+**Encontrar duplicatas:**
 
 ```php
 function findDuplicates(array $arr): array
@@ -117,35 +117,35 @@ function findDuplicates(array $arr): array
     return array_unique($duplicates);
 }
 
-// Тесты
+// Testes
 findDuplicates([1, 2, 3, 2, 4, 5, 3]); // [2, 3]
 ```
 
-**Rotate array:**
+**Rotacionar array:**
 
 ```php
 function rotateArray(array $arr, int $k): array
 {
     $n = count($arr);
-    $k = $k % $n; // Handle k > n
+    $k = $k % $n; // Trata k > n
 
-    // Reverse all
+    // Inverte tudo
     $arr = array_reverse($arr);
-    // Reverse first k
+    // Inverte os primeiros k
     $part1 = array_reverse(array_slice($arr, 0, $k));
-    // Reverse rest
+    // Inverte o resto
     $part2 = array_reverse(array_slice($arr, $k));
 
     return array_merge($part1, $part2);
 }
 
-// Тесты
+// Testes
 rotateArray([1, 2, 3, 4, 5], 2); // [4, 5, 1, 2, 3]
 ```
 
 ---
 
-### 3. FizzBuzz (классика)
+### 3. FizzBuzz (clássico)
 
 ```php
 function fizzBuzz(int $n): array
@@ -172,7 +172,7 @@ function fizzBuzz(int $n): array
 
 ---
 
-### 4. Валидация скобок
+### 4. Validação de parênteses
 
 ```php
 function isValidParentheses(string $s): bool
@@ -188,10 +188,10 @@ function isValidParentheses(string $s): bool
         $char = $s[$i];
 
         if (in_array($char, ['(', '{', '['])) {
-            // Открывающая скобка
+            // Abre
             $stack[] = $char;
         } elseif (isset($pairs[$char])) {
-            // Закрывающая скобка
+            // Fecha
             if (empty($stack) || array_pop($stack) !== $pairs[$char]) {
                 return false;
             }
@@ -201,7 +201,7 @@ function isValidParentheses(string $s): bool
     return empty($stack);
 }
 
-// Тесты
+// Testes
 isValidParentheses('()'); // true
 isValidParentheses('()[]{}'); // true
 isValidParentheses('(]'); // false
@@ -211,9 +211,9 @@ isValidParentheses('{[]}'); // true
 
 ---
 
-### 5. Числа Фибоначчи
+### 5. Números de Fibonacci
 
-**Рекурсивно (медленно):**
+**Recursivo (lento):**
 
 ```php
 function fibRecursive(int $n): int
@@ -224,10 +224,10 @@ function fibRecursive(int $n): int
 
     return fibRecursive($n - 1) + fibRecursive($n - 2);
 }
-// O(2^n) - очень медленно
+// O(2^n) — muito lento
 ```
 
-**Итеративно (быстро):**
+**Iterativo (rápido):**
 
 ```php
 function fib(int $n): int
@@ -250,7 +250,7 @@ function fib(int $n): int
 // O(n)
 ```
 
-**С мемоизацией:**
+**Com memoization:**
 
 ```php
 function fibMemo(int $n, array &$memo = []): int
@@ -266,23 +266,23 @@ function fibMemo(int $n, array &$memo = []): int
     $memo[$n] = fibMemo($n - 1, $memo) + fibMemo($n - 2, $memo);
     return $memo[$n];
 }
-// O(n) с O(n) памяти
+// O(n) com O(n) de memória
 ```
 
 ---
 
-### 6. Реверс строки/массива
+### 6. Reverter string/array
 
 ```php
-// Строка
+// String
 function reverseString(string $s): string
 {
     return strrev($s);
-    // Или вручную:
+    // Ou na mão:
     // return implode('', array_reverse(str_split($s)));
 }
 
-// Массив
+// Array
 function reverseArray(array $arr): array
 {
     $left = 0;
@@ -303,12 +303,12 @@ function reverseArray(array $arr): array
 
 ---
 
-### 7. Laravel специфичные задачи
+### 7. Tarefas específicas de Laravel
 
-**Найти users с > N заказами:**
+**Encontrar users com > N pedidos:**
 
 ```php
-// За последний месяц с более чем 10 заказами
+// No último mês, com mais de 10 pedidos
 User::has('orders', '>', 10)
     ->whereHas('orders', function ($query) {
         $query->where('created_at', '>=', now()->subMonth());
@@ -316,7 +316,7 @@ User::has('orders', '>', 10)
     ->get();
 ```
 
-**Топ 5 продуктов:**
+**Top 5 produtos:**
 
 ```php
 Product::withCount('orderItems')
@@ -325,7 +325,7 @@ Product::withCount('orderItems')
     ->get();
 ```
 
-**Средняя сумма заказа по пользователю:**
+**Valor médio do pedido por usuário:**
 
 ```php
 User::select('users.id', 'users.name')
@@ -338,7 +338,7 @@ User::select('users.id', 'users.name')
 
 ---
 
-### 8. Алгоритмы сортировки
+### 8. Algoritmos de ordenação
 
 **Bubble Sort:**
 
@@ -350,7 +350,7 @@ function bubbleSort(array $arr): array
     for ($i = 0; $i < $n - 1; $i++) {
         for ($j = 0; $j < $n - $i - 1; $j++) {
             if ($arr[$j] > $arr[$j + 1]) {
-                // Swap
+                // Troca
                 $temp = $arr[$j];
                 $arr[$j] = $arr[$j + 1];
                 $arr[$j + 1] = $temp;
@@ -389,12 +389,12 @@ function quickSort(array $arr): array
         quickSort($right)
     );
 }
-// Average O(n log n)
+// Média O(n log n)
 ```
 
 ---
 
-### 9. Бинарный поиск
+### 9. Busca binária
 
 ```php
 function binarySearch(array $arr, int $target): int
@@ -416,17 +416,17 @@ function binarySearch(array $arr, int $target): int
         }
     }
 
-    return -1; // Не найдено
+    return -1; // Não encontrado
 }
 
-// Тесты
+// Testes
 binarySearch([1, 3, 5, 7, 9, 11], 7); // 3
 binarySearch([1, 3, 5, 7, 9, 11], 6); // -1
 ```
 
 ---
 
-### 10. Максимум/минимум в массиве
+### 10. Máximo/mínimo no array
 
 ```php
 function findMax(array $arr): ?int
@@ -446,70 +446,73 @@ function findMax(array $arr): ?int
     return $max;
 }
 
-// Или встроенная функция
+// Ou a função nativa
 $max = max($arr);
 $min = min($arr);
 ```
 
 ---
 
-## Советы для решения задач
+## Dicas para resolver os problemas
 
-**Процесс:**
+**Processo:**
 
 ```
-1. Уточни задачу
-   "Строка может быть пустой?"
-   "Учитывать регистр?"
+1. Esclareça o problema
+   "A string pode ser vazia?"
+   "É case sensitive?"
 
-2. Придумай примеры
+2. Invente exemplos
    Input: "hello"
    Output: "olleh"
 
    Edge cases:
-   - Пустая строка: ""
-   - Один символ: "a"
-   - Спецсимволы: "a-b-c"
+   - String vazia: ""
+   - Um caractere: "a"
+   - Caracteres especiais: "a-b-c"
 
-3. Обсуди подход
-   "Можно решить через array reverse
-    или два указателя"
+3. Discuta a abordagem
+   "Dá para resolver com array reverse
+    ou dois ponteiros"
 
-4. Напиши код
-   Начни с простого решения
+4. Escreva o código
+   Comece pela solução simples
 
-5. Тестируй
-   Проверь на edge cases
+5. Teste
+   Cheque os edge cases
 
-6. Оптимизируй
-   Можно улучшить сложность?
+6. Otimize
+   Dá para melhorar a complexidade?
 ```
 
-**Сложность алгоритмов:**
+**Complexidade dos algoritmos:**
 
 ```
-O(1) - константная:
+O(1) — constante:
   array access, hash lookup
 
-O(log n) - логарифмическая:
+O(log n) — logarítmica:
   binary search
 
-O(n) - линейная:
+O(n) — linear:
   foreach, array_map
 
 O(n log n):
   merge sort, quick sort (average)
 
 O(n²):
-  nested loops, bubble sort
+  loops aninhados, bubble sort
 
 O(2^n):
-  recursive fibonacci (без memo)
+  recursive fibonacci (sem memo)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Coding challenges: палиндромы, анаграммы, два числа с суммой, FizzBuzz, валидация скобок, Фибоначчи. Для строк: strrev, preg_replace. Для массивов: два указателя, hash map. Laravel: whereHas, withCount, selectRaw. Сортировки: bubble O(n²), quick O(n log n). Бинарный поиск O(log n). Процесс: уточнить, примеры, edge cases, код, тесты, оптимизация. Сложность: O(1), O(n), O(n log n), O(n²)."
+> "Coding challenges: palíndromo, anagrama, dois números com a soma, FizzBuzz, validação de parênteses, Fibonacci. Para string: strrev, preg_replace. Para array: dois ponteiros, hash map. Laravel: whereHas, withCount, selectRaw. Ordenação: bubble O(n²), quick O(n log n). Busca binária O(log n). Processo: esclarecer, exemplos, edge cases, código, testes, otimização. Complexidade: O(1), O(n), O(n log n), O(n²)."
 
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
