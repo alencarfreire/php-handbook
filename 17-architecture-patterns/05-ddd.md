@@ -1,43 +1,43 @@
 # 10.5 DDD (Domain-Driven Design)
 
-## Краткое резюме
+## Resumo
 
-> **DDD** — подход к разработке, ориентированный на предметную область (domain).
+> **DDD** — abordagem de desenvolvimento orientada ao domínio (domain).
 >
-> **Концепции:** Entity (с ID), Value Object (без ID), Aggregate (группа Entity), Repository, Domain Events.
+> **Conceitos:** Entity (com ID), Value Object (sem ID), Aggregate (grupo de Entity), Repository, Domain Events.
 >
-> **Важно:** Структура: Domain (логика), Infrastructure (БД/API), Application (use cases). Подходит для сложной бизнес-логики.
+> **Importante:** Estrutura: Domain (lógica), Infrastructure (banco/API), Application (use cases). Serve para regra de negócio complexa.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-DDD — подход к разработке, ориентированный на предметную область (domain). Код отражает бизнес-логику.
-
-**Основные концепции:**
-- Entity — объект с идентичностью
-- Value Object — объект без идентичности
-- Aggregate — группа связанных объектов
-- Repository — доступ к агрегатам
-- Domain Event — событие в domain
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Entity (с идентичностью):**
+**O que é:**
+DDD — abordagem de desenvolvimento orientada ao domínio (domain). O código espelha a regra de negócio.
+
+**Conceitos principais:**
+- Entity — objeto com identidade
+- Value Object — objeto sem identidade
+- Aggregate — grupo de objetos relacionados
+- Repository — acesso aos aggregates
+- Domain Event — evento no domain
+
+---
+
+## Como funciona
+
+**Entity (com identidade):**
 
 ```php
 // app/Domain/Order/Order.php
@@ -80,7 +80,7 @@ class Order
 }
 ```
 
-**Value Object (без идентичности):**
+**Value Object (sem identidade):**
 
 ```php
 // app/Domain/Order/Money.php
@@ -91,11 +91,11 @@ class Money
         private string $currency
     ) {
         if ($amount < 0) {
-            throw new InvalidArgumentException('Amount cannot be negative');
+            throw new InvalidArgumentException('Valor não pode ser negativo');
         }
     }
 
-    public static function fromAmount(float $amount, string $currency = 'USD'): self
+    public static function fromAmount(float $amount, string $currency = 'BRL'): self
     {
         return new self($amount, $currency);
     }
@@ -122,36 +122,36 @@ class Money
 ```php
 class Order // Aggregate Root
 {
-    private Collection $items; // Часть агрегата
+    private Collection $items; // Parte do aggregate
 
     public function addItem(Product $product, int $quantity): void
     {
-        // Только через Order можно добавить item
+        // Só pelo Order dá para adicionar item
         $this->items->push(new OrderItem($product, $quantity));
     }
 
-    // Нельзя напрямую изменить OrderItem вне Order
+    // Não dá para alterar OrderItem direto, fora do Order
 }
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**DDD для:**
-- Сложная бизнес-логика
-- Большие проекты
-- Изменяющиеся требования
+**DDD serve para:**
+- Lógica de negócio complexa
+- Projeto grande
+- Requisito que muda
 
-**НЕ для:**
-- Простые CRUD
-- Маленькие проекты
+**NÃO serve para:**
+- CRUD simples
+- Projeto pequeno
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Структура проекта:**
+**Estrutura do projeto:**
 
 ```
 app/Domain/
@@ -216,20 +216,20 @@ class OrderService
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "DDD ориентирован на предметную область. Entity — объект с идентичностью (Order, User). Value Object — без идентичности (Money, Address). Aggregate — группа связанных Entity, доступ через Root. Repository для агрегатов. Domain Events для реакции на изменения. Структура: Domain (логика), Infrastructure (БД, API), Application (use cases). Подходит для сложной бизнес-логики, не для простых CRUD."
+> "DDD é orientado ao domínio. Entity tem identidade (Order, User). Value Object não tem (Money, Address). Aggregate é um grupo de Entity relacionadas, acesso só pelo Root. Repository para os aggregates. Domain Events para reagir a mudanças. Estrutura: Domain (lógica), Infrastructure (banco, API), Application (use cases). Serve para regra de negócio complexa, não para CRUD simples."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Value Object для Money
+### Exercício 1: Crie um Value Object para Money
 
-Реализуй Value Object `Money` с валидацией и арифметическими операциями.
+**Enunciado:** Implemente o Value Object `Money` com validação e operações aritméticas.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Domain/Shared/ValueObjects/Money.php
@@ -244,12 +244,12 @@ class Money
         $this->validate();
     }
 
-    public static function fromAmount(float $amount, string $currency = 'USD'): self
+    public static function fromAmount(float $amount, string $currency = 'BRL'): self
     {
         return new self($amount, $currency);
     }
 
-    public static function zero(string $currency = 'USD'): self
+    public static function zero(string $currency = 'BRL'): self
     {
         return new self(0, $currency);
     }
@@ -257,12 +257,12 @@ class Money
     private function validate(): void
     {
         if ($this->amount < 0) {
-            throw new \InvalidArgumentException('Amount cannot be negative');
+            throw new \InvalidArgumentException('Valor não pode ser negativo');
         }
 
-        $allowedCurrencies = ['USD', 'EUR', 'GBP', 'RUB'];
+        $allowedCurrencies = ['BRL', 'USD', 'EUR'];
         if (!in_array($this->currency, $allowedCurrencies)) {
-            throw new \InvalidArgumentException("Invalid currency: {$this->currency}");
+            throw new \InvalidArgumentException("Moeda inválida: {$this->currency}");
         }
     }
 
@@ -311,7 +311,7 @@ class Money
     {
         if ($this->currency !== $other->currency) {
             throw new \InvalidArgumentException(
-                "Currency mismatch: {$this->currency} vs {$other->currency}"
+                "Moedas diferentes: {$this->currency} vs {$other->currency}"
             );
         }
     }
@@ -329,10 +329,9 @@ class Money
     public function format(): string
     {
         return match ($this->currency) {
+            'BRL' => 'R$ ' . number_format($this->amount, 2, ',', '.'),
             'USD' => '$' . number_format($this->amount, 2),
             'EUR' => '€' . number_format($this->amount, 2),
-            'GBP' => '£' . number_format($this->amount, 2),
-            'RUB' => number_format($this->amount, 2) . ' ₽',
         };
     }
 
@@ -342,21 +341,21 @@ class Money
     }
 }
 
-// Использование
-$price = Money::fromAmount(100, 'USD');
-$tax = Money::fromAmount(20, 'USD');
-$total = $price->add($tax); // $120 USD
+// Uso
+$price = Money::fromAmount(100, 'BRL');
+$tax = Money::fromAmount(20, 'BRL');
+$total = $price->add($tax); // R$ 120 BRL
 
-echo $total->format(); // $120.00
+echo $total->format(); // R$ 120,00
 ```
 </details>
 
-### Задание 2: Реализуй Aggregate Root для Order
+### Exercício 2: Implemente Aggregate Root para Order
 
-Создай `Order` как Aggregate Root с `OrderItem` внутри. Изменение items только через Order.
+**Enunciado:** Crie `Order` como Aggregate Root com `OrderItem` dentro. Só o Order altera os items.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Domain/Order/Order.php
@@ -382,11 +381,11 @@ class Order // Aggregate Root
         $this->total = Money::zero();
     }
 
-    // Только через Order можно добавить item
+    // Só pelo Order dá para adicionar item
     public function addItem(ProductId $productId, int $quantity, Money $price): void
     {
         if ($quantity <= 0) {
-            throw new \InvalidArgumentException('Quantity must be positive');
+            throw new \InvalidArgumentException('Quantidade deve ser positiva');
         }
 
         $item = new OrderItem($productId, $quantity, $price);
@@ -407,7 +406,7 @@ class Order // Aggregate Root
         $item = $this->findItem($productId);
 
         if (!$item) {
-            throw new \DomainException('Item not found in order');
+            throw new \DomainException('Item não encontrado no pedido');
         }
 
         $item->updateQuantity($quantity);
@@ -417,7 +416,7 @@ class Order // Aggregate Root
     public function markAsPaid(): void
     {
         if (!$this->status->isPending()) {
-            throw new \DomainException('Only pending orders can be marked as paid');
+            throw new \DomainException('Só pedido pendente pode ser marcado como pago');
         }
 
         $this->status = OrderStatus::paid();
@@ -426,7 +425,7 @@ class Order // Aggregate Root
     public function cancel(): void
     {
         if ($this->status->isShipped()) {
-            throw new \DomainException('Cannot cancel shipped orders');
+            throw new \DomainException('Não dá para cancelar pedido já enviado');
         }
 
         $this->status = OrderStatus::cancelled();
@@ -464,7 +463,7 @@ class Order // Aggregate Root
 }
 
 // app/Domain/Order/OrderItem.php
-class OrderItem // Часть агрегата
+class OrderItem // Parte do aggregate
 {
     private Money $subtotal;
 
@@ -479,7 +478,7 @@ class OrderItem // Часть агрегата
     public function updateQuantity(int $quantity): void
     {
         if ($quantity <= 0) {
-            throw new \InvalidArgumentException('Quantity must be positive');
+            throw new \InvalidArgumentException('Quantidade deve ser positiva');
         }
 
         $this->quantity = $quantity;
@@ -504,12 +503,12 @@ class OrderItem // Часть агрегата
 ```
 </details>
 
-### Задание 3: Создай Domain Event
+### Exercício 3: Crie um Domain Event
 
-Реализуй `OrderPlaced` Domain Event и его обработку.
+**Enunciado:** Implemente o Domain Event `OrderPlaced` e o listener.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Domain/Order/Events/OrderPlaced.php
@@ -548,7 +547,7 @@ class OrderPlaced
     }
 }
 
-// app/Domain/Order/Order.php (обновлённая версия)
+// app/Domain/Order/Order.php (versão atualizada)
 class Order
 {
     private array $domainEvents = [];
@@ -556,7 +555,7 @@ class Order
     public function place(): void
     {
         if ($this->items->isEmpty()) {
-            throw new \DomainException('Cannot place empty order');
+            throw new \DomainException('Não dá para finalizar pedido vazio');
         }
 
         $this->status = OrderStatus::placed();
@@ -581,10 +580,10 @@ class EloquentOrderRepository implements OrderRepositoryInterface
 {
     public function save(Order $order): void
     {
-        // Сохранение в БД
+        // Persistência no banco
         // ...
 
-        // Отправка domain events
+        // Dispara os domain events
         foreach ($order->releaseEvents() as $event) {
             event($event);
         }
@@ -605,4 +604,4 @@ class SendOrderConfirmationEmail
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,39 +1,39 @@
 # 10.9 Factory Pattern
 
-## Краткое резюме
+## Resumo
 
-> **Factory Pattern** — паттерн для создания объектов с инкапсуляцией логики создания.
+> **Factory Pattern** — padrão para criar objetos encapsulando a lógica de criação.
 >
-> **Типы:** Simple Factory (static метод), Factory Method (наследование), Abstract Factory (семейство объектов).
+> **Tipos:** Simple Factory (método estático), Factory Method (herança), Abstract Factory (família de objetos).
 >
-> **Важно:** Используется для сложной инициализации, разных типов объектов по условию. Laravel: Model Factories для тестов.
+> **Importante:** Use quando a inicialização é complexa ou o tipo do objeto depende de uma condição. No Laravel: Model Factories para testes.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Factory Pattern — паттерн для создания объектов. Инкапсулирует логику создания.
-
-**Типы:**
-- Simple Factory (статический метод)
-- Factory Method (через наследование)
-- Abstract Factory (семейство объектов)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
+
+**O que é:**
+Factory Pattern — padrão para criar objetos. Encapsula a lógica de criação.
+
+**Tipos:**
+- Simple Factory (método estático)
+- Factory Method (via herança)
+- Abstract Factory (família de objetos)
+
+---
+
+## Como funciona
 
 **Simple Factory:**
 
@@ -52,12 +52,12 @@ class PaymentFactory
                 secret: config('services.paypal.secret')
             ),
             'cash' => new CashPayment(),
-            default => throw new InvalidArgumentException("Unknown payment type: {$type}")
+            default => throw new InvalidArgumentException("Tipo de pagamento desconhecido: {$type}")
         };
     }
 }
 
-// Использование
+// Uso
 $payment = PaymentFactory::create('stripe');
 $payment->charge(100);
 ```
@@ -65,7 +65,7 @@ $payment->charge(100);
 **Factory Method:**
 
 ```php
-// Базовый класс
+// Classe base
 abstract class NotificationService
 {
     abstract protected function createNotifier(): Notifier;
@@ -77,7 +77,7 @@ abstract class NotificationService
     }
 }
 
-// Реализации
+// Implementações
 class EmailNotificationService extends NotificationService
 {
     protected function createNotifier(): Notifier
@@ -94,22 +94,22 @@ class SmsNotificationService extends NotificationService
     }
 }
 
-// Использование
+// Uso
 $service = new EmailNotificationService();
-$service->send('Hello!');
+$service->send('Olá!');
 ```
 
 **Abstract Factory:**
 
 ```php
-// Интерфейс фабрики
+// Interface da factory
 interface UIFactory
 {
     public function createButton(): Button;
     public function createCheckbox(): Checkbox;
 }
 
-// Конкретные фабрики
+// Factories concretas
 class WebUIFactory implements UIFactory
 {
     public function createButton(): Button
@@ -152,21 +152,21 @@ class Application
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Factory для:**
-- Сложная логика создания объектов
-- Разные типы объектов по условию
-- Изоляция логики создания
+**Factory para:**
+- Lógica complexa de criação de objetos
+- Tipos diferentes de objeto conforme a condição
+- Isolar a lógica de criação
 
-**НЕ для:**
-- Простое `new Class()`
+**NÃO use para:**
+- Um `new Class()` simples
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Factory для Eloquent моделей:**
+**Factory para models Eloquent:**
 
 ```php
 // app/Factories/UserFactory.php
@@ -188,7 +188,7 @@ class UserFactory
             'role' => 'user',
             'permissions' => ['read'],
             'password' => Hash::make($data['password']),
-            'email_verified_at' => null,  // Требует верификации
+            'email_verified_at' => null,  // Precisa de verificação
             ...$data,
         ]);
     }
@@ -201,13 +201,13 @@ class UserFactory
             'name' => $providerData['name'],
             'email' => $providerData['email'],
             'password' => Hash::make(Str::random(32)),
-            'email_verified_at' => now(),  // Сразу подтверждён
+            'email_verified_at' => now(),  // Já verificado
             "{$provider}_id" => $providerData['id'],
         ]);
     }
 }
 
-// Использование
+// Uso
 $user = UserFactory::createAdmin([
     'name' => 'Admin',
     'email' => 'admin@example.com',
@@ -215,7 +215,7 @@ $user = UserFactory::createAdmin([
 ]);
 ```
 
-**Factory для API Responses:**
+**Factory para API Responses:**
 
 ```php
 // app/Factories/ResponseFactory.php
@@ -273,13 +273,13 @@ class UserController extends Controller
 
             return ResponseFactory::success($user, 201);
         } catch (\Exception $e) {
-            return ResponseFactory::error('Failed to create user', 500);
+            return ResponseFactory::error('Falha ao criar usuário', 500);
         }
     }
 }
 ```
 
-**Factory с Builder:**
+**Factory com Builder:**
 
 ```php
 // app/Factories/QueryFactory.php
@@ -305,12 +305,12 @@ class QueryFactory
     }
 }
 
-// Использование
+// Uso
 $admins = QueryFactory::createAdminQuery()->get();
 $recentUsers = QueryFactory::createRecentUsersQuery(30)->count();
 ```
 
-**Laravel Model Factories (для тестов):**
+**Laravel Model Factories (para testes):**
 
 ```php
 // database/factories/UserFactory.php
@@ -350,20 +350,20 @@ $users = User::factory()->count(10)->unverified()->create();
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Factory инкапсулирует создание объектов. Simple Factory — статический метод с match/switch. Factory Method — через наследование, подклассы решают какой объект создать. Abstract Factory для семейства объектов. Laravel: Model Factories для тестов, можно создавать кастомные фабрики для API responses, queries, users с разными ролями. Плюсы: изоляция логики создания, гибкость, DRY. Используется для сложной инициализации объектов."
+> "Factory encapsula a criação de objetos. Simple Factory é um método estático com match/switch. Factory Method usa herança: a subclasse decide qual objeto criar. Abstract Factory é para uma família de objetos. No Laravel: Model Factories para testes. Dá para criar factories próprias para API response, query, user com roles diferentes. Prós: isola a lógica de criação, flexibilidade, DRY. Uso quando a inicialização do objeto é complexa."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Simple Factory для уведомлений
+### Exercício 1: Crie uma Simple Factory para notificações
 
-Реализуй `NotificationFactory` который создаёт разные типы уведомлений по условию.
+**Enunciado:** Implemente um `NotificationFactory` que cria tipos diferentes de notificação conforme a condição.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Factories/NotificationFactory.php
@@ -384,16 +384,16 @@ class NotificationFactory
         return match ($type) {
             'email' => new EmailNotification(
                 message: $message,
-                subject: $options['subject'] ?? 'Notification',
+                subject: $options['subject'] ?? 'Notificação',
                 from: $options['from'] ?? config('mail.from.address')
             ),
             'sms' => new SmsNotification(
                 message: $message,
-                phone: $options['phone'] ?? throw new \InvalidArgumentException('Phone required')
+                phone: $options['phone'] ?? throw new \InvalidArgumentException('Telefone obrigatório')
             ),
             'push' => new PushNotification(
                 message: $message,
-                title: $options['title'] ?? 'Notification',
+                title: $options['title'] ?? 'Notificação',
                 deviceToken: $options['device_token'] ?? null
             ),
             'slack' => new SlackNotification(
@@ -401,7 +401,7 @@ class NotificationFactory
                 channel: $options['channel'] ?? '#general',
                 webhookUrl: config('services.slack.webhook_url')
             ),
-            default => throw new \InvalidArgumentException("Unknown notification type: {$type}")
+            default => throw new \InvalidArgumentException("Tipo de notificação desconhecido: {$type}")
         };
     }
 
@@ -437,9 +437,9 @@ class NotificationFactory
     }
 }
 
-// Использование
-$notification = NotificationFactory::create('email', 'Hello!', [
-    'subject' => 'Greeting',
+// Uso
+$notification = NotificationFactory::create('email', 'Olá!', [
+    'subject' => 'Saudação',
     'from' => 'noreply@example.com'
 ]);
 
@@ -447,15 +447,15 @@ $notification->send();
 ```
 </details>
 
-### Задание 2: Реализуй Factory Method для отчётов
+### Exercício 2: Implemente Factory Method para relatórios
 
-Создай базовый `ReportGenerator` и конкретные классы для PDF, Excel, CSV.
+**Enunciado:** Crie o `ReportGenerator` base e as classes concretas para PDF, Excel e CSV.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Базовый интерфейс
+// Interface base
 interface ReportFormatterInterface
 {
     public function format(array $data): string;
@@ -463,13 +463,13 @@ interface ReportFormatterInterface
     public function getFileExtension(): string;
 }
 
-// Реализации
+// Implementações
 class PdfFormatter implements ReportFormatterInterface
 {
     public function format(array $data): string
     {
-        // Generate PDF
-        return '...pdf content...';
+        // Gera o PDF
+        return '...conteúdo pdf...';
     }
 
     public function getContentType(): string
@@ -487,8 +487,8 @@ class ExcelFormatter implements ReportFormatterInterface
 {
     public function format(array $data): string
     {
-        // Generate Excel
-        return '...excel content...';
+        // Gera o Excel
+        return '...conteúdo excel...';
     }
 
     public function getContentType(): string
@@ -527,7 +527,7 @@ class CsvFormatter implements ReportFormatterInterface
     }
 }
 
-// Factory Method базовый класс
+// Factory Method — classe base
 abstract class ReportGenerator
 {
     abstract protected function createFormatter(): ReportFormatterInterface;
@@ -550,7 +550,7 @@ abstract class ReportGenerator
     }
 }
 
-// Конкретные генераторы
+// Geradores concretos
 class PdfReportGenerator extends ReportGenerator
 {
     protected function createFormatter(): ReportFormatterInterface
@@ -590,18 +590,18 @@ class ReportController extends Controller
             default => new PdfReportGenerator(),
         };
 
-        return $generator->download($data, 'orders_report');
+        return $generator->download($data, 'relatorio_pedidos');
     }
 }
 ```
 </details>
 
-### Задание 3: Используй Laravel Model Factory
+### Exercício 3: Use Laravel Model Factory
 
-Создай Model Factory для `Product` с разными состояниями (active, inactive, featured).
+**Enunciado:** Crie uma Model Factory para `Product` com states diferentes (active, inactive, featured).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/factories/ProductFactory.php
@@ -632,7 +632,7 @@ class ProductFactory extends Factory
         ];
     }
 
-    // State: неактивный товар
+    // State: produto inativo
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -641,7 +641,7 @@ class ProductFactory extends Factory
         ]);
     }
 
-    // State: рекомендуемый товар
+    // State: produto em destaque
     public function featured(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -650,17 +650,17 @@ class ProductFactory extends Factory
         ]);
     }
 
-    // State: товар со скидкой
+    // State: produto em promoção
     public function onSale(): static
     {
         return $this->state(fn (array $attributes) => [
             'original_price' => $attributes['price'],
-            'price' => $attributes['price'] * 0.8, // 20% скидка
+            'price' => $attributes['price'] * 0.8, // 20% de desconto
             'is_on_sale' => true,
         ]);
     }
 
-    // State: товар без изображения
+    // State: produto sem imagem
     public function withoutImage(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -668,7 +668,7 @@ class ProductFactory extends Factory
         ]);
     }
 
-    // State: товар с конкретной категорией
+    // State: produto de uma categoria específica
     public function inCategory(Category $category): static
     {
         return $this->state(fn (array $attributes) => [
@@ -676,11 +676,11 @@ class ProductFactory extends Factory
         ]);
     }
 
-    // Последовательность для создания нескольких товаров
+    // Sequência ao criar vários produtos
     public function configure(): static
     {
         return $this->afterCreating(function (Product $product) {
-            // Добавить теги после создания
+            // Adiciona tags depois de criar
             $product->tags()->attach(
                 fake()->randomElements([1, 2, 3, 4, 5], rand(2, 4))
             );
@@ -693,20 +693,20 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // 50 активных товаров
+        // 50 produtos ativos
         Product::factory()->count(50)->create();
 
-        // 10 рекомендуемых товаров
+        // 10 produtos em destaque
         Product::factory()->featured()->count(10)->create();
 
-        // 20 неактивных товаров
+        // 20 produtos inativos
         Product::factory()->inactive()->count(20)->create();
 
-        // 15 товаров со скидкой
+        // 15 produtos em promoção
         Product::factory()->onSale()->count(15)->create();
 
-        // Товары в конкретной категории
-        $electronics = Category::where('name', 'Electronics')->first();
+        // Produtos de uma categoria específica
+        $electronics = Category::where('name', 'Eletrônicos')->first();
         Product::factory()
             ->inCategory($electronics)
             ->count(30)
@@ -714,7 +714,7 @@ class ProductSeeder extends Seeder
     }
 }
 
-// Использование в тестах
+// Uso nos testes
 class ProductTest extends TestCase
 {
     public function test_can_purchase_active_product(): void
@@ -743,4 +743,4 @@ class ProductTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

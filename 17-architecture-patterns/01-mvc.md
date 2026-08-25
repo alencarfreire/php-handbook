@@ -1,41 +1,41 @@
 # 10.1 MVC (Model-View-Controller)
 
-## Краткое резюме
+## Resumo
 
-> **MVC** — архитектурный паттерн, разделяющий приложение на три компонента.
+> **MVC** — padrão de arquitetura que separa o app em três componentes.
 >
-> **Компоненты:** Model (данные/Eloquent), View (отображение/Blade), Controller (логика обработки).
+> **Componentes:** Model (dados/Eloquent), View (exibição/Blade), Controller (lógica de tratamento).
 >
-> **Важно:** Контроллеры должны быть тонкими — бизнес-логика выносится в Service Layer.
+> **Importante:** Controllers ficam finos — a lógica de negócio vai para o Service Layer.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-MVC — архитектурный паттерн, разделяющий приложение на три компонента: Model (данные), View (отображение), Controller (логика обработки).
-
-**Компоненты:**
-- **Model** — работа с данными (Eloquent)
-- **View** — отображение (Blade)
-- **Controller** — обработка запросов
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Схема MVC:**
+**O que é:**
+MVC é um padrão de arquitetura que separa o app em três componentes: Model (dados), View (exibição), Controller (lógica de tratamento).
+
+**Componentes:**
+- **Model** — trabalha com os dados (Eloquent)
+- **View** — exibição (Blade)
+- **Controller** — trata os requests
+
+---
+
+## Como funciona
+
+**Fluxo MVC:**
 
 ```
 Request → Router → Controller → Model → Database
@@ -112,9 +112,9 @@ class PostController extends Controller
     @foreach($posts as $post)
         <article>
             <h2>{{ $post->title }}</h2>
-            <p>By {{ $post->user->name }}</p>
+            <p>Por {{ $post->user->name }}</p>
             <p>{{ $post->excerpt }}</p>
-            <a href="{{ route('posts.show', $post) }}">Read more</a>
+            <a href="{{ route('posts.show', $post) }}">Ler mais</a>
         </article>
     @endforeach
 
@@ -124,23 +124,23 @@ class PostController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**MVC подходит для:**
-- Веб-приложения
-- CRUD операции
-- Традиционные server-side приложения
+**MVC serve para:**
+- Apps web
+- Operações CRUD
+- Apps tradicionais server-side
 
-**Проблемы MVC:**
-- Контроллеры могут разрастаться (Fat Controllers)
-- Бизнес-логика в контроллерах
-- Решение: Service Layer, Repository
+**Problemas do MVC:**
+- Controllers incham (Fat Controllers)
+- Lógica de negócio no controller
+- Solução: Service Layer, Repository
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Тонкий контроллер (правильно):**
+**Controller fino (certo):**
 
 ```php
 class PostController extends Controller
@@ -151,14 +151,14 @@ class PostController extends Controller
 
     public function store(CreatePostRequest $request)
     {
-        // Делегируем логику сервису
+        // Delega a lógica para o service
         $post = $this->postService->create(
             $request->user(),
             $request->validated()
         );
 
         return redirect()->route('posts.show', $post)
-            ->with('success', 'Post created!');
+            ->with('success', 'Post criado!');
     }
 }
 
@@ -175,7 +175,7 @@ class PostService
                 ...$data,
             ]);
 
-            // Дополнительная логика
+            // Lógica extra
             event(new PostCreated($post));
             Cache::forget('posts.latest');
 
@@ -190,7 +190,7 @@ class PostService
 }
 ```
 
-**View Composers (для общих данных):**
+**View Composers (para dados compartilhados):**
 
 ```php
 // app/Providers/ViewServiceProvider.php
@@ -198,12 +198,12 @@ class ViewServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Для всех views
+        // Para todas as views
         View::composer('*', function ($view) {
             $view->with('appName', config('app.name'));
         });
 
-        // Для конкретного view
+        // Para uma view específica
         View::composer('posts.*', function ($view) {
             $view->with('categories', Category::all());
         });
@@ -213,17 +213,17 @@ class ViewServiceProvider extends ServiceProvider
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "MVC разделяет на Model (данные), View (отображение), Controller (логика). В Laravel: Eloquent для Model, Blade для View, Controller для обработки запросов. Контроллер получает запрос, взаимодействует с Model, возвращает View. Проблема Fat Controllers решается через Service Layer. View Composers для общих данных. Route → Controller → Model → View → Response."
+> "MVC separa em Model (dados), View (exibição), Controller (lógica). No Laravel: Eloquent no Model, Blade na View, Controller trata o request. O controller recebe o request, fala com o Model, devolve a View. Fat Controller se resolve com Service Layer. View Composer para dado compartilhado. Route → Controller → Model → View → Response."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Рефакторинг Fat Controller
+### Exercício 1: Refatorar Fat Controller
 
-У тебя есть контроллер с бизнес-логикой. Вынеси её в Service Layer.
+**Enunciado:** Você tem um controller com lógica de negócio. Extraia para o Service Layer.
 
 ```php
 class OrderController extends Controller
@@ -249,7 +249,7 @@ class OrderController extends Controller
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/OrderService.php
@@ -302,18 +302,18 @@ class OrderController extends Controller
         );
 
         return redirect()->route('orders.show', $order)
-            ->with('success', 'Order created successfully!');
+            ->with('success', 'Pedido criado com sucesso!');
     }
 }
 ```
 </details>
 
-### Задание 2: Настрой View Composer
+### Exercício 2: Configurar View Composer
 
-Создай View Composer который будет добавлять список категорий во все views начинающиеся с `posts.*`.
+**Enunciado:** Crie um View Composer que injeta a lista de categorias em todas as views que começam com `posts.*`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Providers/ViewServiceProvider.php
@@ -327,17 +327,17 @@ class ViewServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Для конкретного паттерна views
+        // Para um padrão específico de views
         View::composer('posts.*', function ($view) {
             $view->with('categories', Category::all());
         });
 
-        // Для нескольких views
+        // Para várias views
         View::composer(['posts.*', 'admin.posts.*'], function ($view) {
             $view->with('categories', Category::orderBy('name')->get());
         });
 
-        // Или через класс
+        // Ou via classe
         View::composer('posts.*', PostViewComposer::class);
     }
 }
@@ -356,7 +356,7 @@ class PostViewComposer
     }
 }
 
-// config/app.php - добавить в providers
+// config/app.php — adicionar em providers
 'providers' => [
     // ...
     App\Providers\ViewServiceProvider::class,
@@ -371,12 +371,12 @@ class PostViewComposer
 ```
 </details>
 
-### Задание 3: Реализуй Resource Controller
+### Exercício 3: Implementar Resource Controller
 
-Создай полноценный CRUD контроллер для модели `Article` с валидацией.
+**Enunciado:** Crie um resource controller CRUD completo para o model `Article`, com validação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/ArticleController.php
@@ -402,7 +402,7 @@ class ArticleController extends Controller
         ]);
 
         return redirect()->route('articles.show', $article)
-            ->with('success', 'Article created successfully!');
+            ->with('success', 'Artigo criado com sucesso!');
     }
 
     public function show(Article $article)
@@ -426,7 +426,7 @@ class ArticleController extends Controller
         $article->update($request->validated());
 
         return redirect()->route('articles.show', $article)
-            ->with('success', 'Article updated successfully!');
+            ->with('success', 'Artigo atualizado com sucesso!');
     }
 
     public function destroy(Article $article)
@@ -436,7 +436,7 @@ class ArticleController extends Controller
         $article->delete();
 
         return redirect()->route('articles.index')
-            ->with('success', 'Article deleted successfully!');
+            ->with('success', 'Artigo excluído com sucesso!');
     }
 }
 
@@ -466,4 +466,4 @@ Route::resource('articles', ArticleController::class);
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

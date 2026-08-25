@@ -1,34 +1,34 @@
-# 10.4 SOLID принципы
+# 10.4 Princípios SOLID
 
-## Краткое резюме
+## Resumo
 
-> **SOLID** — 5 принципов объектно-ориентированного проектирования.
+> **SOLID** — 5 princípios de design orientado a objetos.
 >
-> **Принципы:** S (одна ответственность), O (расширение без изменения), L (замена подклассами), I (маленькие интерфейсы), D (зависимость от абстракций).
+> **Princípios:** S (uma responsabilidade), O (estender sem alterar), L (substituir por subclasses), I (interfaces pequenas), D (depender de abstrações).
 >
-> **Важно:** Laravel автоматически применяет D через Service Container. Repository/Service паттерны следуют SOLID.
+> **Importante:** O Laravel aplica D sozinho via Service Container. Os padrões Repository/Service seguem SOLID.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Single Responsibility](#single-responsibility-одна-ответственность)
-- [Open/Closed](#openclosed-открыт-для-расширения-закрыт-для-изменения)
-- [Liskov Substitution](#liskov-substitution-подстановка-лисков)
-- [Interface Segregation](#interface-segregation-разделение-интерфейсов)
-- [Dependency Inversion](#dependency-inversion-инверсия-зависимостей)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Single Responsibility](#single-responsibility-uma-responsabilidade)
+- [Open/Closed](#openclosed-aberto-para-extensão-fechado-para-modificação)
+- [Liskov Substitution](#liskov-substitution-substituição-de-liskov)
+- [Interface Segregation](#interface-segregation-segregação-de-interfaces)
+- [Dependency Inversion](#dependency-inversion-inversão-de-dependências)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-SOLID — 5 принципов объектно-ориентированного проектирования для гибкого и поддерживаемого кода.
+**O que é:**
+SOLID — 5 princípios de design orientado a objetos. Código flexível e fácil de manter.
 
-**Принципы:**
+**Princípios:**
 - **S** - Single Responsibility
 - **O** - Open/Closed
 - **L** - Liskov Substitution
@@ -37,21 +37,21 @@ SOLID — 5 принципов объектно-ориентированного
 
 ---
 
-## Single Responsibility (одна ответственность)
+## Single Responsibility (uma responsabilidade)
 
-Класс должен иметь только одну причину для изменения.
+A classe deve ter só um motivo para mudar.
 
 ```php
-// ❌ ПЛОХО: класс делает всё
+// ❌ RUIM: a classe faz tudo
 class User
 {
-    public function save() { /* БД */ }
+    public function save() { /* banco */ }
     public function sendEmail() { /* Email */ }
     public function generateReport() { /* PDF */ }
 }
 
-// ✅ ХОРОШО: разделение ответственности
-class User { /* только данные */ }
+// ✅ BOM: responsabilidades separadas
+class User { /* só dados */ }
 class UserRepository { public function save(User $user) {} }
 class MailService { public function sendWelcome(User $user) {} }
 class ReportGenerator { public function generate(User $user) {} }
@@ -59,12 +59,12 @@ class ReportGenerator { public function generate(User $user) {} }
 
 ---
 
-## Open/Closed (открыт для расширения, закрыт для изменения)
+## Open/Closed (aberto para extensão, fechado para modificação)
 
-Можно расширять поведение, не изменяя существующий код.
+Você estende o comportamento sem mudar o código que já existe.
 
 ```php
-// ❌ ПЛОХО: нужно менять класс для нового типа
+// ❌ RUIM: tipo novo = mudar a classe
 class PaymentProcessor
 {
     public function process($type, $amount)
@@ -74,11 +74,11 @@ class PaymentProcessor
         } elseif ($type === 'paypal') {
             // ...
         }
-        // Добавление нового типа = изменение класса
+        // Tipo novo = mudar a classe
     }
 }
 
-// ✅ ХОРОШО: новый тип = новый класс
+// ✅ BOM: tipo novo = classe nova
 interface PaymentMethod
 {
     public function charge(float $amount): bool;
@@ -105,12 +105,12 @@ class PaymentProcessor
 
 ---
 
-## Liskov Substitution (подстановка Лисков)
+## Liskov Substitution (substituição de Liskov)
 
-Подклассы должны заменять базовые классы без изменения поведения.
+Subclasses devem substituir a classe base sem mudar o comportamento.
 
 ```php
-// ❌ ПЛОХО: нарушение LSP
+// ❌ RUIM: viola LSP
 class Rectangle
 {
     protected $width;
@@ -124,11 +124,11 @@ class Rectangle
 class Square extends Rectangle
 {
     public function setWidth($width) {
-        $this->width = $this->height = $width; // Изменяет поведение
+        $this->width = $this->height = $width; // Muda o comportamento
     }
 }
 
-// ✅ ХОРОШО: отдельные классы
+// ✅ BOM: classes separadas
 interface Shape
 {
     public function area(): float;
@@ -158,12 +158,12 @@ class Square implements Shape
 
 ---
 
-## Interface Segregation (разделение интерфейсов)
+## Interface Segregation (segregação de interfaces)
 
-Много специфичных интерфейсов лучше, чем один общий.
+Várias interfaces específicas são melhores do que uma interface grande.
 
 ```php
-// ❌ ПЛОХО: большой интерфейс
+// ❌ RUIM: interface grande
 interface Worker
 {
     public function work();
@@ -174,11 +174,11 @@ interface Worker
 class Robot implements Worker
 {
     public function work() { /* OK */ }
-    public function eat() { /* Робот не ест! */ }
-    public function sleep() { /* Робот не спит! */ }
+    public function eat() { /* Robô não come! */ }
+    public function sleep() { /* Robô não dorme! */ }
 }
 
-// ✅ ХОРОШО: маленькие интерфейсы
+// ✅ BOM: interfaces pequenas
 interface Workable
 {
     public function work();
@@ -203,23 +203,23 @@ class Robot implements Workable
 
 ---
 
-## Dependency Inversion (инверсия зависимостей)
+## Dependency Inversion (inversão de dependências)
 
-Зависеть от абстракций, а не от конкретных реализаций.
+Dependa de abstrações, não de implementações concretas.
 
 ```php
-// ❌ ПЛОХО: зависимость от конкретного класса
+// ❌ RUIM: depende da classe concreta
 class OrderService
 {
     private MySQLOrderRepository $repository;
 
     public function __construct()
     {
-        $this->repository = new MySQLOrderRepository(); // Жёсткая связь
+        $this->repository = new MySQLOrderRepository(); // Acoplamento rígido
     }
 }
 
-// ✅ ХОРОШО: зависимость от интерфейса
+// ✅ BOM: depende da interface
 interface OrderRepository
 {
     public function save(Order $order): void;
@@ -233,61 +233,61 @@ class MySQLOrderRepository implements OrderRepository
 class OrderService
 {
     public function __construct(
-        private OrderRepository $repository // Интерфейс
+        private OrderRepository $repository // Interface
     ) {}
 }
 
-// Service Container внедряет реализацию
+// Service Container injeta a implementação
 $this->app->bind(OrderRepository::class, MySQLOrderRepository::class);
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "SOLID: S — один класс = одна ответственность. O — расширение через наследование/интерфейсы, не изменение кода. L — подклассы заменяют базовые без поломки. I — маленькие специфичные интерфейсы. D — зависимость от абстракций (интерфейсов), не конкретных классов. Laravel: DI через Service Container автоматически применяет D. Repository/Service паттерны следуют SOLID."
+> "SOLID: S — uma classe, uma responsabilidade. O — você estende por herança ou interface, sem mudar o código que já existe. L — a subclasse substitui a classe base sem quebrar o comportamento. I — interfaces pequenas e específicas. D — depende de abstração (interface), não de classe concreta. No Laravel o Service Container aplica D sozinho com DI. Repository e Service seguem SOLID."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Исправь нарушение SRP
+### Exercício 1: Corrija a violação de SRP
 
-Этот класс делает слишком много. Раздели его по принципу Single Responsibility.
+Essa classe faz demais. Separe as responsabilidades pelo Single Responsibility.
 
 ```php
 class User extends Model
 {
     public function save(array $options = [])
     {
-        // Сохранение в БД
+        // Salva no banco
         parent::save($options);
 
-        // Отправка email
+        // Envia email
         Mail::to($this->email)->send(new WelcomeEmail($this));
 
-        // Логирование
+        // Log
         Log::info("User {$this->id} saved");
 
-        // Очистка кеша
+        // Limpa o cache
         Cache::forget("user.{$this->id}");
     }
 }
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Разделяем ответственности:
+// Separamos as responsabilidades:
 
-// 1. Model — только данные
+// 1. Model — só dados
 class User extends Model
 {
     protected $fillable = ['name', 'email', 'password'];
 }
 
-// 2. Repository — работа с БД
+// 2. Repository — acesso ao banco
 class UserRepository
 {
     public function save(User $user): User
@@ -297,7 +297,7 @@ class UserRepository
     }
 }
 
-// 3. MailService — отправка email
+// 3. MailService — envio de email
 class MailService
 {
     public function sendWelcome(User $user): void
@@ -306,7 +306,7 @@ class MailService
     }
 }
 
-// 4. CacheService — работа с кешем
+// 4. CacheService — cache
 class CacheService
 {
     public function forgetUser(int $userId): void
@@ -315,7 +315,7 @@ class CacheService
     }
 }
 
-// 5. Service — координация
+// 5. Service — coordenação
 class UserService
 {
     public function __construct(
@@ -340,9 +340,9 @@ class UserService
 ```
 </details>
 
-### Задание 2: Примени Open/Closed принцип
+### Exercício 2: Aplique o princípio Open/Closed
 
-Добавь новый тип уведомления без изменения существующего кода.
+Adicione um tipo novo de notificação sem mudar o código que já existe.
 
 ```php
 class NotificationService
@@ -352,24 +352,24 @@ class NotificationService
         if ($type === 'email') {
             Mail::to($user->email)->send(new Notification($message));
         } elseif ($type === 'sms') {
-            // SMS logic
+            // Lógica de SMS
         }
-        // Добавление нового типа = изменение класса ❌
+        // Tipo novo = mudar a classe ❌
     }
 }
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Создаём интерфейс
+// 1. Criamos a interface
 interface NotificationChannel
 {
     public function send(User $user, string $message): void;
 }
 
-// 2. Реализации для каждого канала
+// 2. Implementação de cada canal
 class EmailChannel implements NotificationChannel
 {
     public function send(User $user, string $message): void
@@ -382,16 +382,16 @@ class SmsChannel implements NotificationChannel
 {
     public function send(User $user, string $message): void
     {
-        // SMS logic
+        // Lógica de SMS
     }
 }
 
-// 3. Новый канал — просто новый класс (без изменения существующего!)
+// 3. Canal novo — só uma classe nova (sem mudar o que já existe!)
 class PushChannel implements NotificationChannel
 {
     public function send(User $user, string $message): void
     {
-        // Push notification logic
+        // Lógica de push notification
     }
 }
 
@@ -399,11 +399,11 @@ class SlackChannel implements NotificationChannel
 {
     public function send(User $user, string $message): void
     {
-        // Slack webhook logic
+        // Lógica do webhook do Slack
     }
 }
 
-// 4. Service работает с интерфейсом
+// 4. Service trabalha com a interface
 class NotificationService
 {
     public function __construct(
@@ -416,7 +416,7 @@ class NotificationService
     }
 }
 
-// 5. Регистрация в ServiceProvider
+// 5. Registro no ServiceProvider
 $this->app->bind(NotificationChannel::class, function ($app) {
     return match (config('notifications.default')) {
         'email' => new EmailChannel(),
@@ -428,9 +428,9 @@ $this->app->bind(NotificationChannel::class, function ($app) {
 ```
 </details>
 
-### Задание 3: Исправь нарушение Interface Segregation
+### Exercício 3: Corrija a violação de Interface Segregation
 
-Упрости интерфейс, разделив его на маленькие.
+Simplifique a interface: quebre em interfaces menores.
 
 ```php
 interface Animal
@@ -443,16 +443,16 @@ interface Animal
 class Dog implements Animal
 {
     public function walk() { /* OK */ }
-    public function fly() { /* Собака не летает! */ }
+    public function fly() { /* Cachorro não voa! */ }
     public function swim() { /* OK */ }
 }
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Разделяем на специфичные интерфейсы:
+// Separamos em interfaces específicas:
 
 interface Walkable
 {
@@ -469,17 +469,17 @@ interface Swimmable
     public function swim(): void;
 }
 
-// Каждый класс реализует только нужные интерфейсы
+// Cada classe implementa só as interfaces que precisa
 class Dog implements Walkable, Swimmable
 {
     public function walk(): void
     {
-        echo "Dog is walking";
+        echo "O cachorro está andando";
     }
 
     public function swim(): void
     {
-        echo "Dog is swimming";
+        echo "O cachorro está nadando";
     }
 }
 
@@ -487,12 +487,12 @@ class Bird implements Walkable, Flyable
 {
     public function walk(): void
     {
-        echo "Bird is walking";
+        echo "O pássaro está andando";
     }
 
     public function fly(): void
     {
-        echo "Bird is flying";
+        echo "O pássaro está voando";
     }
 }
 
@@ -500,7 +500,7 @@ class Fish implements Swimmable
 {
     public function swim(): void
     {
-        echo "Fish is swimming";
+        echo "O peixe está nadando";
     }
 }
 
@@ -515,4 +515,4 @@ class Duck implements Walkable, Flyable, Swimmable
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

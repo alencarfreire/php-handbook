@@ -1,40 +1,40 @@
 # 10.6 CQRS (Command Query Responsibility Segregation)
 
-## Краткое резюме
+## Resumo
 
-> **CQRS** — разделение операций чтения (Query) и записи (Command).
+> **CQRS** — separação das operações de leitura (Query) e escrita (Command).
 >
-> **Принцип:** Command изменяет (не возвращает), Query возвращает (не изменяет).
+> **Princípio:** Command altera (não retorna), Query retorna (não altera).
 >
-> **Важно:** Разные модели: Write Model (Domain Entity), Read Model (DTO). Read repository оптимизирован для чтения.
+> **Importante:** Modelos diferentes: Write Model (Domain Entity), Read Model (DTO). Read repository otimizado para leitura.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-CQRS — разделение операций чтения (Query) и записи (Command). Разные модели для чтения и записи.
-
-**Принцип:**
-- **Command** — изменяет состояние, не возвращает данные
-- **Query** — возвращает данные, не изменяет состояние
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Command (запись):**
+**O que é:**
+CQRS — separação das operações de leitura (Query) e escrita (Command). Modelos diferentes para leitura e escrita.
+
+**Princípio:**
+- **Command** — altera o estado, não retorna dado
+- **Query** — retorna dado, não altera o estado
+
+---
+
+## Como funciona
+
+**Command (escrita):**
 
 ```php
 // app/Application/Commands/CreateOrderCommand.php
@@ -66,12 +66,12 @@ class CreateOrderHandler
 
         $this->orders->save($order);
 
-        // Не возвращаем данные (void)
+        // Não retorna dado (void)
     }
 }
 ```
 
-**Query (чтение):**
+**Query (leitura):**
 
 ```php
 // app/Application/Queries/GetOrderQuery.php
@@ -92,7 +92,7 @@ class GetOrderHandler
     public function handle(GetOrderQuery $query): OrderDTO
     {
         return $this->orders->findById($query->orderId);
-        // Возвращает данные, не изменяет
+        // Retorna dado, não altera
     }
 }
 ```
@@ -130,22 +130,22 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**CQRS для:**
-- Сложная логика чтения/записи
-- Разная производительность для read/write
+**CQRS para:**
+- Lógica complexa de leitura/escrita
+- Performance diferente para read/write
 - Event Sourcing
 
-**НЕ для:**
-- Простые CRUD
-- Маленькие проекты
+**NÃO para:**
+- CRUD simples
+- Projeto pequeno
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Разные модели для чтения и записи:**
+**Modelos diferentes para leitura e escrita:**
 
 ```php
 // Write Model (Domain)
@@ -172,7 +172,7 @@ class OrderDTO
     ) {}
 }
 
-// Read Repository (оптимизированный для чтения)
+// Read Repository (otimizado para leitura)
 class OrderReadRepository
 {
     public function findById(int $id): OrderDTO
@@ -202,7 +202,7 @@ class OrderReadRepository
 }
 ```
 
-**Bus для команд:**
+**Bus para commands:**
 
 ```php
 // app/Bus/CommandBus.php
@@ -221,7 +221,7 @@ class CommandBus
     }
 }
 
-// Использование
+// Uso
 $this->commandBus->dispatch(
     new CreateOrderCommand($userId, $items)
 );
@@ -229,20 +229,20 @@ $this->commandBus->dispatch(
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "CQRS разделяет чтение и запись. Command изменяет состояние, не возвращает данные. Query возвращает данные, не изменяет. Разные модели: Write Model (Domain Entity), Read Model (DTO). Read repository оптимизирован для чтения (JOIN, денормализация). CommandBus для dispatch команд. Используется с Event Sourcing. Подходит для сложной логики, не для простых CRUD."
+> "CQRS separa leitura e escrita. Command altera o estado, não retorna dado. Query retorna dado, não altera. Modelos diferentes: Write Model (Domain Entity), Read Model (DTO). Read repository otimizado para leitura (JOIN, desnormalização). CommandBus para dispatch das commands. Usa junto com Event Sourcing. Serve para lógica complexa, não para CRUD simples."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Command и Query для User
+### Exercício 1: Implemente Command e Query para User
 
-Создай `CreateUserCommand` и `GetUserQuery` с их handlers.
+Crie `CreateUserCommand` e `GetUserQuery` com os handlers.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Application/Commands/CreateUserCommand.php
@@ -280,7 +280,7 @@ class CreateUserHandler
 
         $this->users->save($user);
 
-        // Не возвращаем данные (void)
+        // Não retorna dado (void)
     }
 }
 
@@ -310,7 +310,7 @@ class GetUserHandler
             ->first();
 
         if (!$data) {
-            throw new \Exception('User not found');
+            throw new \Exception('Usuário não encontrado');
         }
 
         return new UserDTO(
@@ -364,12 +364,12 @@ class UserController extends Controller
 ```
 </details>
 
-### Задание 2: Создай CommandBus
+### Exercício 2: Crie um CommandBus
 
-Реализуй простой CommandBus для автоматического роутинга команд к handlers.
+Implemente um CommandBus simples para rotear commands aos handlers automaticamente.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Bus/CommandBus.php
@@ -395,7 +395,7 @@ class CommandBus
 
         if (!class_exists($handlerClass)) {
             throw new \RuntimeException(
-                "Handler not found for " . get_class($command)
+                "Handler não encontrado para " . get_class($command)
             );
         }
 
@@ -415,7 +415,7 @@ public function register(): void
     $this->app->singleton(CommandBus::class);
 }
 
-// Использование
+// Uso
 class UserController extends Controller
 {
     public function __construct(
@@ -451,15 +451,15 @@ class UserController extends Controller
 ```
 </details>
 
-### Задание 3: Read Model с денормализацией
+### Exercício 3: Read Model com desnormalização
 
-Создай оптимизированный Read Model для отображения заказов со всей информацией.
+Crie um Read Model otimizado para exibir pedidos com todas as informações.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Денормализованная таблица для чтения
+// Tabela desnormalizada para leitura
 // Migration: create_order_read_models_table
 Schema::create('order_read_models', function (Blueprint $table) {
     $table->id();
@@ -471,7 +471,7 @@ Schema::create('order_read_models', function (Blueprint $table) {
     $table->decimal('total', 10, 2);
     $table->string('status');
     $table->integer('items_count');
-    $table->json('items'); // Денормализация
+    $table->json('items'); // Desnormalização
     $table->timestamp('created_at');
     $table->index(['user_id', 'status']);
 });
@@ -517,7 +517,7 @@ class GetOrdersHandler
     }
 }
 
-// Обновление Read Model при создании Order
+// Atualiza o Read Model quando o Order é criado
 // app/Listeners/UpdateOrderReadModel.php
 class UpdateOrderReadModel
 {
@@ -563,4 +563,4 @@ class OrderController extends Controller
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

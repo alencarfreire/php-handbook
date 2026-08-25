@@ -1,45 +1,45 @@
 # 10.10 Observer Pattern
 
-## Краткое резюме
+## Resumo
 
-> **Observer Pattern** — подписка объектов на события с автоматическим уведомлением.
+> **Observer Pattern** — objetos se inscrevem em events e recebem notificação automática.
 >
-> **Компоненты:** Subject (издатель), Observer (подписчик), Event (событие).
+> **Componentes:** Subject (publicador), Observer (assinante), Event (evento).
 >
-> **Важно:** Laravel: Event + Listeners, Model Observers для Eloquent. ShouldQueue для асинхронных listeners.
+> **Importante:** Laravel: Event + Listeners, Model Observers no Eloquent. ShouldQueue para listeners assíncronos.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Laravel Events и Listeners](#laravel-events-и-listeners)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Observer Pattern — подписка объектов на события. Когда событие происходит, все подписчики получают уведомление.
-
-**Компоненты:**
-- Subject (издатель)
-- Observer (подписчик)
-- Event (событие)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Laravel Events e Listeners](#laravel-events-e-listeners)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовый Observer:**
+**O que é:**
+Observer Pattern — objetos se inscrevem em events. Quando o event acontece, todos os assinantes recebem a notificação.
+
+**Componentes:**
+- Subject (publicador)
+- Observer (assinante)
+- Event (evento)
+
+---
+
+## Como funciona
+
+**Observer básico:**
 
 ```php
-// Subject (издатель)
+// Subject (publicador)
 interface Subject
 {
     public function attach(Observer $observer): void;
@@ -47,13 +47,13 @@ interface Subject
     public function notify(): void;
 }
 
-// Observer (подписчик)
+// Observer (assinante)
 interface Observer
 {
     public function update(Subject $subject): void;
 }
 
-// Реализация Subject
+// Implementação do Subject
 class Order implements Subject
 {
     private array $observers = [];
@@ -82,7 +82,7 @@ class Order implements Subject
     public function setStatus(string $status): void
     {
         $this->status = $status;
-        $this->notify();  // Уведомляем всех подписчиков
+        $this->notify();  // Notifica todos os assinantes
     }
 
     public function getStatus(): string
@@ -91,13 +91,13 @@ class Order implements Subject
     }
 }
 
-// Реализация Observer
+// Implementação do Observer
 class EmailNotificationObserver implements Observer
 {
     public function update(Subject $subject): void
     {
         if ($subject instanceof Order) {
-            echo "Email sent: Order status changed to {$subject->getStatus()}\n";
+            echo "Email enviado: status do pedido mudou para {$subject->getStatus()}\n";
         }
     }
 }
@@ -107,22 +107,22 @@ class SmsNotificationObserver implements Observer
     public function update(Subject $subject): void
     {
         if ($subject instanceof Order) {
-            echo "SMS sent: Order status changed to {$subject->getStatus()}\n";
+            echo "SMS enviado: status do pedido mudou para {$subject->getStatus()}\n";
         }
     }
 }
 
-// Использование
+// Uso
 $order = new Order();
 $order->attach(new EmailNotificationObserver());
 $order->attach(new SmsNotificationObserver());
 
-$order->setStatus('paid');  // Оба наблюдателя получат уведомление
+$order->setStatus('paid');  // Os dois observers recebem a notificação
 ```
 
 ---
 
-## Laravel Events и Listeners
+## Laravel Events e Listeners
 
 **Event:**
 
@@ -188,7 +188,7 @@ protected $listen = [
 ];
 ```
 
-**Dispatch события:**
+**Dispatch do event:**
 
 ```php
 class OrderController extends Controller
@@ -197,7 +197,7 @@ class OrderController extends Controller
     {
         $order = Order::create($request->validated());
 
-        // Dispatch события — все listeners будут вызваны
+        // Dispatch do event — todos os listeners são chamados
         event(new OrderCreated($order));
 
         return response()->json($order, 201);
@@ -207,20 +207,20 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Observer для:**
-- Уведомления
-- Логирование
-- Обновление связанных данных
-- Асинхронные операции
+**Observer para:**
+- Notificações
+- Log
+- Atualizar dados relacionados
+- Operações assíncronas
 
-**НЕ для:**
-- Прямая зависимость между объектами
+**NÃO use para:**
+- Dependência direta entre objetos
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
 **Model Observers:**
 
@@ -230,19 +230,19 @@ class UserObserver
 {
     public function creating(User $user): void
     {
-        // Перед созданием
+        // Antes de criar
         $user->uuid = Str::uuid();
     }
 
     public function created(User $user): void
     {
-        // После создания
+        // Depois de criar
         event(new UserRegistered($user));
     }
 
     public function updating(User $user): void
     {
-        // Перед обновлением
+        // Antes de atualizar
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
@@ -250,13 +250,13 @@ class UserObserver
 
     public function updated(User $user): void
     {
-        // После обновления
+        // Depois de atualizar
         Cache::forget("user.{$user->id}");
     }
 
     public function deleted(User $user): void
     {
-        // После удаления
+        // Depois de deletar
         $user->posts()->delete();
         $user->comments()->delete();
     }
@@ -269,7 +269,7 @@ public function boot(): void
 }
 ```
 
-**Queue Listeners (асинхронно):**
+**Queue Listeners (assíncrono):**
 
 ```php
 // app/Listeners/SendOrderConfirmation.php
@@ -289,7 +289,7 @@ class SendOrderConfirmation implements ShouldQueue
 
     public function failed(OrderCreated $event, Throwable $exception): void
     {
-        Log::error("Failed to send order confirmation", [
+        Log::error("Falha ao enviar confirmação do pedido", [
             'order_id' => $event->order->id,
             'error' => $exception->getMessage(),
         ]);
@@ -297,7 +297,7 @@ class SendOrderConfirmation implements ShouldQueue
 }
 ```
 
-**Event Subscribers (несколько событий):**
+**Event Subscribers (vários events):**
 
 ```php
 // app/Listeners/UserEventSubscriber.php
@@ -339,7 +339,7 @@ class SendInvoiceEmail implements ShouldQueue
             ->send(new InvoiceEmail($event->order));
     }
 
-    // Условие: выполнить только для оплаченных заказов
+    // Condição: só enfileira pedidos pagos
     public function shouldQueue(OrderCreated $event): bool
     {
         return $event->order->status === 'paid';
@@ -349,20 +349,20 @@ class SendInvoiceEmail implements ShouldQueue
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Observer Pattern — подписка на события. Subject уведомляет Observers. Laravel: Event + Listeners. Event dispatch через `event()`. Listeners регистрируются в EventServiceProvider. Model Observers для Eloquent событий (creating, created, updating, deleted). ShouldQueue для асинхронных listeners. Event Subscribers для нескольких событий. Плюсы: слабая связанность, расширяемость. Используется для уведомлений, логирования, очистки кеша, обновления связанных данных."
+> "Observer Pattern é inscrição em events. O Subject avisa os Observers. No Laravel: Event + Listeners. Dispatch com `event()`. Listeners entram no EventServiceProvider. Model Observers cobrem events do Eloquent (creating, created, updating, deleted). ShouldQueue para listener assíncrono. Event Subscribers quando um listener cobre vários events. Prós: baixo acoplamento, fácil de estender. Uso: notificação, log, limpar cache, atualizar dado relacionado."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Model Observer для Product
+### Exercício 1: Crie um Model Observer para Product
 
-Реализуй `ProductObserver` который автоматически создаёт slug, очищает кеш и логирует изменения.
+Implemente um `ProductObserver` que cria o slug sozinho, limpa o cache e grava log das mudanças.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Observers/ProductObserver.php
@@ -377,47 +377,47 @@ class ProductObserver
 {
     public function creating(Product $product): void
     {
-        // Автоматически создать slug перед созданием
+        // Cria o slug antes de persistir
         if (empty($product->slug)) {
             $product->slug = Str::slug($product->name);
         }
 
-        // Установить значения по умолчанию
+        // Valores padrão
         if (!isset($product->is_active)) {
             $product->is_active = true;
         }
 
-        Log::info('Creating product', ['name' => $product->name]);
+        Log::info('Criando produto', ['name' => $product->name]);
     }
 
     public function created(Product $product): void
     {
-        // После создания очистить кеш
+        // Depois de criar, limpa o cache
         Cache::forget('products.all');
         Cache::forget('products.featured');
 
-        Log::info('Product created', [
+        Log::info('Produto criado', [
             'id' => $product->id,
             'name' => $product->name
         ]);
 
-        // Отправить событие
+        // Dispara o event
         event(new \App\Events\ProductCreated($product));
     }
 
     public function updating(Product $product): void
     {
-        // Если меняется имя, обновить slug
+        // Se o nome mudou, atualiza o slug
         if ($product->isDirty('name')) {
             $product->slug = Str::slug($product->name);
         }
 
-        // Если деактивируется, обнулить stock
+        // Se desativou, zera o stock
         if ($product->isDirty('is_active') && !$product->is_active) {
             $product->stock = 0;
         }
 
-        Log::info('Updating product', [
+        Log::info('Atualizando produto', [
             'id' => $product->id,
             'changes' => $product->getDirty()
         ]);
@@ -425,29 +425,29 @@ class ProductObserver
 
     public function updated(Product $product): void
     {
-        // Очистить кеш конкретного продукта
+        // Limpa o cache desse produto
         Cache::forget("product.{$product->id}");
         Cache::forget('products.all');
 
-        // Если изменилась цена, уведомить подписчиков
+        // Se o preço mudou, notifica os assinantes
         if ($product->wasChanged('price')) {
             event(new \App\Events\ProductPriceChanged($product));
         }
 
-        Log::info('Product updated', ['id' => $product->id]);
+        Log::info('Produto atualizado', ['id' => $product->id]);
     }
 
     public function deleted(Product $product): void
     {
-        // Удалить связанные данные
+        // Apaga dados relacionados
         $product->reviews()->delete();
         $product->images()->delete();
 
-        // Очистить кеш
+        // Limpa o cache
         Cache::forget("product.{$product->id}");
         Cache::forget('products.all');
 
-        Log::warning('Product deleted', [
+        Log::warning('Produto excluído', [
             'id' => $product->id,
             'name' => $product->name
         ]);
@@ -455,21 +455,21 @@ class ProductObserver
 
     public function restored(Product $product): void
     {
-        // При восстановлении из soft delete
+        // Ao restaurar do soft delete
         Cache::forget('products.all');
 
-        Log::info('Product restored', ['id' => $product->id]);
+        Log::info('Produto restaurado', ['id' => $product->id]);
     }
 
     public function forceDeleted(Product $product): void
     {
-        // При окончательном удалении
-        // Удалить файлы изображений
+        // Na exclusão definitiva
+        // Apaga os arquivos de imagem
         if ($product->image_url) {
             Storage::delete($product->image_url);
         }
 
-        Log::warning('Product force deleted', ['id' => $product->id]);
+        Log::warning('Produto excluído em definitivo', ['id' => $product->id]);
     }
 }
 
@@ -489,12 +489,12 @@ class EventServiceProvider extends ServiceProvider
 ```
 </details>
 
-### Задание 2: Создай Event с несколькими Listeners
+### Exercício 2: Crie um Event com vários Listeners
 
-Реализуй `UserRegistered` Event с 3 Listeners: отправка email, создание профиля, начисление бонусов.
+Implemente o Event `UserRegistered` com 3 Listeners: envio de email, criação de perfil, bônus de boas-vindas.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/UserRegistered.php
@@ -538,7 +538,7 @@ class SendWelcomeEmail implements ShouldQueue
 
     public function failed(UserRegistered $event, \Throwable $exception): void
     {
-        Log::error('Failed to send welcome email', [
+        Log::error('Falha ao enviar email de boas-vindas', [
             'user_id' => $event->user->id,
             'error' => $exception->getMessage()
         ]);
@@ -560,7 +560,7 @@ class CreateUserProfile
             'bio' => '',
             'avatar' => 'default-avatar.png',
             'theme' => 'light',
-            'language' => 'en',
+            'language' => 'pt-BR',
             'notifications_enabled' => true,
         ]);
     }
@@ -580,7 +580,7 @@ class GiveWelcomeBonus
             'user_id' => $event->user->id,
             'amount' => 100,
             'type' => 'welcome',
-            'description' => 'Welcome bonus',
+            'description' => 'Bônus de boas-vindas',
             'expires_at' => now()->addDays(30),
         ]);
     }
@@ -595,32 +595,32 @@ protected $listen = [
     ],
 ];
 
-// Использование в Controller
+// Uso no Controller
 class RegisterController extends Controller
 {
     public function register(Request $request)
     {
         $user = User::create($request->validated());
 
-        // Dispatch события - все listeners будут вызваны
+        // Dispatch do event — todos os listeners são chamados
         event(new UserRegistered($user));
 
         return redirect()->route('dashboard')
-            ->with('success', 'Welcome! Check your email.');
+            ->with('success', 'Bem-vindo! Confira seu email.');
     }
 }
 ```
 </details>
 
-### Задание 3: Реализуй Event Subscriber
+### Exercício 3: Implemente um Event Subscriber
 
-Создай `UserActivitySubscriber` который слушает несколько событий пользователя.
+Crie um `UserActivitySubscriber` que escuta vários events do usuário.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// События
+// Events
 namespace App\Events;
 
 class UserLoggedIn
@@ -658,19 +658,19 @@ class UserActivitySubscriber
 {
     public function handleUserLogin(UserLoggedIn $event): void
     {
-        // Обновить last_login_at
+        // Atualiza last_login_at
         $event->user->update([
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
         ]);
 
-        // Логирование
-        Log::info('User logged in', [
+        // Log
+        Log::info('Usuário fez login', [
             'user_id' => $event->user->id,
             'ip' => request()->ip(),
         ]);
 
-        // Сохранить в кеше
+        // Guarda no cache
         Cache::put(
             "user.session.{$event->user->id}",
             true,
@@ -680,25 +680,25 @@ class UserActivitySubscriber
 
     public function handleUserLogout(UserLoggedOut $event): void
     {
-        // Очистить сессию из кеша
+        // Tira a sessão do cache
         Cache::forget("user.session.{$event->user->id}");
 
-        Log::info('User logged out', [
+        Log::info('Usuário fez logout', [
             'user_id' => $event->user->id,
         ]);
     }
 
     public function handleProfileUpdate(UserProfileUpdated $event): void
     {
-        // Очистить кеш профиля
+        // Limpa o cache do perfil
         Cache::forget("user.profile.{$event->user->id}");
 
-        Log::info('User profile updated', [
+        Log::info('Perfil atualizado', [
             'user_id' => $event->user->id,
             'changes' => $event->user->getChanges(),
         ]);
 
-        // Если изменился email, требуется верификация
+        // Se o email mudou, precisa verificar de novo
         if ($event->user->wasChanged('email')) {
             $event->user->update(['email_verified_at' => null]);
             event(new \App\Events\EmailVerificationRequired($event->user));
@@ -707,22 +707,22 @@ class UserActivitySubscriber
 
     public function handlePasswordChange(UserPasswordChanged $event): void
     {
-        // Уведомить пользователя о смене пароля
+        // Avisa o usuário da troca de senha
         Mail::to($event->user->email)
             ->send(new \App\Mail\PasswordChangedMail($event->user));
 
-        Log::warning('User password changed', [
+        Log::warning('Senha alterada', [
             'user_id' => $event->user->id,
             'ip' => request()->ip(),
         ]);
 
-        // Инвалидировать все сессии кроме текущей
+        // Invalida as outras sessões
         $event->user->sessions()
             ->where('id', '!=', session()->getId())
             ->delete();
     }
 
-    // Регистрация событий
+    // Registro dos events
     public function subscribe(Dispatcher $events): array
     {
         return [
@@ -739,7 +739,7 @@ protected $subscribe = [
     UserActivitySubscriber::class,
 ];
 
-// Альтернативный способ регистрации в subscribe()
+// Outra forma de registrar no subscribe()
 public function subscribe(Dispatcher $events): void
 {
     $events->listen(
@@ -767,4 +767,4 @@ public function subscribe(Dispatcher $events): void
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

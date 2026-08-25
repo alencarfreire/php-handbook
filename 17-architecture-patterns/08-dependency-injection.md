@@ -1,42 +1,42 @@
 # 10.8 Dependency Injection (DI)
 
-## Краткое резюме
+## Resumo
 
-> **Dependency Injection** — передача зависимостей извне, а не создание их внутри класса.
+> **Dependency Injection** — você passa as dependências de fora, não cria dentro da classe.
 >
-> **Типы:** Constructor (обязательные), Setter (опциональные), Method (в метод).
+> **Tipos:** Constructor (obrigatórias), Setter (opcionais), Method (no método).
 >
-> **Важно:** Laravel Service Container автоматически делает инъекцию через type-hinting. Плюсы: тестируемость, слабая связанность.
+> **Importante:** o Service Container (container de serviços) do Laravel injeta sozinho pelo type-hint. Prós: testabilidade, baixo acoplamento.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Типы инъекций](#типы-инъекций)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Dependency Injection — передача зависимостей извне, а не создание их внутри класса.
-
-**Типы:**
-- Constructor Injection (через конструктор)
-- Setter Injection (через setter)
-- Method Injection (через метод)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Tipos de injeção](#tipos-de-injeção)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**❌ Без DI (плохо):**
+**O que é:**
+Dependency Injection — você passa as dependências de fora, não cria dentro da classe.
+
+**Tipos:**
+- Constructor Injection (pelo construtor)
+- Setter Injection (pelo setter)
+- Method Injection (pelo método)
+
+---
+
+## Como funciona
+
+**❌ Sem DI (ruim):**
 
 ```php
 class OrderService
@@ -46,7 +46,7 @@ class OrderService
 
     public function __construct()
     {
-        // Создаём зависимости внутри — жёсткая связь
+        // Cria as dependências dentro — acoplamento forte
         $this->repository = new MySQLOrderRepository();
         $this->mailService = new MailService();
     }
@@ -60,10 +60,10 @@ class OrderService
     }
 }
 
-// Проблема: нельзя протестировать, нельзя сменить реализацию
+// Problema: não dá para testar, não dá para trocar a implementação
 ```
 
-**✅ С DI (хорошо):**
+**✅ Com DI (bom):**
 
 ```php
 // Constructor Injection
@@ -83,7 +83,7 @@ class OrderService
     }
 }
 
-// Использование
+// Uso
 $repository = new MySQLOrderRepository();
 $mailService = new MailService();
 $service = new OrderService($repository, $mailService);
@@ -97,7 +97,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Bind интерфейса к реализации
+        // Liga a interface na implementação
         $this->app->bind(
             OrderRepository::class,
             MySQLOrderRepository::class
@@ -115,7 +115,7 @@ class AppServiceProvider extends ServiceProvider
     }
 }
 
-// Controller — автоматическая инъекция
+// Controller — injeção automática
 class OrderController extends Controller
 {
     public function __construct(
@@ -133,14 +133,14 @@ class OrderController extends Controller
 
 ---
 
-## Типы инъекций
+## Tipos de injeção
 
-**Constructor Injection (лучший):**
+**Constructor Injection (o melhor):**
 
 ```php
 class UserService
 {
-    // Зависимости обязательны
+    // Dependências obrigatórias
     public function __construct(
         private UserRepository $repository,
         private CacheService $cache
@@ -155,7 +155,7 @@ class UserService
 {
     private ?LoggerInterface $logger = null;
 
-    // Зависимость опциональна
+    // Dependência opcional
     public function setLogger(LoggerInterface $logger): void
     {
         $this->logger = $logger;
@@ -165,7 +165,7 @@ class UserService
     {
         $user = $this->repository->create($data);
 
-        $this->logger?->info("User created: {$user->id}");
+        $this->logger?->info("Usuário criado: {$user->id}");
 
         return $user;
     }
@@ -177,7 +177,7 @@ class UserService
 ```php
 class OrderController extends Controller
 {
-    // Инъекция в конкретный метод
+    // Injeção no método específico
     public function store(
         Request $request,
         OrderService $service  // Method injection
@@ -189,22 +189,22 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**DI для:**
-- Тестируемость (mock зависимостей)
-- Слабая связанность
-- Смена реализаций
+**DI para:**
+- Testabilidade (mock das dependências)
+- Baixo acoplamento
+- Trocar implementação
 
 **Constructor vs Setter:**
-- Constructor — для обязательных зависимостей
-- Setter — для опциональных
+- Constructor — dependência obrigatória
+- Setter — dependência opcional
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Интерфейсы для DI:**
+**Interfaces para DI:**
 
 ```php
 // app/Contracts/PaymentGateway.php
@@ -243,7 +243,7 @@ $this->app->bind(PaymentGateway::class, function ($app) {
 class OrderService
 {
     public function __construct(
-        private PaymentGateway $payment  // Интерфейс, не класс
+        private PaymentGateway $payment  // Interface, não a classe
     ) {}
 
     public function pay(Order $order): bool
@@ -253,7 +253,7 @@ class OrderService
 }
 ```
 
-**Mock для тестов:**
+**Mock nos testes:**
 
 ```php
 // tests/Feature/OrderServiceTest.php
@@ -261,7 +261,7 @@ class OrderServiceTest extends TestCase
 {
     public function test_creates_order(): void
     {
-        // Mock зависимостей
+        // Mock das dependências
         $repository = Mockery::mock(OrderRepository::class);
         $repository->shouldReceive('create')
             ->once()
@@ -271,7 +271,7 @@ class OrderServiceTest extends TestCase
         $mailService->shouldReceive('sendConfirmation')
             ->once();
 
-        // Инъекция mock объектов
+        // Injeta os mocks
         $service = new OrderService($repository, $mailService);
 
         $order = $service->create(['total' => 100]);
@@ -284,7 +284,7 @@ class OrderServiceTest extends TestCase
 **Facade vs DI:**
 
 ```php
-// ❌ Facade — трудно тестировать
+// ❌ Facade — difícil de testar
 class OrderService
 {
     public function create(array $data): Order
@@ -296,7 +296,7 @@ class OrderService
     }
 }
 
-// ✅ DI — легко тестировать
+// ✅ DI — fácil de testar
 class OrderService
 {
     public function __construct(
@@ -316,20 +316,20 @@ class OrderService
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Dependency Injection передаёт зависимости извне, не создаёт внутри. Constructor Injection для обязательных, Setter для опциональных. Laravel Service Container делает автоматическую инъекцию через type-hinting. Bind интерфейса к реализации в ServiceProvider. Плюсы: тестируемость (mock), слабая связанность, гибкость. Contextual binding для разных реализаций. Facade vs DI: DI лучше для тестов."
+> "Dependency Injection passa as dependências de fora, não cria dentro. Constructor Injection para as obrigatórias, Setter para as opcionais. O Service Container do Laravel injeta sozinho pelo type-hint. Eu faço bind da interface na implementação no Service Provider. Prós: testabilidade (mock), baixo acoplamento, flexibilidade. Contextual binding quando a implementação muda conforme a classe. Facade vs DI: DI é melhor para teste."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Contextual Binding
+### Exercício 1: Implemente Contextual Binding
 
-У тебя есть два сервиса которым нужны разные реализации `CacheInterface`. Настрой contextual binding.
+**Enunciado:** Você tem dois services que precisam de implementações diferentes de `CacheInterface`. Configure o contextual binding.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Contracts/CacheInterface.php
@@ -367,7 +367,7 @@ class MemcachedCache implements CacheInterface
     }
 }
 
-// app/Services/UserService.php (нужен Redis)
+// app/Services/UserService.php (precisa de Redis)
 class UserService
 {
     public function __construct(
@@ -375,7 +375,7 @@ class UserService
     ) {}
 }
 
-// app/Services/ProductService.php (нужен Memcached)
+// app/Services/ProductService.php (precisa de Memcached)
 class ProductService
 {
     public function __construct(
@@ -386,17 +386,17 @@ class ProductService
 // app/Providers/AppServiceProvider.php
 public function register(): void
 {
-    // Contextual binding для UserService
+    // Contextual binding do UserService
     $this->app->when(UserService::class)
         ->needs(CacheInterface::class)
         ->give(RedisCache::class);
 
-    // Contextual binding для ProductService
+    // Contextual binding do ProductService
     $this->app->when(ProductService::class)
         ->needs(CacheInterface::class)
         ->give(MemcachedCache::class);
 
-    // Или через closure
+    // Ou via closure
     $this->app->when(UserService::class)
         ->needs(CacheInterface::class)
         ->give(function ($app) {
@@ -408,9 +408,9 @@ public function register(): void
 ```
 </details>
 
-### Задание 2: Замени static Facade на DI
+### Exercício 2: Troque Facade estática por DI
 
-Рефактори код с Facade на Dependency Injection для лучшей тестируемости.
+**Enunciado:** Refatore o código de Facade para Dependency Injection. Fica mais fácil de testar.
 
 ```php
 class OrderService
@@ -421,7 +421,7 @@ class OrderService
 
         Mail::to($order->user->email)->send(new OrderConfirmation($order));
         Cache::forget('orders.latest');
-        Log::info("Order {$order->id} created");
+        Log::info("Pedido {$order->id} criado");
 
         return $order;
     }
@@ -429,10 +429,10 @@ class OrderService
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Создаём интерфейсы/классы для зависимостей
+// Cria interfaces/classes para as dependências
 
 // app/Services/MailService.php
 class MailService
@@ -459,11 +459,11 @@ class LoggerService
 {
     public function logOrderCreated(int $orderId): void
     {
-        Log::info("Order {$orderId} created");
+        Log::info("Pedido {$orderId} criado");
     }
 }
 
-// Рефакторинг OrderService
+// Refatora o OrderService
 class OrderService
 {
     public function __construct(
@@ -485,7 +485,7 @@ class OrderService
     }
 }
 
-// Тест с mocks
+// Teste com mocks
 class OrderServiceTest extends TestCase
 {
     public function test_creates_order_and_sends_notification(): void
@@ -523,12 +523,12 @@ class OrderServiceTest extends TestCase
 ```
 </details>
 
-### Задание 3: Реализуй Service Provider с binding
+### Exercício 3: Implemente um Service Provider com binding
 
-Создай `PaymentServiceProvider` который регистрирует разные Payment Gateways.
+**Enunciado:** Crie um `PaymentServiceProvider` que registra Payment Gateways diferentes.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Contracts/PaymentGatewayInterface.php
@@ -547,13 +547,13 @@ class StripePayment implements PaymentGatewayInterface
 
     public function charge(float $amount, array $details): bool
     {
-        // Stripe charge logic
+        // Lógica de charge do Stripe
         return true;
     }
 
     public function refund(string $transactionId): bool
     {
-        // Stripe refund logic
+        // Lógica de refund do Stripe
         return true;
     }
 }
@@ -568,13 +568,13 @@ class PayPalPayment implements PaymentGatewayInterface
 
     public function charge(float $amount, array $details): bool
     {
-        // PayPal charge logic
+        // Lógica de charge do PayPal
         return true;
     }
 
     public function refund(string $transactionId): bool
     {
-        // PayPal refund logic
+        // Lógica de refund do PayPal
         return true;
     }
 }
@@ -591,14 +591,14 @@ class PaymentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Singleton для Stripe
+        // Singleton do Stripe
         $this->app->singleton(StripePayment::class, function ($app) {
             return new StripePayment(
                 apiKey: config('services.stripe.secret')
             );
         });
 
-        // Singleton для PayPal
+        // Singleton do PayPal
         $this->app->singleton(PayPalPayment::class, function ($app) {
             return new PayPalPayment(
                 clientId: config('services.paypal.client_id'),
@@ -606,7 +606,7 @@ class PaymentServiceProvider extends ServiceProvider
             );
         });
 
-        // Default binding
+        // Binding padrão
         $this->app->bind(
             PaymentGatewayInterface::class,
             function ($app) {
@@ -618,24 +618,24 @@ class PaymentServiceProvider extends ServiceProvider
             }
         );
 
-        // Именованные binding
+        // Binding nomeado
         $this->app->bind('payment.stripe', StripePayment::class);
         $this->app->bind('payment.paypal', PayPalPayment::class);
     }
 
     public function boot(): void
     {
-        // Boot logic if needed
+        // Lógica de boot, se precisar
     }
 }
 
-// config/app.php - добавить provider
+// config/app.php — adicionar o provider
 'providers' => [
     // ...
     App\Providers\PaymentServiceProvider::class,
 ],
 
-// Использование
+// Uso
 class OrderController extends Controller
 {
     public function __construct(
@@ -650,12 +650,12 @@ class OrderController extends Controller
         );
 
         return $success
-            ? response()->json(['message' => 'Payment successful'])
-            : response()->json(['message' => 'Payment failed'], 400);
+            ? response()->json(['message' => 'Pagamento realizado'])
+            : response()->json(['message' => 'Falha no pagamento'], 400);
     }
 }
 
-// Использование конкретного gateway
+// Uso de um gateway específico
 $stripeGateway = app('payment.stripe');
 $paypalGateway = app('payment.paypal');
 ```
@@ -663,4 +663,4 @@ $paypalGateway = app('payment.paypal');
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

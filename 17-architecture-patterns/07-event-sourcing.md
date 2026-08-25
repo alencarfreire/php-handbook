@@ -1,39 +1,39 @@
 # 10.7 Event Sourcing
 
-## Краткое резюме
+## Resumo
 
-> **Event Sourcing** — сохранение всех изменений как последовательность событий.
+> **Event Sourcing** — guardar todas as mudanças como uma sequência de eventos.
 >
-> **Принцип:** Не храним текущее состояние, храним события. Состояние = применение всех событий.
+> **Princípio:** Você não guarda o estado atual. Guarda os eventos. Estado = aplicar todos os eventos.
 >
-> **Важно:** EventStore хранит события, Aggregate восстанавливается из событий. Snapshot для оптимизации.
+> **Importante:** EventStore guarda os eventos. Aggregate se reconstrói a partir deles. Snapshot para otimizar.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Event Sourcing — сохранение всех изменений как последовательность событий (events). Состояние восстанавливается из событий.
-
-**Принцип:**
-- Не храним текущее состояние
-- Храним все события изменения
-- Состояние = применение всех событий
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
+
+**O que é:**
+Event Sourcing — guardar todas as mudanças como uma sequência de eventos (events). O estado se reconstrói a partir dos eventos.
+
+**Princípio:**
+- Você não guarda o estado atual
+- Guarda todos os eventos de mudança
+- Estado = aplicar todos os eventos
+
+---
+
+## Como funciona
 
 **Event:**
 
@@ -124,7 +124,7 @@ class Order
     private string $status = 'pending';
     private float $total = 0;
 
-    // События для сохранения
+    // Eventos ainda não persistidos
     private array $uncommittedEvents = [];
 
     public static function create(string $id, string $userId, array $items): self
@@ -159,7 +159,7 @@ class Order
         ));
     }
 
-    // Восстановление из событий
+    // Reconstruir a partir dos eventos
     public static function reconstituteFrom(array $events): self
     {
         $order = new self();
@@ -252,24 +252,24 @@ class OrderRepository
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Event Sourcing для:**
-- Аудит всех изменений
-- Восстановление состояния на любой момент
-- Сложная бизнес-логика
-- Temporal queries ("как было вчера?")
+**Event Sourcing para:**
+- Auditoria de todas as mudanças
+- Reconstruir o estado em qualquer momento
+- Regra de negócio complexa
+- Temporal queries ("como estava ontem?")
 
-**НЕ для:**
-- Простые CRUD
-- Быстрый прототип
-- Маленькие проекты
+**NÃO use para:**
+- CRUD simples
+- Protótipo rápido
+- Projeto pequeno
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Миграция для events:**
+**Migration para events:**
 
 ```php
 Schema::create('events', function (Blueprint $table) {
@@ -323,10 +323,10 @@ class OrderProjection
 }
 ```
 
-**Snapshot (оптимизация):**
+**Snapshot (otimização):**
 
 ```php
-// Сохранять snapshot каждые N событий
+// Guardar snapshot a cada N eventos
 class SnapshotStore
 {
     public function saveSnapshot(string $aggregateId, object $aggregate, int $version): void
@@ -349,7 +349,7 @@ class SnapshotStore
     }
 }
 
-// Восстановление из snapshot + события после него
+// Reconstruir a partir do snapshot + eventos depois dele
 public function find(string $orderId): ?Order
 {
     $snapshot = $this->snapshotStore->getSnapshot($orderId);
@@ -371,20 +371,20 @@ public function find(string $orderId): ?Order
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Event Sourcing сохраняет все изменения как события. Aggregate записывает события (`recordThat`), применяет (`applyThat`). EventStore хранит события. Состояние восстанавливается из событий. Projection для Read Model. Snapshot для оптимизации (не перечитывать все события). Плюсы: полный аудит, temporal queries, восстановление. Минусы: сложность, eventual consistency. Используется с CQRS. Подходит для сложной бизнес-логики, аудита."
+> "Event Sourcing guarda todas as mudanças como eventos. O Aggregate registra o evento (`recordThat`) e aplica (`applyThat`). O EventStore persiste. O estado se reconstrói a partir dos eventos. Projection monta o Read Model. Snapshot otimiza — você não relê tudo. Prós: auditoria completa, temporal queries, recuperação. Contras: complexidade, eventual consistency. Costuma ir junto com CQRS. Serve para regra de negócio complexa e auditoria."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй простой EventStore
+### Exercício 1: Implemente um EventStore simples
 
-Создай EventStore с методами сохранения и получения событий.
+**Enunciado:** Crie um EventStore com métodos para guardar e buscar eventos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -489,12 +489,12 @@ class EventStore
 ```
 </details>
 
-### Задание 2: Создай Projection для статистики
+### Exercício 2: Crie uma Projection de estatísticas
 
-Реализуй Projection который подсчитывает общую статистику по заказам.
+**Enunciado:** Implemente uma Projection que calcula estatísticas gerais dos pedidos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -556,10 +556,10 @@ class OrderStatisticsProjection
 
     public function rebuild(): void
     {
-        // Очистка
+        // Limpar
         DB::table('order_statistics')->truncate();
 
-        // Восстановление из всех событий
+        // Reconstruir a partir de todos os eventos
         $events = DB::table('domain_events')
             ->where('aggregate_type', 'Order')
             ->orderBy('id')
@@ -594,7 +594,7 @@ class OrderStatisticsProjection
     }
 }
 
-// Listener для автоматического обновления
+// Listener para atualizar automaticamente
 class UpdateOrderStatistics
 {
     public function __construct(
@@ -614,12 +614,12 @@ class UpdateOrderStatistics
 ```
 </details>
 
-### Задание 3: Реализуй Snapshot механизм
+### Exercício 3: Implemente o mecanismo de Snapshot
 
-Создай Snapshot систему для оптимизации восстановления больших агрегатов.
+**Enunciado:** Crie um sistema de Snapshot para otimizar a reconstrução de aggregates grandes.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -638,7 +638,7 @@ use Illuminate\Support\Facades\DB;
 
 class SnapshotStore
 {
-    private const SNAPSHOT_FREQUENCY = 10; // Каждые 10 событий
+    private const SNAPSHOT_FREQUENCY = 10; // A cada 10 eventos
 
     public function saveSnapshot(
         string $aggregateId,
@@ -707,7 +707,7 @@ class EventSourcedOrderRepository
 
         $order->clearUncommittedEvents();
 
-        // Создать snapshot если нужно
+        // Criar snapshot se precisar
         $eventCount = count(
             $this->eventStore->getEventsForAggregate($order->getId())
         );
@@ -724,20 +724,20 @@ class EventSourcedOrderRepository
 
     public function find(string $orderId): ?Order
     {
-        // Попытка загрузить snapshot
+        // Tentar carregar o snapshot
         $snapshot = $this->snapshotStore->getSnapshot($orderId);
 
         if ($snapshot) {
-            // Восстановить из snapshot
+            // Reconstruir a partir do snapshot
             $order = clone $snapshot->aggregate;
 
-            // Загрузить только новые события после snapshot
+            // Carregar só os eventos depois do snapshot
             $events = $this->eventStore->getEventsAfterVersion(
                 $orderId,
                 $snapshot->version
             );
         } else {
-            // Создать новый и загрузить все события
+            // Criar um novo e carregar todos os eventos
             $order = new Order();
             $events = $this->eventStore->getEventsForAggregate($orderId);
         }
@@ -746,7 +746,7 @@ class EventSourcedOrderRepository
             return null;
         }
 
-        // Применить события
+        // Aplicar os eventos
         foreach ($events as $event) {
             $order->applyThat($event);
         }
@@ -759,4 +759,4 @@ class EventSourcedOrderRepository
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

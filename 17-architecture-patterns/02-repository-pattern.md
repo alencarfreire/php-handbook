@@ -1,39 +1,39 @@
 # 10.2 Repository Pattern
 
-## Краткое резюме
+## Resumo
 
-> **Repository Pattern** — слой абстракции между бизнес-логикой и доступом к данным.
+> **Repository Pattern** — camada de abstração entre a lógica de negócio e o acesso a dados.
 >
-> **Зачем:** Изоляция от ORM, переиспользование запросов, тестируемость через mock.
+> **Para quê:** Isolar do ORM, reusar queries, testar com mock.
 >
-> **Важно:** Interface определяет контракт, Implementation содержит запросы. Регистрация через Service Provider.
+> **Importante:** A Interface define o contrato, a Implementation tem as queries. Você registra no Service Provider.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Repository — слой абстракции между бизнес-логикой и доступом к данным. Инкапсулирует запросы к БД.
-
-**Зачем:**
-- Изоляция от ORM
-- Переиспользование запросов
-- Тестируемость (mock repository)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
+
+**O que é:**
+Repository — camada de abstração entre a lógica de negócio e o acesso a dados. Encapsula as queries no banco.
+
+**Para quê:**
+- Isolar do ORM
+- Reusar queries
+- Testabilidade (mock do repository)
+
+---
+
+## Como funciona
 
 **Interface:**
 
@@ -81,7 +81,7 @@ class PostRepository implements PostRepositoryInterface
         return $post->delete();
     }
 
-    // Кастомные методы
+    // Métodos customizados
     public function findPublished(): Collection
     {
         return Post::where('published', true)->get();
@@ -94,7 +94,7 @@ class PostRepository implements PostRepositoryInterface
 }
 ```
 
-**Service Provider (регистрация):**
+**Service Provider (registro):**
 
 ```php
 // app/Providers/RepositoryServiceProvider.php
@@ -110,7 +110,7 @@ class RepositoryServiceProvider extends ServiceProvider
 }
 ```
 
-**Использование в Service:**
+**Uso no Service:**
 
 ```php
 class PostService
@@ -136,27 +136,27 @@ class PostService
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы:**
-- ✅ Переиспользование запросов
-- ✅ Тестируемость
-- ✅ Изоляция от ORM
+**Prós:**
+- ✅ Reuso de queries
+- ✅ Testabilidade
+- ✅ Isolamento do ORM
 
-**Минусы:**
-- ❌ Больше кода (boilerplate)
-- ❌ Может быть избыточным для простых CRUD
+**Contras:**
+- ❌ Mais código (boilerplate)
+- ❌ Pode ser overkill para CRUD simples
 
-**Используй когда:**
-- Сложные запросы
-- Нужна смена ORM
-- Много переиспользуемых запросов
+**Use quando:**
+- Queries complexas
+- Precisa trocar o ORM
+- Muitas queries reutilizadas
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Repository с фильтрацией:**
+**Repository com filtro:**
 
 ```php
 class PostRepository implements PostRepositoryInterface
@@ -182,7 +182,7 @@ class PostRepository implements PostRepositoryInterface
 }
 ```
 
-**Mock для тестов:**
+**Mock nos testes:**
 
 ```php
 // tests/Unit/PostServiceTest.php
@@ -194,32 +194,32 @@ class PostServiceTest extends TestCase
         $repository->shouldReceive('create')
             ->once()
             ->with(Mockery::type('array'))
-            ->andReturn(new Post(['id' => 1, 'title' => 'Test']));
+            ->andReturn(new Post(['id' => 1, 'title' => 'Teste']));
 
         $service = new PostService($repository);
-        $post = $service->create($user, ['title' => 'Test']);
+        $post = $service->create($user, ['title' => 'Teste']);
 
-        $this->assertEquals('Test', $post->title);
+        $this->assertEquals('Teste', $post->title);
     }
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Repository инкапсулирует доступ к данным. Interface определяет контракт, Implementation содержит запросы. Bind в Service Provider. Плюсы: переиспользование, тестируемость, изоляция от ORM. Используется в Service Layer. Mock repository в тестах. Может быть избыточным для простых CRUD. Подходит для сложных запросов и смены источника данных."
+> "Repository encapsula o acesso a dados. A Interface define o contrato, a Implementation tem as queries. Bind no Service Provider. Prós: reuso, testabilidade, isolamento do ORM. Você usa no Service Layer. Mock do repository nos testes. Pode ser overkill para CRUD simples. Serve para query complexa e para trocar a fonte de dados."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Repository с фильтрацией
+### Exercício 1: Crie um Repository com filtro
 
-Реализуй `UserRepository` с методом `filter()` который принимает массив фильтров: `role`, `status`, `search` (по имени/email).
+**Enunciado:** Implemente `UserRepository` com o método `filter()` que recebe um array de filtros: `role`, `status`, `search` (por nome/email).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Contracts/UserRepositoryInterface.php
@@ -302,7 +302,7 @@ class RepositoryServiceProvider extends ServiceProvider
     }
 }
 
-// Использование
+// Uso
 class UserService
 {
     public function __construct(
@@ -317,12 +317,12 @@ class UserService
 ```
 </details>
 
-### Задание 2: Напиши тест с Mock Repository
+### Exercício 2: Escreva um teste com Mock Repository
 
-Протестируй `OrderService::create()` используя mock `OrderRepository`.
+**Enunciado:** Teste `OrderService::create()` usando mock de `OrderRepository`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Unit/OrderServiceTest.php
@@ -388,12 +388,12 @@ class OrderServiceTest extends TestCase
         $repository = Mockery::mock(OrderRepositoryInterface::class);
         $repository->shouldReceive('create')
             ->once()
-            ->andThrow(new \Exception('Database error'));
+            ->andThrow(new \Exception('Erro no banco'));
 
         $service = new OrderService($repository);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Database error');
+        $this->expectExceptionMessage('Erro no banco');
 
         $service->create($user, $orderData);
     }
@@ -401,12 +401,12 @@ class OrderServiceTest extends TestCase
 ```
 </details>
 
-### Задание 3: Реализуй смену источника данных
+### Exercício 3: Troque a fonte de dados
 
-У тебя есть `ProductRepository` работающий с БД. Реализуй `ApiProductRepository` который берёт данные из внешнего API.
+**Enunciado:** Você tem um `ProductRepository` que fala com o banco. Implemente `ApiProductRepository` que busca os dados de uma API externa.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Contracts/ProductRepositoryInterface.php
@@ -465,7 +465,7 @@ class RepositoryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Выбор реализации по конфигу
+        // Escolhe a implementação pelo config
         $this->app->bind(
             ProductRepositoryInterface::class,
             function ($app) {
@@ -483,11 +483,11 @@ class RepositoryServiceProvider extends ServiceProvider
 
 // config/products.php
 return [
-    'source' => env('PRODUCTS_SOURCE', 'database'), // 'database' или 'api'
+    'source' => env('PRODUCTS_SOURCE', 'database'), // 'database' ou 'api'
     'api_url' => env('PRODUCTS_API_URL', 'https://api.example.com'),
 ];
 
-// Использование (код не меняется!)
+// Uso (o código não muda!)
 class ProductService
 {
     public function __construct(
@@ -504,4 +504,4 @@ class ProductService
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
