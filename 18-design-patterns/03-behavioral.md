@@ -1,41 +1,41 @@
-# 11.3 Поведенческие паттерны (Behavioral Patterns)
+# 11.3 Padrões comportamentais (Behavioral Patterns)
 
-## Краткое резюме
+## Resumo
 
-> **Behavioral Patterns** — паттерны для эффективной коммуникации между объектами и распределения обязанностей.
+> **Behavioral Patterns** — padrões para comunicação entre objetos e distribuição de responsabilidade.
 >
-> **Основные:** Strategy (взаимозаменяемые алгоритмы), Observer (уведомление зависимых), Command (инкапсуляция запроса), Chain of Responsibility (цепочка обработчиков), Template Method (скелет алгоритма).
+> **Principais:** Strategy (algoritmos intercambiáveis), Observer (notifica dependentes), Command (encapsula o request), Chain of Responsibility (cadeia de handlers), Template Method (esqueleto do algoritmo).
 >
-> **Laravel примеры:** Validation rules (Strategy), Events/Listeners (Observer), Jobs/Queue (Command), Middleware (Chain of Responsibility).
+> **Exemplos no Laravel:** Validation rules (Strategy), Events/Listeners (Observer), Jobs/Queue (Command), Middleware (Chain of Responsibility).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Strategy](#1-strategy-стратегия)
-- [Observer](#2-observer-наблюдатель)
-- [Command](#3-command-команда)
-- [Chain of Responsibility](#4-chain-of-responsibility-цепочка-обязанностей)
-- [Template Method](#5-template-method-шаблонный-метод)
-- [Iterator](#6-iterator-итератор)
-- [Сравнение](#сравнение)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Strategy](#1-strategy-estratégia)
+- [Observer](#2-observer-observador)
+- [Command](#3-command-comando)
+- [Chain of Responsibility](#4-chain-of-responsibility-cadeia-de-responsabilidade)
+- [Template Method](#5-template-method-método-template)
+- [Iterator](#6-iterator-iterador)
+- [Comparação](#comparação)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Behavioral Patterns:**
-Паттерны для эффективной коммуникации между объектами и распределения обязанностей.
+Padrões para comunicação entre objetos e distribuição de responsabilidade.
 
-**Зачем:**
-- Гибкая коммуникация между объектами
-- Инкапсуляция поведения
-- Слабое связывание
+**Para quê:**
+- Comunicação flexível entre objetos
+- Encapsular comportamento
+- Acoplamento fraco
 
-**Основные паттерны:**
+**Padrões principais:**
 1. Strategy
 2. Observer
 3. Command
@@ -47,24 +47,24 @@
 
 ---
 
-## 1. Strategy (Стратегия)
+## 1. Strategy (Estratégia)
 
-**Что это:**
-Определяет семейство алгоритмов, инкапсулирует каждый и делает взаимозаменяемыми.
+**O que é:**
+Define uma família de algoritmos, encapsula cada um e deixa intercambiáveis.
 
-**Когда использовать:**
-- Много похожих классов отличающихся только поведением
-- Нужны разные варианты алгоритма
-- Избежать условных операторов
+**Quando usar:**
+- Várias classes parecidas, só o comportamento muda
+- Precisa de variantes do mesmo algoritmo
+- Evitar if/switch
 
-**Проблема без Strategy:**
+**Problema sem Strategy:**
 
 ```php
 class OrderProcessor
 {
     public function process(Order $order, string $shippingType)
     {
-        // Плохо: switch для каждого типа
+        // Ruim: switch para cada tipo
         switch ($shippingType) {
             case 'standard':
                 $cost = 5;
@@ -86,7 +86,7 @@ class OrderProcessor
 }
 ```
 
-**Решение: Strategy**
+**Solução: Strategy**
 
 ```php
 interface ShippingStrategy
@@ -143,7 +143,7 @@ class OrderProcessor
     }
 }
 
-// Использование
+// Uso
 $strategy = new ExpressShipping();
 $processor = new OrderProcessor($strategy);
 $processor->process($order);
@@ -152,7 +152,7 @@ $processor->process($order);
 **Laravel Validation Rules = Strategy:**
 
 ```php
-// Каждое правило = стратегия
+// Cada regra = uma strategy
 $request->validate([
     'email' => ['required', 'email', 'unique:users'],
     'password' => ['required', 'min:8', 'confirmed'],
@@ -168,24 +168,24 @@ class CustomRule implements Rule
 
     public function message()
     {
-        return 'The :attribute must be valid.';
+        return 'O campo :attribute deve ser válido.';
     }
 }
 ```
 
 ---
 
-## 2. Observer (Наблюдатель)
+## 2. Observer (Observador)
 
-**Что это:**
-Определяет зависимость один-ко-многим так что при изменении состояния одного объекта все зависимые уведомляются.
+**O que é:**
+Define uma dependência um-para-muitos. Quando o estado de um objeto muda, todos os dependentes são notificados.
 
-**Когда использовать:**
-- Один объект должен уведомлять другие об изменениях
-- Объекты слабо связаны
-- Event-driven архитектура
+**Quando usar:**
+- Um objeto precisa avisar outros sobre mudanças
+- Objetos com acoplamento fraco
+- Arquitetura event-driven
 
-**Реализация:**
+**Implementação:**
 
 ```php
 interface Observer
@@ -228,7 +228,7 @@ class Order implements Subject
     public function setStatus(string $status): void
     {
         $this->status = $status;
-        $this->notify();  // Уведомить observers
+        $this->notify();  // Notifica os observers
     }
 
     public function getStatus(): string
@@ -242,7 +242,7 @@ class EmailNotificationObserver implements Observer
     public function update(Subject $subject): void
     {
         if ($subject instanceof Order) {
-            echo "Email: Order status changed to {$subject->getStatus()}\n";
+            echo "Email: status do pedido mudou para {$subject->getStatus()}\n";
         }
     }
 }
@@ -252,17 +252,17 @@ class SmsNotificationObserver implements Observer
     public function update(Subject $subject): void
     {
         if ($subject instanceof Order) {
-            echo "SMS: Order status changed to {$subject->getStatus()}\n";
+            echo "SMS: status do pedido mudou para {$subject->getStatus()}\n";
         }
     }
 }
 
-// Использование
+// Uso
 $order = new Order();
 $order->attach(new EmailNotificationObserver());
 $order->attach(new SmsNotificationObserver());
 
-$order->setStatus('shipped');  // Оба observers уведомлены
+$order->setStatus('shipped');  // Os dois observers são notificados
 ```
 
 **Laravel Events = Observer Pattern:**
@@ -293,30 +293,30 @@ class UpdateInventory
     }
 }
 
-// Регистрация
+// Registro
 Event::listen(OrderShipped::class, [
     SendShipmentNotification::class,
     UpdateInventory::class,
 ]);
 
 // Trigger
-event(new OrderShipped($order));  // Все listeners уведомлены
+event(new OrderShipped($order));  // Todos os listeners são notificados
 ```
 
 ---
 
-## 3. Command (Команда)
+## 3. Command (Comando)
 
-**Что это:**
-Инкапсулирует запрос как объект, позволяя параметризовать клиентов с разными запросами, ставить в очередь или логировать.
+**O que é:**
+Encapsula um request como objeto. Dá para parametrizar o cliente, enfileirar ou logar.
 
-**Когда использовать:**
-- Параметризовать объекты с операциями
-- Undo/Redo функциональность
-- Очередь операций
-- Логирование операций
+**Quando usar:**
+- Parametrizar objetos com operações
+- Undo/Redo
+- Fila de operações
+- Log de operações
 
-**Реализация:**
+**Implementação:**
 
 ```php
 interface Command
@@ -340,13 +340,13 @@ class PlaceOrderCommand implements Command
     {
         $this->previousStatus = $this->order->status;
         $this->order->status = 'placed';
-        echo "Order placed\n";
+        echo "Pedido criado\n";
     }
 
     public function undo(): void
     {
         $this->order->status = $this->previousStatus;
-        echo "Order placement undone\n";
+        echo "Criação do pedido desfeita\n";
     }
 }
 
@@ -360,13 +360,13 @@ class ShipOrderCommand implements Command
     {
         $this->previousStatus = $this->order->status;
         $this->order->status = 'shipped';
-        echo "Order shipped\n";
+        echo "Pedido enviado\n";
     }
 
     public function undo(): void
     {
         $this->order->status = $this->previousStatus;
-        echo "Order shipment undone\n";
+        echo "Envio do pedido desfeito\n";
     }
 }
 
@@ -389,15 +389,15 @@ class CommandInvoker
     }
 }
 
-// Использование
+// Uso
 $order = new Order();
 $invoker = new CommandInvoker();
 
 $invoker->execute(new PlaceOrderCommand($order));
 $invoker->execute(new ShipOrderCommand($order));
 
-$invoker->undo();  // Отменить shipment
-$invoker->undo();  // Отменить placement
+$invoker->undo();  // Desfaz o shipment
+$invoker->undo();  // Desfaz o placement
 ```
 
 **Laravel Jobs = Command Pattern:**
@@ -418,24 +418,24 @@ class SendEmailJob implements ShouldQueue
 }
 
 // Invoker = Queue
-SendEmailJob::dispatch($user, 'Hello');
+SendEmailJob::dispatch($user, 'Olá');
 
-// Параметризация, очередь, retry - всё как в Command Pattern
+// Parametrização, fila, retry — tudo como no Command Pattern
 ```
 
 ---
 
-## 4. Chain of Responsibility (Цепочка обязанностей)
+## 4. Chain of Responsibility (Cadeia de responsabilidade)
 
-**Что это:**
-Избегает привязки отправителя запроса к получателю, давая возможность обработать запрос нескольким объектам.
+**O que é:**
+Evita acoplar o remetente ao destinatário. Vários objetos podem tratar o request.
 
-**Когда использовать:**
-- Несколько объектов могут обработать запрос
-- Обработчик заранее неизвестен
-- Набор обработчиков динамический
+**Quando usar:**
+- Vários objetos podem tratar o request
+- O handler não é conhecido de antemão
+- O conjunto de handlers é dinâmico
 
-**Реализация:**
+**Implementação:**
 
 ```php
 abstract class Handler
@@ -467,10 +467,10 @@ class AuthenticationHandler extends Handler
     protected function process(Request $request): ?Response
     {
         if (!$request->hasToken()) {
-            return new Response('Unauthorized', 401);
+            return new Response('Não autorizado', 401);
         }
 
-        // Authenticated, передать дальше
+        // Autenticado, passa adiante
         return null;
     }
 }
@@ -480,7 +480,7 @@ class AuthorizationHandler extends Handler
     protected function process(Request $request): ?Response
     {
         if (!$request->hasPermission()) {
-            return new Response('Forbidden', 403);
+            return new Response('Proibido', 403);
         }
 
         return null;
@@ -492,7 +492,7 @@ class ValidationHandler extends Handler
     protected function process(Request $request): ?Response
     {
         if (!$request->isValid()) {
-            return new Response('Invalid data', 422);
+            return new Response('Dados inválidos', 422);
         }
 
         return null;
@@ -503,12 +503,12 @@ class ActionHandler extends Handler
 {
     protected function process(Request $request): ?Response
     {
-        // Actual business logic
-        return new Response('Success', 200);
+        // Lógica de negócio de fato
+        return new Response('Sucesso', 200);
     }
 }
 
-// Использование: строим цепочку
+// Uso: monta a cadeia
 $chain = new AuthenticationHandler();
 $chain->setNext(new AuthorizationHandler())
       ->setNext(new ValidationHandler())
@@ -520,7 +520,7 @@ $response = $chain->handle($request);
 **Laravel Middleware = Chain of Responsibility:**
 
 ```php
-// Каждый middleware = handler в цепочке
+// Cada middleware = um handler na cadeia
 class Authenticate
 {
     public function handle(Request $request, Closure $next)
@@ -529,7 +529,7 @@ class Authenticate
             return redirect('/login');
         }
 
-        return $next($request);  // Передать следующему
+        return $next($request);  // Passa para o próximo
     }
 }
 
@@ -545,28 +545,28 @@ class VerifyEmail
     }
 }
 
-// Route = цепочка
+// Route = a cadeia
 Route::middleware(['auth', 'verified', 'throttle:60,1'])
     ->get('/dashboard', [DashboardController::class, 'index']);
 ```
 
 ---
 
-## 5. Template Method (Шаблонный метод)
+## 5. Template Method (Método template)
 
-**Что это:**
-Определяет скелет алгоритма, перекладывая некоторые шаги на подклассы.
+**O que é:**
+Define o esqueleto do algoritmo e deixa alguns passos para as subclasses.
 
-**Когда использовать:**
-- Общий алгоритм с вариациями в шагах
-- Избежать дублирования
+**Quando usar:**
+- Algoritmo comum com variação nos passos
+- Evitar duplicação
 
-**Реализация:**
+**Implementação:**
 
 ```php
 abstract class DataImporter
 {
-    // Template method (скелет)
+    // Template method (esqueleto)
     public function import(string $file): void
     {
         $data = $this->readFile($file);
@@ -622,7 +622,7 @@ class JsonImporter extends DataImporter
 
     protected function transform(array $data): array
     {
-        return $data;  // Already in correct format
+        return $data;  // Já está no formato certo
     }
 
     protected function save(array $data): void
@@ -631,17 +631,17 @@ class JsonImporter extends DataImporter
     }
 }
 
-// Использование
+// Uso
 $importer = new CsvImporter();
 $importer->import('users.csv');
 ```
 
 ---
 
-## 6. Iterator (Итератор)
+## 6. Iterator (Iterador)
 
-**Что это:**
-Предоставляет способ последовательного доступа к элементам без раскрытия внутренней структуры.
+**O que é:**
+Dá acesso sequencial aos elementos sem expor a estrutura interna.
 
 **Laravel Collections = Iterator:**
 
@@ -652,7 +652,7 @@ foreach ($users as $user) {
     echo $user->name;
 }
 
-// Методы iterator
+// Métodos do iterator
 $users->each(fn($user) => $user->notify());
 $users->map(fn($user) => $user->email);
 $users->filter(fn($user) => $user->isActive());
@@ -660,33 +660,33 @@ $users->filter(fn($user) => $user->isActive());
 
 ---
 
-## Сравнение
+## Comparação
 
-| Pattern | Use Case | Laravel Example |
+| Pattern | Caso de uso | Exemplo no Laravel |
 |---------|----------|-----------------|
-| Strategy | Взаимозаменяемые алгоритмы | Validation rules |
-| Observer | Уведомление зависимых объектов | Events & Listeners |
-| Command | Инкапсуляция запроса | Jobs, Queue |
-| Chain of Responsibility | Цепочка обработчиков | Middleware |
-| Template Method | Общий алгоритм, вариации шагов | Import classes |
-| Iterator | Обход коллекции | Collections |
+| Strategy | Algoritmos intercambiáveis | Validation rules |
+| Observer | Notificar objetos dependentes | Events & Listeners |
+| Command | Encapsular o request | Jobs, Queue |
+| Chain of Responsibility | Cadeia de handlers | Middleware |
+| Template Method | Algoritmo comum, passos variam | Import classes |
+| Iterator | Percorrer a coleção | Collections |
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Behavioral Patterns для коммуникации между объектами. Strategy: взаимозаменяемые алгоритмы, Laravel Validation rules пример. Observer: один-ко-многим уведомления, Laravel Events/Listeners. Command: инкапсуляция запроса как объект, Laravel Jobs для queue. Chain of Responsibility: цепочка обработчиков, Middleware пример. Template Method: скелет алгоритма с вариациями в шагах. Iterator: обход коллекции, Laravel Collections. Strategy, Observer, Command наиболее популярны. Middleware = Chain of Responsibility, Events = Observer, Jobs = Command."
+> "Behavioral Patterns são para comunicação entre objetos. Strategy: algoritmos intercambiáveis. Validation rules do Laravel é o exemplo. Observer: notificação um-para-muitos. Events e Listeners do Laravel. Command: encapsula o request como objeto. Jobs do Laravel na queue. Chain of Responsibility: cadeia de handlers. Middleware é o exemplo. Template Method: esqueleto do algoritmo, os passos variam. Iterator: percorre a coleção. Collections do Laravel. Strategy, Observer e Command são os mais pedidos. Middleware = Chain of Responsibility, Events = Observer, Jobs = Command."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Strategy Pattern
+### Exercício 1: Implemente o Strategy Pattern
 
-Создай систему для расчёта скидок: `NoDiscount`, `PercentageDiscount`, `FixedDiscount`. Используй Strategy Pattern.
+Crie um sistema de desconto: `NoDiscount`, `PercentageDiscount`, `FixedDiscount`. Use o Strategy Pattern.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface DiscountStrategy
@@ -735,7 +735,7 @@ class Order
     }
 }
 
-// Использование
+// Uso
 $order1 = new Order(1000, new PercentageDiscount(10));
 echo $order1->getTotal();  // 900
 
@@ -747,12 +747,12 @@ echo $order3->getTotal();  // 1000
 ```
 </details>
 
-### Задание 2: Реализуй Observer Pattern
+### Exercício 2: Implemente o Observer Pattern
 
-Создай систему уведомлений где `Order` уведомляет `EmailNotifier` и `SmsNotifier` при изменении статуса.
+Crie um sistema de notificação em que `Order` avisa `EmailNotifier` e `SmsNotifier` quando o status muda.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface Observer
@@ -804,7 +804,7 @@ class EmailNotifier implements Observer
     public function update(string $event, mixed $data): void
     {
         if ($event === 'status_changed') {
-            echo "Email: Order status changed to {$data['status']}\n";
+            echo "Email: status do pedido mudou para {$data['status']}\n";
         }
     }
 }
@@ -814,42 +814,42 @@ class SmsNotifier implements Observer
     public function update(string $event, mixed $data): void
     {
         if ($event === 'status_changed') {
-            echo "SMS: Order status changed to {$data['status']}\n";
+            echo "SMS: status do pedido mudou para {$data['status']}\n";
         }
     }
 }
 
-// Использование
+// Uso
 $order = new Order();
 $order->attach(new EmailNotifier());
 $order->attach(new SmsNotifier());
 
 $order->setStatus('shipped');
-// Email: Order status changed to shipped
-// SMS: Order status changed to shipped
+// Email: status do pedido mudou para shipped
+// SMS: status do pedido mudou para shipped
 ```
 </details>
 
-### Задание 3: В чём разница между Strategy и Template Method?
+### Exercício 3: Qual a diferença entre Strategy e Template Method?
 
-Объясни разницу и приведи примеры.
+Explique a diferença e dê exemplos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-| Аспект | Strategy | Template Method |
+| Aspecto | Strategy | Template Method |
 |--------|----------|-----------------|
-| **Механизм** | Композиция (has-a) | Наследование (is-a) |
-| **Изменение во время выполнения** | Да, можно менять стратегию | Нет, определено в подклассе |
-| **Количество объектов** | Много стратегий | Один объект с шаблоном |
-| **Инверсия контроля** | Клиент выбирает стратегию | Базовый класс контролирует алгоритм |
+| **Mecanismo** | Composição (has-a) | Herança (is-a) |
+| **Mudança em runtime** | Sim, troca a strategy | Não, fica na subclasse |
+| **Quantidade de objetos** | Várias strategies | Um objeto com o template |
+| **Inversão de controle** | O cliente escolhe a strategy | A classe base controla o algoritmo |
 
-**Strategy - композиция, выбор алгоритма:**
+**Strategy — composição, você escolhe o algoritmo:**
 ```php
 class PaymentProcessor
 {
     public function __construct(
-        private PaymentStrategy $strategy  // Можно менять
+        private PaymentStrategy $strategy  // Dá para trocar
     ) {}
 
     public function setStrategy(PaymentStrategy $strategy): void
@@ -870,16 +870,16 @@ $processor->setStrategy(new PayPalStrategy());
 $processor->process($order);  // PayPal
 ```
 
-**Template Method - наследование, скелет алгоритма:**
+**Template Method — herança, esqueleto do algoritmo:**
 ```php
 abstract class DataImporter
 {
     // Template method
     public function import(string $file): void
     {
-        $data = $this->readFile($file);  // Шаг 1
-        $validated = $this->validate($data);  // Шаг 2
-        $this->save($validated);  // Шаг 3
+        $data = $this->readFile($file);  // Passo 1
+        $validated = $this->validate($data);  // Passo 2
+        $this->save($validated);  // Passo 3
     }
 
     abstract protected function readFile(string $file): array;
@@ -896,16 +896,16 @@ class CsvImporter extends DataImporter
     // ...
 }
 
-// Алгоритм фиксирован: read → validate → save
+// Algoritmo fixo: read → validate → save
 $importer = new CsvImporter();
 $importer->import('data.csv');
 ```
 
-**Когда что использовать:**
-- **Strategy** - когда нужна гибкость и возможность менять алгоритм в runtime
-- **Template Method** - когда есть фиксированный алгоритм с вариациями в шагах
+**Quando usar o quê:**
+- **Strategy** — quando precisa de flexibilidade e trocar o algoritmo em runtime
+- **Template Method** — quando o algoritmo é fixo e só os passos variam
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

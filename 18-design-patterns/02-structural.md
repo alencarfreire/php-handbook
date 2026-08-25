@@ -1,40 +1,40 @@
-# 11.2 Структурные паттерны (Structural Patterns)
+# 11.2 Padrões estruturais (Structural Patterns)
 
-## Краткое резюме
+## Resumo
 
-> **Structural Patterns** — паттерны для композиции классов и объектов в более крупные структуры.
+> **Structural Patterns** — padrões para compor classes e objetos em estruturas maiores.
 >
-> **Основные:** Adapter (адаптация интерфейсов), Decorator (добавление поведения), Facade (упрощение API), Proxy (контроль доступа), Composite (древовидные структуры).
+> **Principais:** Adapter (adaptar interfaces), Decorator (adicionar comportamento), Facade (simplificar a API), Proxy (controlar acesso), Composite (estruturas em árvore).
 >
-> **Laravel примеры:** Cache drivers (Adapter), Middleware (Decorator), Facades (Facade), Eloquent relations (Proxy).
+> **Exemplos no Laravel:** Cache drivers (Adapter), Middleware (Decorator), Facades (Facade), relations do Eloquent (Proxy).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Adapter](#1-adapter-адаптер)
-- [Decorator](#2-decorator-декоратор)
-- [Facade](#3-facade-фасад)
-- [Proxy](#4-proxy-прокси)
-- [Composite](#5-composite-компоновщик)
-- [Сравнение](#сравнение)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Adapter](#1-adapter-adaptador)
+- [Decorator](#2-decorator-decorador)
+- [Facade](#3-facade-fachada)
+- [Proxy](#4-proxy)
+- [Composite](#5-composite)
+- [Comparação](#comparação)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Structural Patterns:**
-Паттерны для композиции классов и объектов в более крупные структуры.
+Padrões para compor classes e objetos em estruturas maiores.
 
-**Зачем:**
-- Упростить сложные структуры
-- Адаптировать интерфейсы
-- Добавить функциональность без изменения кода
+**Para quê:**
+- Simplificar estruturas complexas
+- Adaptar interfaces
+- Adicionar funcionalidade sem mudar o código
 
-**Основные паттерны:**
+**Padrões principais:**
 1. Adapter
 2. Decorator
 3. Facade
@@ -45,38 +45,38 @@
 
 ---
 
-## 1. Adapter (Адаптер)
+## 1. Adapter (Adaptador)
 
-**Что это:**
-Преобразует интерфейс класса в другой интерфейс, который ожидает клиент.
+**O que é:**
+Converte a interface de uma classe na interface que o cliente espera.
 
-**Когда использовать:**
-- Интеграция legacy кода
-- Использование сторонних библиотек с несовместимым API
+**Quando usar:**
+- Integrar código legacy
+- Usar biblioteca de terceiros com API incompatível
 
-**Проблема:**
+**Problema:**
 
 ```php
-// Наш интерфейс
+// Nossa interface
 interface PaymentGateway
 {
     public function charge(int $amount): Payment;
 }
 
-// Сторонняя библиотека Stripe
+// Biblioteca de terceiros Stripe
 class StripeClient
 {
     public function createCharge(array $params): array
     {
-        // Stripe API call
+        // Chamada à API do Stripe
         return ['id' => 'ch_123', 'status' => 'succeeded'];
     }
 }
 
-// Несовместимые интерфейсы!
+// Interfaces incompatíveis!
 ```
 
-**Решение: Adapter**
+**Solução: Adapter**
 
 ```php
 class StripeAdapter implements PaymentGateway
@@ -87,10 +87,10 @@ class StripeAdapter implements PaymentGateway
 
     public function charge(int $amount): Payment
     {
-        // Адаптируем: наш интерфейс → Stripe API
+        // Adaptamos: nossa interface → API do Stripe
         $result = $this->stripe->createCharge([
-            'amount' => $amount * 100,  // cents
-            'currency' => 'usd',
+            'amount' => $amount * 100,  // centavos
+            'currency' => 'brl',
         ]);
 
         return new Payment(
@@ -101,49 +101,49 @@ class StripeAdapter implements PaymentGateway
     }
 }
 
-// Использование
+// Uso
 $stripe = new StripeClient();
 $gateway = new StripeAdapter($stripe);
 
-$payment = $gateway->charge(100);  // Единый интерфейс
+$payment = $gateway->charge(100);  // Interface única
 ```
 
 **Laravel Cache Adapter:**
 
 ```php
-// Laravel Cache адаптирует разные драйверы к единому интерфейсу
+// Laravel Cache adapta drivers diferentes a uma interface única
 Cache::store('redis')->put('key', 'value', 3600);
 Cache::store('memcached')->put('key', 'value', 3600);
 Cache::store('file')->put('key', 'value', 3600);
 
-// Один интерфейс, разные реализации
+// Uma interface, implementações diferentes
 ```
 
 ---
 
-## 2. Decorator (Декоратор)
+## 2. Decorator (Decorador)
 
-**Что это:**
-Динамически добавляет объекту новую функциональность без изменения его структуры.
+**O que é:**
+Adiciona funcionalidade a um objeto em runtime, sem mudar a estrutura dele.
 
-**Когда использовать:**
-- Добавить поведение динамически
-- Избежать наследования (composition over inheritance)
-- Множество комбинаций функциональности
+**Quando usar:**
+- Adicionar comportamento em runtime
+- Evitar herança (composition over inheritance)
+- Muitas combinações de funcionalidade
 
-**Проблема без Decorator:**
+**Problema sem Decorator:**
 
 ```php
-// Плохо: класс для каждой комбинации
+// Ruim: uma classe para cada combinação
 class SimpleCoffee {}
 class CoffeeWithMilk {}
 class CoffeeWithSugar {}
 class CoffeeWithMilkAndSugar {}
 class CoffeeWithMilkAndSugarAndCaramel {}
-// Комбинаторный взрыв!
+// Explosão combinatória!
 ```
 
-**Решение: Decorator**
+**Solução: Decorator**
 
 ```php
 interface Coffee
@@ -161,7 +161,7 @@ class SimpleCoffee implements Coffee
 
     public function getDescription(): string
     {
-        return 'Simple coffee';
+        return 'Café simples';
     }
 }
 
@@ -181,7 +181,7 @@ class MilkDecorator extends CoffeeDecorator
 
     public function getDescription(): string
     {
-        return $this->coffee->getDescription() . ', milk';
+        return $this->coffee->getDescription() . ', leite';
     }
 }
 
@@ -194,61 +194,61 @@ class SugarDecorator extends CoffeeDecorator
 
     public function getDescription(): string
     {
-        return $this->coffee->getDescription() . ', sugar';
+        return $this->coffee->getDescription() . ', açúcar';
     }
 }
 
-// Использование: композиция декораторов
+// Uso: composição de decorators
 $coffee = new SimpleCoffee();
 $coffee = new MilkDecorator($coffee);
 $coffee = new SugarDecorator($coffee);
 
-echo $coffee->getDescription();  // "Simple coffee, milk, sugar"
+echo $coffee->getDescription();  // "Café simples, leite, açúcar"
 echo $coffee->getCost();  // 13
 ```
 
 **Laravel Middleware = Decorator Pattern:**
 
 ```php
-// Middleware декорирует Request/Response
+// Middleware decora Request/Response
 class AuthMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        // Before logic
+        // Antes
         if (!auth()->check()) {
             return redirect('/login');
         }
 
-        $response = $next($request);  // Декорируемый объект
+        $response = $next($request);  // Objeto decorado
 
-        // After logic
+        // Depois
         $response->header('X-Authenticated', 'true');
 
         return $response;
     }
 }
 
-// Route с декораторами
+// Route com decorators
 Route::middleware(['auth', 'verified', 'throttle:60,1'])
     ->get('/dashboard', [DashboardController::class, 'index']);
 ```
 
 ---
 
-## 3. Facade (Фасад)
+## 3. Facade (Fachada)
 
-**Что это:**
-Предоставляет упрощённый интерфейс к сложной подсистеме.
+**O que é:**
+Oferece uma interface simples para um subsistema complexo.
 
-**Когда использовать:**
-- Сложная подсистема с множеством классов
-- Нужен простой API для клиентов
+**Quando usar:**
+- Subsistema complexo com muitas classes
+- Cliente precisa de uma API simples
 
-**Проблема без Facade:**
+**Problema sem Facade:**
 
 ```php
-// Клиент должен знать о всех классах
+// O cliente precisa conhecer todas as classes
 $socket = new Socket();
 $socket->connect('smtp.example.com', 587);
 
@@ -258,8 +258,8 @@ $connection->authenticate('user', 'pass');
 $message = new EmailMessage();
 $message->setFrom('from@example.com');
 $message->setTo('to@example.com');
-$message->setSubject('Hello');
-$message->setBody('World');
+$message->setSubject('Olá');
+$message->setBody('Mundo');
 
 $sender = new EmailSender($connection);
 $sender->send($message);
@@ -267,17 +267,17 @@ $sender->send($message);
 $connection->close();
 $socket->disconnect();
 
-// Слишком сложно!
+// Complicado demais!
 ```
 
-**Решение: Facade**
+**Solução: Facade**
 
 ```php
 class EmailFacade
 {
     public static function send(string $to, string $subject, string $body): void
     {
-        // Скрываем сложность
+        // Escondemos a complexidade
         $socket = new Socket();
         $socket->connect(config('mail.host'), config('mail.port'));
 
@@ -298,8 +298,8 @@ class EmailFacade
     }
 }
 
-// Использование: просто!
-EmailFacade::send('to@example.com', 'Hello', 'World');
+// Uso: simples!
+EmailFacade::send('to@example.com', 'Olá', 'Mundo');
 ```
 
 **Laravel Facades:**
@@ -309,26 +309,26 @@ EmailFacade::send('to@example.com', 'Hello', 'World');
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-// Простой API к сложным подсистемам
+// API simples para subsistemas complexos
 Cache::put('key', 'value', 3600);
 DB::table('users')->where('active', true)->get();
 
-// Под капотом:
+// Por baixo:
 Cache::put() → CacheManager → Repository → Store (Redis/Memcached/File)
 ```
 
 ---
 
-## 4. Proxy (Прокси)
+## 4. Proxy
 
-**Что это:**
-Предоставляет объект-заменитель который контролирует доступ к другому объекту.
+**O que é:**
+Objeto substituto que controla o acesso a outro objeto.
 
-**Типы Proxy:**
+**Tipos de Proxy:**
 - **Virtual Proxy** — lazy loading
 - **Protection Proxy** — access control
-- **Remote Proxy** — удалённый объект
-- **Caching Proxy** — кэш результатов
+- **Remote Proxy** — objeto remoto
+- **Caching Proxy** — cache de resultados
 
 **Virtual Proxy (Lazy Loading):**
 
@@ -344,14 +344,14 @@ class RealImage implements Image
 
     public function __construct(private string $filename)
     {
-        // Дорогая операция
+        // Operação cara
         $this->loadFromDisk();
     }
 
     private function loadFromDisk(): void
     {
-        echo "Loading image: {$this->filename}\n";
-        sleep(2);  // Simulate heavy operation
+        echo "Carregando imagem: {$this->filename}\n";
+        sleep(2);  // Simula operação pesada
         $this->data = file_get_contents($this->filename);
     }
 
@@ -369,7 +369,7 @@ class ImageProxy implements Image
 
     public function render(): string
     {
-        // Lazy loading: загрузить только когда нужно
+        // Lazy loading: carrega só quando precisa
         if ($this->realImage === null) {
             $this->realImage = new RealImage($this->filename);
         }
@@ -378,13 +378,13 @@ class ImageProxy implements Image
     }
 }
 
-// Использование
+// Uso
 $image = new ImageProxy('large.jpg');
-// Image НЕ загружен
+// Imagem NÃO carregada
 
-// ... много кода ...
+// ... bastante código ...
 
-echo $image->render();  // Загрузится ЗДЕСЬ
+echo $image->render();  // Carrega AQUI
 ```
 
 **Protection Proxy (Access Control):**
@@ -445,22 +445,22 @@ class ProtectedDocumentProxy implements Document
 ```php
 $user = User::find(1);
 
-// posts НЕ загружены (proxy)
-$user->posts;  // Загрузятся ЗДЕСЬ (lazy loading)
+// posts NÃO carregados (proxy)
+$user->posts;  // Carregam AQUI (lazy loading)
 ```
 
 ---
 
-## 5. Composite (Компоновщик)
+## 5. Composite
 
-**Что это:**
-Компонует объекты в древовидные структуры. Клиент работает с единичными объектами и композициями одинаково.
+**O que é:**
+Compõe objetos em estrutura de árvore. O cliente trata objeto único e composição do mesmo jeito.
 
-**Когда использовать:**
-- Древовидная структура (меню, файловая система)
-- Клиент должен работать с объектами и группами одинаково
+**Quando usar:**
+- Estrutura em árvore (menu, sistema de arquivos)
+- Cliente precisa tratar objeto e grupo do mesmo jeito
 
-**Пример: Menu Structure**
+**Exemplo: estrutura de menu**
 
 ```php
 interface MenuComponent
@@ -497,7 +497,7 @@ class MenuComposite implements MenuComponent
         $html = "<li>{$this->name}<ul>";
 
         foreach ($this->children as $child) {
-            $html .= $child->render();  // Рекурсия
+            $html .= $child->render();  // Recursão
         }
 
         $html .= "</ul></li>";
@@ -506,15 +506,15 @@ class MenuComposite implements MenuComponent
     }
 }
 
-// Использование
+// Uso
 $menu = new MenuComposite('Menu');
 
-$menu->add(new MenuItem('Home', '/'));
-$menu->add(new MenuItem('About', '/about'));
+$menu->add(new MenuItem('Início', '/'));
+$menu->add(new MenuItem('Sobre', '/about'));
 
-$products = new MenuComposite('Products');
-$products->add(new MenuItem('Laptops', '/products/laptops'));
-$products->add(new MenuItem('Phones', '/products/phones'));
+$products = new MenuComposite('Produtos');
+$products->add(new MenuItem('Notebooks', '/products/laptops'));
+$products->add(new MenuItem('Celulares', '/products/phones'));
 
 $menu->add($products);
 
@@ -523,41 +523,41 @@ echo $menu->render();
 
 ---
 
-## Сравнение
+## Comparação
 
-| Pattern | Use Case | Laravel Example |
+| Pattern | Uso | Exemplo no Laravel |
 |---------|----------|-----------------|
-| Adapter | Адаптация интерфейсов | Cache drivers |
-| Decorator | Добавить поведение | Middleware |
-| Facade | Упростить API | Laravel Facades |
-| Proxy | Контроль доступа, lazy loading | Eloquent relations |
-| Composite | Древовидные структуры | Menu, categories |
+| Adapter | Adaptar interfaces | Cache drivers |
+| Decorator | Adicionar comportamento | Middleware |
+| Facade | Simplificar a API | Laravel Facades |
+| Proxy | Controle de acesso, lazy loading | Relations do Eloquent |
+| Composite | Estruturas em árvore | Menu, categorias |
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Structural Patterns для композиции объектов. Adapter: адаптация несовместимых интерфейсов, Laravel Cache адаптирует разные драйверы. Decorator: динамически добавить поведение, Middleware пример (composition over inheritance). Facade: упрощённый API к сложной подсистеме, Laravel Facades. Proxy: контроль доступа или lazy loading, Eloquent relations lazy loading. Composite: древовидные структуры (меню, категории). Decorator и Facade наиболее популярны в Laravel. Middleware = Decorator, Facades = Facade."
+> "Structural Patterns são para composição de objetos. Adapter: adaptar interfaces incompatíveis — o Laravel Cache adapta drivers diferentes. Decorator: adicionar comportamento em runtime, Middleware é o exemplo (composition over inheritance). Facade: API simples para um subsistema complexo, as Laravel Facades. Proxy: controle de acesso ou lazy loading — as relations do Eloquent. Composite: estruturas em árvore (menu, categorias). Decorator e Facade são os mais comuns no Laravel. Middleware = Decorator, Facades = Facade."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Adapter
+### Exercício 1: Implemente um Adapter
 
-У тебя есть старый `LegacyLogger` с методом `writeLog($message)` и новый интерфейс `Logger` с методом `log($level, $message)`. Создай адаптер.
+Você tem um `LegacyLogger` antigo com o método `writeLog($message)` e a interface nova `Logger` com o método `log($level, $message)`. Crie o adapter.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Новый интерфейс
+// Interface nova
 interface Logger
 {
     public function log(string $level, string $message): void;
 }
 
-// Старый класс (нельзя изменить)
+// Classe antiga (não dá para mudar)
 class LegacyLogger
 {
     public function writeLog(string $message): void
@@ -580,20 +580,20 @@ class LegacyLoggerAdapter implements Logger
     }
 }
 
-// Использование
+// Uso
 $legacy = new LegacyLogger();
 $logger = new LegacyLoggerAdapter($legacy);
 
-$logger->log('ERROR', 'Something went wrong');  // Работает!
+$logger->log('ERROR', 'Algo deu errado');  // Funciona!
 ```
 </details>
 
-### Задание 2: Реализуй Decorator для кэширования
+### Exercício 2: Implemente um Decorator de cache
 
-Создай `CachedRepository` который декорирует `UserRepository` добавляя кэширование для метода `find()`.
+Crie um `CachedRepository` que decora o `UserRepository` e adiciona cache no método `find()`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface UserRepository
@@ -606,7 +606,7 @@ class DatabaseUserRepository implements UserRepository
 {
     public function find(int $id): ?User
     {
-        // DB query
+        // Consulta no banco
         return User::find($id);
     }
 
@@ -636,38 +636,38 @@ class CachedUserRepository implements UserRepository
     {
         $this->repository->save($user);
 
-        // Инвалидация кэша
+        // Invalida o cache
         $this->cache->forget("user:{$user->id}");
     }
 }
 
-// Использование
+// Uso
 $repository = new DatabaseUserRepository();
 $cachedRepository = new CachedUserRepository($repository, $cache);
 
-$user = $cachedRepository->find(1);  // DB query
+$user = $cachedRepository->find(1);  // Consulta no banco
 $user = $cachedRepository->find(1);  // Cache hit!
 ```
 </details>
 
-### Задание 3: В чём разница между Adapter и Facade?
+### Exercício 3: Qual a diferença entre Adapter e Facade?
 
-Объясни разницу и приведи примеры когда что использовать.
+Explique a diferença e dê exemplos de quando usar cada um.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-| Аспект | Adapter | Facade |
+| Aspecto | Adapter | Facade |
 |--------|---------|---------|
-| **Назначение** | Преобразовать интерфейс | Упростить интерфейс |
-| **Количество классов** | Обычно 1 класс | Обычно много классов |
-| **Изменение интерфейса** | Да, адаптирует | Нет, упрощает существующий |
-| **Когда использовать** | Интеграция несовместимого кода | Сложная подсистема |
+| **Função** | Converter a interface | Simplificar a interface |
+| **Quantidade de classes** | Geralmente 1 classe | Geralmente várias classes |
+| **Muda a interface** | Sim, adapta | Não, simplifica a existente |
+| **Quando usar** | Integrar código incompatível | Subsistema complexo |
 
-**Adapter - когда интерфейсы несовместимы:**
+**Adapter — quando as interfaces são incompatíveis:**
 ```php
 // Stripe API: createCharge(array $params)
-// Наш API: charge(int $amount)
+// Nossa API: charge(int $amount)
 class StripeAdapter implements PaymentGateway
 {
     public function charge(int $amount): Payment
@@ -678,26 +678,26 @@ class StripeAdapter implements PaymentGateway
 }
 ```
 
-**Facade - когда подсистема сложная:**
+**Facade — quando o subsistema é complexo:**
 ```php
-// Вместо работы с Socket, SmtpConnection, EmailMessage, EmailSender
-// Простой API:
+// Em vez de lidar com Socket, SmtpConnection, EmailMessage, EmailSender
+// API simples:
 class EmailFacade
 {
     public static function send(string $to, string $subject, string $body): void
     {
-        // Скрываем всю сложность
+        // Escondemos toda a complexidade
     }
 }
 
-EmailFacade::send('to@example.com', 'Hello', 'World');
+EmailFacade::send('to@example.com', 'Olá', 'Mundo');
 ```
 
-**Ключевое отличие:**
-- Adapter преобразует один интерфейс в другой
-- Facade предоставляет простой API к сложной системе
+**Diferença principal:**
+- Adapter converte uma interface em outra
+- Facade oferece uma API simples para um sistema complexo
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

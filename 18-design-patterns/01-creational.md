@@ -1,40 +1,40 @@
-# 11.1 Порождающие паттерны (Creational Patterns)
+# 11.1 Padrões criacionais (Creational Patterns)
 
-## Краткое резюме
+## Resumo
 
-> **Creational Patterns** — паттерны для создания объектов. Абстрагируют процесс инстанцирования.
+> **Creational Patterns** — padrões para criar objetos. Abstraem o processo de instanciação.
 >
-> **Основные:** Singleton (один экземпляр), Factory Method (создание по типу), Abstract Factory (семейства объектов), Builder (сложное создание), Prototype (клонирование).
+> **Principais:** Singleton (uma instância), Factory Method (cria pelo tipo), Abstract Factory (famílias de objetos), Builder (criação complexa), Prototype (clonagem).
 >
-> **Laravel примеры:** Service Container singleton, Model Factories, Query Builder.
+> **Exemplos no Laravel:** Service Container singleton, Model Factories, Query Builder.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Singleton](#1-singleton)
 - [Factory Method](#2-factory-method)
 - [Abstract Factory](#3-abstract-factory)
 - [Builder](#4-builder)
 - [Prototype](#5-prototype)
-- [Сравнение](#сравнение)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Comparação](#comparação)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Creational Patterns:**
-Паттерны для создания объектов. Абстрагируют процесс инстанцирования.
+Padrões para criar objetos. Abstraem o processo de instanciação.
 
-**Зачем:**
-- Гибкое создание объектов
-- Скрыть сложность создания
-- Переиспользование кода
+**Para quê:**
+- Criar objetos com flexibilidade
+- Esconder a complexidade da criação
+- Reaproveitar código
 
-**Основные паттерны:**
+**Padrões principais:**
 1. Singleton
 2. Factory Method
 3. Abstract Factory
@@ -45,16 +45,16 @@
 
 ## 1. Singleton
 
-**Что это:**
-Гарантирует что класс имеет только один экземпляр и предоставляет глобальную точку доступа.
+**O que é:**
+Garante que a classe tenha uma instância só e oferece um ponto global de acesso.
 
-**Когда использовать:**
+**Quando usar:**
 - Database connection
 - Logger
 - Configuration
 - Cache manager
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class Database
@@ -62,7 +62,7 @@ class Database
     private static ?Database $instance = null;
     private PDO $connection;
 
-    // Private constructor (нельзя создать извне)
+    // Constructor private (não dá para criar de fora)
     private function __construct()
     {
         $this->connection = new PDO(
@@ -72,13 +72,13 @@ class Database
         );
     }
 
-    // Private clone (нельзя клонировать)
+    // Clone private (não dá para clonar)
     private function __clone() {}
 
-    // Private unserialize (нельзя десериализовать)
+    // unserialize bloqueado (não dá para desserializar)
     public function __wakeup()
     {
-        throw new Exception("Cannot unserialize singleton");
+        throw new Exception("Não é possível desserializar um singleton");
     }
 
     public static function getInstance(): Database
@@ -96,14 +96,14 @@ class Database
     }
 }
 
-// Использование
+// Uso
 $db1 = Database::getInstance();
 $db2 = Database::getInstance();
 
-var_dump($db1 === $db2);  // true (тот же объект)
+var_dump($db1 === $db2);  // true (o mesmo objeto)
 ```
 
-**Laravel Singleton:**
+**Singleton no Laravel:**
 
 ```php
 // Service Provider
@@ -111,26 +111,26 @@ $this->app->singleton(PaymentGateway::class, function ($app) {
     return new StripeGateway(config('stripe.key'));
 });
 
-// Везде один и тот же экземпляр
+// Em todo lugar a mesma instância
 $gateway1 = app(PaymentGateway::class);
 $gateway2 = app(PaymentGateway::class);
 
 var_dump($gateway1 === $gateway2);  // true
 ```
 
-**Минусы Singleton:**
-- ❌ Global state (тестирование сложнее)
+**Contras do Singleton:**
+- ❌ Global state (testar fica mais difícil)
 - ❌ Tight coupling
 - ❌ Multithreading issues
 
-**Альтернатива: Dependency Injection**
+**Alternativa: Dependency Injection**
 
 ```php
-// Вместо Singleton
+// No lugar do Singleton
 class OrderService
 {
     public function __construct(
-        private PaymentGateway $gateway  // DI вместо Singleton
+        private PaymentGateway $gateway  // DI no lugar do Singleton
     ) {}
 }
 ```
@@ -139,17 +139,17 @@ class OrderService
 
 ## 2. Factory Method
 
-**Что это:**
-Определяет интерфейс для создания объектов, но позволяет подклассам решать какой класс инстанцировать.
+**O que é:**
+Define a interface para criar objetos, mas deixa a subclasse decidir qual classe instanciar.
 
-**Когда использовать:**
-- Неизвестен заранее тип создаваемого объекта
-- Создание объектов делегируется подклассам
+**Quando usar:**
+- Você não sabe de antemão o tipo do objeto
+- A criação fica a cargo das subclasses
 
-**Проблема без Factory:**
+**Problema sem Factory:**
 
 ```php
-// Плохо: if/switch в клиентском коде
+// Ruim: if/switch no código do cliente
 $type = 'credit_card';
 
 if ($type === 'credit_card') {
@@ -163,7 +163,7 @@ if ($type === 'credit_card') {
 $gateway->charge($amount);
 ```
 
-**Решение: Factory Method**
+**Solução: Factory Method**
 
 ```php
 abstract class PaymentGatewayFactory
@@ -193,12 +193,12 @@ class PayPalGatewayFactory extends PaymentGatewayFactory
     }
 }
 
-// Использование
+// Uso
 $factory = new CreditCardGatewayFactory();
-$payment = $factory->processPayment(100);
+$payment = $factory->processPayment(10000);  // R$ 100,00 em centavos
 ```
 
-**Простая Factory (не паттерн Gang of Four, но полезно):**
+**Simple Factory (não é o padrão Gang of Four, mas é útil):**
 
 ```php
 class PaymentGatewayFactory
@@ -209,17 +209,17 @@ class PaymentGatewayFactory
             'credit_card' => new CreditCardGateway(),
             'paypal' => new PayPalGateway(),
             'crypto' => new CryptoGateway(),
-            default => throw new InvalidArgumentException("Unknown type: {$type}"),
+            default => throw new InvalidArgumentException("Tipo desconhecido: {$type}"),
         };
     }
 }
 
-// Использование
+// Uso
 $gateway = PaymentGatewayFactory::create('credit_card');
 $gateway->charge($amount);
 ```
 
-**Laravel Factory для Models:**
+**Factory do Laravel para Models:**
 
 ```php
 // database/factories/UserFactory.php
@@ -242,7 +242,7 @@ class UserFactory extends Factory
     }
 }
 
-// Использование
+// Uso
 $user = User::factory()->create();
 $admin = User::factory()->admin()->create();
 ```
@@ -251,14 +251,14 @@ $admin = User::factory()->admin()->create();
 
 ## 3. Abstract Factory
 
-**Что это:**
-Предоставляет интерфейс для создания семейств связанных объектов без указания конкретных классов.
+**O que é:**
+Oferece uma interface para criar famílias de objetos relacionados, sem apontar as classes concretas.
 
-**Когда использовать:**
-- Нужно создавать семейства связанных объектов
-- Система должна быть независима от способа создания объектов
+**Quando usar:**
+- Você precisa criar famílias de objetos relacionados
+- O sistema não pode depender de como os objetos são criados
 
-**Пример: UI Components**
+**Exemplo: UI Components**
 
 ```php
 // Abstract Factory
@@ -305,7 +305,7 @@ class WindowsButton implements Button
 {
     public function render(): string
     {
-        return '<button class="windows">Click</button>';
+        return '<button class="windows">Clique</button>';
     }
 }
 
@@ -313,7 +313,7 @@ class MacButton implements Button
 {
     public function render(): string
     {
-        return '<button class="mac">Click</button>';
+        return '<button class="mac">Clique</button>';
     }
 }
 
@@ -335,7 +335,7 @@ class Application
     }
 }
 
-// Использование
+// Uso
 $os = 'windows';
 $factory = $os === 'windows' ? new WindowsUIFactory() : new MacUIFactory();
 
@@ -343,7 +343,7 @@ $app = new Application($factory);
 echo $app->render();
 ```
 
-**Laravel Example: Notification Channels**
+**Exemplo no Laravel: Notification Channels**
 
 ```php
 interface NotificationFactory
@@ -369,7 +369,7 @@ class TestingNotificationFactory implements NotificationFactory
 {
     public function createEmailChannel(): EmailChannel
     {
-        return new LogEmailChannel();  // Логировать вместо отправки
+        return new LogEmailChannel();  // Loga em vez de enviar
     }
 
     public function createSmsChannel(): SmsChannel
@@ -383,14 +383,14 @@ class TestingNotificationFactory implements NotificationFactory
 
 ## 4. Builder
 
-**Что это:**
-Отделяет конструирование сложного объекта от его представления. Позволяет создавать разные представления используя один и тот же процесс.
+**O que é:**
+Separa a construção de um objeto complexo da representação dele. O mesmo processo monta representações diferentes.
 
-**Когда использовать:**
-- Объект имеет много optional параметров
-- Процесс создания сложный (несколько шагов)
+**Quando usar:**
+- O objeto tem muitos parâmetros opcionais
+- A criação tem vários passos
 
-**Проблема без Builder:**
+**Problema sem Builder:**
 
 ```php
 // Telescoping Constructor Anti-Pattern
@@ -406,11 +406,11 @@ class Pizza
     ) {}
 }
 
-// Использование: сложно читать
+// Uso: difícil de ler
 $pizza = new Pizza('large', true, false, true, false, true);
 ```
 
-**Решение: Builder**
+**Solução: Builder**
 
 ```php
 class Pizza
@@ -469,7 +469,7 @@ class PizzaBuilder
     }
 }
 
-// Использование: fluent, читаемо
+// Uso: fluent, fácil de ler
 $pizza = Pizza::builder()
     ->size('large')
     ->withCheese()
@@ -505,7 +505,7 @@ $response = Http::withHeaders([
     ->timeout(30)
     ->retry(3, 100)
     ->post('https://api.example.com/users', [
-        'name' => 'John',
+        'name' => 'João',
     ]);
 ```
 
@@ -513,27 +513,27 @@ $response = Http::withHeaders([
 
 ## 5. Prototype
 
-**Что это:**
-Создание новых объектов путем копирования (клонирования) существующих.
+**O que é:**
+Cria objetos novos copiando (clonando) os que já existem.
 
-**Когда использовать:**
-- Создание объекта дорого (DB query, API call)
-- Нужно создать много похожих объектов
+**Quando usar:**
+- Criar o objeto é caro (DB query, API call)
+- Você precisa de vários objetos parecidos
 
-**Реализация:**
+**Implementação:**
 
 ```php
 class Product
 {
     public function __construct(
         public string $name,
-        public float $price,
+        public int $price,  // centavos
         public array $attributes = []
     ) {}
 
     public function __clone()
     {
-        // Deep clone для массивов/объектов
+        // Deep clone para arrays/objetos
         $this->attributes = array_map(
             fn($attr) => is_object($attr) ? clone $attr : $attr,
             $this->attributes
@@ -541,20 +541,20 @@ class Product
     }
 }
 
-// Создать прототип
-$prototype = new Product('Laptop', 1000, [
+// Criar o prototype
+$prototype = new Product('Notebook', 499900, [  // R$ 4.999,00
     'brand' => 'Dell',
-    'warranty' => '2 years',
+    'warranty' => '2 anos',
 ]);
 
-// Клонировать и модифицировать
+// Clonar e modificar
 $product1 = clone $prototype;
-$product1->name = 'Gaming Laptop';
-$product1->price = 1500;
+$product1->name = 'Notebook Gamer';
+$product1->price = 749900;  // R$ 7.499,00
 
 $product2 = clone $prototype;
-$product2->name = 'Business Laptop';
-$product2->price = 1200;
+$product2->name = 'Notebook Corporativo';
+$product2->price = 599900;  // R$ 5.999,00
 ```
 
 **Laravel Eloquent:**
@@ -564,43 +564,43 @@ $product2->price = 1200;
 $user = User::find(1);
 
 $newUser = $user->replicate();
-$newUser->email = 'newemail@example.com';
+$newUser->email = 'joao@email.com';
 $newUser->save();
 
-// Replicate с relationships
+// Replicate com relationships
 $post = Post::with('tags')->find(1);
 $newPost = $post->replicate();
-$newPost->push();  // Save with relationships
+$newPost->push();  // Salva com os relationships
 ```
 
 ---
 
-## Сравнение
+## Comparação
 
-| Pattern | Use Case | Laravel Example |
-|---------|----------|-----------------|
-| Singleton | Один экземпляр | Service Container singleton |
-| Factory Method | Создание по типу | Model factories |
-| Abstract Factory | Семейства объектов | Notification channels |
-| Builder | Сложное создание | Query Builder, HTTP Builder |
-| Prototype | Клонирование | Model replicate() |
-
----
-
-## На собеседовании скажешь
-
-> "Creational Patterns для создания объектов. Singleton: один экземпляр, Laravel singleton() в Container. Factory Method: создание по типу, простая factory через match. Abstract Factory: семейства связанных объектов. Builder: fluent interface для сложных объектов, Laravel Query Builder пример. Prototype: клонирование объектов, Eloquent replicate(). Factory и Builder наиболее популярны в Laravel. Singleton редко нужен (DI лучше). Builder для читаемого API с optional параметрами."
+| Pattern | Caso de uso | Exemplo no Laravel |
+|---------|-------------|--------------------|
+| Singleton | Uma instância | Service Container singleton |
+| Factory Method | Criar pelo tipo | Model factories |
+| Abstract Factory | Famílias de objetos | Notification channels |
+| Builder | Criação complexa | Query Builder, HTTP Builder |
+| Prototype | Clonagem | Model replicate() |
 
 ---
 
-## Практические задания
+## Na entrevista
 
-### Задание 1: Реализуй Simple Factory
+> "Creational Patterns são para criar objetos. Singleton: uma instância só, no Laravel é singleton() no Container. Factory Method: cria pelo tipo, Simple Factory com match. Abstract Factory: famílias de objetos relacionados. Builder: fluent interface para objeto complexo, Query Builder do Laravel é o exemplo. Prototype: clona o objeto, no Eloquent é replicate(). Factory e Builder são os mais comuns no Laravel. Singleton quase não precisa — DI é melhor. Builder quando a API tem parâmetro opcional e você quer leitura fácil."
 
-Создай `PaymentFactory` с методом `create()` который возвращает разные payment gateway по типу: `stripe`, `paypal`, `crypto`.
+---
+
+## Exercícios práticos
+
+### Exercício 1: Implemente uma Simple Factory
+
+Crie um `PaymentFactory` com o método `create()` que devolve um payment gateway diferente conforme o tipo: `stripe`, `paypal`, `crypto`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 interface PaymentGateway
@@ -612,7 +612,7 @@ class StripeGateway implements PaymentGateway
 {
     public function charge(int $amount): Payment
     {
-        // Stripe logic
+        // Lógica do Stripe
         return new Payment('stripe', $amount);
     }
 }
@@ -621,7 +621,7 @@ class PayPalGateway implements PaymentGateway
 {
     public function charge(int $amount): Payment
     {
-        // PayPal logic
+        // Lógica do PayPal
         return new Payment('paypal', $amount);
     }
 }
@@ -634,23 +634,23 @@ class PaymentFactory
             'stripe' => new StripeGateway(),
             'paypal' => new PayPalGateway(),
             'crypto' => new CryptoGateway(),
-            default => throw new InvalidArgumentException("Unknown type: {$type}"),
+            default => throw new InvalidArgumentException("Tipo desconhecido: {$type}"),
         };
     }
 }
 
-// Использование
+// Uso
 $gateway = PaymentFactory::create('stripe');
-$payment = $gateway->charge(1000);
+$payment = $gateway->charge(10000);  // R$ 100,00 em centavos
 ```
 </details>
 
-### Задание 2: Реализуй Builder Pattern
+### Exercício 2: Implemente o Builder Pattern
 
-Создай `QueryBuilder` для построения SQL запросов с методами `select()`, `where()`, `orderBy()`, `limit()`.
+Crie um `QueryBuilder` para montar SQL com os métodos `select()`, `where()`, `orderBy()`, `limit()`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class QueryBuilder
@@ -715,7 +715,7 @@ class QueryBuilder
     }
 }
 
-// Использование
+// Uso
 $sql = (new QueryBuilder('users'))
     ->select(['name', 'email'])
     ->where('active', '=', 1)
@@ -725,39 +725,39 @@ $sql = (new QueryBuilder('users'))
 ```
 </details>
 
-### Задание 3: В чём проблема Singleton?
+### Exercício 3: Qual é o problema do Singleton?
 
-Почему Singleton считается антипаттерном? Какая альтернатива?
+Por que o Singleton é considerado um antipattern? Qual é a alternativa?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Проблемы Singleton:**
+**Problemas do Singleton:**
 
-1. **Global State** - глобальное изменяемое состояние усложняет тестирование
-2. **Tight Coupling** - код жёстко завязан на конкретный класс
-3. **Hidden Dependencies** - зависимости скрыты (не видны в конструкторе)
-4. **Сложно тестировать** - нельзя подменить mock
-5. **Multithreading issues** - проблемы в многопоточной среде
+1. **Global State** — estado global mutável deixa o teste mais difícil
+2. **Tight Coupling** — o código fica amarrado na classe concreta
+3. **Hidden Dependencies** — a dependência não aparece no construtor
+4. **Difícil de testar** — não dá para trocar por um mock
+5. **Multithreading issues** — problema em ambiente com várias threads
 
-**Альтернатива: Dependency Injection**
+**Alternativa: Dependency Injection**
 
 ```php
-// Плохо: Singleton
+// Ruim: Singleton
 class OrderService
 {
     public function process(Order $order)
     {
-        $gateway = PaymentGateway::getInstance();  // Скрытая зависимость
+        $gateway = PaymentGateway::getInstance();  // Dependência escondida
         $gateway->charge($order->total);
     }
 }
 
-// Хорошо: DI
+// Bom: DI
 class OrderService
 {
     public function __construct(
-        private PaymentGateway $gateway  // Явная зависимость
+        private PaymentGateway $gateway  // Dependência explícita
     ) {}
 
     public function process(Order $order)
@@ -766,16 +766,16 @@ class OrderService
     }
 }
 
-// В Service Container
+// No Service Container
 $this->app->singleton(PaymentGateway::class, StripeGateway::class);
 ```
 
-**Когда Singleton допустим:**
-- Логирование (простая write-only операция)
-- Configuration (read-only данные)
-- Connection pools (контролируемый shared resource)
+**Quando o Singleton é aceitável:**
+- Log (operação simples, só escreve)
+- Configuration (dado read-only)
+- Connection pools (recurso compartilhado sob controle)
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
