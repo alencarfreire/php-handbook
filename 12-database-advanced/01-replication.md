@@ -1,43 +1,43 @@
-# 9.1 Репликация БД
+# 9.1 Replicação de banco
 
-> **TL;DR:** Репликация копирует данные с Master на Slaves для масштабирования чтения и отказоустойчивости. Master-Slave: запись в master, чтение со slaves. Асинхронная репликация быстро, но replication lag. Laravel: read/write hosts, sticky sessions. Failover через Patroni/MHA.
+> **TL;DR:** Replicação copia os dados do Master para os Slaves. Escala leitura e aguenta o master cair. Master-Slave: grava no master, lê nos slaves. Assíncrona é rápida, mas tem replication lag. Laravel: read/write hosts, sticky sessions. Failover com Patroni/MHA.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы репликации](#типы-репликации)
+- [O que é](#o-que-é)
+- [Tipos de replicação](#tipos-de-replicação)
   - [Master-Slave (Single Leader)](#1-master-slave-single-leader)
   - [Master-Master (Multi-Leader)](#2-master-master-multi-leader)
-  - [Multi-Master с partitioning](#3-multi-master-с-partitioning)
-- [Синхронная vs Асинхронная](#синхронная-vs-асинхронная)
-- [Laravel конфигурация](#laravel-конфигурация)
-- [MySQL Репликация](#mysql-репликация)
-- [PostgreSQL Репликация](#postgresql-репликация)
+  - [Multi-Master com partitioning](#3-multi-master-com-partitioning)
+- [Síncrona vs Assíncrona](#síncrona-vs-assíncrona)
+- [Configuração no Laravel](#configuração-no-laravel)
+- [Replicação no MySQL](#replicação-no-mysql)
+- [Replicação no PostgreSQL](#replicação-no-postgresql)
 - [Replication Lag](#replication-lag)
-- [Мониторинг репликации](#мониторинг-репликации)
-- [Failover](#failover-переключение-на-реплику)
-- [Практические советы](#практические-советы)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Monitoramento da replicação](#monitoramento-da-replicação)
+- [Failover](#failover-promover-a-réplica)
+- [Dicas práticas](#dicas-práticas)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
-**Репликация:**
-Копирование данных с одной БД (master) на одну или несколько других БД (replicas) для обеспечения отказоустойчивости и масштабирования чтения.
+**Replicação:**
+Copia os dados de um banco (master) para um ou mais bancos (réplicas). Serve para escalar leitura e não cair se o master cair.
 
-**Зачем:**
-- Масштабирование чтения (читать с реплик)
-- Отказоустойчивость (если master упал)
-- Географическое распределение
-- Бэкапы без нагрузки на master
+**Para quê:**
+- Escalar leitura (lê nas réplicas)
+- Tolerância a falha (se o master cair)
+- Distribuição geográfica
+- Backup sem carga no master
 
 ---
 
-## Типы репликации
+## Tipos de replicação
 
 ### 1. Master-Slave (Single Leader)
 
-**Схема:**
+**Esquema:**
 
 ```
 Master (Write)
@@ -47,115 +47,115 @@ Slave 2 (Read)
 Slave 3 (Read)
 ```
 
-**Как работает:**
+**Como funciona:**
 
 ```
-1. Client пишет в Master
-2. Master записывает в binlog
-3. Slaves читают binlog и применяют изменения
-4. Clients читают со Slaves
+1. Client grava no Master
+2. Master escreve no binlog
+3. Slaves leem o binlog e aplicam as mudanças
+4. Clients leem nos Slaves
 ```
 
-**Преимущества:**
-- ✅ Простая настройка
-- ✅ Масштабирование чтения
-- ✅ Можно делать бэкапы с Slave
+**Vantagens:**
+- ✅ Setup simples
+- ✅ Escala leitura
+- ✅ Dá para fazer backup no Slave
 
-**Недостатки:**
+**Desvantagens:**
 - ❌ Single point of failure (master)
-- ❌ Replication lag (задержка)
-- ❌ Все записи только в master
+- ❌ Replication lag (atraso)
+- ❌ Toda escrita só no master
 
 ---
 
 ### 2. Master-Master (Multi-Leader)
 
-**Схема:**
+**Esquema:**
 
 ```
 Master 1 (Read/Write) ←→ Master 2 (Read/Write)
 ```
 
-**Преимущества:**
-- ✅ Нет single point of failure
-- ✅ Можно писать в любой master
-- ✅ Географическое распределение
+**Vantagens:**
+- ✅ Sem single point of failure
+- ✅ Grava em qualquer master
+- ✅ Distribuição geográfica
 
-**Недостатки:**
-- ❌ Конфликты при одновременной записи
-- ❌ Сложная настройка
-- ❌ Сложное разрешение конфликтов
+**Desvantagens:**
+- ❌ Conflito se os dois gravarem ao mesmo tempo
+- ❌ Setup difícil
+- ❌ Resolver conflito é difícil
 
-**Конфликты:**
+**Conflitos:**
 
 ```sql
--- В одно время на разных masters:
+-- Ao mesmo tempo, em masters diferentes:
 -- Master 1:
 UPDATE users SET name = 'John' WHERE id = 1;
 
 -- Master 2:
 UPDATE users SET name = 'Jane' WHERE id = 1;
 
--- Конфликт! Кто победит?
--- Стратегии:
--- 1. Last Write Wins (LWW) - по timestamp
+-- Conflito! Quem ganha?
+-- Estratégias:
+-- 1. Last Write Wins (LWW) — pelo timestamp
 -- 2. Version vectors
--- 3. Application level resolution
+-- 3. Resolução na aplicação
 ```
 
 ---
 
-### 3. Multi-Master с partitioning
+### 3. Multi-Master com partitioning
 
-**Схема:**
+**Esquema:**
 
 ```
 Master 1 (users 1-1000) ←→ Master 2 (users 1001-2000)
 ```
 
-Каждый master отвечает за свою часть данных.
+Cada master cuida da sua fatia dos dados.
 
 ---
 
-## Синхронная vs Асинхронная
+## Síncrona vs Assíncrona
 
-### Синхронная репликация:
+### Replicação síncrona:
 
 ```
 Client → Master
          ↓
-      [WAIT] пока Slave подтвердит
+      [WAIT] até o Slave confirmar
          ↓
       Response → Client
 ```
 
-**Плюсы:**
-- ✅ Данные гарантированно на реплике
-- ✅ Нет потери данных
+**Prós:**
+- ✅ Dado garantido na réplica
+- ✅ Sem perda de dado
 
-**Минусы:**
-- ❌ Медленнее (ждём реплику)
-- ❌ Если реплика недоступна → запись блокируется
+**Contras:**
+- ❌ Mais lento (espera a réplica)
+- ❌ Réplica fora → a escrita trava
 
-### Асинхронная репликация:
+### Replicação assíncrona:
 
 ```
-Client → Master → Response (сразу)
+Client → Master → Response (na hora)
          ↓
-      Slave (позже)
+      Slave (depois)
 ```
 
-**Плюсы:**
-- ✅ Быстро (не ждём реплику)
-- ✅ Master не зависит от реплик
+**Prós:**
+- ✅ Rápido (não espera a réplica)
+- ✅ Master não depende das réplicas
 
-**Минусы:**
+**Contras:**
 - ❌ Replication lag
-- ❌ Можно потерять данные если master упал
+- ❌ Se o master cair, pode perder dado
 
 ---
 
-## Laravel конфигурация
+## Configuração no Laravel
 
 **config/database.php:**
 
@@ -170,7 +170,7 @@ Client → Master → Response (сразу)
     'write' => [
         'host' => ['192.168.1.1'],  // Master
     ],
-    'sticky' => true,  // Читать с write после записи
+    'sticky' => true,  // Lê do write depois de gravar
     'driver' => 'mysql',
     'database' => 'myapp',
     'username' => 'root',
@@ -178,27 +178,27 @@ Client → Master → Response (сразу)
 ],
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
-// Автоматический routing
+// Roteamento automático
 User::create([...]);  // → Master (write)
 User::all();          // → Slave (read)
 
-// Явно использовать write connection
+// Forçar a write connection
 DB::connection('mysql')->useWriteConnection()
     ->select('SELECT * FROM users');
 
-// Sticky session: читать с master после записи
+// Sticky session: lê no master depois de gravar
 $user = User::create([...]);  // Write → Master
-$user->fresh();  // Read → Master (из-за sticky=true)
+$user->fresh();  // Read → Master (por causa do sticky=true)
 ```
 
 ---
 
-## MySQL Репликация
+## Replicação no MySQL
 
-**Настройка Master:**
+**Configurar o Master:**
 
 ```ini
 # /etc/mysql/my.cnf
@@ -209,28 +209,28 @@ binlog_format = ROW  # or MIXED
 ```
 
 ```sql
--- Создать replication user
+-- Criar o usuário de replicação
 CREATE USER 'repl'@'%' IDENTIFIED BY 'password';
 GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
 FLUSH PRIVILEGES;
 
--- Посмотреть позицию binlog
+-- Ver a posição do binlog
 SHOW MASTER STATUS;
 -- File: mysql-bin.000001, Position: 154
 ```
 
-**Настройка Slave:**
+**Configurar o Slave:**
 
 ```ini
 # /etc/mysql/my.cnf
 [mysqld]
 server-id = 2
 relay_log = /var/log/mysql/relay-bin.log
-read_only = 1  # Slave только для чтения
+read_only = 1  # Slave só leitura
 ```
 
 ```sql
--- Подключить к master
+-- Ligar no master
 CHANGE MASTER TO
   MASTER_HOST='192.168.1.1',
   MASTER_USER='repl',
@@ -238,22 +238,22 @@ CHANGE MASTER TO
   MASTER_LOG_FILE='mysql-bin.000001',
   MASTER_LOG_POS=154;
 
--- Запустить репликацию
+-- Subir a replicação
 START SLAVE;
 
--- Проверить статус
+-- Checar o status
 SHOW SLAVE STATUS\G
 
--- Seconds_Behind_Master: 0 (нет задержки)
+-- Seconds_Behind_Master: 0 (sem atraso)
 -- Slave_IO_Running: Yes
 -- Slave_SQL_Running: Yes
 ```
 
 ---
 
-## PostgreSQL Репликация
+## Replicação no PostgreSQL
 
-**Streaming Replication (асинхронная):**
+**Streaming Replication (assíncrona):**
 
 **Master (primary):**
 
@@ -269,17 +269,17 @@ host replication repl 192.168.1.2/32 md5
 ```
 
 ```sql
--- Создать replication user
+-- Criar o usuário de replicação
 CREATE ROLE repl WITH REPLICATION LOGIN PASSWORD 'password';
 ```
 
 **Slave (standby):**
 
 ```bash
-# Создать base backup
+# Criar o base backup
 pg_basebackup -h 192.168.1.1 -D /var/lib/postgresql/data -U repl -P
 
-# standby.signal (создать пустой файл)
+# standby.signal (criar arquivo vazio)
 touch /var/lib/postgresql/data/standby.signal
 ```
 
@@ -292,43 +292,43 @@ primary_conninfo = 'host=192.168.1.1 port=5432 user=repl password=password'
 
 ## Replication Lag
 
-**Проблема:**
+**O problema:**
 
 ```php
-// User создаёт post
-$post = Post::create(['title' => 'Hello']);  // Write → Master
+// User cria o post
+$post = Post::create(['title' => 'Olá']);  // Write → Master
 
-// Redirect и сразу читаем
+// Redirect e lê na hora
 return redirect("/posts/{$post->id}");
 
-// Read → Slave (но replication lag!)
-$post = Post::find($id);  // null или старые данные
+// Read → Slave (mas tem replication lag!)
+$post = Post::find($id);  // null ou dado velho
 ```
 
-**Решение 1: Sticky sessions**
+**Solução 1: Sticky sessions**
 
 ```php
-'sticky' => true,  // Читать с master после записи в сессии
+'sticky' => true,  // Lê no master depois de gravar na sessão
 ```
 
-**Решение 2: Явно читать с master**
+**Solução 2: Ler no master na mão**
 
 ```php
 $post = Post::create([...]);
 
-// Читать с master
+// Ler no master
 $post = DB::connection('mysql')
     ->useWriteConnection()
     ->table('posts')
     ->find($post->id);
 ```
 
-**Решение 3: Retry с задержкой**
+**Solução 3: Retry com espera**
 
 ```php
 $post = Post::create([...]);
 
-// Подождать репликацию
+// Esperar a replicação
 sleep(1);
 
 $post = Post::find($post->id);
@@ -336,100 +336,100 @@ $post = Post::find($post->id);
 
 ---
 
-## Мониторинг репликации
+## Monitoramento da replicação
 
 **MySQL:**
 
 ```sql
 SHOW SLAVE STATUS\G
 
--- Важные поля:
--- Seconds_Behind_Master: задержка в секундах
--- Slave_IO_Running: получение binlog
--- Slave_SQL_Running: применение изменений
--- Last_Error: ошибки репликации
+-- Campos que importam:
+-- Seconds_Behind_Master: atraso em segundos
+-- Slave_IO_Running: recebendo o binlog
+-- Slave_SQL_Running: aplicando as mudanças
+-- Last_Error: erros de replicação
 ```
 
 **PostgreSQL:**
 
 ```sql
--- На master
+-- No master
 SELECT * FROM pg_stat_replication;
 
--- pg_wal_lsn_diff показывает задержку
+-- pg_wal_lsn_diff mostra o atraso
 SELECT pg_wal_lsn_diff(sent_lsn, write_lsn) AS lag_bytes
 FROM pg_stat_replication;
 ```
 
 ---
 
-## Failover (переключение на реплику)
+## Failover (promover a réplica)
 
-**Автоматический failover:**
+**Failover automático:**
 
 ```
-Master (down!) → Slave 1 (promoted to Master)
-                 Slave 2 (reconnect to new Master)
+Master (down!) → Slave 1 (promovido a Master)
+                 Slave 2 (reconecta no Master novo)
 ```
 
-**Инструменты:**
+**Ferramentas:**
 - MySQL: MHA (Master High Availability)
 - PostgreSQL: Patroni, repmgr
-- ProxySQL / HAProxy для автоматического routing
+- ProxySQL / HAProxy para roteamento automático
 
-**Ручной failover:**
+**Failover manual:**
 
 ```sql
--- На Slave:
+-- No Slave:
 STOP SLAVE;
 RESET SLAVE ALL;
 
--- Сделать Master
+-- Virar Master
 SET GLOBAL read_only = 0;
 
--- Переключить приложение на новый Master
+-- Apontar o app para o Master novo
 ```
 
 ---
 
-## Практические советы
+## Dicas práticas
 
-**Когда использовать:**
-
-```
-✓ > 70% read operations
-✓ Нужна высокая доступность
-✓ Географическое распределение
-✓ Бэкапы без нагрузки на master
-```
-
-**Когда НЕ использовать:**
+**Quando usar:**
 
 ```
-❌ 50/50 read/write (не даст прироста)
-❌ Маленькая БД (< 1GB)
-❌ Нет expertise в поддержке
+✓ > 70% de leitura
+✓ Precisa de alta disponibilidade
+✓ Distribuição geográfica
+✓ Backup sem carga no master
 ```
 
-**Best practices:**
+**Quando NÃO usar:**
 
 ```
-✓ Мониторинг replication lag
-✓ Автоматический failover (Patroni, MHA)
-✓ Regular failover drills (тестировать переключение)
-✓ Consistent backups (pg_basebackup, mysqldump)
+❌ 50/50 read/write (não ganha throughput)
+❌ Banco pequeno (< 1GB)
+❌ Sem expertise para operar
+```
+
+**Boas práticas:**
+
+```
+✓ Monitorar replication lag
+✓ Failover automático (Patroni, MHA)
+✓ Failover drills de verdade (testar a troca)
+✓ Backups consistentes (pg_basebackup, mysqldump)
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настройка Read/Write Splitting в Laravel
+### Exercício 1: Read/Write Splitting no Laravel
 
-**Задача:** Настроить Laravel приложение для чтения с реплик и записи в master.
+**Enunciado:** Configure o Laravel para ler nas réplicas e gravar no master.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/database.php
@@ -443,34 +443,34 @@ SET GLOBAL read_only = 0;
     'write' => [
         'host' => ['192.168.1.1'],  // Master
     ],
-    'sticky' => true,  // Читать с write после записи в сессии
+    'sticky' => true,  // Lê do write depois de gravar na sessão
     'driver' => 'mysql',
     'database' => env('DB_DATABASE', 'forge'),
     'username' => env('DB_USERNAME', 'forge'),
     'password' => env('DB_PASSWORD', ''),
 ],
 
-// Использование
+// Uso
 class UserController extends Controller
 {
     public function store(Request $request)
     {
-        // Запись → Master
+        // Escrita → Master
         $user = User::create($request->validated());
 
-        // Чтение → Master (из-за sticky=true)
+        // Leitura → Master (por causa do sticky=true)
         return new UserResource($user->fresh());
     }
 
     public function index()
     {
-        // Чтение → Slave (случайная реплика)
+        // Leitura → Slave (réplica aleatória)
         return UserResource::collection(User::paginate(20));
     }
 
     public function forceWriteConnection()
     {
-        // Явно читать с master
+        // Ler no master na mão
         $users = DB::connection('mysql')
             ->useWriteConnection()
             ->table('users')
@@ -483,22 +483,22 @@ class UserController extends Controller
 
 </details>
 
-### Задание 2: Обработка Replication Lag
+### Exercício 2: Lidar com replication lag
 
-**Задача:** Реализовать безопасное чтение после записи при наличии replication lag.
+**Enunciado:** Leia com segurança depois de gravar, mesmo com replication lag.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 class PostController extends Controller
 {
     public function store(Request $request)
     {
-        // Создаём пост (запись в master)
+        // Cria o post (grava no master)
         $post = Post::create($request->validated());
 
-        // Решение 1: Читать с master после записи
+        // Solução 1: ler no master depois de gravar
         $freshPost = DB::connection('mysql')
             ->useWriteConnection()
             ->table('posts')
@@ -507,21 +507,21 @@ class PostController extends Controller
         return response()->json($freshPost);
     }
 
-    // Решение 2: Использовать sticky sessions
+    // Solução 2: sticky sessions
     public function storeWithSticky(Request $request)
     {
         $post = Post::create($request->validated());
 
-        // С sticky=true автоматически читает с master
+        // Com sticky=true, lê no master sozinho
         return new PostResource($post);
     }
 
-    // Решение 3: Retry с задержкой
+    // Solução 3: retry com espera
     public function storeWithRetry(Request $request)
     {
         $post = Post::create($request->validated());
 
-        // Подождать репликацию
+        // Esperar a replicação
         $maxAttempts = 3;
         $attempt = 0;
 
@@ -536,7 +536,7 @@ class PostController extends Controller
             $attempt++;
         }
 
-        // Fallback: читать с master
+        // Fallback: ler no master
         return new PostResource(
             Post::on('mysql')->useWriteConnection()->find($post->id)
         );
@@ -546,12 +546,12 @@ class PostController extends Controller
 
 </details>
 
-### Задание 3: Мониторинг Replication Lag
+### Exercício 3: Monitorar replication lag
 
-**Задача:** Создать Artisan команду для проверки задержки репликации.
+**Enunciado:** Crie um comando Artisan que checa o atraso da replicação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/CheckReplicationLag.php
@@ -563,7 +563,7 @@ use Illuminate\Support\Facades\DB;
 class CheckReplicationLag extends Command
 {
     protected $signature = 'db:check-replication';
-    protected $description = 'Check database replication lag';
+    protected $description = 'Checa o replication lag do banco';
 
     public function handle()
     {
@@ -581,7 +581,7 @@ class CheckReplicationLag extends Command
         $status = DB::select('SHOW SLAVE STATUS')[0] ?? null;
 
         if (!$status) {
-            $this->error('Replication is not configured');
+            $this->error('Replicação não está configurada');
             return;
         }
 
@@ -589,21 +589,21 @@ class CheckReplicationLag extends Command
         $ioRunning = $status->Slave_IO_Running;
         $sqlRunning = $status->Slave_SQL_Running;
 
-        $this->info("Replication Status:");
+        $this->info("Status da replicação:");
         $this->line("IO Running: {$ioRunning}");
         $this->line("SQL Running: {$sqlRunning}");
-        $this->line("Lag: {$lag} seconds");
+        $this->line("Lag: {$lag} segundos");
 
         if ($lag > 60) {
-            $this->warn("⚠️  High replication lag: {$lag} seconds");
+            $this->warn("⚠️  Replication lag alto: {$lag} segundos");
         } elseif ($lag > 10) {
-            $this->comment("⚡ Moderate lag: {$lag} seconds");
+            $this->comment("⚡ Lag moderado: {$lag} segundos");
         } else {
-            $this->info("✓ Replication is healthy");
+            $this->info("✓ Replicação saudável");
         }
 
         if ($status->Last_Error) {
-            $this->error("Error: {$status->Last_Error}");
+            $this->error("Erro: {$status->Last_Error}");
         }
     }
 
@@ -612,11 +612,11 @@ class CheckReplicationLag extends Command
         $replicas = DB::select('SELECT * FROM pg_stat_replication');
 
         if (empty($replicas)) {
-            $this->error('No replicas found');
+            $this->error('Nenhuma réplica encontrada');
             return;
         }
 
-        $this->info("Replication Status:");
+        $this->info("Status da replicação:");
 
         foreach ($replicas as $replica) {
             $lag = DB::selectOne(
@@ -626,23 +626,23 @@ class CheckReplicationLag extends Command
 
             $lagMB = round($lag / 1024 / 1024, 2);
 
-            $this->line("Replica: {$replica->application_name}");
+            $this->line("Réplica: {$replica->application_name}");
             $this->line("  State: {$replica->state}");
             $this->line("  Lag: {$lagMB} MB");
 
             if ($lagMB > 100) {
-                $this->warn("  ⚠️  High lag");
+                $this->warn("  ⚠️  Lag alto");
             } else {
-                $this->info("  ✓ Healthy");
+                $this->info("  ✓ Saudável");
             }
         }
     }
 }
 
-// Регистрация в Kernel.php
+// Registrar em Kernel.php
 protected function schedule(Schedule $schedule)
 {
-    // Проверять каждые 5 минут
+    // Checar a cada 5 minutos
     $schedule->command('db:check-replication')
         ->everyFiveMinutes()
         ->emailOutputOnFailure('admin@example.com');
@@ -653,11 +653,10 @@ protected function schedule(Schedule $schedule)
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Репликация копирует данные с Master на Slaves для масштабирования чтения и отказоустойчивости. Master-Slave: запись в master, чтение со slaves. Асинхронная репликация: быстро но replication lag. Синхронная: медленнее но без потери данных. Laravel: read/write hosts, sticky sessions. MySQL: binlog репликация, server-id. PostgreSQL: streaming replication, WAL. Failover: автоматически через Patroni/MHA или вручную promote slave. Мониторинг: Seconds_Behind_Master, pg_stat_replication."
+> "Replicação copia os dados do Master para os Slaves. Escala leitura e aguenta o master cair. Master-Slave: grava no master, lê nos slaves. Assíncrona é rápida, mas tem replication lag. Síncrona é mais lenta, sem perda de dado. Laravel: read/write hosts, sticky sessions. MySQL: replicação via binlog, server-id. PostgreSQL: streaming replication, WAL. Failover: automático com Patroni/MHA, ou você promove o slave na mão. Monitoramento: Seconds_Behind_Master, pg_stat_replication."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

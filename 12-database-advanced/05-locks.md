@@ -1,55 +1,55 @@
-# 9.5 Блокировки (Locks)
+# 9.5 Locks (bloqueios)
 
-> **TL;DR:** Locks предотвращают concurrent доступ к данным. Shared Lock (FOR SHARE) разрешает читать, Exclusive Lock (FOR UPDATE) запрещает всё. SKIP LOCKED для queue workers. Optimistic Locking проверяет версию без блокировки. Advisory Locks для application-level блокировок. Deadlocks решаются блокировкой в одном порядке.
+> **TL;DR:** Locks impedem acesso concorrente aos dados. Shared Lock (FOR SHARE) deixa ler. Exclusive Lock (FOR UPDATE) bloqueia tudo. SKIP LOCKED para queue workers. Optimistic Locking checa a versão sem travar. Advisory Locks para lock no nível da aplicação. Deadlock se resolve travando na mesma ordem.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы блокировок](#типы-блокировок)
+- [O que é](#o-que-é)
+- [Tipos de lock](#tipos-de-lock)
   - [Shared Lock](#1-shared-lock-s-lock--read-lock)
   - [Exclusive Lock](#2-exclusive-lock-x-lock--write-lock)
-  - [Row-Level Lock](#3-row-level-lock-блокировка-строки)
-  - [Table-Level Lock](#4-table-level-lock-блокировка-таблицы)
+  - [Row-Level Lock](#3-row-level-lock-bloqueio-de-linha)
+  - [Table-Level Lock](#4-table-level-lock-bloqueio-de-tabela)
 - [FOR UPDATE SKIP LOCKED](#for-update-skip-locked)
 - [FOR UPDATE NOWAIT](#for-update-nowait)
-- [Optimistic Locking](#optimistic-locking-оптимистичная-блокировка)
+- [Optimistic Locking](#optimistic-locking-bloqueio-otimista)
 - [Advisory Locks](#advisory-locks-postgresql)
 - [Lock Wait Timeout](#lock-wait-timeout)
-- [Deadlocks](#deadlocks-взаимная-блокировка)
-- [Мониторинг блокировок](#мониторинг-блокировок)
-- [Best Practices](#best-practices)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Deadlocks](#deadlocks-bloqueio-mútuo)
+- [Monitoramento de locks](#monitoramento-de-locks)
+- [Boas práticas](#boas-práticas)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
-**Locks (Блокировки):**
-Механизм для предотвращения одновременного изменения одних данных разными транзакциями.
+**Locks (bloqueios):**
+Mecanismo que impede duas transações de alterarem o mesmo dado ao mesmo tempo.
 
-**Зачем:**
-- Предотвратить race conditions
-- Обеспечить data consistency
-- Контролировать concurrent доступ
+**Para quê:**
+- Evitar race conditions
+- Garantir consistência dos dados
+- Controlar acesso concorrente
 
 **Trade-off:**
-- Больше блокировок → больше consistency, меньше concurrency
-- Меньше блокировок → меньше consistency, больше concurrency
+- Mais locks → mais consistência, menos concorrência
+- Menos locks → menos consistência, mais concorrência
 
 ---
 
-## Типы блокировок
+## Tipos de lock
 
 ### 1. Shared Lock (S-lock) — READ Lock
 
-**Что делает:**
-- Разрешает другим читать
-- Запрещает другим писать
+**O que faz:**
+- Deixa os outros lerem
+- Impede os outros de escreverem
 
 ```sql
 -- PostgreSQL
 BEGIN;
 SELECT * FROM accounts WHERE id = 1 FOR SHARE;
--- Другие могут SELECT, но не UPDATE/DELETE
+-- Outros podem SELECT, mas não UPDATE/DELETE
 COMMIT;
 ```
 
@@ -57,14 +57,14 @@ COMMIT;
 
 ### 2. Exclusive Lock (X-lock) — WRITE Lock
 
-**Что делает:**
-- Запрещает другим читать и писать
+**O que faz:**
+- Impede os outros de ler e de escrever
 
 ```sql
 -- PostgreSQL
 BEGIN;
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
--- Другие НЕ могут SELECT FOR UPDATE/SHARE, UPDATE, DELETE
+-- Outros NÃO podem SELECT FOR UPDATE/SHARE, UPDATE, DELETE
 COMMIT;
 ```
 
@@ -80,20 +80,20 @@ $user = User::lockForUpdate()->find($id);
 
 ---
 
-### 3. Row-Level Lock (блокировка строки)
+### 3. Row-Level Lock (bloqueio de linha)
 
 **PostgreSQL:**
 
 ```sql
--- Заблокировать конкретную строку
+-- Trava a linha específica
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
 ```
 
-**Use case: Bank Transfer**
+**Use case: transferência bancária**
 
 ```php
 DB::transaction(function () use ($fromId, $toId, $amount) {
-    // Блокируем обе строки в порядке ID (deadlock prevention)
+    // Trava as duas linhas na ordem do ID (prevenção de deadlock)
     $accounts = Account::whereIn('id', [$fromId, $toId])
         ->orderBy('id')
         ->lockForUpdate()
@@ -107,7 +107,7 @@ DB::transaction(function () use ($fromId, $toId, $amount) {
         throw new InsufficientFundsException();
     }
 
-    // Безопасно изменяем (никто другой не может)
+    // Altera com segurança (ninguém mais consegue)
     $from->decrement('balance', $amount);
     $to->increment('balance', $amount);
 });
@@ -115,59 +115,59 @@ DB::transaction(function () use ($fromId, $toId, $amount) {
 
 ---
 
-### 4. Table-Level Lock (блокировка таблицы)
+### 4. Table-Level Lock (bloqueio de tabela)
 
 ```sql
 -- PostgreSQL
 LOCK TABLE accounts IN ACCESS EXCLUSIVE MODE;
--- Никто не может читать/писать
+-- Ninguém pode ler/escrever
 ```
 
-**Режимы:**
+**Modos:**
 
 ```sql
--- ACCESS SHARE (читать можно)
+-- ACCESS SHARE (leitura permitida)
 LOCK TABLE accounts IN ACCESS SHARE MODE;
 
--- ROW EXCLUSIVE (обычные UPDATE/DELETE)
+-- ROW EXCLUSIVE (UPDATE/DELETE comuns)
 LOCK TABLE accounts IN ROW EXCLUSIVE MODE;
 
--- ACCESS EXCLUSIVE (никто не может ничего)
+-- ACCESS EXCLUSIVE (ninguém pode nada)
 LOCK TABLE accounts IN ACCESS EXCLUSIVE MODE;
 ```
 
-**Когда использовать:**
-- ❌ Редко в production (блокирует всю таблицу)
-- ✅ Maintenance операции (ALTER TABLE, TRUNCATE)
+**Quando usar:**
+- ❌ Raro em production (trava a tabela inteira)
+- ✅ Operações de maintenance (ALTER TABLE, TRUNCATE)
 
 ---
 
 ## FOR UPDATE SKIP LOCKED
 
-**Проблема: Queue Workers**
+**Problema: Queue Workers**
 
 ```sql
 -- Worker 1
 BEGIN;
 SELECT * FROM jobs WHERE status = 'pending' LIMIT 1 FOR UPDATE;
--- Получил job #1
+-- Pegou o job #1
 
--- Worker 2 (одновременно)
+-- Worker 2 (ao mesmo tempo)
 SELECT * FROM jobs WHERE status = 'pending' LIMIT 1 FOR UPDATE;
--- Ждёт пока Worker 1 закончит (блокируется!)
+-- Espera o Worker 1 terminar (fica bloqueado!)
 ```
 
-**Решение: SKIP LOCKED**
+**Solução: SKIP LOCKED**
 
 ```sql
 -- Worker 1
 BEGIN;
 SELECT * FROM jobs WHERE status = 'pending' LIMIT 1 FOR UPDATE SKIP LOCKED;
--- Получил job #1
+-- Pegou o job #1
 
 -- Worker 2
 SELECT * FROM jobs WHERE status = 'pending' LIMIT 1 FOR UPDATE SKIP LOCKED;
--- Пропустил job #1, получил job #2 (не ждёт!)
+-- Pulou o job #1, pegou o job #2 (não espera!)
 ```
 
 **Laravel Queue Worker:**
@@ -177,7 +177,7 @@ class ProcessNextJob
 {
     public function handle()
     {
-        // Получить следующий job без блокировки
+        // Pega o próximo job sem ficar esperando lock
         $job = Job::where('status', 'pending')
             ->orderBy('created_at')
             ->limit(1)
@@ -185,12 +185,12 @@ class ProcessNextJob
             ->first();
 
         if (!$job) {
-            return;  // Нет доступных jobs
+            return;  // Sem jobs disponíveis
         }
 
         $job->update(['status' => 'processing']);
 
-        // Process job...
+        // Processa o job...
     }
 }
 ```
@@ -199,13 +199,13 @@ class ProcessNextJob
 
 ## FOR UPDATE NOWAIT
 
-**Что делает:**
-Вместо ожидания сразу выбросить ошибку.
+**O que faz:**
+Em vez de esperar, estoura erro na hora.
 
 ```sql
 BEGIN;
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
--- Если уже заблокировано → ERROR: could not obtain lock
+-- Se já estiver travado → ERROR: could not obtain lock
 ```
 
 **Laravel:**
@@ -213,24 +213,24 @@ SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
 ```php
 try {
     $account = Account::where('id', 1)
-        ->lockForUpdate()  // можно добавить NOWAIT через raw
+        ->lockForUpdate()  // dá para adicionar NOWAIT via raw
         ->first();
 
 } catch (QueryException $e) {
     if ($e->getCode() === '55P03') {  // lock_not_available
-        return response()->json(['error' => 'Resource locked'], 423);
+        return response()->json(['error' => 'Recurso bloqueado'], 423);
     }
 }
 ```
 
 ---
 
-## Optimistic Locking (Оптимистичная блокировка)
+## Optimistic Locking (bloqueio otimista)
 
-**Идея:**
-Не блокировать, а проверять версию при сохранении.
+**Ideia:**
+Não trava. Na hora de salvar, checa a versão.
 
-**Реализация:**
+**Implementação:**
 
 ```php
 // Migration
@@ -245,81 +245,81 @@ class Product extends Model
     {
         $currentVersion = $this->version;
 
-        // Попытка обновления
+        // Tentativa de update
         $updated = DB::table('products')
             ->where('id', $this->id)
-            ->where('version', $currentVersion)  // Проверка версии
+            ->where('version', $currentVersion)  // Checagem da versão
             ->update([
                 'stock' => DB::raw('stock - ' . $quantity),
-                'version' => $currentVersion + 1,  // Инкремент версии
+                'version' => $currentVersion + 1,  // Incrementa a versão
             ]);
 
         if ($updated === 0) {
-            // Кто-то изменил раньше нас
-            throw new OptimisticLockException('Product was modified by another transaction');
+            // Alguém alterou antes da gente
+            throw new OptimisticLockException('Produto foi modificado por outra transação');
         }
 
         $this->refresh();
     }
 }
 
-// Использование
+// Uso
 try {
     $product->updateStock(5);
 } catch (OptimisticLockException $e) {
-    // Retry or notify user
-    return response()->json(['error' => 'Product was modified, please retry'], 409);
+    // Retry ou avisa o usuário
+    return response()->json(['error' => 'Produto foi modificado, tente de novo'], 409);
 }
 ```
 
-**Плюсы:**
-- ✅ Высокая concurrency (не блокируем)
-- ✅ Нет deadlocks
+**Prós:**
+- ✅ Alta concorrência (não trava)
+- ✅ Sem deadlocks
 
-**Минусы:**
-- ❌ Нужны retries
-- ❌ Может часто падать при высокой конкуренции
+**Contras:**
+- ❌ Precisa de retries
+- ❌ Pode falhar bastante com concorrência alta
 
 ---
 
 ## Advisory Locks (PostgreSQL)
 
-**Что это:**
-Application-level locks (не привязаны к транзакциям).
+**O que é:**
+Locks no nível da aplicação (não presos à transação).
 
 ```sql
--- Получить lock
+-- Obter o lock
 SELECT pg_advisory_lock(123);
 
--- Проверить доступность
+-- Checar disponibilidade
 SELECT pg_try_advisory_lock(123);  -- true/false
 
--- Освободить
+-- Liberar
 SELECT pg_advisory_unlock(123);
 ```
 
-**Use case: Prevent Duplicate Jobs**
+**Use case: evitar jobs duplicados**
 
 ```php
 class ProcessUniqueTask
 {
     public function handle($taskId)
     {
-        // Попытка получить lock
+        // Tenta obter o lock
         $locked = DB::selectOne("SELECT pg_try_advisory_lock(?) as locked", [$taskId])->locked;
 
         if (!$locked) {
-            // Другой процесс уже обрабатывает
-            Log::info("Task {$taskId} is already being processed");
+            // Outro processo já está processando
+            Log::info("Task {$taskId} já está em processamento");
             return;
         }
 
         try {
-            // Process task...
+            // Processa a task...
             $this->processTask($taskId);
 
         } finally {
-            // Освобождаем lock
+            // Libera o lock
             DB::statement("SELECT pg_advisory_unlock(?)", [$taskId]);
         }
     }
@@ -329,7 +329,7 @@ class ProcessUniqueTask
 **Use case: Singleton Scheduler**
 
 ```php
-// Гарантировать что только 1 экземпляр scheduler работает
+// Garante que só 1 instância do scheduler roda
 class Scheduler
 {
     private const LOCK_ID = 999999;
@@ -342,16 +342,16 @@ class Scheduler
         )->locked;
 
         if (!$locked) {
-            die("Scheduler is already running\n");
+            die("Scheduler já está em execução\n");
         }
 
-        // Scheduler loop...
+        // Loop do scheduler...
         while (true) {
             $this->processTasks();
             sleep(60);
         }
 
-        // Lock освобождается когда процесс завершается
+        // O lock libera quando o processo termina
     }
 }
 ```
@@ -363,32 +363,32 @@ class Scheduler
 **PostgreSQL:**
 
 ```sql
--- Установить timeout для ожидания lock
+-- Definir timeout de espera do lock
 SET lock_timeout = '5s';
 
 BEGIN;
 SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
--- Если не получили lock за 5s → ERROR
+-- Se não pegar o lock em 5s → ERROR
 COMMIT;
 ```
 
-**Laravel config:**
+**Config do Laravel:**
 
 ```php
 // config/database.php
 'pgsql' => [
     'options' => [
         '--client_encoding=utf8',
-        '--lock_timeout=5000',  // 5 seconds
+        '--lock_timeout=5000',  // 5 segundos
     ],
 ],
 ```
 
 ---
 
-## Deadlocks (Взаимная блокировка)
+## Deadlocks (bloqueio mútuo)
 
-**Проблема:**
+**Problema:**
 
 ```sql
 -- Transaction A
@@ -406,28 +406,28 @@ UPDATE accounts SET balance = balance + 50 WHERE id = 1;   -- Need row 1
 -- DEADLOCK!
 ```
 
-**PostgreSQL детектит и откатывает одну транзакцию:**
+**O PostgreSQL detecta e dá rollback em uma transação:**
 
 ```
 ERROR: deadlock detected
 DETAIL: Process 1234 waits for ShareLock on transaction 5678
 ```
 
-**Решение: Блокировать в одном порядке**
+**Solução: travar na mesma ordem**
 
 ```php
 DB::transaction(function () use ($fromId, $toId, $amount) {
-    // Всегда блокировать в порядке ID
+    // Sempre travar na ordem do ID
     $ids = [$fromId, $toId];
     sort($ids);
 
     $accounts = Account::whereIn('id', $ids)
-        ->orderBy('id')  // ← Критично!
+        ->orderBy('id')  // ← Crítico!
         ->lockForUpdate()
         ->get()
         ->keyBy('id');
 
-    // Теперь безопасно
+    // Agora é seguro
     $accounts[$fromId]->decrement('balance', $amount);
     $accounts[$toId]->increment('balance', $amount);
 });
@@ -435,12 +435,12 @@ DB::transaction(function () use ($fromId, $toId, $amount) {
 
 ---
 
-## Мониторинг блокировок
+## Monitoramento de locks
 
 **PostgreSQL:**
 
 ```sql
--- Текущие locks
+-- Locks atuais
 SELECT
     pid,
     usename,
@@ -450,7 +450,7 @@ SELECT
 FROM pg_stat_activity
 WHERE cardinality(pg_blocking_pids(pid)) > 0;
 
--- Waiting queries
+-- Queries esperando
 SELECT
     wait_event_type,
     wait_event,
@@ -467,35 +467,35 @@ WHERE wait_event IS NOT NULL;
 -- InnoDB locks
 SELECT * FROM information_schema.INNODB_LOCKS;
 
--- Waiting transactions
+-- Transações esperando
 SELECT * FROM information_schema.INNODB_LOCK_WAITS;
 ```
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Минимизировать длительность lock (короткие транзакции)
-✓ Блокировать в одном порядке (по ID) для deadlock prevention
-✓ Использовать SKIP LOCKED для queue workers
-✓ Использовать Optimistic Locking для high-concurrency read-mostly данных
-✓ Мониторить deadlocks и long-running locks
-✓ Избегать Table-Level locks в production
-✓ Устанавливать lock_timeout
-✓ Для критичных операций: SELECT FOR UPDATE + версионирование
+✓ Encurtar o tempo do lock (transações curtas)
+✓ Travar na mesma ordem (por ID) para evitar deadlock
+✓ Usar SKIP LOCKED em queue workers
+✓ Usar Optimistic Locking em dados read-mostly com alta concorrência
+✓ Monitorar deadlocks e locks longos
+✓ Evitar Table-Level lock em production
+✓ Definir lock_timeout
+✓ Operação crítica: SELECT FOR UPDATE + versionamento
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Queue Worker с SKIP LOCKED
+### Exercício 1: Queue Worker com SKIP LOCKED
 
-**Задача:** Реализовать queue worker который обрабатывает задачи без блокировок.
+**Enunciado:** Implemente um queue worker que processa tasks sem ficar preso em lock.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Jobs/ProcessQueueJob.php
@@ -516,24 +516,24 @@ class ProcessQueueJob implements ShouldQueue
         // PostgreSQL
         $job = $this->getNextJobPostgres();
 
-        // MySQL (не поддерживает SKIP LOCKED в старых версиях)
+        // MySQL (versões antigas não suportam SKIP LOCKED)
         // $job = $this->getNextJobMySQL();
 
         if (!$job) {
-            return; // Нет доступных задач
+            return; // Sem tasks disponíveis
         }
 
         try {
-            // Обрабатываем задачу
+            // Processa a task
             $this->processJob($job);
 
-            // Помечаем как выполненную
+            // Marca como concluída
             DB::table('queue_jobs')
                 ->where('id', $job->id)
                 ->update(['status' => 'completed', 'completed_at' => now()]);
 
         } catch (\Exception $e) {
-            // Помечаем как failed
+            // Marca como failed
             DB::table('queue_jobs')
                 ->where('id', $job->id)
                 ->update([
@@ -555,7 +555,7 @@ class ProcessQueueJob implements ShouldQueue
                 ->first();
 
             if ($job) {
-                // Сразу помечаем как processing
+                // Já marca como processing
                 DB::table('queue_jobs')
                     ->where('id', $job->id)
                     ->update(['status' => 'processing', 'started_at' => now()]);
@@ -568,7 +568,7 @@ class ProcessQueueJob implements ShouldQueue
     private function getNextJobMySQL()
     {
         return DB::transaction(function () {
-            // MySQL: используем UPDATE с WHERE
+            // MySQL: usamos UPDATE com WHERE
             $affected = DB::table('queue_jobs')
                 ->where('status', 'pending')
                 ->orderBy('created_at')
@@ -592,19 +592,19 @@ class ProcessQueueJob implements ShouldQueue
 
     private function processJob($job)
     {
-        // Симуляция обработки
+        // Simulação do processamento
         $data = json_decode($job->payload, true);
 
         match($job->type) {
             'send_email' => $this->sendEmail($data),
             'process_image' => $this->processImage($data),
             'generate_report' => $this->generateReport($data),
-            default => throw new \Exception("Unknown job type: {$job->type}")
+            default => throw new \Exception("Tipo de job desconhecido: {$job->type}")
         };
     }
 }
 
-// Migration для queue_jobs
+// Migration da queue_jobs
 Schema::create('queue_jobs', function (Blueprint $table) {
     $table->id();
     $table->string('type');
@@ -622,12 +622,12 @@ Schema::create('queue_jobs', function (Blueprint $table) {
 
 </details>
 
-### Задание 2: Optimistic Locking для Product Updates
+### Exercício 2: Optimistic Locking em updates de Product
 
-**Задача:** Реализовать optimistic locking для предотвращения lost updates.
+**Enunciado:** Implemente optimistic locking para evitar lost updates.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -649,21 +649,21 @@ class Product extends Model
     {
         $currentVersion = $this->version;
 
-        // Добавляем инкремент версии
+        // Incrementa a versão
         $data['version'] = $currentVersion + 1;
 
-        // Обновляем только если версия не изменилась
+        // Atualiza só se a versão não mudou
         $updated = static::where('id', $this->id)
             ->where('version', $currentVersion)
             ->update($data);
 
         if ($updated === 0) {
             throw new OptimisticLockException(
-                "Product #{$this->id} was modified by another transaction. Please reload and try again."
+                "Product #{$this->id} foi modificado por outra transação. Recarregue e tente de novo."
             );
         }
 
-        // Обновляем модель
+        // Atualiza o model
         $this->refresh();
 
         return true;
@@ -685,14 +685,14 @@ class Product extends Model
             $fresh = $this->fresh();
 
             if ($fresh->version !== $currentVersion) {
-                throw new OptimisticLockException("Product was modified by another transaction");
+                throw new OptimisticLockException("Produto foi modificado por outra transação");
             }
 
             if ($fresh->stock < $quantity) {
-                throw new OutOfStockException("Insufficient stock");
+                throw new OutOfStockException("Estoque insuficiente");
             }
 
-            throw new \Exception("Failed to update stock");
+            throw new \Exception("Falha ao atualizar estoque");
         }
 
         $this->refresh();
@@ -710,7 +710,7 @@ public function update(Request $request, Product $product)
             $product->updateWithOptimisticLock($request->validated());
 
             return response()->json([
-                'message' => 'Product updated successfully',
+                'message' => 'Produto atualizado com sucesso',
                 'product' => $product
             ]);
 
@@ -719,14 +719,14 @@ public function update(Request $request, Product $product)
 
             if ($attempt >= $maxRetries) {
                 return response()->json([
-                    'error' => 'Product was modified multiple times. Please reload and try again.'
+                    'error' => 'Produto foi modificado várias vezes. Recarregue e tente de novo.'
                 ], 409);
             }
 
             // Exponential backoff
             usleep(50000 * $attempt); // 50ms, 100ms, 150ms
 
-            // Перезагружаем модель
+            // Recarrega o model
             $product->refresh();
         }
     }
@@ -735,12 +735,12 @@ public function update(Request $request, Product $product)
 
 </details>
 
-### Задание 3: Advisory Locks для Singleton Tasks
+### Exercício 3: Advisory Locks para tasks singleton
 
-**Задача:** Использовать PostgreSQL advisory locks для гарантии единственного экземпляра задачи.
+**Enunciado:** Use advisory locks do PostgreSQL para garantir uma única instância da task.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/AdvisoryLockService.php
@@ -769,7 +769,7 @@ class AdvisoryLockService
     public function withLock(int $lockId, callable $callback)
     {
         if (!$this->tryLock($lockId)) {
-            throw new \Exception("Failed to acquire lock {$lockId}");
+            throw new \Exception("Falha ao obter lock {$lockId}");
         }
 
         try {
@@ -789,7 +789,7 @@ use App\Services\AdvisoryLockService;
 class ProcessUniqueTask extends Command
 {
     protected $signature = 'task:process-unique {task-id}';
-    protected $description = 'Process task that should run only once';
+    protected $description = 'Processa uma task que deve rodar só uma vez';
 
     public function __construct(
         private AdvisoryLockService $lockService
@@ -803,16 +803,16 @@ class ProcessUniqueTask extends Command
 
         try {
             $this->lockService->withLock($taskId, function () use ($taskId) {
-                $this->info("Processing task {$taskId}...");
+                $this->info("Processando task {$taskId}...");
 
-                // Долгая обработка
+                // Processamento longo
                 sleep(10);
 
-                $this->info("Task {$taskId} completed");
+                $this->info("Task {$taskId} concluída");
             });
 
         } catch (\Exception $e) {
-            $this->error("Task {$taskId} is already being processed");
+            $this->error("Task {$taskId} já está em processamento");
             return 1;
         }
     }
@@ -833,11 +833,11 @@ class SingletonScheduler extends Command
     public function handle()
     {
         if (!$this->lockService->tryLock(self::LOCK_ID)) {
-            $this->error('Scheduler is already running');
+            $this->error('Scheduler já está em execução');
             return 1;
         }
 
-        $this->info('Scheduler started');
+        $this->info('Scheduler iniciado');
 
         try {
             // Scheduler loop
@@ -852,8 +852,8 @@ class SingletonScheduler extends Command
 
     private function processTasks()
     {
-        // Process scheduled tasks
-        $this->info('Processing tasks...');
+        // Processa as tasks agendadas
+        $this->info('Processando tasks...');
     }
 }
 ```
@@ -862,10 +862,10 @@ class SingletonScheduler extends Command
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Locks предотвращают concurrent доступ к данным. Shared Lock (FOR SHARE) разрешает читать, Exclusive Lock (FOR UPDATE) запрещает всё. Row-Level locks для строк, Table-Level для таблиц. SKIP LOCKED для queue workers (не ждать занятые строки). Optimistic Locking: проверять версию при сохранении без блокировки. Advisory Locks в PostgreSQL для application-level блокировок. Deadlocks решаются блокировкой в одном порядке (по ID). Мониторинг через pg_stat_activity. Best practices: короткие транзакции, lock timeout, избегать Table locks."
+> "Locks impedem acesso concorrente aos dados. Shared Lock (FOR SHARE) deixa ler. Exclusive Lock (FOR UPDATE) bloqueia tudo. Row-Level lock na linha, Table-Level na tabela. SKIP LOCKED para queue workers — não espera linha ocupada. Optimistic Locking: checa a versão na hora de salvar, sem travar. Advisory Locks no PostgreSQL para lock no nível da aplicação. Deadlock se resolve travando na mesma ordem (por ID). Monitoramento via pg_stat_activity. Boas práticas: transação curta, lock timeout, evitar Table lock."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

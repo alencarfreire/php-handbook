@@ -1,44 +1,44 @@
 # 9.7 Materialized Views
 
-> **TL;DR:** Materialized View — результат запроса, физически сохранённый на диске. REFRESH MATERIALIZED VIEW для обновления, CONCURRENTLY не блокирует SELECT. Use cases: dashboard statistics, complex aggregations, reporting. Laravel: создавать через DB::statement, refresh через Scheduler. MySQL не поддерживает — workaround через таблицу + scheduled job.
+> **TL;DR:** Materialized View é o resultado de uma query, gravado fisicamente no disco. REFRESH MATERIALIZED VIEW atualiza, CONCURRENTLY não bloqueia SELECT. Casos de uso: estatística de dashboard, agregação pesada, relatório. No Laravel: criar com DB::statement, refresh pelo Scheduler. MySQL não tem — workaround com tabela + scheduled job.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Создание Materialized View](#создание-materialized-view)
-- [Refresh Materialized View](#refresh-materialized-view)
-- [Автоматический Refresh](#автоматический-refresh)
-- [Use Cases](#use-cases)
-- [Incremental Update](#incremental-update-postgresql-13)
-- [Triggers для Refresh](#triggers-для-refresh)
+- [O que é](#o-que-é)
+- [Criar Materialized View](#criar-materialized-view)
+- [Refresh da Materialized View](#refresh-da-materialized-view)
+- [Refresh automático](#refresh-automático)
+- [Casos de uso](#casos-de-uso)
+- [Update incremental](#update-incremental-postgresql-13)
+- [Triggers para refresh](#triggers-para-refresh)
 - [MySQL](#mysql)
-- [Best Practices](#best-practices)
-- [Альтернативы](#альтернативы)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Boas práticas](#boas-práticas)
+- [Alternativas](#alternativas)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
-**Materialized View:**
-Результат запроса, сохранённый как таблица. Данные физически хранятся на диске.
+**Materialized View (visão materializada):**
+Resultado de uma query, guardado como tabela. Os dados ficam fisicamente no disco.
 
 **View vs Materialized View:**
-- **View** (обычная): виртуальная, запрос выполняется каждый раз
-- **Materialized View**: физическая, данные закешированы
+- **View** (comum): virtual, a query roda toda vez
+- **Materialized View**: física, os dados ficam em cache
 
-**Зачем:**
-- Ускорить сложные запросы (aggregations, joins)
-- Pre-compute expensive операции
-- Отчёты и аналитика
+**Para quê:**
+- Acelerar query pesada (aggregations, joins)
+- Pré-calcular operação cara
+- Relatório e analytics
 
 **Trade-off:**
-- ✅ Быстрые SELECT
-- ❌ Данные могут быть устаревшими (нужен REFRESH)
-- ❌ Занимают место на диске
+- ✅ SELECT rápido
+- ❌ Dado pode ficar velho (precisa de REFRESH)
+- ❌ Ocupa espaço em disco
 
 ---
 
-## Создание Materialized View
+## Criar Materialized View
 
 **PostgreSQL:**
 
@@ -52,7 +52,7 @@ SELECT
 FROM products
 GROUP BY category_id;
 
--- Создать индекс
+-- Criar índice
 CREATE INDEX ON product_stats(category_id);
 ```
 
@@ -77,25 +77,25 @@ Schema::create('product_stats', function (Blueprint $table) {
 
 ---
 
-## Refresh Materialized View
+## Refresh da Materialized View
 
-**Manual Refresh:**
+**Refresh manual:**
 
 ```sql
 REFRESH MATERIALIZED VIEW product_stats;
 ```
 
-**Concurrent Refresh (не блокирует SELECT):**
+**Concurrent Refresh (não bloqueia SELECT):**
 
 ```sql
 REFRESH MATERIALIZED VIEW CONCURRENTLY product_stats;
--- Требует UNIQUE индекс
+-- Precisa de índice UNIQUE
 ```
 
 **Laravel:**
 
 ```php
-// В команде или job
+// Na command ou no job
 DB::statement('REFRESH MATERIALIZED VIEW product_stats');
 
 // Concurrent
@@ -104,7 +104,7 @@ DB::statement('REFRESH MATERIALIZED VIEW CONCURRENTLY product_stats');
 
 ---
 
-## Автоматический Refresh
+## Refresh automático
 
 **Laravel Scheduler:**
 
@@ -112,17 +112,17 @@ DB::statement('REFRESH MATERIALIZED VIEW CONCURRENTLY product_stats');
 // app/Console/Kernel.php
 protected function schedule(Schedule $schedule)
 {
-    // Обновлять каждый час
+    // Atualizar a cada hora
     $schedule->call(function () {
         DB::statement('REFRESH MATERIALIZED VIEW CONCURRENTLY product_stats');
     })->hourly();
 
-    // Или каждую ночь
+    // Ou toda noite
     $schedule->command('app:refresh-materialized-views')->daily();
 }
 ```
 
-**Artisan команда:**
+**Command Artisan:**
 
 ```php
 // app/Console/Commands/RefreshMaterializedViews.php
@@ -139,11 +139,11 @@ class RefreshMaterializedViews extends Command
         ];
 
         foreach ($views as $view) {
-            $this->info("Refreshing {$view}...");
+            $this->info("Atualizando {$view}...");
 
             DB::statement("REFRESH MATERIALIZED VIEW CONCURRENTLY {$view}");
 
-            $this->info("✓ {$view} refreshed");
+            $this->info("✓ {$view} atualizada");
         }
     }
 }
@@ -151,14 +151,14 @@ class RefreshMaterializedViews extends Command
 
 ---
 
-## Use Cases
+## Casos de uso
 
-### 1. Dashboard Statistics
+### 1. Estatísticas de dashboard
 
-**Проблема: медленный запрос**
+**Problema: query lenta**
 
 ```sql
--- Каждый раз считает (медленно)
+-- Calcula toda vez (lento)
 SELECT
     COUNT(*) as total_users,
     COUNT(CASE WHEN created_at > NOW() - INTERVAL '30 days' THEN 1 END) as new_users,
@@ -167,7 +167,7 @@ SELECT
 FROM users;
 ```
 
-**Решение: Materialized View**
+**Solução: Materialized View**
 
 ```sql
 CREATE MATERIALIZED VIEW dashboard_stats AS
@@ -178,7 +178,7 @@ SELECT
     AVG(orders_count) as avg_orders
 FROM users;
 
--- Refresh каждый час
+-- Refresh a cada hora
 ```
 
 **Laravel:**
@@ -188,7 +188,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Быстро (данные уже посчитаны)
+        // Rápido (dado já calculado)
         $stats = DB::table('dashboard_stats')->first();
 
         return view('dashboard', compact('stats'));
@@ -198,12 +198,12 @@ class DashboardController extends Controller
 
 ---
 
-### 2. Product Search с агрегациями
+### 2. Busca de produto com agregações
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- Медленно: JOIN + GROUP BY + COUNT
+-- Lento: JOIN + GROUP BY + COUNT
 SELECT
     products.*,
     categories.name as category_name,
@@ -215,7 +215,7 @@ LEFT JOIN reviews ON products.id = reviews.product_id
 GROUP BY products.id, categories.name;
 ```
 
-**Решение:**
+**Solução:**
 
 ```sql
 CREATE MATERIALIZED VIEW products_with_stats AS
@@ -245,15 +245,15 @@ class ProductWithStats extends Model
     protected $table = 'products_with_stats';
     public $timestamps = false;
 
-    // Read-only
+    // Somente leitura
     public function save(array $options = [])
     {
-        throw new Exception('Materialized view is read-only');
+        throw new Exception('Materialized view é somente leitura');
     }
 }
 
-// Использование
-$products = ProductWithStats::where('category_name', 'Electronics')
+// Uso
+$products = ProductWithStats::where('category_name', 'Eletrônicos')
     ->where('avg_rating', '>=', 4.0)
     ->orderBy('avg_rating', 'desc')
     ->paginate(20);
@@ -261,9 +261,9 @@ $products = ProductWithStats::where('category_name', 'Electronics')
 
 ---
 
-### 3. Reporting / Analytics
+### 3. Relatório / Analytics
 
-**Monthly Sales Report:**
+**Relatório mensal de vendas:**
 
 ```sql
 CREATE MATERIALIZED VIEW monthly_sales AS
@@ -302,7 +302,7 @@ class ReportsController extends Controller
 
 ---
 
-### 4. Leaderboard (топы)
+### 4. Leaderboard (ranking)
 
 ```sql
 CREATE MATERIALIZED VIEW user_leaderboard AS
@@ -318,20 +318,20 @@ GROUP BY users.id, users.name
 ORDER BY total_spent DESC
 LIMIT 100;
 
--- Refresh ежедневно
+-- Refresh diário
 ```
 
 ---
 
-## Incremental Update (PostgreSQL 13+)
+## Update incremental (PostgreSQL 13+)
 
-**Проблема:**
-REFRESH MATERIALIZED VIEW пересчитывает ВСЕ данные.
+**Problema:**
+REFRESH MATERIALIZED VIEW recalcula TODOS os dados.
 
-**Решение: Incremental Materialized View**
+**Solução: Incremental Materialized View**
 
 ```sql
--- Требует: primary key или unique index
+-- Precisa de: primary key ou unique index
 CREATE MATERIALIZED VIEW product_stats AS
 SELECT
     category_id,
@@ -342,18 +342,18 @@ GROUP BY category_id;
 
 CREATE UNIQUE INDEX ON product_stats(category_id);
 
--- Теперь можно incremental refresh (только изменённые данные)
+-- Agora dá para fazer incremental refresh (só o que mudou)
 REFRESH MATERIALIZED VIEW CONCURRENTLY product_stats;
 ```
 
 ---
 
-## Triggers для Refresh
+## Triggers para refresh
 
-**Auto-refresh при изменении данных:**
+**Auto-refresh quando o dado muda:**
 
 ```sql
--- Function для refresh
+-- Function para o refresh
 CREATE OR REPLACE FUNCTION refresh_product_stats()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -362,31 +362,31 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger на INSERT/UPDATE/DELETE
+-- Trigger em INSERT/UPDATE/DELETE
 CREATE TRIGGER trigger_refresh_product_stats
 AFTER INSERT OR UPDATE OR DELETE ON products
 FOR EACH STATEMENT
 EXECUTE FUNCTION refresh_product_stats();
 ```
 
-**Проблема:**
-- ❌ REFRESH после КАЖДОГО изменения (медленно)
-- ❌ Может блокировать
+**Problema:**
+- ❌ REFRESH depois de CADA mudança (lento)
+- ❌ Pode bloquear
 
-**Лучше:**
+**Melhor:**
 - ✅ Scheduled refresh (hourly/daily)
-- ✅ Manual refresh через job после bulk операций
+- ✅ Refresh manual via job depois de operação em lote
 
 ---
 
 ## MySQL
 
-**MySQL НЕ поддерживает Materialized Views!**
+**MySQL NÃO tem Materialized Views!**
 
-**Workaround: обычная таблица + scheduled update**
+**Workaround: tabela comum + update agendado**
 
 ```php
-// Migration: обычная таблица
+// Migration: tabela comum
 Schema::create('product_stats', function (Blueprint $table) {
     $table->unsignedBigInteger('category_id')->primary();
     $table->integer('products_count');
@@ -394,7 +394,7 @@ Schema::create('product_stats', function (Blueprint $table) {
     $table->timestamp('updated_at');
 });
 
-// Command для refresh
+// Command para o refresh
 class RefreshProductStats extends Command
 {
     public function handle()
@@ -422,59 +422,59 @@ $schedule->command('app:refresh-product-stats')->hourly();
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ REFRESH CONCURRENTLY с UNIQUE индексом (не блокирует SELECT)
-✓ Scheduler для автоматического refresh (hourly/daily)
-✓ Индексы на Materialized View для быстрых запросов
-✓ Используй для read-heavy aggregate запросов
-✓ НЕ используй если данные должны быть real-time
-✓ Мониторь размер (могут занимать много места)
-✓ Используй для отчётов, dashboards, leaderboards
-✓ В MySQL: workaround через обычную таблицу + scheduled job
+✓ REFRESH CONCURRENTLY com índice UNIQUE (não bloqueia SELECT)
+✓ Scheduler para refresh automático (hourly/daily)
+✓ Índices na Materialized View para query rápida
+✓ Use em query de agregação read-heavy
+✓ NÃO use se o dado precisa ser real-time
+✓ Monitore o tamanho (pode ocupar bastante espaço)
+✓ Use para relatório, dashboard, leaderboard
+✓ No MySQL: workaround com tabela comum + scheduled job
 ```
 
 ---
 
-## Альтернативы
+## Alternativas
 
-**Когда НЕ использовать Materialized View:**
+**Quando NÃO usar Materialized View:**
 
-### 1. Real-time данные → Cache
+### 1. Dado real-time → Cache
 
 ```php
-// Вместо Materialized View
+// Em vez de Materialized View
 Cache::remember('dashboard_stats', 3600, function () {
     return DB::table('users')->select([...])->first();
 });
 ```
 
-### 2. Частые изменения → Query Optimization
+### 2. Mudança frequente → Query Optimization
 
 ```sql
--- Вместо Materialized View: добавить индексы
+-- Em vez de Materialized View: adicionar índices
 CREATE INDEX ON products(category_id, price);
 ```
 
-### 3. Simple queries → Обычная View
+### 3. Query simples → View comum
 
 ```sql
--- Если запрос быстрый, достаточно обычной View
+-- Se a query é rápida, View comum basta
 CREATE VIEW active_users AS
 SELECT * FROM users WHERE is_active = true;
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Dashboard Statistics Materialized View
+### Exercício 1: Materialized View de estatísticas do dashboard
 
-**Задача:** Создать materialized view для дашборда с автоматическим обновлением.
+**Enunciado:** Criar materialized view para o dashboard com atualização automática.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/xxxx_create_dashboard_stats_view.php
@@ -497,7 +497,7 @@ return new class extends Migration
                 NOW() as updated_at
         ");
 
-        // Создаём уникальный индекс (для CONCURRENTLY)
+        // Índice UNIQUE (para CONCURRENTLY)
         DB::statement("CREATE UNIQUE INDEX ON dashboard_stats (updated_at)");
     }
 
@@ -516,11 +516,11 @@ use Illuminate\Support\Facades\DB;
 class RefreshDashboardStats extends Command
 {
     protected $signature = 'stats:refresh-dashboard';
-    protected $description = 'Refresh dashboard materialized view';
+    protected $description = 'Atualiza a materialized view do dashboard';
 
     public function handle()
     {
-        $this->info('Refreshing dashboard stats...');
+        $this->info('Atualizando estatísticas do dashboard...');
 
         $start = microtime(true);
 
@@ -528,14 +528,14 @@ class RefreshDashboardStats extends Command
 
         $duration = round((microtime(true) - $start) * 1000, 2);
 
-        $this->info("✓ Dashboard stats refreshed in {$duration}ms");
+        $this->info("✓ Estatísticas do dashboard atualizadas em {$duration}ms");
     }
 }
 
 // app/Console/Kernel.php
 protected function schedule(Schedule $schedule)
 {
-    // Обновлять каждые 15 минут
+    // Atualizar a cada 15 minutos
     $schedule->command('stats:refresh-dashboard')->everyFifteenMinutes();
 }
 
@@ -544,7 +544,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Быстро! Данные уже посчитаны
+        // Rápido! Dado já calculado
         $stats = DB::table('dashboard_stats')->first();
 
         return response()->json([
@@ -557,12 +557,12 @@ class DashboardController extends Controller
 
 </details>
 
-### Задание 2: Product Rankings with Materialized View
+### Exercício 2: Ranking de produtos com Materialized View
 
-**Задача:** Создать топ продуктов по продажам с периодическим обновлением.
+**Enunciado:** Criar o top de produtos por vendas com atualização periódica.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -597,7 +597,7 @@ return new class extends Migration
             GROUP BY p.id, p.name, p.category_id, c.name
         ");
 
-        // Индексы для быстрых запросов
+        // Índices para query rápida
         DB::statement("CREATE UNIQUE INDEX ON product_rankings (id)");
         DB::statement("CREATE INDEX ON product_rankings (category_id)");
         DB::statement("CREATE INDEX ON product_rankings (overall_rank)");
@@ -610,7 +610,7 @@ return new class extends Migration
     }
 };
 
-// app/Models/ProductRanking.php (read-only model)
+// app/Models/ProductRanking.php (model somente leitura)
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -620,15 +620,15 @@ class ProductRanking extends Model
     protected $table = 'product_rankings';
     public $timestamps = false;
 
-    // Read-only
+    // Somente leitura
     public function save(array $options = [])
     {
-        throw new \Exception('ProductRanking is a read-only materialized view');
+        throw new \Exception('ProductRanking é uma materialized view somente leitura');
     }
 
     public function delete()
     {
-        throw new \Exception('ProductRanking is a read-only materialized view');
+        throw new \Exception('ProductRanking é uma materialized view somente leitura');
     }
 }
 
@@ -666,29 +666,29 @@ class RefreshProductRankings extends Command
 
     public function handle()
     {
-        $this->info('Refreshing product rankings...');
+        $this->info('Atualizando ranking de produtos...');
 
         DB::statement('REFRESH MATERIALIZED VIEW CONCURRENTLY product_rankings');
 
-        $this->info('✓ Product rankings refreshed');
+        $this->info('✓ Ranking de produtos atualizado');
     }
 }
 
-// Scheduler: обновлять каждый час
+// Scheduler: atualizar a cada hora
 $schedule->command('stats:refresh-products')->hourly();
 ```
 
 </details>
 
-### Задание 3: MySQL Alternative (без Materialized Views)
+### Exercício 3: Alternativa no MySQL (sem Materialized Views)
 
-**Задача:** Реализовать аналог materialized view для MySQL.
+**Enunciado:** Implementar o equivalente de materialized view no MySQL.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Migration (обычная таблица вместо materialized view)
+// Migration (tabela comum no lugar da materialized view)
 Schema::create('dashboard_stats_cache', function (Blueprint $table) {
     $table->id();
     $table->integer('total_users');
@@ -711,7 +711,7 @@ class DashboardStatsService
     {
         $stats = $this->calculateStats();
 
-        // Truncate и insert (для MySQL)
+        // Truncate e insert (para MySQL)
         DB::table('dashboard_stats_cache')->truncate();
         DB::table('dashboard_stats_cache')->insert($stats);
     }
@@ -756,7 +756,7 @@ class RefreshDashboardStatsMySQL extends Command
 
     public function handle()
     {
-        $this->info('Refreshing dashboard stats...');
+        $this->info('Atualizando estatísticas do dashboard...');
 
         $start = microtime(true);
 
@@ -764,7 +764,7 @@ class RefreshDashboardStatsMySQL extends Command
 
         $duration = round((microtime(true) - $start) * 1000, 2);
 
-        $this->info("✓ Dashboard stats refreshed in {$duration}ms");
+        $this->info("✓ Estatísticas do dashboard atualizadas em {$duration}ms");
     }
 }
 
@@ -780,7 +780,7 @@ class DashboardController extends Controller
         $stats = $this->statsService->get();
 
         if (!$stats) {
-            // Первый раз - вычислить и закешировать
+            // Primeira vez — calcular e guardar no cache
             $this->statsService->refresh();
             $stats = $this->statsService->get();
         }
@@ -800,10 +800,10 @@ $schedule->command('stats:refresh-dashboard')->everyFifteenMinutes();
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Materialized View — результат запроса, физически сохранённый на диске. Отличие от обычной View: данные закешированы, не пересчитываются каждый раз. REFRESH MATERIALIZED VIEW для обновления, CONCURRENTLY не блокирует SELECT (требует UNIQUE индекс). Use cases: dashboard statistics, complex aggregations, reporting, leaderboards. Laravel: создавать через DB::statement в migration, refresh через Scheduler (hourly/daily). MySQL не поддерживает — workaround через таблицу + scheduled job. Best practices: CONCURRENTLY, индексы, scheduled refresh, для read-heavy запросов. Альтернативы: Cache для real-time, индексы для simple queries."
+> "Materialized View é o resultado de uma query, gravado fisicamente no disco. Diferença da View comum: o dado fica em cache, não recalcula toda vez. REFRESH MATERIALIZED VIEW atualiza, CONCURRENTLY não bloqueia SELECT (precisa de índice UNIQUE). Casos de uso: estatística de dashboard, agregação pesada, relatório, leaderboard. No Laravel: criar com DB::statement na migration, refresh pelo Scheduler (hourly/daily). MySQL não tem — workaround com tabela + scheduled job. Boas práticas: CONCURRENTLY, índices, scheduled refresh, para query read-heavy. Alternativas: Cache para real-time, índices para query simples."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

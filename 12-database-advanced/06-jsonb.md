@@ -1,41 +1,41 @@
-# 9.6 JSONB в PostgreSQL
+# 9.6 JSONB no PostgreSQL
 
-> **TL;DR:** JSONB — бинарный JSON тип в PostgreSQL для гибкой схемы данных. Операторы: -> (get JSON), ->> (get text), @> (contains), ? (has key). GIN индексы для быстрых запросов. Laravel: where('attributes->brand', 'Dell'), whereJsonContains. Use cases: dynamic attributes, user preferences, audit logs.
+> **TL;DR:** JSONB é o tipo JSON binário do PostgreSQL para schema flexível. Operadores: -> (get JSON), ->> (get text), @> (contains), ? (has key). GIN indexes para queries rápidas. Laravel: where('attributes->brand', 'Dell'), whereJsonContains. Casos de uso: atributos dinâmicos, preferences do usuário, audit logs.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Создание JSONB колонки](#создание-jsonb-колонки)
-- [Запись данных](#запись-данных)
-- [Чтение данных](#чтение-данных)
-- [Операторы JSONB](#операторы-jsonb)
-- [Запросы в Laravel](#запросы-в-laravel)
-- [Индексы на JSONB](#индексы-на-jsonb)
-- [Практические примеры](#практические-примеры)
-- [JSONB Functions](#jsonb-functions)
-- [Performance Tips](#performance-tips)
-- [JSONB vs Relational](#jsonb-vs-relational)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [O que é](#o-que-é)
+- [Criar coluna JSONB](#criar-coluna-jsonb)
+- [Gravar dados](#gravar-dados)
+- [Ler dados](#ler-dados)
+- [Operadores JSONB](#operadores-jsonb)
+- [Queries no Laravel](#queries-no-laravel)
+- [Índices em JSONB](#índices-em-jsonb)
+- [Exemplos práticos](#exemplos-práticos)
+- [Funções JSONB](#funções-jsonb)
+- [Dicas de performance](#dicas-de-performance)
+- [JSONB vs relacional](#jsonb-vs-relacional)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
 **JSONB:**
-Бинарный JSON тип данных в PostgreSQL. Хранит JSON в разобранном виде, позволяет индексировать и эффективно запрашивать.
+Tipo JSON binário no PostgreSQL. Guarda o JSON já parseado. Dá para indexar e consultar com eficiência.
 
 **JSON vs JSONB:**
-- **JSON**: текст, хранится как есть, медленные запросы
-- **JSONB**: binary, parsed, быстрые запросы, поддержка индексов
+- **JSON**: texto, guarda como está, queries lentas
+- **JSONB**: binary, parsed, queries rápidas, suporta índices
 
-**Зачем:**
-- Гибкая схема (dynamic fields)
-- Вложенные структуры
-- Запросы внутри JSON
-- Миграция с NoSQL
+**Para quê:**
+- Schema flexível (campos dinâmicos)
+- Estruturas aninhadas
+- Query dentro do JSON
+- Migração de NoSQL
 
 ---
 
-## Создание JSONB колонки
+## Criar coluna JSONB
 
 **Migration:**
 
@@ -43,7 +43,7 @@
 Schema::create('products', function (Blueprint $table) {
     $table->id();
     $table->string('name');
-    $table->jsonb('attributes');  // JSONB колонка
+    $table->jsonb('attributes');  // Coluna JSONB
     $table->timestamps();
 });
 ```
@@ -54,14 +54,14 @@ Schema::create('products', function (Blueprint $table) {
 class Product extends Model
 {
     protected $casts = [
-        'attributes' => 'array',  // Auto JSON encode/decode
+        'attributes' => 'array',  // Encode/decode JSON automático
     ];
 }
 ```
 
 ---
 
-## Запись данных
+## Gravar dados
 
 ```php
 Product::create([
@@ -80,56 +80,56 @@ Product::create([
 
 ---
 
-## Чтение данных
+## Ler dados
 
-**Базовое чтение:**
+**Leitura básica:**
 
 ```php
 $product = Product::find(1);
 
-// Весь JSON
+// O JSON inteiro
 $attributes = $product->attributes;
 
-// Доступ к полям
+// Acesso aos campos
 $brand = $product->attributes['brand'];  // 'Dell'
 $cpu = $product->attributes['specs']['cpu'];  // 'Intel i7'
 ```
 
-**Eloquent JSON путь:**
+**Caminho JSON no Eloquent:**
 
 ```php
-// WHERE JSON field
+// WHERE em campo JSON
 $products = Product::where('attributes->brand', 'Dell')->get();
 
-// Вложенные поля
+// Campos aninhados
 $products = Product::where('attributes->specs->cpu', 'Intel i7')->get();
 
-// SELECT JSON field
+// SELECT de campo JSON
 $brands = Product::select('attributes->brand as brand')->get();
 ```
 
 ---
 
-## Операторы JSONB
+## Operadores JSONB
 
-### 1. `->` Получить JSON объект
+### 1. `->` Pegar objeto JSON
 
 ```sql
 SELECT attributes->'brand' FROM products;
--- Результат: JSON ("Dell")
+-- Resultado: JSON ("Dell")
 ```
 
-### 2. `->>` Получить text
+### 2. `->>` Pegar text
 
 ```sql
 SELECT attributes->>'brand' FROM products;
--- Результат: text (Dell)
+-- Resultado: text (Dell)
 ```
 
-### 3. `@>` Содержит JSON
+### 3. `@>` Contém JSON
 
 ```sql
--- Найти продукты с brand = 'Dell'
+-- Encontrar produtos com brand = 'Dell'
 SELECT * FROM products
 WHERE attributes @> '{"brand": "Dell"}';
 ```
@@ -140,65 +140,65 @@ WHERE attributes @> '{"brand": "Dell"}';
 Product::whereRaw("attributes @> ?", ['{"brand": "Dell"}'])->get();
 ```
 
-### 4. `?` Есть ключ
+### 4. `?` Tem a chave
 
 ```sql
--- Найти продукты у которых есть поле 'warranty'
+-- Encontrar produtos que têm o campo 'warranty'
 SELECT * FROM products
 WHERE attributes ? 'warranty';
 ```
 
-### 5. `?|` Есть любой из ключей
+### 5. `?|` Tem qualquer uma das chaves
 
 ```sql
--- Есть 'color' или 'size'
+-- Tem 'color' ou 'size'
 SELECT * FROM products
 WHERE attributes ?| array['color', 'size'];
 ```
 
-### 6. `?&` Есть все ключи
+### 6. `?&` Tem todas as chaves
 
 ```sql
--- Есть и 'color' и 'size'
+-- Tem 'color' e 'size'
 SELECT * FROM products
 WHERE attributes ?& array['color', 'size'];
 ```
 
 ---
 
-## Запросы в Laravel
+## Queries no Laravel
 
-**WHERE на JSON поле:**
+**WHERE em campo JSON:**
 
 ```php
-// Простое условие
+// Condição simples
 Product::where('attributes->brand', 'Dell')->get();
 
-// Вложенное
+// Aninhado
 Product::where('attributes->specs->ram', '16GB')->get();
 
 // Contains
 Product::whereJsonContains('attributes->tags', 'electronics')->get();
 
-// Array length
+// Tamanho do array
 Product::whereJsonLength('attributes->tags', 2)->get();
 ```
 
-**UPDATE JSON поле:**
+**UPDATE em campo JSON:**
 
 ```php
-// Обновить весь JSON
+// Atualizar o JSON inteiro
 $product->update([
     'attributes' => ['brand' => 'HP'],
 ]);
 
-// Обновить конкретное поле через SQL
+// Atualizar um campo específico via SQL
 Product::where('id', 1)->update([
     'attributes->brand' => 'HP',
 ]);
 ```
 
-**Increment JSON number:**
+**Incrementar número no JSON:**
 
 ```php
 DB::table('products')
@@ -210,11 +210,11 @@ DB::table('products')
 
 ---
 
-## Индексы на JSONB
+## Índices em JSONB
 
 ### 1. GIN Index (General Inverted Index)
 
-**Для `@>` и `?` операторов:**
+**Para os operadores `@>` e `?`:**
 
 ```php
 Schema::table('products', function (Blueprint $table) {
@@ -225,50 +225,50 @@ Schema::table('products', function (Blueprint $table) {
 // CREATE INDEX idx_products_attributes ON products USING gin (attributes);
 ```
 
-**Использование:**
+**Uso:**
 
 ```sql
--- Быстро (использует GIN index)
+-- Rápido (usa GIN index)
 SELECT * FROM products
 WHERE attributes @> '{"brand": "Dell"}';
 ```
 
 ---
 
-### 2. GIN Index на конкретный путь
+### 2. GIN Index em um caminho específico
 
 ```php
-// Raw SQL в migration
+// Raw SQL na migration
 DB::statement("
     CREATE INDEX idx_products_brand
     ON products USING gin ((attributes->'brand'))
 ");
 ```
 
-**Использование:**
+**Uso:**
 
 ```sql
--- Быстро
+-- Rápido
 SELECT * FROM products
 WHERE attributes->'brand' = '"Dell"';
 ```
 
 ---
 
-### 3. B-Tree Index на JSON поле
+### 3. B-Tree Index em campo JSON
 
 ```php
-// Для сортировки и WHERE с операторами сравнения
+// Para ORDER BY e WHERE com operadores de comparação
 DB::statement("
     CREATE INDEX idx_products_price
     ON products ((attributes->>'price')::numeric)
 ");
 ```
 
-**Использование:**
+**Uso:**
 
 ```sql
--- Быстро
+-- Rápido
 SELECT * FROM products
 WHERE (attributes->>'price')::numeric > 1000
 ORDER BY (attributes->>'price')::numeric;
@@ -284,12 +284,12 @@ Product::whereRaw("(attributes->>'price')::numeric > ?", [1000])
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-### 1. Dynamic Attributes (E-commerce)
+### 1. Atributos dinâmicos (e-commerce)
 
 ```php
-// Product с разными атрибутами для разных категорий
+// Product com atributos diferentes por categoria
 Product::create([
     'name' => 'T-Shirt',
     'category' => 'clothing',
@@ -310,7 +310,7 @@ Product::create([
     ],
 ]);
 
-// Фильтры
+// Filtros
 Product::where('category', 'clothing')
     ->where('attributes->color', 'blue')
     ->get();
@@ -322,7 +322,7 @@ Product::where('category', 'electronics')
 
 ---
 
-### 2. User Preferences
+### 2. Preferences do usuário
 
 ```php
 Schema::create('users', function (Blueprint $table) {
@@ -332,10 +332,10 @@ Schema::create('users', function (Blueprint $table) {
 });
 
 User::create([
-    'email' => 'user@example.com',
+    'email' => 'joao@email.com',
     'preferences' => [
         'theme' => 'dark',
-        'language' => 'en',
+        'language' => 'pt',
         'notifications' => [
             'email' => true,
             'push' => false,
@@ -343,16 +343,16 @@ User::create([
     ],
 ]);
 
-// Получить пользователей с dark theme
+// Usuários com tema dark
 User::where('preferences->theme', 'dark')->get();
 
-// Email notifications enabled
+// Notificações por email ativas
 User::where('preferences->notifications->email', true)->get();
 ```
 
 ---
 
-### 3. Audit Log
+### 3. Audit log
 
 ```php
 Schema::create('audit_logs', function (Blueprint $table) {
@@ -365,7 +365,7 @@ Schema::create('audit_logs', function (Blueprint $table) {
     $table->timestamps();
 });
 
-// При обновлении
+// No update
 AuditLog::create([
     'model_type' => 'Product',
     'model_id' => 1,
@@ -380,14 +380,14 @@ AuditLog::create([
     ],
 ]);
 
-// Найти все изменения цены
+// Todas as mudanças de preço
 AuditLog::whereRaw("old_values->>'price' IS DISTINCT FROM new_values->>'price'")
     ->get();
 ```
 
 ---
 
-### 4. Settings/Configuration
+### 4. Settings/configuração
 
 ```php
 Schema::create('settings', function (Blueprint $table) {
@@ -396,7 +396,7 @@ Schema::create('settings', function (Blueprint $table) {
     $table->jsonb('value');
 });
 
-// Хранить сложные настройки
+// Guardar configurações complexas
 Setting::create([
     'key' => 'payment_gateways',
     'value' => [
@@ -412,19 +412,19 @@ Setting::create([
     ],
 ]);
 
-// Получить настройку
+// Pegar a configuração
 $stripeEnabled = Setting::where('key', 'payment_gateways')
     ->value('value->stripe->enabled');
 ```
 
 ---
 
-## JSONB Functions
+## Funções JSONB
 
 ### 1. jsonb_array_elements
 
 ```sql
--- Развернуть JSON array в строки
+-- Expandir o JSON array em linhas
 SELECT jsonb_array_elements(attributes->'tags') as tag
 FROM products
 WHERE id = 1;
@@ -448,7 +448,7 @@ DB::table('products')
 ### 2. jsonb_build_object
 
 ```sql
--- Создать JSON объект
+-- Criar objeto JSON
 SELECT jsonb_build_object(
     'name', name,
     'brand', attributes->>'brand'
@@ -460,7 +460,7 @@ SELECT jsonb_build_object(
 ### 3. jsonb_set
 
 ```sql
--- Обновить значение в JSON
+-- Atualizar valor no JSON
 UPDATE products
 SET attributes = jsonb_set(
     attributes,
@@ -482,44 +482,44 @@ DB::table('products')
 
 ---
 
-## Performance Tips
+## Dicas de performance
 
 ```
-✓ Используй JSONB вместо JSON (быстрее)
-✓ Создавай GIN индексы для частых запросов
-✓ Для сортировки используй B-Tree индексы на (field->>'key')::type
-✓ Храни только динамические поля в JSONB (не всё подряд)
-✓ JSONB хорош для read-heavy (не для write-heavy)
-✓ Нормализуй если часто JOIN по этим полям
+✓ Use JSONB em vez de JSON (mais rápido)
+✓ Crie GIN indexes para queries frequentes
+✓ Para ORDER BY, use B-Tree indexes em (field->>'key')::type
+✓ Guarde só campos dinâmicos no JSONB (não tudo)
+✓ JSONB é bom para read-heavy (não para write-heavy)
+✓ Normalize se você faz JOIN frequente nesses campos
 ```
 
 ---
 
-## JSONB vs Relational
+## JSONB vs relacional
 
-**JSONB хорош для:**
-- ✅ Dynamic/flexible schema
-- ✅ Nested data
-- ✅ Prototype/MVP
-- ✅ Настройки, preferences
+**JSONB é bom para:**
+- ✅ Schema dinâmica/flexível
+- ✅ Dados aninhados
+- ✅ Protótipo/MVP
+- ✅ Settings, preferences
 
-**Relational хорош для:**
-- ✅ Strict schema
-- ✅ JOIN с другими таблицами
-- ✅ Referential integrity
-- ✅ Complex queries
+**Relacional é bom para:**
+- ✅ Schema rígida
+- ✅ JOIN com outras tabelas
+- ✅ Integridade referencial
+- ✅ Queries complexas
 
-**Гибридный подход:**
+**Abordagem híbrida:**
 
 ```php
 Schema::create('products', function (Blueprint $table) {
-    // Relational (для JOIN и WHERE)
+    // Relacional (para JOIN e WHERE)
     $table->id();
     $table->string('name');
     $table->decimal('price');
     $table->unsignedBigInteger('category_id');
 
-    // JSONB (для динамических полей)
+    // JSONB (para campos dinâmicos)
     $table->jsonb('attributes')->nullable();
 
     $table->foreign('category_id')->references('id')->on('categories');
@@ -528,14 +528,14 @@ Schema::create('products', function (Blueprint $table) {
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: E-commerce с динамическими атрибутами
+### Exercício 1: E-commerce com atributos dinâmicos
 
-**Задача:** Реализовать систему продуктов с гибкими атрибутами для разных категорий.
+**Enunciado:** Implemente um sistema de produtos com atributos flexíveis por categoria.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -548,11 +548,11 @@ Schema::create('products', function (Blueprint $table) {
     $table->timestamps();
 
     $table->index('category_id');
-    // GIN индекс для JSONB
+    // GIN index para JSONB
     $table->index('attributes', 'idx_products_attributes', 'gin');
 });
 
-// Также индекс на конкретные поля
+// Também índice em campos específicos
 DB::statement("CREATE INDEX idx_products_brand ON products USING gin ((attributes->'brand'))");
 DB::statement("CREATE INDEX idx_products_price_numeric ON products ((attributes->>'price')::numeric)");
 
@@ -563,7 +563,7 @@ class Product extends Model
         'attributes' => 'array',
     ];
 
-    // Scope для фильтрации по JSONB полям
+    // Scope para filtrar por campos JSONB
     public function scopeWithAttribute($query, string $key, $value)
     {
         return $query->where("attributes->{$key}", $value);
@@ -587,7 +587,7 @@ class ProductController extends Controller
     {
         $query = Product::query();
 
-        // Фильтры из query params
+        // Filtros dos query params
         if ($brand = $request->input('brand')) {
             $query->withAttribute('brand', $brand);
         }
@@ -600,12 +600,12 @@ class ProductController extends Controller
             $query->whereRaw("(attributes->>'price')::numeric >= ?", [$minPrice]);
         }
 
-        // Фильтр по наличию атрибута
+        // Filtro por existência do atributo
         if ($request->boolean('has_warranty')) {
             $query->hasAttribute('warranty');
         }
 
-        // Комплексный фильтр (contains)
+        // Filtro composto (contains)
         if ($specs = $request->input('specs')) {
             $query->attributeContains($specs);
         }
@@ -622,13 +622,13 @@ class ProductController extends Controller
             'attributes' => 'required|array',
         ]);
 
-        // Разные атрибуты для разных категорий
+        // Atributos diferentes por categoria
         $product = Product::create($validated);
 
         return new ProductResource($product);
     }
 
-    // Массовое обновление JSONB поля
+    // Update em massa de campo JSONB
     public function bulkUpdateAttribute(Request $request)
     {
         $validated = $request->validate([
@@ -637,20 +637,20 @@ class ProductController extends Controller
             'attribute_value' => 'required',
         ]);
 
-        // Обновить конкретное поле в JSONB
+        // Atualizar um campo específico no JSONB
         $affected = Product::where('category_id', $validated['category_id'])
             ->update([
                 "attributes->{$validated['attribute_key']}" => $validated['attribute_value']
             ]);
 
         return response()->json([
-            'message' => "Updated {$affected} products",
+            'message' => "Atualizados {$affected} produtos",
             'affected' => $affected
         ]);
     }
 }
 
-// Примеры данных для разных категорий
+// Exemplos de dados por categoria
 // Electronics:
 Product::create([
     'name' => 'Laptop Dell XPS',
@@ -684,12 +684,12 @@ Product::create([
 
 </details>
 
-### Задание 2: User Preferences & Settings
+### Exercício 2: Preferences e settings do usuário
 
-**Задача:** Система настроек пользователя с JSONB.
+**Enunciado:** Sistema de configurações do usuário com JSONB.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -706,7 +706,7 @@ class User extends Model
         'metadata' => 'array',
     ];
 
-    // Helper методы для работы с preferences
+    // Helpers para preferences
     public function getPreference(string $key, $default = null)
     {
         return data_get($this->preferences, $key, $default);
@@ -764,7 +764,7 @@ class UserPreferencesController extends Controller
         $user->updatePreferences($validated);
 
         return response()->json([
-            'message' => 'Preferences updated',
+            'message' => 'Preferências atualizadas',
             'preferences' => $user->preferences
         ]);
     }
@@ -776,7 +776,7 @@ class UserPreferencesController extends Controller
         return response()->json($user->preferences ?? []);
     }
 
-    // Получить пользователей с определенными настройками
+    // Usuários com determinadas configurações
     public function getUsersWithEmailNotifications()
     {
         $users = User::notificationEnabled('email')->get();
@@ -785,7 +785,7 @@ class UserPreferencesController extends Controller
     }
 }
 
-// Default preferences при регистрации
+// Preferences padrão no cadastro
 class RegisterController extends Controller
 {
     public function register(Request $request)
@@ -800,7 +800,7 @@ class RegisterController extends Controller
             ...$validated,
             'preferences' => [
                 'theme' => 'light',
-                'language' => 'en',
+                'language' => 'pt',
                 'notifications' => [
                     'email' => true,
                     'push' => true,
@@ -820,12 +820,12 @@ class RegisterController extends Controller
 
 </details>
 
-### Задание 3: Audit Log с JSONB
+### Exercício 3: Audit log com JSONB
 
-**Задача:** Система аудита изменений с сохранением diff в JSONB.
+**Enunciado:** Sistema de auditoria de mudanças, com o diff salvo em JSONB.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -945,7 +945,7 @@ class AuditObserver
     }
 }
 
-// Регистрация observer
+// Registrar o observer
 // app/Providers/EventServiceProvider.php
 public function boot()
 {
@@ -973,12 +973,12 @@ class AuditLogController extends Controller
             $query->where('action', $action);
         }
 
-        // Поиск по изменениям конкретного поля
+        // Busca por mudanças de um campo específico
         if ($field = $request->input('field')) {
             $query->whereRaw("new_values ? ?", [$field]);
         }
 
-        // Поиск по конкретному значению
+        // Busca por um valor específico
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->whereRaw("old_values::text ILIKE ?", ["%{$search}%"])
@@ -1005,10 +1005,10 @@ class AuditLogController extends Controller
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "JSONB — бинарный JSON тип в PostgreSQL. Отличие от JSON: parsed, поддержка индексов, быстрые запросы. Операторы: -> (get JSON), ->> (get text), @> (contains), ? (has key). Laravel: where('attributes->brand', 'Dell'), whereJsonContains. GIN индексы для @> и ? операторов, B-Tree для сортировки. Use cases: dynamic attributes, user preferences, audit logs, settings. Trade-off: гибкость vs strict schema. Best practices: JSONB для read-heavy динамических полей, relational для JOIN и strict schema, гибридный подход оптимален."
+> "JSONB é o tipo JSON binário do PostgreSQL. Diferença para JSON: parsed, tem índice, query rápida. Operadores: -> (get JSON), ->> (get text), @> (contains), ? (has key). No Laravel: where('attributes->brand', 'Dell'), whereJsonContains. GIN index para @> e ?, B-Tree para ORDER BY. Casos de uso: atributos dinâmicos, preferences do usuário, audit log, settings. Trade-off: flexibilidade vs schema rígida. Na prática: JSONB para campos dinâmicos read-heavy, relacional para JOIN e schema rígida. O híbrido costuma ser o melhor."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

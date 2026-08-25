@@ -1,46 +1,46 @@
-# 9.3 Window Functions (Оконные функции)
+# 9.3 Window Functions (funções de janela)
 
-> **TL;DR:** Window Functions выполняют вычисления на окне строк без GROUP BY. ROW_NUMBER для уникальных номеров, RANK с пропусками, PARTITION BY разделяет на группы. Running totals через SUM() OVER, moving averages через ROWS BETWEEN. LAG/LEAD для предыдущей/следующей строки. Use cases: топы, накопительные суммы, deduplicate.
+> **TL;DR:** Window Functions calculam sobre uma janela de linhas, sem GROUP BY. ROW_NUMBER dá número único, RANK pula posição, PARTITION BY separa em grupos. Running total com SUM() OVER, moving average com ROWS BETWEEN. LAG/LEAD pega a linha anterior/próxima. Casos de uso: tops, soma acumulada, deduplicate.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Синтаксис](#синтаксис)
+- [O que é](#o-que-é)
+- [Sintaxe](#sintaxe)
 - [ROW_NUMBER, RANK, DENSE_RANK](#row_number-rank-dense_rank)
   - [ROW_NUMBER](#row_number)
   - [RANK](#rank)
   - [DENSE_RANK](#dense_rank)
 - [PARTITION BY](#partition-by)
-- [Running Totals](#running-totals-накопительная-сумма)
-- [Moving Average](#moving-average-скользящее-среднее)
-- [LAG и LEAD](#lag-и-lead)
-- [FIRST_VALUE и LAST_VALUE](#first_value-и-last_value)
-- [NTILE](#ntile-разделить-на-n-групп)
-- [Практические примеры](#практические-примеры)
+- [Running Totals](#running-totals-soma-acumulada)
+- [Moving Average](#moving-average-média-móvel)
+- [LAG e LEAD](#lag-e-lead)
+- [FIRST_VALUE e LAST_VALUE](#first_value-e-last_value)
+- [NTILE](#ntile-dividir-em-n-grupos)
+- [Exemplos práticos](#exemplos-práticos)
 - [Frame Clause](#frame-clause)
 - [Performance](#performance)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
 **Window Functions:**
-Функции SQL которые выполняют вычисления на наборе строк (окне), связанных с текущей строкой, не группируя результат.
+Funções SQL que calculam sobre um conjunto de linhas (janela) ligado à linha atual, sem agrupar o resultado.
 
-**Отличие от GROUP BY:**
-- **GROUP BY** сворачивает строки в одну
-- **Window Functions** сохраняют все строки и добавляют вычисленные колонки
+**Diferença do GROUP BY:**
+- **GROUP BY** junta as linhas em uma
+- **Window Functions** mantêm todas as linhas e acrescentam colunas calculadas
 
-**Зачем:**
-- Ranking (топы, рейтинги)
-- Running totals (накопительные суммы)
+**Para quê:**
+- Ranking (tops, rankings)
+- Running totals (somas acumuladas)
 - Moving averages
 - Row numbering
-- Lag/Lead (сравнение с предыдущей/следующей строкой)
+- Lag/Lead (comparar com a linha anterior/próxima)
 
 ---
 
-## Синтаксис
+## Sintaxe
 
 ```sql
 function_name([args]) OVER (
@@ -50,10 +50,10 @@ function_name([args]) OVER (
 )
 ```
 
-**Компоненты:**
-- **PARTITION BY** — разделить на группы (как GROUP BY, но не сворачивает)
-- **ORDER BY** — порядок внутри окна
-- **ROWS/RANGE** — рамка окна (по умолчанию: от начала до текущей строки)
+**Componentes:**
+- **PARTITION BY** — separa em grupos (como GROUP BY, mas não junta as linhas)
+- **ORDER BY** — ordem dentro da janela
+- **ROWS/RANGE** — frame da janela (padrão: do início até a linha atual)
 
 ---
 
@@ -61,7 +61,7 @@ function_name([args]) OVER (
 
 ### ROW_NUMBER()
 
-**Уникальный номер для каждой строки:**
+**Número único para cada linha:**
 
 ```sql
 SELECT
@@ -73,7 +73,7 @@ FROM employees;
 -- name       salary  row_num
 -- Alice      5000    1
 -- Bob        4000    2
--- Charlie    4000    3  ← уникальный номер, даже если salary одинаковый
+-- Charlie    4000    3  ← número único, mesmo com salary igual
 -- David      3000    4
 ```
 
@@ -81,7 +81,7 @@ FROM employees;
 
 ### RANK()
 
-**Ранг с пропусками при одинаковых значениях:**
+**Rank com pulos quando o valor é igual:**
 
 ```sql
 SELECT
@@ -93,15 +93,15 @@ FROM employees;
 -- name       salary  rank
 -- Alice      5000    1
 -- Bob        4000    2
--- Charlie    4000    2  ← тот же ранг
--- David      3000    4  ← пропуск (3 отсутствует)
+-- Charlie    4000    2  ← mesmo rank
+-- David      3000    4  ← pula o 3
 ```
 
 ---
 
 ### DENSE_RANK()
 
-**Ранг без пропусков:**
+**Rank sem pulos:**
 
 ```sql
 SELECT
@@ -113,18 +113,18 @@ FROM employees;
 -- name       salary  dense_rank
 -- Alice      5000    1
 -- Bob        4000    2
--- Charlie    4000    2  ← тот же ранг
--- David      3000    3  ← нет пропуска
+-- Charlie    4000    2  ← mesmo rank
+-- David      3000    3  ← sem pulo
 ```
 
 ---
 
 ## PARTITION BY
 
-**Отдельное окно для каждой группы:**
+**Uma janela por grupo:**
 
 ```sql
--- Топ 3 зарплаты в каждом департаменте
+-- Top 3 salários em cada departamento
 SELECT
     department,
     name,
@@ -147,7 +147,7 @@ FROM employees;
 **Laravel Eloquent:**
 
 ```php
-// Топ 3 товара в каждой категории
+// Top 3 produtos em cada categoria
 DB::table('products')
     ->select([
         'category_id',
@@ -161,7 +161,7 @@ DB::table('products')
 
 ---
 
-## Running Totals (Накопительная сумма)
+## Running Totals (soma acumulada)
 
 ```sql
 SELECT
@@ -181,11 +181,11 @@ ORDER BY date;
 -- 2024-01-04  120      570  ← 100 + 150 + 200 + 120
 ```
 
-**Короткая форма:**
+**Forma curta:**
 
 ```sql
 SUM(revenue) OVER (ORDER BY date)
--- По умолчанию: от начала до текущей строки
+-- Por padrão: do início até a linha atual
 ```
 
 **Laravel:**
@@ -203,9 +203,9 @@ DB::table('daily_sales')
 
 ---
 
-## Moving Average (Скользящее среднее)
+## Moving Average (média móvel)
 
-**Среднее за последние 3 дня:**
+**Média dos últimos 3 dias:**
 
 ```sql
 SELECT
@@ -228,9 +228,9 @@ ORDER BY date;
 
 ---
 
-## LAG и LEAD
+## LAG e LEAD
 
-### LAG (предыдущая строка)
+### LAG (linha anterior)
 
 ```sql
 SELECT
@@ -249,7 +249,7 @@ ORDER BY date;
 
 ---
 
-### LEAD (следующая строка)
+### LEAD (próxima linha)
 
 ```sql
 SELECT
@@ -267,7 +267,7 @@ ORDER BY date;
 
 ---
 
-## FIRST_VALUE и LAST_VALUE
+## FIRST_VALUE e LAST_VALUE
 
 ```sql
 SELECT
@@ -293,10 +293,10 @@ FROM employees;
 
 ---
 
-## NTILE (разделить на N групп)
+## NTILE (dividir em N grupos)
 
 ```sql
--- Разделить пользователей на 4 группы (квартили) по активности
+-- Dividir usuários em 4 grupos (quartis) por atividade
 SELECT
     user_id,
     activity_score,
@@ -314,13 +314,13 @@ FROM users;
 -- 108      300             4
 ```
 
-**Use case:** A/B testing, сегментация пользователей.
+**Use case:** A/B testing, segmentação de usuários.
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-### 1. Топ 5 товаров в каждой категории
+### 1. Top 5 produtos em cada categoria
 
 ```sql
 WITH ranked_products AS (
@@ -358,7 +358,7 @@ DB::table(DB::raw('(
 
 ---
 
-### 2. Процент от total
+### 2. Percentual do total
 
 ```sql
 SELECT
@@ -377,10 +377,10 @@ FROM products;
 
 ---
 
-### 3. Найти gaps (пропуски)
+### 3. Encontrar gaps (buracos)
 
 ```sql
--- Найти пропущенные даты
+-- Encontrar datas faltando
 WITH dates AS (
     SELECT
         date,
@@ -396,10 +396,10 @@ WHERE next_date - date > INTERVAL '1 day';
 
 ---
 
-### 4. Deduplicate (удалить дубликаты)
+### 4. Deduplicate (remover duplicatas)
 
 ```sql
--- Оставить только последнюю запись для каждого user
+-- Ficar só com o último registro de cada user
 WITH ranked AS (
     SELECT
         *,
@@ -429,7 +429,7 @@ DB::table(DB::raw('(
 
 ---
 
-### 5. Сравнение с прошлым периодом
+### 5. Comparar com o período anterior
 
 ```sql
 SELECT
@@ -457,26 +457,26 @@ ORDER BY month;
 **ROWS vs RANGE:**
 
 ```sql
--- ROWS: физические строки
+-- ROWS: linhas físicas
 ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
 
--- RANGE: логический диапазон (по значению)
+-- RANGE: intervalo lógico (pelo valor)
 RANGE BETWEEN INTERVAL '7 days' PRECEDING AND CURRENT ROW
 ```
 
-**Примеры frame:**
+**Exemplos de frame:**
 
 ```sql
--- От начала до текущей строки (по умолчанию)
+-- Do início até a linha atual (padrão)
 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 
--- Последние 3 строки
+-- Últimas 3 linhas
 ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
 
--- Текущая и следующие 2
+-- A atual e as 2 seguintes
 ROWS BETWEEN CURRENT ROW AND 2 FOLLOWING
 
--- Все строки в partition
+-- Todas as linhas do partition
 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 ```
 
@@ -484,18 +484,18 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
 
 ## Performance
 
-**Индексы:**
+**Índices:**
 
 ```sql
--- Window function использует ORDER BY
--- Нужен индекс на сортируемую колонку
+-- Window function usa ORDER BY
+-- Precisa de índice na coluna do ORDER BY
 CREATE INDEX idx_sales_date ON sales(date);
 
--- С PARTITION BY нужен composite index
+-- Com PARTITION BY precisa de índice composto
 CREATE INDEX idx_products_category_sales ON products(category_id, sales DESC);
 ```
 
-**Materialized View для сложных window queries:**
+**Materialized View para window queries pesadas:**
 
 ```sql
 CREATE MATERIALIZED VIEW product_rankings AS
@@ -508,23 +508,23 @@ FROM products;
 
 CREATE INDEX ON product_rankings(category_id, rank);
 
--- Обновлять периодически
+-- Atualizar de tempos em tempos
 REFRESH MATERIALIZED VIEW product_rankings;
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Топ продуктов в каждой категории
+### Exercício 1: Top de produtos em cada categoria
 
-**Задача:** Получить топ 3 самых дорогих продукта в каждой категории.
+**Enunciado:** Traga os 3 produtos mais caros de cada categoria.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// SQL решение
+// Solução SQL
 $topProducts = DB::select("
     WITH ranked_products AS (
         SELECT
@@ -545,7 +545,7 @@ $topProducts = DB::select("
     ORDER BY category_name, rank
 ");
 
-// Laravel Eloquent (через subquery)
+// Laravel Eloquent (via subquery)
 $products = DB::table(DB::raw('(
     SELECT
         products.*,
@@ -562,28 +562,28 @@ $products = DB::table(DB::raw('(
 ->orderBy('rank')
 ->get();
 
-// Группировка по категориям
+// Agrupar por categoria
 $grouped = collect($products)->groupBy('category_name');
 
 foreach ($grouped as $category => $items) {
-    echo "Category: {$category}\n";
+    echo "Categoria: {$category}\n";
     foreach ($items as $product) {
-        echo "  {$product->rank}. {$product->name} - \${$product->price}\n";
+        echo "  {$product->rank}. {$product->name} - R$ {$product->price}\n";
     }
 }
 ```
 
 </details>
 
-### Задание 2: Накопительная сумма продаж
+### Exercício 2: Soma acumulada de vendas
 
-**Задача:** Рассчитать накопительную сумму продаж по дням и процент от общей суммы.
+**Enunciado:** Calcule a soma acumulada de vendas por dia e o percentual do total.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// SQL с running total и процентом
+// SQL com running total e percentual
 $salesReport = DB::select("
     SELECT
         date,
@@ -625,10 +625,10 @@ $report = DB::table(DB::raw('(
 ->orderBy('date')
 ->get();
 
-// Форматирование для отчета
+// Formatar para o relatório
 foreach ($report as $row) {
     echo sprintf(
-        "%s: $%s (Running: $%s, %s%%)\n",
+        "%s: R$ %s (Acumulado: R$ %s, %s%%)\n",
         $row->date,
         number_format($row->daily_revenue, 2),
         number_format($row->running_total, 2),
@@ -639,15 +639,15 @@ foreach ($report as $row) {
 
 </details>
 
-### Задание 3: Сравнение с предыдущим периодом (MoM Growth)
+### Exercício 3: Comparar com o período anterior (MoM Growth)
 
-**Задача:** Рассчитать месячный рост выручки (Month-over-Month growth).
+**Enunciado:** Calcule o crescimento mensal da receita (Month-over-Month growth).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// SQL с LAG для сравнения с предыдущим месяцем
+// SQL com LAG para comparar com o mês anterior
 $monthlyGrowth = DB::select("
     SELECT
         month,
@@ -673,7 +673,7 @@ $monthlyGrowth = DB::select("
     ORDER BY month
 ");
 
-// Artisan Command для отчета
+// Artisan Command para o relatório
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -707,12 +707,12 @@ class MonthlyGrowthReport extends Command
         ");
 
         $this->table(
-            ['Month', 'Revenue', 'Prev Month', 'Growth %'],
+            ['Mês', 'Receita', 'Mês anterior', 'Crescimento %'],
             array_map(function ($row) {
                 return [
                     $row->month,
-                    '$' . number_format($row->revenue, 2),
-                    $row->prev_month ? '$' . number_format($row->prev_month, 2) : '-',
+                    'R$ ' . number_format($row->revenue, 2),
+                    $row->prev_month ? 'R$ ' . number_format($row->prev_month, 2) : '-',
                     $row->growth_percent ? $row->growth_percent . '%' : '-',
                 ];
             }, $data)
@@ -725,11 +725,10 @@ class MonthlyGrowthReport extends Command
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Window Functions выполняют вычисления на окне строк без GROUP BY. Синтаксис: function OVER (PARTITION BY, ORDER BY, ROWS). ROW_NUMBER для уникальных номеров, RANK с пропусками, DENSE_RANK без пропусков. PARTITION BY разделяет на группы. Running totals через SUM() OVER (ORDER BY). Moving average через ROWS BETWEEN N PRECEDING AND CURRENT ROW. LAG/LEAD для предыдущей/следующей строки. Use cases: топы по категориям, накопительные суммы, процент от total, deduplicate. Индексы на ORDER BY колонки для performance."
+> "Window Functions calculam sobre uma janela de linhas, sem GROUP BY. Sintaxe: function OVER (PARTITION BY, ORDER BY, ROWS). ROW_NUMBER para número único, RANK com pulos, DENSE_RANK sem pulos. PARTITION BY separa em grupos. Running total com SUM() OVER (ORDER BY). Moving average com ROWS BETWEEN N PRECEDING AND CURRENT ROW. LAG/LEAD para a linha anterior/próxima. Casos de uso: top por categoria, soma acumulada, percentual do total, deduplicate. Índice nas colunas do ORDER BY para performance."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

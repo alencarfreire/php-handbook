@@ -1,43 +1,43 @@
-# 9.2 Шардинг (Sharding)
+# 9.2 Sharding
 
-> **TL;DR:** Шардинг делит данные на независимые БД для масштабирования записи. Range-based по диапазону ID, Hash-based равномерно. Проблемы: cross-shard queries, unique constraints, resharding. Laravel: multiple connections, ShardManager. Использовать когда > 1TB и write bottleneck.
+> **TL;DR:** Sharding divide os dados em bancos independentes para escalar escrita. Range-based por intervalo de ID, Hash-based de forma uniforme. Problemas: cross-shard queries, unique constraints, resharding. Laravel: multiple connections, ShardManager. Use quando passa de 1TB e tem write bottleneck.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы шардинга](#типы-шардинга)
-  - [Range-based](#1-range-based-по-диапазону)
-  - [Hash-based](#2-hash-based-по-хешу)
-  - [Geographic](#3-geographic-географический)
-  - [Directory-based](#4-directory-based-справочник)
-- [Реализация в Laravel](#реализация-в-laravel)
-- [Проблемы шардинга](#проблемы-шардинга)
+- [O que é](#o-que-é)
+- [Tipos de sharding](#tipos-de-sharding)
+  - [Range-based](#1-range-based-por-intervalo)
+  - [Hash-based](#2-hash-based-por-hash)
+  - [Geographic](#3-geographic-geográfico)
+  - [Directory-based](#4-directory-based-diretório)
+- [Implementação no Laravel](#implementação-no-laravel)
+- [Problemas do sharding](#problemas-do-sharding)
   - [Cross-shard queries](#1-cross-shard-queries)
   - [Unique constraints](#2-unique-constraints)
-  - [Resharding](#3-resharding-добавление-шардов)
-- [Шардирование vs Репликация](#шардирование-vs-репликация)
+  - [Resharding](#3-resharding-adicionar-shards)
+- [Sharding vs Replicação](#sharding-vs-replicação)
 - [Vitess](#vitess-mysql-sharding-solution)
-- [Когда использовать шардинг](#когда-использовать-шардинг)
-- [Практический пример](#практический-пример)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Quando usar sharding](#quando-usar-sharding)
+- [Exemplo prático](#exemplo-prático)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
-**Шардинг:**
-Горизонтальное разделение данных на несколько независимых БД (шардов). Каждый шард содержит часть данных.
+**Sharding:**
+Particionamento horizontal: você quebra os dados em vários bancos independentes (shards). Cada shard guarda uma fatia.
 
-**Зачем:**
-- Масштабирование записи (write scaling)
-- Обход лимитов одной БД
-- Географическое распределение
-- Изоляция данных
+**Para quê:**
+- Escalar escrita (write scaling)
+- Sair do teto de um banco só
+- Distribuição geográfica
+- Isolamento de dados
 
 ```
-До шардинга:
+Antes do sharding:
 Single DB (10TB, 10M users)
 
-После шардинга:
+Depois do sharding:
 Shard 1: users 1-2.5M    (2.5TB)
 Shard 2: users 2.5M-5M   (2.5TB)
 Shard 3: users 5M-7.5M   (2.5TB)
@@ -46,11 +46,11 @@ Shard 4: users 7.5M-10M  (2.5TB)
 
 ---
 
-## Типы шардинга
+## Tipos de sharding
 
-### 1. Range-based (по диапазону)
+### 1. Range-based (por intervalo)
 
-**Принцип:**
+**Princípio:**
 
 ```
 user_id 1-1000      → Shard 1
@@ -58,16 +58,16 @@ user_id 1001-2000   → Shard 2
 user_id 2001-3000   → Shard 3
 ```
 
-**Плюсы:**
-- ✅ Просто понять
-- ✅ Range queries работают (WHERE id BETWEEN 100 AND 200)
-- ✅ Легко добавить новый шард
+**Prós:**
+- ✅ Fácil de entender
+- ✅ Range queries funcionam (WHERE id BETWEEN 100 AND 200)
+- ✅ Fácil adicionar um shard novo
 
-**Минусы:**
-- ❌ Неравномерное распределение (hotspots)
-- ❌ Старые данные на одном шарде
+**Contras:**
+- ❌ Distribuição desigual (hotspots)
+- ❌ Dados antigos concentram num shard só
 
-**Пример:**
+**Exemplo:**
 
 ```php
 function getShardByUserId(int $userId): string
@@ -84,9 +84,9 @@ DB::connection($shard)->table('users')->find($userId);
 
 ---
 
-### 2. Hash-based (по хешу)
+### 2. Hash-based (por hash)
 
-**Принцип:**
+**Princípio:**
 
 ```
 user_id 123  → hash(123) % 4 = 3 → Shard 3
@@ -94,20 +94,20 @@ user_id 456  → hash(456) % 4 = 0 → Shard 0
 user_id 789  → hash(789) % 4 = 1 → Shard 1
 ```
 
-**Плюсы:**
-- ✅ Равномерное распределение
-- ✅ Нет hotspots
+**Prós:**
+- ✅ Distribuição uniforme
+- ✅ Sem hotspots
 
-**Минусы:**
-- ❌ Нельзя делать range queries
-- ❌ Сложно добавить новый шард (rehashing)
+**Contras:**
+- ❌ Não dá para fazer range queries
+- ❌ Difícil adicionar um shard novo (rehashing)
 
-**Пример:**
+**Exemplo:**
 
 ```php
 function getShardByHash(int $userId): string
 {
-    $shardIndex = $userId % 4;  // 4 шарда
+    $shardIndex = $userId % 4;  // 4 shards
     return "shard$shardIndex";
 }
 
@@ -117,25 +117,25 @@ DB::connection($shard)->table('users')->find($userId);
 
 ---
 
-### 3. Geographic (географический)
+### 3. Geographic (geográfico)
 
-**Принцип:**
+**Princípio:**
 
 ```
-users в USA    → Shard US
-users в Europe → Shard EU
-users в Asia   → Shard ASIA
+users nos EUA     → Shard US
+users na Europa   → Shard EU
+users na Ásia     → Shard ASIA
 ```
 
-**Плюсы:**
-- ✅ Низкая latency для пользователей
-- ✅ Compliance (GDPR - данные в EU)
+**Prós:**
+- ✅ Latência baixa para o usuário
+- ✅ Compliance (GDPR — dados na UE)
 
-**Минусы:**
-- ❌ Неравномерное распределение
-- ❌ Cross-region queries сложные
+**Contras:**
+- ❌ Distribuição desigual
+- ❌ Cross-region queries ficam complexas
 
-**Пример:**
+**Exemplo:**
 
 ```php
 function getShardByCountry(string $country): string
@@ -151,11 +151,11 @@ function getShardByCountry(string $country): string
 
 ---
 
-### 4. Directory-based (справочник)
+### 4. Directory-based (diretório)
 
-**Принцип:**
+**Princípio:**
 
-Отдельная таблица mapping:
+Tabela de mapping à parte:
 
 ```sql
 CREATE TABLE shard_directory (
@@ -167,17 +167,17 @@ CREATE TABLE shard_directory (
 -- user_id 456 → shard1
 ```
 
-**Плюсы:**
-- ✅ Гибкое распределение
-- ✅ Легко переместить user между шардами
+**Prós:**
+- ✅ Distribuição flexível
+- ✅ Fácil mover o user entre shards
 
-**Минусы:**
-- ❌ Дополнительный lookup
-- ❌ Single point of failure (directory)
+**Contras:**
+- ❌ Lookup a mais
+- ❌ Single point of failure (o directory)
 
 ---
 
-## Реализация в Laravel
+## Implementação no Laravel
 
 **config/database.php:**
 
@@ -230,7 +230,7 @@ class ShardManager
 }
 ```
 
-**Repository с шардингом:**
+**Repository com sharding:**
 
 ```php
 class UserRepository
@@ -259,7 +259,7 @@ class UserRepository
 
     public function all(): Collection
     {
-        // ❌ Проблема: нужно запросить ВСЕ шарды
+        // ❌ Problema: precisa consultar TODOS os shards
         $results = [];
 
         foreach (ShardManager::getAllShards() as $shard) {
@@ -277,31 +277,31 @@ class UserRepository
 
 ---
 
-## Проблемы шардинга
+## Problemas do sharding
 
 ### 1. Cross-shard queries
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- Невозможно сделать JOIN между шардами
+-- Não dá para fazer JOIN entre shards
 SELECT users.name, orders.total
 FROM users
 JOIN orders ON users.id = orders.user_id
 WHERE orders.status = 'pending';
 ```
 
-**Решение 1: Дублировать данные**
+**Solução 1: Duplicar os dados**
 
 ```php
-// В каждом шарде хранить нужные данные
-// orders table содержит user_name (денормализация)
+// Em cada shard, guardar os dados necessários
+// a tabela orders tem user_name (desnormalização)
 ```
 
-**Решение 2: Application-level JOIN**
+**Solução 2: Application-level JOIN**
 
 ```php
-// 1. Получить orders со всех шардов
+// 1. Buscar orders de todos os shards
 $orders = [];
 foreach (ShardManager::getAllShards() as $shard) {
     $shardOrders = DB::connection($shard)
@@ -312,7 +312,7 @@ foreach (ShardManager::getAllShards() as $shard) {
     $orders = array_merge($orders, $shardOrders->toArray());
 }
 
-// 2. Получить users
+// 2. Buscar users
 $userIds = array_unique(array_column($orders, 'user_id'));
 $users = [];
 foreach ($userIds as $userId) {
@@ -321,7 +321,7 @@ foreach ($userIds as $userId) {
     $users[$userId] = $user;
 }
 
-// 3. Объединить в приложении
+// 3. Juntar no app
 foreach ($orders as &$order) {
     $order->user = $users[$order->user_id];
 }
@@ -331,17 +331,17 @@ foreach ($orders as &$order) {
 
 ### 2. Unique constraints
 
-**Проблема:**
+**Problema:**
 
 ```sql
--- email должен быть уникальным глобально
--- Но каждый шард - отдельная БД
+-- email precisa ser único globalmente
+-- Mas cada shard é um banco separado
 ```
 
-**Решение 1: Global lookup table**
+**Solução 1: Global lookup table**
 
 ```sql
--- Отдельная БД для уникальных значений
+-- Banco separado para valores únicos
 CREATE TABLE global_emails (
     email VARCHAR(255) PRIMARY KEY,
     user_id INT,
@@ -349,11 +349,11 @@ CREATE TABLE global_emails (
 );
 ```
 
-**Решение 2: Distributed ID generation**
+**Solução 2: Distributed ID generation**
 
 ```php
 // Snowflake ID: timestamp + shard_id + sequence
-// Гарантирует уникальность без координации
+// Garante unicidade sem coordenação
 function generateSnowflakeId(int $shardId): int
 {
     $timestamp = (int)(microtime(true) * 1000);
@@ -365,17 +365,17 @@ function generateSnowflakeId(int $shardId): int
 
 ---
 
-### 3. Resharding (добавление шардов)
+### 3. Resharding (adicionar shards)
 
-**Проблема:**
+**Problema:**
 
 ```
-Было 4 шарда → Нужно 8 шардов
+Eram 4 shards → Precisa de 8 shards
 user_id % 4 → user_id % 8
-Данные нужно перераспределить!
+Os dados precisam ser redistribuídos!
 ```
 
-**Решение: Consistent Hashing**
+**Solução: Consistent Hashing**
 
 ```php
 class ConsistentHashing
@@ -384,7 +384,7 @@ class ConsistentHashing
 
     public function addNode(string $node): void
     {
-        // Добавить node в несколько позиций (virtual nodes)
+        // Adicionar o node em várias posições (virtual nodes)
         for ($i = 0; $i < 100; $i++) {
             $hash = crc32("$node:$i");
             $this->ring[$hash] = $node;
@@ -406,24 +406,24 @@ class ConsistentHashing
     }
 }
 
-// При добавлении нового шарда перемещается только ~1/N данных
+// Ao adicionar um shard novo, só ~1/N dos dados se move
 ```
 
 ---
 
-## Шардирование vs Репликация
+## Sharding vs Replicação
 
-**Репликация:**
-- Копия данных на каждом сервере
-- Масштабирование чтения
-- Master пишет, Slaves читают
+**Replicação:**
+- Cópia dos dados em cada servidor
+- Escala de leitura
+- Master escreve, Slaves leem
 
-**Шардинг:**
-- Разные данные на каждом сервере
-- Масштабирование записи
-- Каждый шард независим
+**Sharding:**
+- Dados diferentes em cada servidor
+- Escala de escrita
+- Cada shard é independente
 
-**Комбинация (рекомендуется):**
+**Combinando (recomendado):**
 
 ```
 Shard 1 (Master) → Shard 1 (Slave)
@@ -435,16 +435,16 @@ Shard 3 (Master) → Shard 3 (Slave)
 
 ## Vitess (MySQL sharding solution)
 
-**Что это:**
-Open-source система для шардинга MySQL (используется в YouTube, Slack).
+**O que é:**
+Sistema open-source de sharding MySQL (usado no YouTube, Slack).
 
-**Возможности:**
-- Автоматический шардинг
-- Resharding без downtime
+**O que faz:**
+- Sharding automático
+- Resharding sem downtime
 - Connection pooling
 - Query routing
 
-**Архитектура:**
+**Arquitetura:**
 
 ```
 Application
@@ -458,68 +458,68 @@ VTTablet → MySQL Shard 3
 
 ---
 
-## Когда использовать шардинг
+## Quando usar sharding
 
-**Используй когда:**
-
-```
-✓ > 1TB данных
-✓ > 100M записей
-✓ Write bottleneck (не помогает репликация)
-✓ Географическое распределение
-✓ Regulatory compliance (данные в регионе)
-```
-
-**НЕ используй когда:**
+**Use quando:**
 
 ```
-❌ < 100GB данных (преждевременная оптимизация)
-❌ Много cross-shard queries
-❌ Нет expertise (сложность возрастает 10x)
-❌ Можно вертикально масштабировать
+✓ > 1TB de dados
+✓ > 100M de registros
+✓ Write bottleneck (replicação não resolve)
+✓ Distribuição geográfica
+✓ Regulatory compliance (dados na região)
 ```
 
-**Альтернативы шардингу:**
+**NÃO use quando:**
 
 ```
-1. Вертикальное масштабирование (больше RAM/CPU)
-2. Партиционирование (partition tables)
-3. Архив старых данных
-4. Денормализация
+❌ < 100GB de dados (otimização prematura)
+❌ Muitas cross-shard queries
+❌ Sem expertise (a complexidade sobe 10x)
+❌ Dá para escalar verticalmente
+```
+
+**Alternativas ao sharding:**
+
+```
+1. Escala vertical (mais RAM/CPU)
+2. Particionamento (partition tables)
+3. Arquivar dados antigos
+4. Desnormalização
 5. NoSQL (MongoDB, Cassandra - built-in sharding)
 ```
 
 ---
 
-## Практический пример
+## Exemplo prático
 
 **Instagram sharding:**
 
 ```
-Шардинг по user_id:
-- 4000+ PostgreSQL шардов
-- ~1000 users на шард
-- Photos хранятся на том же шарде что user
+Sharding por user_id:
+- 4000+ shards PostgreSQL
+- ~1000 users por shard
+- Photos ficam no mesmo shard do user
 
 Lookup:
 user_id → shard_id (consistent hashing)
 
-Следствия:
-✓ Все photos одного user на одном шарде (локальные JOIN)
-✓ Feed generation сложный (нужно запросить N шардов для N followings)
-✓ Celebrity problem (шард с Beyoncé перегружен)
+Consequências:
+✓ Todas as photos de um user no mesmo shard (JOIN local)
+✓ Gerar o feed fica pesado (precisa consultar N shards para N followings)
+✓ Celebrity problem (o shard da Beyoncé fica sobrecarregado)
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализация ShardManager
+### Exercício 1: Implementar o ShardManager
 
-**Задача:** Создать ShardManager с hash-based шардингом для пользователей.
+**Enunciado:** Crie um ShardManager com hash-based sharding para usuários.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/ShardManager.php
@@ -594,7 +594,7 @@ class UserRepository
 
     public function findByEmail(string $email): ?array
     {
-        // Проблема: нужно искать по всем шардам
+        // Problema: precisa buscar em todos os shards
         $results = $this->shardManager->queryAllShards(function ($db) use ($email) {
             return $db->table('users')
                 ->where('email', $email)
@@ -632,15 +632,15 @@ class UserRepository
 
 </details>
 
-### Задание 2: Решение проблемы Unique Constraints
+### Exercício 2: Resolver Unique Constraints
 
-**Задача:** Реализовать глобальную уникальность email при шардинге пользователей.
+**Enunciado:** Implemente unicidade global de email com sharding de usuários.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Migration для global lookup table
+// Migration da global lookup table
 Schema::create('global_emails', function (Blueprint $table) {
     $table->string('email')->primary();
     $table->unsignedBigInteger('user_id');
@@ -668,7 +668,7 @@ class EmailRegistry
             ]);
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() === '23000') { // Duplicate entry
-                throw new Exception("Email {$email} is already registered");
+                throw new Exception("Email {$email} já está registrado");
             }
             throw $e;
         }
@@ -687,7 +687,7 @@ class EmailRegistry
     }
 }
 
-// Updated UserRepository
+// UserRepository atualizado
 class UserRepository
 {
     public function __construct(
@@ -699,19 +699,19 @@ class UserRepository
     {
         $email = $data['email'];
 
-        // Проверить уникальность
+        // Checar unicidade
         if ($this->emailRegistry->lookup($email)) {
-            throw new Exception("Email {$email} already exists");
+            throw new Exception("Email {$email} já existe");
         }
 
         $userId = $this->generateUserId();
         $shardId = $this->shardManager->getShardConnection($userId);
 
         DB::transaction(function () use ($email, $userId, $shardId, $data) {
-            // 1. Зарегистрировать email
+            // 1. Registrar o email
             $this->emailRegistry->register($email, $userId, $shardId);
 
-            // 2. Создать пользователя в шарде
+            // 2. Criar o usuário no shard
             $this->shardManager->query($userId, function ($db) use ($data, $userId) {
                 $db->table('users')->insert([...$data, 'id' => $userId]);
             });
@@ -722,7 +722,7 @@ class UserRepository
 
     public function findByEmail(string $email): ?array
     {
-        // Быстрый lookup через registry
+        // Lookup rápido pelo registry
         $lookup = $this->emailRegistry->lookup($email);
 
         if (!$lookup) {
@@ -736,12 +736,12 @@ class UserRepository
 
 </details>
 
-### Задание 3: Consistent Hashing для Resharding
+### Exercício 3: Consistent Hashing para Resharding
 
-**Задача:** Реализовать consistent hashing для минимизации перемещения данных при добавлении шардов.
+**Enunciado:** Implemente consistent hashing para minimizar a movimentação de dados ao adicionar shards.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/ConsistentHashing.php
@@ -761,7 +761,7 @@ class ConsistentHashing
 
     public function addNode(string $node): void
     {
-        // Добавляем виртуальные узлы для равномерного распределения
+        // Adicionamos virtual nodes para distribuição uniforme
         for ($i = 0; $i < self::VIRTUAL_NODES; $i++) {
             $hash = crc32("{$node}:{$i}");
             $this->ring[$hash] = $node;
@@ -781,19 +781,19 @@ class ConsistentHashing
     public function getNode(int $key): string
     {
         if (empty($this->ring)) {
-            throw new \Exception('No nodes available');
+            throw new \Exception('Nenhum node disponível');
         }
 
         $hash = crc32((string)$key);
 
-        // Найти первый узел >= hash
+        // Achar o primeiro node >= hash
         foreach ($this->ring as $ringHash => $node) {
             if ($hash <= $ringHash) {
                 return $node;
             }
         }
 
-        // Если не нашли, вернуть первый узел (wrap around)
+        // Se não achou, devolve o primeiro node (wrap around)
         return reset($this->ring);
     }
 
@@ -829,14 +829,14 @@ class ConsistentShardManager
     {
         $this->hashing->addNode($shardId);
 
-        // После добавления нового шарда нужно мигрировать ~1/N данных
+        // Depois de adicionar o shard, precisa migrar ~1/N dos dados
         $this->migrateData($shardId);
     }
 
     private function migrateData(string $newShardId): void
     {
-        // Пример: проверить каждого пользователя и переместить если нужно
-        // В продакшене делать через background job
+        // Exemplo: checar cada usuário e mover se precisar
+        // Em produção, fazer via background job
 
         foreach ($this->hashing->getNodes() as $oldShard) {
             if ($oldShard === $newShardId) {
@@ -852,7 +852,7 @@ class ConsistentShardManager
                 $correctShard = $this->getShardConnection($user->id);
 
                 if ($correctShard !== $oldShard) {
-                    // Переместить на правильный шард
+                    // Mover para o shard certo
                     DB::connection($correctShard)
                         ->table('users')
                         ->insert((array)$user);
@@ -872,11 +872,10 @@ class ConsistentShardManager
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Шардинг делит данные на независимые БД для масштабирования записи. Range-based: по диапазону ID, просто но hotspots. Hash-based: равномерно но нет range queries. Geographic: по регионам для latency. Проблемы: cross-shard queries (application-level JOIN), unique constraints (global lookup table), resharding (consistent hashing). Laravel: multiple connections, ShardManager для routing. Комбинировать с репликацией. Vitess для MySQL sharding. Использовать когда > 1TB и write bottleneck. Альтернативы: вертикальное масштабирование, партиционирование, NoSQL."
+> "Sharding divide os dados em bancos independentes para escalar escrita. Range-based: por intervalo de ID, simples mas tem hotspots. Hash-based: distribuição uniforme, mas sem range queries. Geographic: por região, para latência. Problemas: cross-shard queries (JOIN no app), unique constraints (global lookup table), resharding (consistent hashing). No Laravel: multiple connections e um ShardManager para o routing. Combina com replicação. Vitess para sharding de MySQL. Uso quando passa de 1TB e tem write bottleneck. Alternativas: escala vertical, particionamento, NoSQL."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

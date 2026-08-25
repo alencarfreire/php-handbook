@@ -1,49 +1,49 @@
-# 9.8 Партиционирование (Partitioning)
+# 9.8 Partitioning
 
-> **TL;DR:** Partitioning разделяет большую таблицу на меньшие части для ускорения запросов. Range (по дате), List (по категориям), Hash (равномерное распределение). Partition pruning сканирует только нужные партиции. PostgreSQL: partition key в PK, индексы автоматически на партициях. Laravel: автоматизировать создание/удаление через scheduler.
+> **TL;DR:** Partitioning divide uma tabela grande em pedaços menores para acelerar as queries. Range (por data), List (por categoria), Hash (distribuição uniforme). Partition pruning escaneia só as partições certas. PostgreSQL: partition key na PK, índices automaticamente nas partições. Laravel: automatize criar/dropar pelo scheduler.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы Partitioning](#типы-partitioning)
-  - [Range Partitioning](#1-range-partitioning-по-диапазону)
-  - [List Partitioning](#2-list-partitioning-по-списку)
-  - [Hash Partitioning](#3-hash-partitioning-по-хешу)
-- [Laravel Implementation](#laravel-implementation)
-- [Автоматическое создание партиций](#автоматическое-создание-партиций)
-- [Удаление старых партиций](#удаление-старых-партиций)
-- [Practical Example](#practical-example-logs)
-- [Partition Pruning](#partition-pruning)
-- [Indexes на партициях](#indexes-на-партициях)
+- [O que é](#o-que-é)
+- [Tipos de Partitioning](#tipos-de-partitioning)
+  - [Range Partitioning](#1-range-partitioning-por-intervalo)
+  - [List Partitioning](#2-list-partitioning-por-lista)
+  - [Hash Partitioning](#3-hash-partitioning-por-hash)
+- [Implementação no Laravel](#implementação-no-laravel)
+- [Criação automática de partições](#criação-automática-de-partições)
+- [Remoção de partições antigas](#remoção-de-partições-antigas)
+- [Exemplo prático: logs](#exemplo-prático-logs)
+- [Partition pruning](#partition-pruning)
+- [Índices nas partições](#índices-nas-partições)
 - [Sub-partitioning](#sub-partitioning)
-- [Best Practices](#best-practices)
-- [MySQL Partitioning](#mysql-partitioning)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Boas práticas](#boas-práticas)
+- [Partitioning no MySQL](#partitioning-no-mysql)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
 **Partitioning:**
-Разделение большой таблицы на меньшие физические части (partitions), которые логически остаются одной таблицей.
+Dividir uma tabela grande em pedaços físicos menores (partitions), que logicamente continuam sendo uma tabela só.
 
-**Зачем:**
-- Ускорить запросы (query только нужные партиции)
-- Упростить архивирование (drop старых партиций)
-- Улучшить maintenance (VACUUM, REINDEX быстрее)
-- Параллельные операции
+**Para quê:**
+- Acelerar queries (query só nas partições certas)
+- Arquivar fica simples (DROP das partições velhas)
+- Maintenance mais fácil (VACUUM, REINDEX mais rápidos)
+- Operações em paralelo
 
 **Trade-off:**
-- ✅ Производительность на больших таблицах (millions+ rows)
-- ❌ Сложность настройки
-- ❌ Не всегда даёт выигрыш на маленьких таблицах
+- ✅ Performance em tabela grande (milhões+ de rows)
+- ❌ Setup mais complexo
+- ❌ Em tabela pequena, quase nunca vale a pena
 
 ---
 
-## Типы Partitioning
+## Tipos de Partitioning
 
-### 1. Range Partitioning (по диапазону)
+### 1. Range Partitioning (por intervalo)
 
-**Use case:** временные данные (логи, заказы по дате)
+**Caso de uso:** dados temporais (logs, pedidos por data)
 
 ```sql
 -- Parent table
@@ -52,7 +52,7 @@ CREATE TABLE orders (
     user_id BIGINT,
     total DECIMAL(10, 2),
     created_at TIMESTAMP NOT NULL,
-    PRIMARY KEY (id, created_at)  -- partition key должен быть в PK
+    PRIMARY KEY (id, created_at)  -- partition key precisa estar na PK
 ) PARTITION BY RANGE (created_at);
 
 -- Child partitions
@@ -66,20 +66,20 @@ CREATE TABLE orders_2024_03 PARTITION OF orders
     FOR VALUES FROM ('2024-03-01') TO ('2024-04-01');
 ```
 
-**Запросы автоматически роутятся:**
+**As queries caem na partição certa sozinhas:**
 
 ```sql
--- PostgreSQL автоматически выберет нужную партицию
+-- PostgreSQL escolhe a partição certa sozinho
 SELECT * FROM orders
 WHERE created_at >= '2024-02-15' AND created_at < '2024-02-20';
--- Сканирует только orders_2024_02 (не все партиции!)
+-- Escaneia só orders_2024_02 (não todas as partições!)
 ```
 
 ---
 
-### 2. List Partitioning (по списку)
+### 2. List Partitioning (por lista)
 
-**Use case:** категории, регионы, статусы
+**Caso de uso:** categorias, regiões, status
 
 ```sql
 CREATE TABLE products (
@@ -90,7 +90,7 @@ CREATE TABLE products (
     PRIMARY KEY (id, category)
 ) PARTITION BY LIST (category);
 
--- Партиции по категориям
+-- Partições por categoria
 CREATE TABLE products_electronics PARTITION OF products
     FOR VALUES IN ('electronics', 'computers', 'phones');
 
@@ -103,9 +103,9 @@ CREATE TABLE products_food PARTITION OF products
 
 ---
 
-### 3. Hash Partitioning (по хешу)
+### 3. Hash Partitioning (por hash)
 
-**Use case:** равномерное распределение данных
+**Caso de uso:** distribuição uniforme dos dados
 
 ```sql
 CREATE TABLE users (
@@ -114,7 +114,7 @@ CREATE TABLE users (
     name VARCHAR(255)
 ) PARTITION BY HASH (id);
 
--- 4 партиции (равномерное распределение)
+-- 4 partições (distribuição uniforme)
 CREATE TABLE users_p0 PARTITION OF users
     FOR VALUES WITH (MODULUS 4, REMAINDER 0);
 
@@ -130,9 +130,9 @@ CREATE TABLE users_p3 PARTITION OF users
 
 ---
 
-## Laravel Implementation
+## Implementação no Laravel
 
-**Migration для Range Partitioning:**
+**Migration de Range Partitioning:**
 
 ```php
 Schema::create('orders', function (Blueprint $table) {
@@ -141,31 +141,31 @@ Schema::create('orders', function (Blueprint $table) {
     $table->decimal('total', 10, 2);
     $table->timestamp('created_at');
 
-    // Partition key должен быть в primary key
+    // Partition key precisa estar na primary key
     $table->primary(['id', 'created_at']);
 });
 
-// Создать партиции через raw SQL
+// Criar partições com raw SQL
 DB::statement("
     ALTER TABLE orders
     PARTITION BY RANGE (created_at)
 ");
 
-// Партиция за январь 2024
+// Partição de janeiro de 2024
 DB::statement("
     CREATE TABLE orders_2024_01 PARTITION OF orders
     FOR VALUES FROM ('2024-01-01') TO ('2024-02-01')
 ");
 
-// Индексы создаются автоматически на каждой партиции
+// Índices são criados automaticamente em cada partição
 DB::statement("CREATE INDEX ON orders_2024_01(user_id)");
 ```
 
 ---
 
-## Автоматическое создание партиций
+## Criação automática de partições
 
-**Command для создания будущих партиций:**
+**Command para criar partições futuras:**
 
 ```php
 class CreateMonthlyPartitions extends Command
@@ -185,41 +185,41 @@ class CreateMonthlyPartitions extends Command
 
             $partitionName = "{$table}_{$date->format('Y_m')}";
 
-            // Проверить существование
+            // Checar se já existe
             $exists = DB::selectOne("
                 SELECT 1 FROM pg_tables
                 WHERE tablename = ?
             ", [$partitionName]);
 
             if ($exists) {
-                $this->info("Partition {$partitionName} already exists");
+                $this->info("Partição {$partitionName} já existe");
                 continue;
             }
 
-            // Создать партицию
+            // Criar a partição
             DB::statement("
                 CREATE TABLE {$partitionName} PARTITION OF {$table}
                 FOR VALUES FROM ('{$date->format('Y-m-d')}')
                              TO ('{$nextDate->format('Y-m-d')}')
             ");
 
-            // Индексы
+            // Índices
             DB::statement("CREATE INDEX ON {$partitionName}(user_id)");
 
-            $this->info("✓ Created partition {$partitionName}");
+            $this->info("✓ Partição {$partitionName} criada");
         }
     }
 }
 
-// Scheduler: создавать партиции на 3 месяца вперёд
+// Scheduler: criar partições 3 meses à frente
 $schedule->command('partitions:create-monthly orders --months=3')->monthly();
 ```
 
 ---
 
-## Удаление старых партиций
+## Remoção de partições antigas
 
-**Архивирование старых данных:**
+**Arquivar dados antigos:**
 
 ```php
 class DropOldPartitions extends Command
@@ -233,7 +233,7 @@ class DropOldPartitions extends Command
 
         $cutoffDate = now()->subMonths($monthsAgo)->startOfMonth();
 
-        // Найти все партиции старше cutoff
+        // Achar todas as partições mais antigas que o cutoff
         $partitions = DB::select("
             SELECT tablename
             FROM pg_tables
@@ -244,21 +244,21 @@ class DropOldPartitions extends Command
         foreach ($partitions as $partition) {
             $name = $partition->tablename;
 
-            if ($this->confirm("Drop partition {$name}?")) {
-                // Опционально: экспорт в архив
+            if ($this->confirm("Dropar a partição {$name}?")) {
+                // Opcional: exportar para o arquivo
                 $this->exportToArchive($name);
 
-                // Удалить партицию
+                // Remover a partição
                 DB::statement("DROP TABLE {$name}");
 
-                $this->info("✓ Dropped partition {$name}");
+                $this->info("✓ Partição {$name} removida");
             }
         }
     }
 
     private function exportToArchive(string $partition)
     {
-        // Export to S3, filesystem, etc.
+        // Export para S3, filesystem, etc.
         $data = DB::table($partition)->get();
         Storage::disk('archive')->put(
             "{$partition}.json",
@@ -267,15 +267,15 @@ class DropOldPartitions extends Command
     }
 }
 
-// Scheduler: удалять партиции старше 12 месяцев
+// Scheduler: dropar partições com mais de 12 meses
 $schedule->command('partitions:drop-old orders --months-ago=12')->monthly();
 ```
 
 ---
 
-## Practical Example: Logs
+## Exemplo prático: logs
 
-**Scenario:** миллионы логов в день, хранить 3 месяца.
+**Cenário:** milhões de logs por dia, guardar 3 meses.
 
 ```php
 // Migration
@@ -291,7 +291,7 @@ Schema::create('logs', function (Blueprint $table) {
 
 DB::statement("ALTER TABLE logs PARTITION BY RANGE (created_at)");
 
-// Создать партиции на 3 месяца вперёд
+// Criar partições 3 meses à frente
 for ($i = 0; $i < 3; $i++) {
     $date = now()->addMonths($i)->startOfMonth();
     $nextDate = $date->copy()->addMonth();
@@ -308,35 +308,35 @@ $schedule->command('partitions:create-monthly logs --months=3')->monthly();
 $schedule->command('partitions:drop-old logs --months-ago=3')->daily();
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
-// Laravel автоматически работает с партициями
-Log::info('User logged in', ['user_id' => 123]);
+// Laravel trabalha com partições sem você perceber
+Log::info('Usuário fez login', ['user_id' => 123]);
 
-// Query только нужную партицию
+// Query só na partição certa
 DB::table('logs')
     ->where('created_at', '>=', now()->subDays(7))
     ->where('level', 'error')
     ->get();
-// Scan только партиции за последние 7 дней
+// Scan só das partições dos últimos 7 dias
 ```
 
 ---
 
-## Partition Pruning
+## Partition pruning
 
-**EXPLAIN покажет какие партиции сканируются:**
+**EXPLAIN mostra quais partições são escaneadas:**
 
 ```sql
 EXPLAIN SELECT * FROM orders
 WHERE created_at >= '2024-02-01' AND created_at < '2024-03-01';
 
 -- Seq Scan on orders_2024_02
--- (только 1 партиция!)
+-- (só 1 partição!)
 ```
 
-**Без partition key в WHERE — сканируются ВСЕ партиции:**
+**Sem partition key no WHERE — escaneia TODAS as partições:**
 
 ```sql
 EXPLAIN SELECT * FROM orders WHERE user_id = 123;
@@ -345,10 +345,10 @@ EXPLAIN SELECT * FROM orders WHERE user_id = 123;
 --   -> Seq Scan on orders_2024_01
 --   -> Seq Scan on orders_2024_02
 --   -> Seq Scan on orders_2024_03
--- (все партиции!)
+-- (todas as partições!)
 ```
 
-**Решение: добавить partition key в WHERE**
+**Solução: coloque a partition key no WHERE**
 
 ```sql
 SELECT * FROM orders
@@ -359,17 +359,17 @@ WHERE user_id = 123
 
 ---
 
-## Indexes на партициях
+## Índices nas partições
 
-**Индексы создаются на parent → автоматически на всех партициях:**
+**Índice no parent → cai automático em todas as partições:**
 
 ```sql
--- Создать индекс на parent table
+-- Criar índice na parent table
 CREATE INDEX idx_orders_user ON orders(user_id);
 
--- Автоматически создаются индексы:
--- idx_orders_user_2024_01 на orders_2024_01
--- idx_orders_user_2024_02 на orders_2024_02
+-- Índices criados automaticamente:
+-- idx_orders_user_2024_01 em orders_2024_01
+-- idx_orders_user_2024_02 em orders_2024_02
 -- ...
 ```
 
@@ -378,7 +378,7 @@ CREATE INDEX idx_orders_user ON orders(user_id);
 ```php
 Schema::table('orders', function (Blueprint $table) {
     $table->index('user_id');
-    // Автоматически на всех партициях
+    // Automaticamente em todas as partições
 });
 ```
 
@@ -386,7 +386,7 @@ Schema::table('orders', function (Blueprint $table) {
 
 ## Sub-partitioning
 
-**Partition по дате, sub-partition по региону:**
+**Partition por data, sub-partition por região:**
 
 ```sql
 CREATE TABLE orders (
@@ -397,12 +397,12 @@ CREATE TABLE orders (
     PRIMARY KEY (id, created_at, region)
 ) PARTITION BY RANGE (created_at);
 
--- Партиция за месяц
+-- Partição do mês
 CREATE TABLE orders_2024_01 PARTITION OF orders
     FOR VALUES FROM ('2024-01-01') TO ('2024-02-01')
     PARTITION BY LIST (region);
 
--- Sub-партиции по региону
+-- Subpartições por região
 CREATE TABLE orders_2024_01_eu PARTITION OF orders_2024_01
     FOR VALUES IN ('EU', 'UK');
 
@@ -412,26 +412,26 @@ CREATE TABLE orders_2024_01_us PARTITION OF orders_2024_01
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Partitioning для больших таблиц (millions+ rows)
-✓ Range partitioning для временных данных (logs, orders)
-✓ List partitioning для категорий (region, status)
-✓ Hash partitioning для равномерного распределения
-✓ Partition key должен быть в primary key
-✓ Всегда включай partition key в WHERE для pruning
-✓ Автоматизируй создание/удаление партиций (scheduler)
-✓ Индексы создавай на parent table (автоматически на партициях)
-✓ EXPLAIN для проверки partition pruning
-✓ Не используй partitioning на маленьких таблицах (overhead)
+✓ Partitioning para tabelas grandes (milhões+ de rows)
+✓ Range partitioning para dados temporais (logs, pedidos)
+✓ List partitioning para categorias (region, status)
+✓ Hash partitioning para distribuição uniforme
+✓ Partition key precisa estar na primary key
+✓ Sempre coloque a partition key no WHERE para pruning
+✓ Automatize criar/dropar partições (scheduler)
+✓ Crie índices na parent table (caem automático nas partições)
+✓ EXPLAIN para checar partition pruning
+✓ Não use partitioning em tabela pequena (overhead)
 ```
 
 ---
 
-## MySQL Partitioning
+## Partitioning no MySQL
 
-**MySQL поддерживает, но с ограничениями:**
+**MySQL tem, mas com restrições:**
 
 ```sql
 -- Range partitioning (MySQL)
@@ -449,21 +449,21 @@ PARTITION BY RANGE (YEAR(created_at)) (
 );
 ```
 
-**Ограничения MySQL:**
-- Foreign keys НЕ поддерживаются
-- Partition key должен быть в primary key
-- Меньше гибкости чем PostgreSQL
+**Limitações do MySQL:**
+- Foreign keys NÃO são suportadas
+- Partition key precisa estar na primary key
+- Menos flexível que o PostgreSQL
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Partitioned Logs Table
+### Exercício 1: Tabela de logs particionada
 
-**Задача:** Создать партиционированную таблицу логов с автоматическим управлением партициями.
+**Enunciado:** Criar uma tabela de logs particionada com gestão automática das partições.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/xxxx_create_logs_partitioned.php
@@ -474,7 +474,7 @@ return new class extends Migration
 {
     public function up()
     {
-        // Создаём parent table
+        // Criamos a parent table
         DB::statement("
             CREATE TABLE logs (
                 id BIGSERIAL,
@@ -486,11 +486,11 @@ return new class extends Migration
             ) PARTITION BY RANGE (created_at)
         ");
 
-        // Создаём индексы на parent (автоматически на всех партициях)
+        // Índices no parent (caem automático em todas as partições)
         DB::statement("CREATE INDEX ON logs (level, created_at)");
         DB::statement("CREATE INDEX ON logs USING gin (context)");
 
-        // Создаём партиции на 3 месяца вперёд
+        // Criamos partições 3 meses à frente
         $this->createPartitions(3);
     }
 
@@ -526,8 +526,8 @@ use Illuminate\Support\Facades\DB;
 class ManageLogPartitions extends Command
 {
     protected $signature = 'logs:manage-partitions
-                            {--create-future=3 : Create partitions N months ahead}
-                            {--drop-old=3 : Drop partitions older than N months}';
+                            {--create-future=3 : Cria partições N meses à frente}
+                            {--drop-old=3 : Dropa partições com mais de N meses}';
 
     public function handle()
     {
@@ -538,7 +538,7 @@ class ManageLogPartitions extends Command
     private function createFuturePartitions()
     {
         $months = $this->option('create-future');
-        $this->info("Creating partitions for next {$months} months...");
+        $this->info("Criando partições para os próximos {$months} meses...");
 
         for ($i = 0; $i < $months; $i++) {
             $date = now()->addMonths($i)->startOfMonth();
@@ -546,14 +546,14 @@ class ManageLogPartitions extends Command
 
             $partitionName = "logs_" . $date->format('Y_m');
 
-            // Проверяем существование
+            // Checamos se já existe
             $exists = DB::selectOne("
                 SELECT 1 FROM pg_tables
                 WHERE tablename = ?
             ", [$partitionName]);
 
             if ($exists) {
-                $this->comment("Partition {$partitionName} already exists");
+                $this->comment("Partição {$partitionName} já existe");
                 continue;
             }
 
@@ -564,7 +564,7 @@ class ManageLogPartitions extends Command
                              TO ('{$nextDate->format('Y-m-d')}')
             ");
 
-            $this->info("✓ Created partition {$partitionName}");
+            $this->info("✓ Partição {$partitionName} criada");
         }
     }
 
@@ -573,9 +573,9 @@ class ManageLogPartitions extends Command
         $months = $this->option('drop-old');
         $cutoffDate = now()->subMonths($months)->startOfMonth();
 
-        $this->info("Dropping partitions older than {$cutoffDate->format('Y-m')}...");
+        $this->info("Dropando partições anteriores a {$cutoffDate->format('Y-m')}...");
 
-        // Найти старые партиции
+        // Achar partições antigas
         $partitions = DB::select("
             SELECT tablename
             FROM pg_tables
@@ -586,24 +586,24 @@ class ManageLogPartitions extends Command
         foreach ($partitions as $partition) {
             $name = $partition->tablename;
 
-            if (!$this->confirm("Drop partition {$name}?", true)) {
+            if (!$this->confirm("Dropar a partição {$name}?", true)) {
                 continue;
             }
 
-            // Опционально: экспорт в архив
+            // Opcional: exportar para o arquivo
             $this->exportToArchive($name);
 
-            // Удаляем партицию
+            // Dropamos a partição
             DB::statement("DROP TABLE IF EXISTS {$name}");
 
-            $this->info("✓ Dropped partition {$name}");
+            $this->info("✓ Partição {$name} removida");
         }
     }
 
     private function exportToArchive(string $partition)
     {
-        // Экспорт в S3, файловую систему и т.д.
-        $this->comment("Exporting {$partition} to archive...");
+        // Export para S3, filesystem, etc.
+        $this->comment("Exportando {$partition} para o arquivo...");
 
         $data = DB::table($partition)->get();
 
@@ -617,35 +617,35 @@ class ManageLogPartitions extends Command
 // app/Console/Kernel.php
 protected function schedule(Schedule $schedule)
 {
-    // Управлять партициями ежемесячно
+    // Gerenciar partições todo mês
     $schedule->command('logs:manage-partitions --create-future=3 --drop-old=3')
         ->monthly();
 }
 
-// Использование (прозрачно для приложения)
+// Uso (transparente para o app)
 DB::table('logs')->insert([
     'level' => 'error',
-    'message' => 'Something went wrong',
+    'message' => 'Algo deu errado',
     'context' => json_encode(['user_id' => 123]),
     'created_at' => now(),
 ]);
 
-// Query автоматически использует partition pruning
+// A query usa partition pruning sozinha
 $recentErrors = DB::table('logs')
     ->where('level', 'error')
     ->where('created_at', '>=', now()->subDays(7))
     ->get();
-// Сканирует только партиции за последние 7 дней!
+// Escaneia só as partições dos últimos 7 dias!
 ```
 
 </details>
 
-### Задание 2: Orders Partitioning by Date
+### Exercício 2: Partitioning de pedidos por data
 
-**Задача:** Партиционировать таблицу заказов по дате для быстрого архивирования старых заказов.
+**Enunciado:** Particionar a tabela de pedidos por data para arquivar pedidos antigos rápido.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration
@@ -656,7 +656,7 @@ return new class extends Migration
 {
     public function up()
     {
-        // Создаём partitioned table
+        // Criamos a tabela particionada
         DB::statement("
             CREATE TABLE orders (
                 id BIGSERIAL,
@@ -669,11 +669,11 @@ return new class extends Migration
             ) PARTITION BY RANGE (created_at)
         ");
 
-        // Индексы
+        // Índices
         DB::statement("CREATE INDEX ON orders (user_id, created_at)");
         DB::statement("CREATE INDEX ON orders (status, created_at)");
 
-        // Создать партиции за последние 12 месяцев
+        // Criar partições dos últimos 12 meses
         for ($i = 11; $i >= 0; $i--) {
             $date = now()->subMonths($i)->startOfMonth();
             $nextDate = $date->copy()->addMonth();
@@ -688,7 +688,7 @@ return new class extends Migration
             ");
         }
 
-        // Партиция для будущих заказов
+        // Partição para pedidos futuros
         DB::statement("
             CREATE TABLE orders_future
             PARTITION OF orders
@@ -708,15 +708,15 @@ return new class extends Migration
     }
 };
 
-// app/Models/Order.php (прозрачно работает с партициями)
+// app/Models/Order.php (funciona transparente com partições)
 class Order extends Model
 {
-    // Стандартная модель, партиционирование прозрачно
+    // Model padrão, partitioning transparente
 }
 
-// Queries используют partition pruning
+// Queries usam partition pruning
 Order::where('created_at', '>=', now()->subDays(30))->get();
-// Сканирует только партицию текущего месяца!
+// Escaneia só a partição do mês atual!
 
 // app/Console/Commands/ArchiveOldOrders.php
 class ArchiveOldOrders extends Command
@@ -728,9 +728,9 @@ class ArchiveOldOrders extends Command
         $monthsAgo = $this->option('months-ago');
         $cutoffDate = now()->subMonths($monthsAgo)->startOfMonth();
 
-        $this->info("Archiving orders older than {$cutoffDate->format('Y-m')}...");
+        $this->info("Arquivando pedidos anteriores a {$cutoffDate->format('Y-m')}...");
 
-        // Найти старые партиции
+        // Achar partições antigas
         $partitions = DB::select("
             SELECT tablename
             FROM pg_tables
@@ -743,28 +743,28 @@ class ArchiveOldOrders extends Command
         foreach ($partitions as $partition) {
             $name = $partition->tablename;
 
-            $this->info("Processing partition {$name}...");
+            $this->info("Processando a partição {$name}...");
 
-            // 1. Export to archive storage
+            // 1. Export para o storage de arquivo
             $this->exportPartition($name);
 
-            // 2. Drop partition
-            if ($this->confirm("Drop partition {$name}?")) {
+            // 2. Dropar a partição
+            if ($this->confirm("Dropar a partição {$name}?")) {
                 DB::statement("DROP TABLE {$name}");
-                $this->info("✓ Dropped {$name}");
+                $this->info("✓ {$name} dropada");
             }
         }
     }
 
     private function exportPartition(string $partition)
     {
-        // Export по частям (chunk)
+        // Export em pedaços (chunk)
         $exported = 0;
 
         DB::table($partition)
             ->orderBy('id')
             ->chunk(1000, function ($orders) use ($partition, &$exported) {
-                // Save to S3/file storage
+                // Salvar no S3/file storage
                 Storage::disk('archive')->append(
                     "{$partition}.jsonl",
                     $orders->map(fn($o) => json_encode($o))->implode("\n")
@@ -773,19 +773,19 @@ class ArchiveOldOrders extends Command
                 $exported += $orders->count();
             });
 
-        $this->info("  Exported {$exported} orders");
+        $this->info("  {$exported} pedidos exportados");
     }
 }
 ```
 
 </details>
 
-### Задание 3: Проверка Partition Pruning
+### Exercício 3: Checar partition pruning
 
-**Задача:** Создать команду для анализа partition pruning в запросах.
+**Enunciado:** Criar um command para analisar partition pruning nas queries.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/AnalyzePartitionPruning.php
@@ -797,20 +797,20 @@ use Illuminate\Support\Facades\DB;
 class AnalyzePartitionPruning extends Command
 {
     protected $signature = 'partition:analyze {query}';
-    protected $description = 'Analyze partition pruning for a query';
+    protected $description = 'Analisa partition pruning de uma query';
 
     public function handle()
     {
         $query = $this->argument('query');
 
-        $this->info("Analyzing query:");
+        $this->info("Analisando a query:");
         $this->line($query);
         $this->newLine();
 
         // EXPLAIN query
         $plan = DB::select("EXPLAIN {$query}");
 
-        $this->info("Execution Plan:");
+        $this->info("Plano de execução:");
 
         $partitionsScanned = [];
         $pruningDetected = false;
@@ -819,12 +819,12 @@ class AnalyzePartitionPruning extends Command
             $line = $row->{'QUERY PLAN'};
             $this->line($line);
 
-            // Detect partition scans
+            // Detectar scans de partição
             if (preg_match('/Seq Scan on (\w+)/', $line, $matches)) {
                 $partitionsScanned[] = $matches[1];
             }
 
-            // Detect pruning
+            // Detectar pruning
             if (str_contains($line, 'Partitions')) {
                 $pruningDetected = true;
             }
@@ -833,19 +833,19 @@ class AnalyzePartitionPruning extends Command
         $this->newLine();
 
         if ($pruningDetected) {
-            $this->info("✓ Partition pruning is ACTIVE");
-            $this->info("Partitions scanned: " . count($partitionsScanned));
+            $this->info("✓ Partition pruning ATIVO");
+            $this->info("Partições escaneadas: " . count($partitionsScanned));
 
-            $this->table(['Partition'], array_map(fn($p) => [$p], $partitionsScanned));
+            $this->table(['Partição'], array_map(fn($p) => [$p], $partitionsScanned));
         } else {
-            $this->warn("⚠ Partition pruning is NOT detected");
-            $this->warn("This query may scan ALL partitions!");
-            $this->comment("Tip: Include partition key in WHERE clause");
+            $this->warn("⚠ Partition pruning NÃO detectado");
+            $this->warn("Essa query pode escanear TODAS as partições!");
+            $this->comment("Dica: coloque a partition key no WHERE");
         }
     }
 }
 
-// Примеры использования:
+// Exemplos de uso:
 // php artisan partition:analyze "SELECT * FROM orders WHERE created_at >= '2024-01-01'"
 // php artisan partition:analyze "SELECT * FROM logs WHERE level = 'error' AND created_at > NOW() - INTERVAL '7 days'"
 
@@ -858,7 +858,7 @@ class ShowPartitionStats extends Command
     {
         $table = $this->argument('table');
 
-        // Получить информацию о партициях
+        // Pegar info das partições
         $partitions = DB::select("
             SELECT
                 c.relname as partition_name,
@@ -875,7 +875,7 @@ class ShowPartitionStats extends Command
         ", ["{$table}_%"]);
 
         $this->table(
-            ['Partition', 'Size', 'Inserts', 'Updates', 'Deletes', 'Live Rows', 'Dead Rows'],
+            ['Partição', 'Tamanho', 'Inserts', 'Updates', 'Deletes', 'Linhas vivas', 'Linhas mortas'],
             array_map(fn($p) => [
                 $p->partition_name,
                 $p->size,
@@ -893,7 +893,7 @@ class ShowPartitionStats extends Command
         ", [$table])->size;
 
         $this->newLine();
-        $this->info("Total table size: {$totalSize}");
+        $this->info("Tamanho total da tabela: {$totalSize}");
     }
 }
 ```
@@ -902,10 +902,10 @@ class ShowPartitionStats extends Command
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Partitioning — разделение большой таблицы на меньшие физические части. Типы: Range (по дате), List (по категориям), Hash (равномерное распределение). Преимущества: query только нужные партиции (partition pruning), простое архивирование (DROP TABLE), быстрый maintenance. PostgreSQL поддерживает декларативное partitioning, partition key должен быть в PK. Индексы на parent создаются автоматически на партициях. Laravel: создавать через DB::statement, автоматизировать через scheduler (создание будущих, удаление старых). Best practices: для millions+ rows, всегда partition key в WHERE, EXPLAIN для проверки pruning. MySQL поддерживает, но без foreign keys."
+> "Partitioning é dividir uma tabela grande em pedaços físicos menores. Tipos: Range (por data), List (por categoria), Hash (distribuição uniforme). Vantagem: a query só bate nas partições certas (partition pruning), arquivar é DROP TABLE, maintenance fica rápido. PostgreSQL tem partitioning declarativo; partition key precisa estar na PK. Índice no parent cai automático nas partições. Laravel: cria com DB::statement, automatiza no scheduler (criar as futuras, dropar as velhas). Best practice: milhões+ de rows, sempre partition key no WHERE, EXPLAIN pra checar o pruning. MySQL também tem, mas sem foreign keys."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,105 +1,105 @@
-# 9.4 Уровни изоляции транзакций
+# 9.4 Níveis de isolamento de transações
 
-> **TL;DR:** Isolation Levels контролируют видимость данных между concurrent транзакциями. Read Committed (default PostgreSQL) только committed данные, Repeatable Read (default MySQL) snapshot isolation, Serializable как последовательное выполнение. Trade-off: больше изоляция → больше consistency, меньше performance. Deadlocks решаются retry и блокировкой в одном порядке.
+> **TL;DR:** Isolation Levels controlam o que uma transação vê enquanto outras transações concorrentes mudam os dados. Read Committed (default no PostgreSQL) só vê dados committed. Repeatable Read (default no MySQL) usa snapshot isolation. Serializable se comporta como execução em série. Trade-off: mais isolamento → mais consistency, menos performance. Deadlock se resolve com retry e lock na mesma ordem.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Проблемы concurrent доступа](#проблемы-concurrent-доступа)
-  - [Dirty Read](#1-dirty-read-грязное-чтение)
-  - [Non-Repeatable Read](#2-non-repeatable-read-неповторяющееся-чтение)
-  - [Phantom Read](#3-phantom-read-фантомное-чтение)
+- [O que é](#o-que-é)
+- [Problemas de acesso concurrent](#problemas-de-acesso-concurrent)
+  - [Dirty Read](#1-dirty-read-leitura-suja)
+  - [Non-Repeatable Read](#2-non-repeatable-read-leitura-não-repetível)
+  - [Phantom Read](#3-phantom-read-leitura-fantasma)
 - [Read Uncommitted](#1-read-uncommitted)
 - [Read Committed](#2-read-committed-default-postgresql)
 - [Repeatable Read](#3-repeatable-read-default-mysql)
 - [Serializable](#4-serializable)
-- [Comparison Table](#comparison-table)
+- [Tabela comparativa](#tabela-comparativa)
 - [Laravel](#laravel)
-- [Практические примеры](#практические-примеры)
+- [Exemplos práticos](#exemplos-práticos)
 - [Deadlocks](#deadlocks)
-- [Мониторинг](#мониторинг)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Monitoramento](#monitoramento)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
 **Isolation Levels:**
-Настройки которые контролируют что видит транзакция когда другие транзакции параллельно изменяют данные.
+Configuração que controla o que a transação vê quando outras transações alteram os dados em paralelo.
 
 **Trade-off:**
-- Больше изоляция → больше consistency, меньше performance
-- Меньше изоляция → меньше consistency, больше performance
+- Mais isolamento → mais consistency, menos performance
+- Menos isolamento → menos consistency, mais performance
 
-**4 уровня (от слабого к строгому):**
+**4 níveis (do mais fraco ao mais forte):**
 1. Read Uncommitted
-2. Read Committed (default в PostgreSQL)
-3. Repeatable Read (default в MySQL)
+2. Read Committed (default no PostgreSQL)
+3. Repeatable Read (default no MySQL)
 4. Serializable
 
 ---
 
-## Проблемы concurrent доступа
+## Problemas de acesso concurrent
 
-### 1. Dirty Read (грязное чтение)
+### 1. Dirty Read (leitura suja)
 
-**Проблема:** Читаем uncommitted данные другой транзакции.
+**Problema:** Você lê dados uncommitted de outra transação.
 
 ```sql
 -- Transaction A
 BEGIN;
 UPDATE accounts SET balance = balance - 100 WHERE id = 1;
--- НЕ commit
+-- SEM commit
 
--- Transaction B (параллельно)
+-- Transaction B (em paralelo)
 BEGIN;
-SELECT balance FROM accounts WHERE id = 1;  -- Видит -100
+SELECT balance FROM accounts WHERE id = 1;  -- Vê -100
 COMMIT;
 
 -- Transaction A
-ROLLBACK;  -- Откатили!
+ROLLBACK;  -- Deu rollback!
 
--- Transaction B прочитала данные которых никогда не было
+-- Transaction B leu dados que nunca existiram
 ```
 
 ---
 
-### 2. Non-Repeatable Read (неповторяющееся чтение)
+### 2. Non-Repeatable Read (leitura não repetível)
 
-**Проблема:** Читаем одну строку дважды и получаем разные значения.
+**Problema:** Você lê a mesma linha duas vezes e recebe valores diferentes.
 
 ```sql
 -- Transaction A
 BEGIN;
 SELECT balance FROM accounts WHERE id = 1;  -- 1000
 
--- Transaction B (параллельно)
+-- Transaction B (em paralelo)
 BEGIN;
 UPDATE accounts SET balance = 500 WHERE id = 1;
 COMMIT;
 
--- Transaction A (продолжаем)
-SELECT balance FROM accounts WHERE id = 1;  -- 500 (было 1000!)
+-- Transaction A (continua)
+SELECT balance FROM accounts WHERE id = 1;  -- 500 (era 1000!)
 COMMIT;
 ```
 
 ---
 
-### 3. Phantom Read (фантомное чтение)
+### 3. Phantom Read (leitura fantasma)
 
-**Проблема:** Запрос дважды возвращает разное количество строк.
+**Problema:** A mesma query devolve uma quantidade diferente de linhas.
 
 ```sql
 -- Transaction A
 BEGIN;
 SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- 10
 
--- Transaction B (параллельно)
+-- Transaction B (em paralelo)
 BEGIN;
 INSERT INTO orders (status) VALUES ('pending');
 COMMIT;
 
--- Transaction A (продолжаем)
-SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- 11 (было 10!)
+-- Transaction A (continua)
+SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- 11 (era 10!)
 COMMIT;
 ```
 
@@ -107,34 +107,34 @@ COMMIT;
 
 ## 1. Read Uncommitted
 
-**Что разрешает:**
+**O que permite:**
 - ✅ Dirty Read
 - ✅ Non-Repeatable Read
 - ✅ Phantom Read
 
-**Использование:**
+**Uso:**
 
 ```sql
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 BEGIN;
-SELECT * FROM accounts;  -- Может прочитать uncommitted данные
+SELECT * FROM accounts;  -- Pode ler dados uncommitted
 COMMIT;
 ```
 
-**Когда использовать:**
-- Приблизительные статистики (не критично)
-- ❌ Почти никогда не используется в production
+**Quando usar:**
+- Estatística aproximada (não é crítico)
+- ❌ Quase nunca entra em production
 
 ---
 
 ## 2. Read Committed (default PostgreSQL)
 
-**Что запрещает:**
+**O que bloqueia:**
 - ❌ Dirty Read
 - ✅ Non-Repeatable Read
 - ✅ Phantom Read
 
-**Гарантия:** Видим только committed данные.
+**Garantia:** Você só vê dados committed.
 
 ```sql
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
@@ -142,8 +142,8 @@ BEGIN;
 
 SELECT balance FROM accounts WHERE id = 1;  -- 1000
 
--- Другая транзакция изменила и commit
--- Следующий SELECT увидит новое значение
+-- Outra transação alterou e fez commit
+-- O próximo SELECT vê o valor novo
 
 SELECT balance FROM accounts WHERE id = 1;  -- 500
 
@@ -154,7 +154,7 @@ COMMIT;
 
 ```php
 DB::transaction(function () {
-    // Read Committed по умолчанию
+    // Read Committed por padrão
     $user = User::find(1);
 });
 ```
@@ -163,12 +163,12 @@ DB::transaction(function () {
 
 ## 3. Repeatable Read (default MySQL)
 
-**Что запрещает:**
+**O que bloqueia:**
 - ❌ Dirty Read
 - ❌ Non-Repeatable Read
-- ✅ Phantom Read (в PostgreSQL запрещено, в MySQL разрешено)
+- ✅ Phantom Read (no PostgreSQL é bloqueado, no MySQL é permitido)
 
-**Гарантия:** Одна строка всегда возвращает одно значение в рамках транзакции.
+**Garantia:** A mesma linha devolve o mesmo valor durante a transação.
 
 ```sql
 SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
@@ -176,25 +176,25 @@ BEGIN;
 
 SELECT balance FROM accounts WHERE id = 1;  -- 1000
 
--- Другая транзакция изменила и commit
--- Но мы всё равно видим старое значение
+-- Outra transação alterou e fez commit
+-- Mas a gente ainda vê o valor antigo
 
-SELECT balance FROM accounts WHERE id = 1;  -- 1000 (не изменилось!)
+SELECT balance FROM accounts WHERE id = 1;  -- 1000 (não mudou!)
 
 COMMIT;
 ```
 
-**Реализация:** Snapshot isolation (каждая транзакция видит snapshot на момент начала).
+**Implementação:** Snapshot isolation (cada transação vê o snapshot do momento em que começou).
 
 **MySQL:**
 
 ```php
 DB::transaction(function () {
-    // Repeatable Read по умолчанию
+    // Repeatable Read por padrão
     $balance1 = Account::find(1)->balance;
-    sleep(5);  // Другая транзакция изменила balance
+    sleep(5);  // Outra transação alterou o balance
     $balance2 = Account::find(1)->balance;
-    // $balance1 === $balance2 (тот же snapshot)
+    // $balance1 === $balance2 (mesmo snapshot)
 });
 ```
 
@@ -202,12 +202,12 @@ DB::transaction(function () {
 
 ## 4. Serializable
 
-**Что запрещает:**
+**O que bloqueia:**
 - ❌ Dirty Read
 - ❌ Non-Repeatable Read
 - ❌ Phantom Read
 
-**Гарантия:** Транзакции выполняются как будто последовательно (serial).
+**Garantia:** As transações rodam como se fossem em série (serial).
 
 ```sql
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
@@ -215,57 +215,57 @@ BEGIN;
 
 SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- 10
 
--- Другая транзакция пытается INSERT
--- Будет заблокирована или вернёт serialization error
+-- Outra transação tenta INSERT
+-- Fica bloqueada ou devolve serialization error
 
 SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- 10
 
 COMMIT;
 ```
 
-**Недостатки:**
-- ❌ Медленно (много блокировок)
-- ❌ Serialization errors (нужен retry)
+**Desvantagens:**
+- ❌ Lento (muitos locks)
+- ❌ Serialization errors (precisa de retry)
 
-**Когда использовать:**
-- Критичные финансовые операции
-- Когда нужна абсолютная consistency
+**Quando usar:**
+- Operação financeira crítica
+- Quando você precisa de consistency absoluta
 
 ---
 
-## Comparison Table
+## Tabela comparativa
 
 | Level              | Dirty Read | Non-Repeatable | Phantom | Performance |
 |--------------------|------------|----------------|---------|-------------|
-| Read Uncommitted   | ✅ Да      | ✅ Да          | ✅ Да   | Быстро      |
-| Read Committed     | ❌ Нет     | ✅ Да          | ✅ Да   | Средне      |
-| Repeatable Read    | ❌ Нет     | ❌ Нет         | ✅ Да*  | Средне      |
-| Serializable       | ❌ Нет     | ❌ Нет         | ❌ Нет  | Медленно    |
+| Read Uncommitted   | ✅ Sim     | ✅ Sim         | ✅ Sim  | Rápido      |
+| Read Committed     | ❌ Não     | ✅ Sim         | ✅ Sim  | Médio       |
+| Repeatable Read    | ❌ Não     | ❌ Não         | ✅ Sim* | Médio       |
+| Serializable       | ❌ Não     | ❌ Não         | ❌ Não  | Lento       |
 
-\* PostgreSQL запрещает, MySQL разрешает
+\* PostgreSQL bloqueia, MySQL permite
 
 ---
 
 ## Laravel
 
-**Установить уровень изоляции:**
+**Definir o nível de isolamento:**
 
 ```php
-// Глобально в config/database.php
+// Global em config/database.php
 'mysql' => [
     'options' => [
         PDO::ATTR_PERSISTENT => true,
     ],
-    // MySQL не поддерживает изоляцию через options
+    // MySQL não aceita isolamento via options
 ],
 
-// Для конкретной транзакции
+// Para uma transação específica
 DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
 DB::transaction(function () {
     // ...
 });
 
-// Или через raw
+// Ou via raw
 DB::beginTransaction();
 DB::statement('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
 // ... queries ...
@@ -274,9 +274,9 @@ DB::commit();
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-### 1. Bank Transfer (нужна изоляция)
+### 1. Bank Transfer (precisa de isolamento)
 
 ```php
 // ❌ Read Committed: race condition
@@ -287,14 +287,14 @@ DB::transaction(function () use ($from, $to, $amount) {
         throw new InsufficientFundsException();
     }
 
-    // Другая транзакция может одновременно сделать withdrawal
-    // и balance станет negative!
+    // Outra transação pode fazer withdrawal ao mesmo tempo
+    // e o balance fica negative!
 
     $fromAccount->decrement('balance', $amount);
     Account::find($to)->increment('balance', $amount);
 });
 
-// ✅ Serializable: безопасно
+// ✅ Serializable: seguro
 DB::statement('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
 DB::transaction(function () use ($from, $to, $amount) {
     $fromAccount = Account::lockForUpdate()->find($from);
@@ -310,14 +310,14 @@ DB::transaction(function () use ($from, $to, $amount) {
 
 ---
 
-### 2. Inventory Check (Repeatable Read достаточно)
+### 2. Inventory Check (Repeatable Read basta)
 
 ```php
 DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
 DB::transaction(function () use ($productId, $quantity) {
     $product = Product::find($productId);
 
-    // Видим snapshot, не меняется во время транзакции
+    // Vemos o snapshot, não muda durante a transação
     if ($product->stock < $quantity) {
         throw new OutOfStockException();
     }
@@ -332,8 +332,8 @@ DB::transaction(function () use ($productId, $quantity) {
 ### 3. Analytics Report (Read Committed OK)
 
 ```php
-// Read Committed достаточно для reports
-// Не критично если данные немного несогласованы
+// Read Committed basta para reports
+// Não é crítico se os dados ficarem um pouco inconsistentes
 DB::transaction(function () {
     $totalUsers = User::count();
     $totalOrders = Order::count();
@@ -351,36 +351,36 @@ DB::transaction(function () {
 
 ## Deadlocks
 
-**Проблема:** Две транзакции ждут друг друга.
+**Problema:** Duas transações esperam uma pela outra.
 
 ```sql
 -- Transaction A
 BEGIN;
-UPDATE accounts SET balance = balance - 100 WHERE id = 1;  -- Блокирует row 1
--- Ждёт...
-UPDATE accounts SET balance = balance + 100 WHERE id = 2;  -- Нужна row 2
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;  -- Trava a row 1
+-- Espera...
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;  -- Precisa da row 2
 
--- Transaction B (параллельно)
+-- Transaction B (em paralelo)
 BEGIN;
-UPDATE accounts SET balance = balance - 50 WHERE id = 2;   -- Блокирует row 2
--- Ждёт...
-UPDATE accounts SET balance = balance + 50 WHERE id = 1;   -- Нужна row 1
+UPDATE accounts SET balance = balance - 50 WHERE id = 2;   -- Trava a row 2
+-- Espera...
+UPDATE accounts SET balance = balance + 50 WHERE id = 1;   -- Precisa da row 1
 
--- DEADLOCK! Обе ждут друг друга
+-- DEADLOCK! As duas esperam uma pela outra
 ```
 
-**Решение БД:** Автоматически откатывает одну транзакцию.
+**O que o banco faz:** Dá rollback automático em uma das transações.
 
-**Предотвращение:**
+**Como evitar:**
 
 ```php
-// 1. Всегда блокировать в одном порядке (по ID)
+// 1. Sempre travar na mesma ordem (por ID)
 $accounts = Account::whereIn('id', [$from, $to])
-    ->orderBy('id')  // Всегда один порядок!
+    ->orderBy('id')  // Sempre a mesma ordem!
     ->lockForUpdate()
     ->get();
 
-// 2. Retry при deadlock
+// 2. Retry no deadlock
 $maxRetries = 3;
 for ($i = 0; $i < $maxRetries; $i++) {
     try {
@@ -399,15 +399,15 @@ for ($i = 0; $i < $maxRetries; $i++) {
 
 ---
 
-## Мониторинг
+## Monitoramento
 
 **PostgreSQL:**
 
 ```sql
--- Посмотреть текущие locks
+-- Ver locks atuais
 SELECT * FROM pg_locks WHERE NOT granted;
 
--- Посмотреть blocking queries
+-- Ver queries bloqueadas
 SELECT
     blocked_locks.pid AS blocked_pid,
     blocking_locks.pid AS blocking_pid,
@@ -432,14 +432,14 @@ SELECT * FROM information_schema.INNODB_TRX;
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Безопасный банковский перевод
+### Exercício 1: Transferência bancária segura
 
-**Задача:** Реализовать банковский перевод с правильным уровнем изоляции для предотвращения race conditions.
+**Enunciado:** Implemente uma transferência bancária com o isolation level certo para evitar race conditions.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/BankTransferService.php
@@ -453,11 +453,11 @@ class BankTransferService
 {
     public function transfer(int $fromAccountId, int $toAccountId, float $amount): void
     {
-        // Используем Serializable для критичных финансовых операций
+        // Serializable para operação financeira crítica
         DB::statement('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
 
         DB::transaction(function () use ($fromAccountId, $toAccountId, $amount) {
-            // Блокируем аккаунты в порядке ID (предотвращение deadlock)
+            // Trava as contas na ordem do ID (evita deadlock)
             $ids = [$fromAccountId, $toAccountId];
             sort($ids);
 
@@ -470,18 +470,18 @@ class BankTransferService
             $fromAccount = $accounts[$fromAccountId];
             $toAccount = $accounts[$toAccountId];
 
-            // Проверка баланса
+            // Checagem de saldo
             if ($fromAccount->balance < $amount) {
                 throw new InsufficientFundsException(
-                    "Insufficient funds. Available: {$fromAccount->balance}, Required: {$amount}"
+                    "Saldo insuficiente. Disponível: {$fromAccount->balance}, Necessário: {$amount}"
                 );
             }
 
-            // Выполняем перевод
+            // Faz o transfer
             $fromAccount->decrement('balance', $amount);
             $toAccount->increment('balance', $amount);
 
-            // Логируем транзакцию
+            // Log da transação
             DB::table('transactions')->insert([
                 'from_account_id' => $fromAccountId,
                 'to_account_id' => $toAccountId,
@@ -491,7 +491,7 @@ class BankTransferService
         });
     }
 
-    // Вариант с retry при deadlock
+    // Variante com retry no deadlock
     public function transferWithRetry(int $fromAccountId, int $toAccountId, float $amount): void
     {
         $maxAttempts = 3;
@@ -499,7 +499,7 @@ class BankTransferService
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
                 $this->transfer($fromAccountId, $toAccountId, $amount);
-                return; // Успешно
+                return; // Deu certo
             } catch (\Illuminate\Database\QueryException $e) {
                 // Deadlock error code
                 if ($e->getCode() === '40P01' && $attempt < $maxAttempts) {
@@ -516,12 +516,12 @@ class BankTransferService
 
 </details>
 
-### Задание 2: Демонстрация Isolation Levels
+### Exercício 2: Demonstração de Isolation Levels
 
-**Задача:** Создать Artisan команду для демонстрации разных проблем concurrent доступа.
+**Enunciado:** Crie uma Artisan command para demonstrar os problemas de acesso concurrent.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/DemoIsolationLevels.php
@@ -533,7 +533,7 @@ use Illuminate\Support\Facades\DB;
 class DemoIsolationLevels extends Command
 {
     protected $signature = 'demo:isolation {level}';
-    protected $description = 'Demonstrate isolation level behaviors';
+    protected $description = 'Demonstra o comportamento dos isolation levels';
 
     public function handle()
     {
@@ -543,7 +543,7 @@ class DemoIsolationLevels extends Command
             'dirty-read' => $this->demoDirtyRead(),
             'non-repeatable' => $this->demoNonRepeatableRead(),
             'phantom' => $this->demoPhantomRead(),
-            default => $this->error('Invalid level')
+            default => $this->error('Nível inválido')
         };
     }
 
@@ -551,7 +551,7 @@ class DemoIsolationLevels extends Command
     {
         $this->info('=== Dirty Read Demo ===');
 
-        // Transaction A (в отдельном процессе симулируем через sleep)
+        // Transaction A (em outro processo, simulamos com sleep)
         $this->comment('Transaction A: BEGIN');
         DB::statement('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
         DB::beginTransaction();
@@ -559,18 +559,18 @@ class DemoIsolationLevels extends Command
         $this->comment('Transaction A: UPDATE balance = 500');
         DB::table('accounts')->where('id', 1)->update(['balance' => 500]);
 
-        // Transaction B читает uncommitted данные
+        // Transaction B lê dados uncommitted
         $this->comment('Transaction B: SELECT balance');
         $balance = DB::table('accounts')->where('id', 1)->value('balance');
-        $this->line("Transaction B видит: balance = {$balance}");
+        $this->line("Transaction B vê: balance = {$balance}");
 
-        // Transaction A откатывается
+        // Transaction A dá rollback
         $this->comment('Transaction A: ROLLBACK');
         DB::rollBack();
 
         $actualBalance = DB::table('accounts')->where('id', 1)->value('balance');
-        $this->error("Реальный balance: {$actualBalance}");
-        $this->error('Transaction B прочитала данные которых не существует!');
+        $this->error("Balance real: {$actualBalance}");
+        $this->error('Transaction B leu dados que não existem!');
     }
 
     private function demoNonRepeatableRead()
@@ -580,22 +580,22 @@ class DemoIsolationLevels extends Command
         DB::statement('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
         DB::beginTransaction();
 
-        // Первое чтение
+        // Primeira leitura
         $balance1 = DB::table('accounts')->where('id', 1)->value('balance');
-        $this->line("Первое чтение: balance = {$balance1}");
+        $this->line("Primeira leitura: balance = {$balance1}");
 
-        $this->comment('Другая транзакция изменила balance...');
-        // Симулируем изменение в другой транзакции
+        $this->comment('Outra transação alterou o balance...');
+        // Simula mudança em outra transação
         DB::commit();
         DB::table('accounts')->where('id', 1)->update(['balance' => 999]);
         DB::beginTransaction();
 
-        // Второе чтение
+        // Segunda leitura
         $balance2 = DB::table('accounts')->where('id', 1)->value('balance');
-        $this->line("Второе чтение: balance = {$balance2}");
+        $this->line("Segunda leitura: balance = {$balance2}");
 
         if ($balance1 !== $balance2) {
-            $this->error('Non-Repeatable Read: значения разные!');
+            $this->error('Non-Repeatable Read: os valores são diferentes!');
         }
 
         DB::commit();
@@ -608,21 +608,21 @@ class DemoIsolationLevels extends Command
         DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
         DB::beginTransaction();
 
-        // Первый подсчет
+        // Primeira contagem
         $count1 = DB::table('orders')->where('status', 'pending')->count();
-        $this->line("Первый подсчет: {$count1} pending orders");
+        $this->line("Primeira contagem: {$count1} pending orders");
 
-        $this->comment('Другая транзакция добавила order...');
+        $this->comment('Outra transação inseriu um order...');
         DB::commit();
         DB::table('orders')->insert(['status' => 'pending', 'total' => 100]);
         DB::beginTransaction();
 
-        // Второй подсчет
+        // Segunda contagem
         $count2 = DB::table('orders')->where('status', 'pending')->count();
-        $this->line("Второй подсчет: {$count2} pending orders");
+        $this->line("Segunda contagem: {$count2} pending orders");
 
         if ($count1 !== $count2) {
-            $this->error('Phantom Read: количество строк изменилось!');
+            $this->error('Phantom Read: a quantidade de linhas mudou!');
         }
 
         DB::commit();
@@ -632,12 +632,12 @@ class DemoIsolationLevels extends Command
 
 </details>
 
-### Задание 3: Inventory Management с Repeatable Read
+### Exercício 3: Inventory Management com Repeatable Read
 
-**Задача:** Реализовать систему управления складом с правильной изоляцией.
+**Enunciado:** Implemente um sistema de estoque com o isolamento certo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/InventoryService.php
@@ -652,24 +652,24 @@ class InventoryService
 {
     public function createOrder(int $productId, int $quantity): Order
     {
-        // Repeatable Read достаточно для inventory
+        // Repeatable Read basta para inventory
         DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
 
         return DB::transaction(function () use ($productId, $quantity) {
-            // Блокируем продукт
+            // Trava o produto
             $product = Product::lockForUpdate()->findOrFail($productId);
 
-            // Проверяем stock (видим snapshot на момент начала транзакции)
+            // Checa o stock (vê o snapshot do início da transação)
             if ($product->stock < $quantity) {
                 throw new OutOfStockException(
-                    "Product {$product->name} is out of stock. Available: {$product->stock}, Requested: {$quantity}"
+                    "Produto {$product->name} está sem estoque. Disponível: {$product->stock}, Pedido: {$quantity}"
                 );
             }
 
-            // Уменьшаем stock
+            // Diminui o stock
             $product->decrement('stock', $quantity);
 
-            // Создаём заказ
+            // Cria o pedido
             $order = Order::create([
                 'product_id' => $productId,
                 'quantity' => $quantity,
@@ -680,7 +680,7 @@ class InventoryService
         });
     }
 
-    // Batch order с обработкой deadlock
+    // Batch order com tratamento de deadlock
     public function createBatchOrder(array $items): array
     {
         DB::statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
@@ -688,7 +688,7 @@ class InventoryService
         return DB::transaction(function () use ($items) {
             $orders = [];
 
-            // Сортируем по product_id для предотвращения deadlock
+            // Ordena por product_id para evitar deadlock
             usort($items, fn($a, $b) => $a['product_id'] <=> $b['product_id']);
 
             foreach ($items as $item) {
@@ -708,11 +708,10 @@ class InventoryService
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Isolation Levels контролируют видимость данных между concurrent транзакциями. 4 уровня: Read Uncommitted (dirty reads OK), Read Committed (default PostgreSQL, только committed данные), Repeatable Read (default MySQL, snapshot isolation), Serializable (как последовательное выполнение). Проблемы: Dirty Read (uncommitted), Non-Repeatable Read (разные значения), Phantom Read (разное количество строк). Trade-off: больше изоляция → больше consistency, меньше performance. Deadlocks: транзакции ждут друг друга, решение — retry и блокировать в одном порядке."
+> "Isolation Levels controlam o que uma transação vê enquanto outras transações concorrentes mudam os dados. 4 níveis: Read Uncommitted (dirty reads OK), Read Committed (default no PostgreSQL, só dados committed), Repeatable Read (default no MySQL, snapshot isolation), Serializable (como execução em série). Problemas: Dirty Read (uncommitted), Non-Repeatable Read (valores diferentes), Phantom Read (quantidade de linhas diferente). Trade-off: mais isolamento → mais consistency, menos performance. Deadlock: transações esperam uma pela outra. Solução: retry e lock na mesma ordem."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

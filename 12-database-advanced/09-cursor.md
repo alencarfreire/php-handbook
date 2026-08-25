@@ -1,65 +1,65 @@
-# 9.9 Cursor (Курсоры)
+# 9.9 Cursor
 
-> **TL;DR:** Cursor для построчной итерации без загрузки всего в память. Laravel cursor() использует server-side cursors. Use cases: экспорт больших данных в CSV, обработка millions+ rows. Chunk по страницам (можно UPDATE), cursor streaming (read-only). Lazy Collections = cursor с functional операциями. Не использовать для маленьких выборок.
+> **TL;DR:** Cursor itera linha a linha sem carregar tudo na memória. Laravel `cursor()` usa server-side cursors. Casos de uso: exportar volume grande para CSV, processar millions+ rows. Chunk pagina (dá para UPDATE), cursor faz streaming (read-only). Lazy Collections = cursor com operações funcionais. Não use em seleção pequena.
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [PostgreSQL Cursor](#postgresql-cursor)
 - [Laravel Cursor](#laravel-cursor-lazy-collections)
 - [Chunk vs Cursor](#chunk-vs-cursor)
 - [Lazy Collections](#lazy-collections)
-- [Export в CSV](#export-в-csv)
-- [Cursor с фильтрами](#cursor-с-фильтрами)
+- [Export para CSV](#export-para-csv)
+- [Cursor com filtros](#cursor-com-filtros)
 - [PostgreSQL Server-Side Cursor](#postgresql-server-side-cursor)
 - [WITH HOLD](#with-hold-postgresql)
-- [Cursor для UPDATE](#cursor-для-update)
+- [Cursor para UPDATE](#cursor-para-update)
 - [MySQL Cursor](#mysql-cursor)
-- [Best Practices](#best-practices)
-- [Когда НЕ использовать cursor](#когда-не-использовать-cursor)
-- [Monitoring](#monitoring)
-- [Практические задания](#практические-задания)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
+- [Boas práticas](#boas-práticas)
+- [Quando NÃO usar cursor](#quando-não-usar-cursor)
+- [Monitoramento](#monitoramento)
+- [Exercícios práticos](#exercícios-práticos)
+- [Na entrevista](#na-entrevista)
 
-## Что это
+## O que é
 
 **Cursor:**
-Механизм для итерации по результатам SQL запроса строка за строкой.
+Mecanismo para iterar o resultado de um SQL linha a linha.
 
-**Зачем:**
-- Обработка больших объёмов данных (не загружать всё в память)
-- Построчная обработка с логикой
-- Streaming data
+**Para quê:**
+- Processar volume grande (sem carregar tudo na memória)
+- Processar linha a linha com lógica
+- Streaming de dados
 
 **Trade-off:**
-- ✅ Не загружает всё в память
-- ❌ Медленнее чем bulk операции
-- ❌ Держит соединение открытым
+- ✅ Não carrega tudo na memória
+- ❌ Mais lento que operação bulk
+- ❌ Mantém a conexão aberta
 
-**Когда использовать:**
-- Миллионы строк (не влезают в память)
-- Сложная логика для каждой строки
-- Export больших данных
+**Quando usar:**
+- Milhões de linhas (não cabem na memória)
+- Lógica complexa em cada linha
+- Export de volume grande
 
 ---
 
 ## PostgreSQL Cursor
 
-**Базовый пример:**
+**Exemplo básico:**
 
 ```sql
--- Объявить cursor
+-- Declarar o cursor
 DECLARE my_cursor CURSOR FOR
     SELECT id, email, name FROM users;
 
--- Открыть cursor
+-- Abrir o cursor
 OPEN my_cursor;
 
--- Fetch строки
-FETCH NEXT FROM my_cursor;  -- Одна строка
-FETCH 10 FROM my_cursor;    -- 10 строк
+-- Fetch das linhas
+FETCH NEXT FROM my_cursor;  -- Uma linha
+FETCH 10 FROM my_cursor;    -- 10 linhas
 
--- Закрыть cursor
+-- Fechar o cursor
 CLOSE my_cursor;
 ```
 
@@ -67,27 +67,27 @@ CLOSE my_cursor;
 
 ## Laravel Cursor (Lazy Collections)
 
-**Laravel предоставляет Eloquent cursor():**
+**Laravel oferece Eloquent `cursor()`:**
 
 ```php
-// ❌ ПЛОХО: загрузит ВСЁ в память
+// ❌ RUIM: carrega TUDO na memória
 $users = User::all();  // 10 million users → OutOfMemoryError
 
 foreach ($users as $user) {
     $this->process($user);
 }
 
-// ✅ ХОРОШО: cursor
+// ✅ BOM: cursor
 foreach (User::cursor() as $user) {
     $this->process($user);
 }
-// Загружает по 1000 строк, освобождает память после обработки
+// Carrega de 1000 em 1000, libera memória depois de processar
 ```
 
-**Как работает:**
+**Como funciona:**
 
 ```php
-// User::cursor() под капотом
+// User::cursor() por baixo
 public function cursor()
 {
     return $this->applyScopes()
@@ -100,7 +100,7 @@ public function cursor()
 
 ## Chunk vs Cursor
 
-**Chunk (по страницам):**
+**Chunk (por páginas):**
 
 ```php
 User::chunk(1000, function ($users) {
@@ -109,7 +109,7 @@ User::chunk(1000, function ($users) {
     }
 });
 
-// Выполняет:
+// Executa:
 // SELECT * FROM users LIMIT 1000 OFFSET 0
 // SELECT * FROM users LIMIT 1000 OFFSET 1000
 // SELECT * FROM users LIMIT 1000 OFFSET 2000
@@ -123,30 +123,30 @@ foreach (User::cursor() as $user) {
     $this->process($user);
 }
 
-// Выполняет:
+// Executa:
 // DECLARE cursor_name CURSOR FOR SELECT * FROM users
 // FETCH 1000 FROM cursor_name
 // FETCH 1000 FROM cursor_name
 // ...
 ```
 
-**Когда chunk, когда cursor:**
+**Quando chunk, quando cursor:**
 
 | Chunk | Cursor |
 |-------|--------|
-| Можно изменять строки | Read-only |
-| ORDER BY нестабильный | ORDER BY стабильный |
-| Простая логика | Сложная логика |
-| Небольшие таблицы | Огромные таблицы |
+| Dá para alterar as linhas | Read-only |
+| ORDER BY instável | ORDER BY estável |
+| Lógica simples | Lógica complexa |
+| Tabelas pequenas | Tabelas enormes |
 
 ---
 
 ## Lazy Collections
 
-**Laravel Lazy Collections = cursor под капотом:**
+**Laravel Lazy Collections = cursor por baixo:**
 
 ```php
-// Обработать 10 млн пользователей
+// Processar 10 milhões de usuários
 User::cursor()
     ->filter(fn ($user) => $user->isActive())
     ->map(fn ($user) => [
@@ -155,27 +155,27 @@ User::cursor()
     ])
     ->each(fn ($data) => $this->sendEmail($data));
 
-// Всё выполняется streaming (не загружает всё в память)
+// Tudo roda em streaming (não carrega tudo na memória)
 ```
 
 ---
 
-## Export в CSV
+## Export para CSV
 
-**Плохо: загружает всё в память**
+**Ruim: carrega tudo na memória**
 
 ```php
-// ❌ OutOfMemoryError на больших данных
+// ❌ OutOfMemoryError em volume grande
 $users = User::all();
 
 $csv = Writer::createFromPath('users.csv', 'w+');
 $csv->insertAll($users->toArray());
 ```
 
-**Хорошо: cursor**
+**Bom: cursor**
 
 ```php
-// ✅ Streaming export
+        // ✅ Export em streaming
 $csv = Writer::createFromPath('users.csv', 'w+');
 
 foreach (User::cursor() as $user) {
@@ -197,8 +197,8 @@ class ExportUsersJob implements ShouldQueue
         $file = storage_path('exports/users.csv');
         $handle = fopen($file, 'w');
 
-        // Header
-        fputcsv($handle, ['ID', 'Email', 'Name']);
+        // Cabeçalho
+        fputcsv($handle, ['ID', 'Email', 'Nome']);
 
         // Cursor (streaming)
         foreach (User::cursor() as $user) {
@@ -211,22 +211,22 @@ class ExportUsersJob implements ShouldQueue
 
         fclose($handle);
 
-        // Send to user...
+        // Envia para o usuário...
     }
 }
 ```
 
 ---
 
-## Cursor с фильтрами
+## Cursor com filtros
 
 ```php
-// Только активные пользователи
+// Só usuários ativos
 foreach (User::where('is_active', true)->cursor() as $user) {
     $this->process($user);
 }
 
-// С отношениями (N+1 problem!)
+// Com relationships (problema N+1!)
 foreach (User::with('orders')->cursor() as $user) {
     $this->process($user);
 }
@@ -236,7 +236,7 @@ foreach (User::with('orders')->cursor() as $user) {
 
 ## PostgreSQL Server-Side Cursor
 
-**Для очень больших выборок (миллиарды строк):**
+**Para seleção enorme (bilhões de linhas):**
 
 ```php
 class ProcessHugeTable extends Command
@@ -244,15 +244,15 @@ class ProcessHugeTable extends Command
     public function handle()
     {
         DB::transaction(function () {
-            // Объявить cursor
+            // Declarar o cursor
             DB::statement("DECLARE my_cursor CURSOR FOR SELECT * FROM huge_table");
 
             while (true) {
-                // Fetch 1000 строк
+                // Fetch de 1000 linhas
                 $rows = DB::select("FETCH 1000 FROM my_cursor");
 
                 if (empty($rows)) {
-                    break;  // Конец данных
+                    break;  // Fim dos dados
                 }
 
                 foreach ($rows as $row) {
@@ -260,7 +260,7 @@ class ProcessHugeTable extends Command
                 }
             }
 
-            // Закрыть cursor
+            // Fechar o cursor
             DB::statement("CLOSE my_cursor");
         });
     }
@@ -271,23 +271,23 @@ class ProcessHugeTable extends Command
 
 ## WITH HOLD (PostgreSQL)
 
-**Обычный cursor закрывается после COMMIT:**
+**Cursor comum fecha depois do COMMIT:**
 
 ```sql
 BEGIN;
 DECLARE my_cursor CURSOR FOR SELECT * FROM users;
 COMMIT;
--- Cursor закрыт!
+-- Cursor fechado!
 ```
 
-**WITH HOLD — cursor остаётся открытым:**
+**WITH HOLD — o cursor continua aberto:**
 
 ```sql
 BEGIN;
 DECLARE my_cursor CURSOR WITH HOLD FOR SELECT * FROM users;
 COMMIT;
 
--- Cursor всё ещё открыт
+-- Cursor ainda aberto
 FETCH FROM my_cursor;
 ```
 
@@ -298,7 +298,7 @@ DB::transaction(function () {
     DB::statement("DECLARE my_cursor CURSOR WITH HOLD FOR SELECT * FROM users");
 });
 
-// Cursor доступен вне транзакции
+// Cursor disponível fora da transação
 $rows = DB::select("FETCH 1000 FROM my_cursor");
 
 DB::statement("CLOSE my_cursor");
@@ -306,9 +306,9 @@ DB::statement("CLOSE my_cursor");
 
 ---
 
-## Cursor для UPDATE
+## Cursor para UPDATE
 
-**Update по частям (чтобы не блокировать таблицу):**
+**Update em partes (para não bloquear a tabela):**
 
 ```php
 class UpdateUsersInBatches extends Command
@@ -323,14 +323,14 @@ class UpdateUsersInBatches extends Command
             $processed++;
 
             if ($processed % 1000 === 0) {
-                $this->info("Processed: {$processed}");
+                $this->info("Processados: {$processed}");
             }
         }
     }
 }
 ```
 
-**Лучше: chunk с UPDATE:**
+**Melhor: chunk com UPDATE:**
 
 ```php
 User::where('status', 'pending')
@@ -344,18 +344,18 @@ User::where('status', 'pending')
 
 ## MySQL Cursor
 
-**MySQL НЕ поддерживает server-side cursors в клиентских запросах!**
+**MySQL NÃO tem server-side cursor em query de cliente!**
 
-**Laravel cursor() в MySQL работает иначе:**
+**Laravel `cursor()` no MySQL funciona diferente:**
 
 ```php
-// MySQL: не настоящий cursor, просто unbuffered query
+// MySQL: não é cursor de verdade, é unbuffered query
 foreach (User::cursor() as $user) {
-    // Всё равно загружает всё, но streaming
+    // Ainda faz streaming, mas não é cursor de verdade
 }
 ```
 
-**Stored Procedure с cursor (MySQL):**
+**Stored Procedure com cursor (MySQL):**
 
 ```sql
 DELIMITER //
@@ -377,7 +377,7 @@ BEGIN
             LEAVE read_loop;
         END IF;
 
-        -- Process...
+        -- Processa...
 
     END LOOP;
 
@@ -386,70 +386,70 @@ END //
 
 DELIMITER ;
 
--- Вызов
+-- Chamada
 CALL process_users();
 ```
 
-**Проблема:** сложно, редко используется.
+**Problema:** complicado, quase ninguém usa.
 
 ---
 
-## Best Practices
+## Boas práticas
 
 ```
-✓ Cursor для ОГРОМНЫХ таблиц (millions+ rows)
-✓ Laravel cursor() для Eloquent
-✓ Lazy Collections для цепочки операций
-✓ CSV export через cursor (streaming)
-✓ Chunk для UPDATE/DELETE (не cursor!)
-✓ Избегай cursor если можешь сделать bulk операцию
-✓ PostgreSQL: server-side cursor для миллиардов строк
-✓ MySQL: cursor только в stored procedures
-✓ Мониторь открытые cursors (pg_cursors)
+✓ Cursor para tabelas ENORMES (millions+ rows)
+✓ Laravel cursor() para Eloquent
+✓ Lazy Collections para encadear operações
+✓ CSV export via cursor (streaming)
+✓ Chunk para UPDATE/DELETE (não cursor!)
+✓ Evite cursor se dá para fazer bulk
+✓ PostgreSQL: server-side cursor para bilhões de linhas
+✓ MySQL: cursor só em stored procedures
+✓ Monitore cursors abertos (pg_cursors)
 ```
 
 ---
 
-## Когда НЕ использовать cursor
+## Quando NÃO usar cursor
 
-**1. Можно bulk операцию:**
+**1. Dá para fazer bulk:**
 
 ```php
-// ❌ Медленно: cursor
+// ❌ Lento: cursor
 foreach (User::cursor() as $user) {
     $user->update(['updated_at' => now()]);
 }
 
-// ✅ Быстро: bulk update
+// ✅ Rápido: bulk update
 User::query()->update(['updated_at' => now()]);
 ```
 
-**2. Небольшая выборка:**
+**2. Seleção pequena:**
 
 ```php
-// ❌ Overkill: cursor для 100 строк
+// ❌ Overkill: cursor para 100 linhas
 foreach (User::limit(100)->cursor() as $user) {
     //...
 }
 
-// ✅ Просто get()
+// ✅ Só get()
 foreach (User::limit(100)->get() as $user) {
     //...
 }
 ```
 
-**3. Можно paginate:**
+**3. Dá para paginar:**
 
 ```php
-// Для API pagination не cursor, а paginate()
+// Na paginação de API não é cursor, é paginate()
 User::paginate(50);
 ```
 
 ---
 
-## Monitoring
+## Monitoramento
 
-**PostgreSQL: открытые cursors**
+**PostgreSQL: cursors abertos**
 
 ```sql
 SELECT * FROM pg_cursors;
@@ -458,35 +458,35 @@ SELECT * FROM pg_cursors;
 -- my_cursor      | SELECT * FROM users          | f           | f
 ```
 
-**Laravel: memory usage**
+**Laravel: uso de memória**
 
 ```php
 class ProcessHugeTable extends Command
 {
     public function handle()
     {
-        $this->info('Memory: ' . memory_get_usage() / 1024 / 1024 . ' MB');
+        $this->info('Memória: ' . memory_get_usage() / 1024 / 1024 . ' MB');
 
         foreach (User::cursor() as $user) {
             $this->process($user);
         }
 
-        $this->info('Memory: ' . memory_get_usage() / 1024 / 1024 . ' MB');
-        // Должно быть примерно одинаково
+        $this->info('Memória: ' . memory_get_usage() / 1024 / 1024 . ' MB');
+        // Tem que ficar mais ou menos igual
     }
 }
 ```
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: CSV Export с Cursor
+### Exercício 1: CSV Export com Cursor
 
-**Задача:** Реализовать экспорт миллионов записей в CSV без OutOfMemory.
+**Enunciado:** Exporte milhões de registros para CSV sem OutOfMemory.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Jobs/ExportUsersToCSV.php
@@ -504,7 +504,7 @@ class ExportUsersToCSV implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 3600; // 1 hour
+    public $timeout = 3600; // 1 hora
 
     public function __construct(
         private array $filters = []
@@ -515,28 +515,28 @@ class ExportUsersToCSV implements ShouldQueue
         $filename = 'exports/users_' . now()->format('Y-m-d_His') . '.csv';
         $tempPath = storage_path("app/{$filename}");
 
-        // Открываем файл для записи
+        // Abre o arquivo para escrita
         $handle = fopen($tempPath, 'w');
 
-        // Header
+        // Cabeçalho
         fputcsv($handle, [
             'ID',
-            'Name',
+            'Nome',
             'Email',
-            'Created At',
-            'Last Login',
-            'Orders Count',
-            'Total Spent',
+            'Criado em',
+            'Último login',
+            'Qtd. pedidos',
+            'Total gasto',
         ]);
 
         $exported = 0;
         $startTime = microtime(true);
         $memoryStart = memory_get_usage();
 
-        // Cursor для streaming
+        // Cursor para streaming
         $query = User::query();
 
-        // Применяем фильтры
+        // Aplica os filtros
         if (!empty($this->filters['created_from'])) {
             $query->where('created_at', '>=', $this->filters['created_from']);
         }
@@ -545,7 +545,7 @@ class ExportUsersToCSV implements ShouldQueue
             $query->whereHas('orders');
         }
 
-        // Cursor через записи
+        // Cursor pelas linhas
         foreach ($query->cursor() as $user) {
             fputcsv($handle, [
                 $user->id,
@@ -559,19 +559,19 @@ class ExportUsersToCSV implements ShouldQueue
 
             $exported++;
 
-            // Progress logging
+            // Log de progresso
             if ($exported % 10000 === 0) {
                 $memoryUsed = round((memory_get_usage() - $memoryStart) / 1024 / 1024, 2);
                 $elapsed = round(microtime(true) - $startTime, 2);
                 $rate = round($exported / $elapsed);
 
-                logger()->info("Export progress: {$exported} users ({$rate}/s, {$memoryUsed}MB)");
+                logger()->info("Progresso do export: {$exported} usuários ({$rate}/s, {$memoryUsed}MB)");
             }
         }
 
         fclose($handle);
 
-        // Move to cloud storage
+        // Move para o cloud storage
         Storage::disk('s3')->put(
             $filename,
             file_get_contents($tempPath)
@@ -582,9 +582,9 @@ class ExportUsersToCSV implements ShouldQueue
         $duration = round(microtime(true) - $startTime, 2);
         $memoryPeak = round(memory_get_peak_usage() / 1024 / 1024, 2);
 
-        logger()->info("Export completed: {$exported} users in {$duration}s (peak memory: {$memoryPeak}MB)");
+        logger()->info("Export concluído: {$exported} usuários em {$duration}s (pico de memória: {$memoryPeak}MB)");
 
-        // Notify user
+        // Notifica o usuário
         // event(new ExportCompleted($filename));
     }
 }
@@ -599,11 +599,11 @@ class ExportController extends Controller
             'has_orders' => 'sometimes|boolean',
         ]);
 
-        // Dispatch job
+        // Dispara o job
         ExportUsersToCSV::dispatch($validated);
 
         return response()->json([
-            'message' => 'Export started. You will be notified when it\'s ready.',
+            'message' => 'Export iniciado. Você será notificado quando estiver pronto.',
         ]);
     }
 }
@@ -611,12 +611,12 @@ class ExportController extends Controller
 
 </details>
 
-### Задание 2: Batch Processing с Cursor
+### Exercício 2: Processamento em batch com Cursor
 
-**Задача:** Обработать миллионы записей с комплексной логикой для каждой.
+**Enunciado:** Processe milhões de registros com lógica complexa em cada um.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/ProcessInactiveUsers.php
@@ -629,18 +629,18 @@ use Illuminate\Support\Facades\DB;
 class ProcessInactiveUsers extends Command
 {
     protected $signature = 'users:process-inactive
-                            {--dry-run : Run without making changes}
-                            {--limit= : Limit number of users to process}';
+                            {--dry-run : Roda sem fazer alterações}
+                            {--limit= : Limita quantos usuários processar}';
 
     public function handle()
     {
         $dryRun = $this->option('dry-run');
         $limit = $this->option('limit');
 
-        $this->info('Processing inactive users...');
+        $this->info('Processando usuários inativos...');
 
         if ($dryRun) {
-            $this->warn('DRY RUN MODE - no changes will be made');
+            $this->warn('MODO DRY RUN — nenhuma alteração será feita');
         }
 
         $processed = 0;
@@ -650,7 +650,7 @@ class ProcessInactiveUsers extends Command
 
         $progressBar = $this->output->createProgressBar();
 
-        // Query для inactive users
+        // Query de usuários inativos
         $query = User::where('last_login', '<', now()->subMonths(6))
             ->where('is_active', true);
 
@@ -658,50 +658,50 @@ class ProcessInactiveUsers extends Command
             $query->limit($limit);
         }
 
-        // Cursor для обработки
+        // Cursor para processar
         foreach ($query->cursor() as $user) {
             $processed++;
             $progressBar->advance();
 
-            // Комплексная логика для каждого пользователя
+            // Lógica complexa para cada usuário
             $inactiveDays = now()->diffInDays($user->last_login);
 
             try {
                 if ($inactiveDays > 365) {
-                    // Более года - удалить
+                    // Mais de um ano — apaga
                     if (!$dryRun) {
                         $this->deleteUser($user);
                     }
                     $deleted++;
-                    $this->line("\n[DELETE] User {$user->id} - inactive for {$inactiveDays} days");
+                    $this->line("\n[DELETE] Usuário {$user->id} — inativo há {$inactiveDays} dias");
 
                 } elseif ($inactiveDays > 180) {
-                    // Более 6 месяцев - деактивировать
+                    // Mais de 6 meses — desativa
                     if (!$dryRun) {
                         $user->update(['is_active' => false]);
                     }
                     $deactivated++;
-                    $this->line("\n[DEACTIVATE] User {$user->id} - inactive for {$inactiveDays} days");
+                    $this->line("\n[DEACTIVATE] Usuário {$user->id} — inativo há {$inactiveDays} dias");
 
                 } else {
-                    // Отправить напоминание
+                    // Envia lembrete
                     if (!$dryRun) {
                         $this->sendReactivationEmail($user);
                     }
                     $notified++;
-                    $this->line("\n[NOTIFY] User {$user->id} - inactive for {$inactiveDays} days");
+                    $this->line("\n[NOTIFY] Usuário {$user->id} — inativo há {$inactiveDays} dias");
                 }
 
             } catch (\Exception $e) {
-                $this->error("\nError processing user {$user->id}: " . $e->getMessage());
+                $this->error("\nErro ao processar o usuário {$user->id}: " . $e->getMessage());
             }
 
-            // Memory check
+            // Checagem de memória
             if ($processed % 1000 === 0) {
                 $memoryMB = round(memory_get_usage() / 1024 / 1024, 2);
-                $this->comment("\nMemory usage: {$memoryMB}MB");
+                $this->comment("\nUso de memória: {$memoryMB}MB");
 
-                // Force garbage collection
+                // Força o garbage collection
                 gc_collect_cycles();
             }
         }
@@ -709,38 +709,38 @@ class ProcessInactiveUsers extends Command
         $progressBar->finish();
 
         $this->newLine(2);
-        $this->info("Processing completed!");
+        $this->info("Processamento concluído!");
         $this->table(
-            ['Metric', 'Count'],
+            ['Métrica', 'Quantidade'],
             [
-                ['Total Processed', number_format($processed)],
-                ['Notified', number_format($notified)],
-                ['Deactivated', number_format($deactivated)],
-                ['Deleted', number_format($deleted)],
+                ['Total processado', number_format($processed)],
+                ['Notificados', number_format($notified)],
+                ['Desativados', number_format($deactivated)],
+                ['Apagados', number_format($deleted)],
             ]
         );
 
         if ($dryRun) {
-            $this->warn('This was a DRY RUN - no changes were made');
+            $this->warn('Isso foi um DRY RUN — nenhuma alteração foi feita');
         }
     }
 
     private function deleteUser(User $user)
     {
         DB::transaction(function () use ($user) {
-            // Удалить связанные данные
+            // Apaga os dados relacionados
             $user->orders()->delete();
             $user->preferences()->delete();
             $user->sessions()->delete();
 
-            // Удалить пользователя
+            // Apaga o usuário
             $user->delete();
         });
     }
 
     private function sendReactivationEmail(User $user)
     {
-        // Send email
+        // Envia o email
         // Mail::to($user)->send(new ReactivationReminder($user));
     }
 }
@@ -748,12 +748,12 @@ class ProcessInactiveUsers extends Command
 
 </details>
 
-### Задание 3: Chunk vs Cursor Comparison
+### Exercício 3: Comparação Chunk vs Cursor
 
-**Задача:** Создать команду для сравнения производительности chunk и cursor.
+**Enunciado:** Crie um comando para comparar a performance de chunk e cursor.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/BenchmarkCursorVsChunk.php
@@ -765,31 +765,31 @@ use Illuminate\Console\Command;
 class BenchmarkCursorVsChunk extends Command
 {
     protected $signature = 'benchmark:cursor-vs-chunk {count=10000}';
-    protected $description = 'Compare cursor vs chunk performance';
+    protected $description = 'Compara a performance de cursor vs chunk';
 
     public function handle()
     {
         $count = (int) $this->argument('count');
 
-        $this->info("Benchmarking with {$count} records...");
+        $this->info("Benchmark com {$count} registros...");
         $this->newLine();
 
-        // Benchmark 1: All at once (BAD)
-        $this->info('1. Loading all records at once...');
+        // Benchmark 1: tudo de uma vez (RUIM)
+        $this->info('1. Carregando todos de uma vez...');
         $result1 = $this->benchmarkAll($count);
 
         // Benchmark 2: Chunk
-        $this->info('2. Using chunk...');
+        $this->info('2. Usando chunk...');
         $result2 = $this->benchmarkChunk($count);
 
         // Benchmark 3: Cursor
-        $this->info('3. Using cursor...');
+        $this->info('3. Usando cursor...');
         $result3 = $this->benchmarkCursor($count);
 
-        // Results
+        // Resultados
         $this->newLine();
         $this->table(
-            ['Method', 'Time (s)', 'Peak Memory (MB)', 'Avg Memory (MB)'],
+            ['Método', 'Tempo (s)', 'Pico de memória (MB)', 'Média de memória (MB)'],
             [
                 [
                     'all()',
@@ -812,12 +812,12 @@ class BenchmarkCursorVsChunk extends Command
             ]
         );
 
-        // Winner
+        // Vencedor
         $fastest = collect([$result1, $result2, $result3])->sortBy('time')->first();
-        $this->info("Fastest: {$fastest['method']}");
+        $this->info("Mais rápido: {$fastest['method']}");
 
         $leastMemory = collect([$result1, $result2, $result3])->sortBy('peak_memory')->first();
-        $this->info("Least memory: {$leastMemory['method']}");
+        $this->info("Menos memória: {$leastMemory['method']}");
     }
 
     private function benchmarkAll($count): array
@@ -828,7 +828,7 @@ class BenchmarkCursorVsChunk extends Command
         $users = User::limit($count)->get();
 
         foreach ($users as $user) {
-            // Simulate processing
+            // Simula o processamento
             $this->processUser($user);
         }
 
@@ -878,19 +878,19 @@ class BenchmarkCursorVsChunk extends Command
 
     private function processUser($user)
     {
-        // Simulate processing
+        // Simula o processamento
         $data = [
             'id' => $user->id,
             'email' => $user->email,
             'name' => $user->name,
         ];
 
-        // Some calculation
+        // Algum cálculo
         $hash = md5(json_encode($data));
     }
 }
 
-// Использование:
+// Uso:
 // php artisan benchmark:cursor-vs-chunk 10000
 // php artisan benchmark:cursor-vs-chunk 100000
 ```
@@ -899,10 +899,10 @@ class BenchmarkCursorVsChunk extends Command
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Cursor — механизм для построчной итерации по результатам SQL. Преимущество: не загружает всё в память. Laravel cursor() использует PostgreSQL server-side cursors, в MySQL unbuffered query. Use cases: экспорт больших данных в CSV, обработка millions+ rows. Chunk vs Cursor: chunk по страницам (можно UPDATE), cursor streaming (read-only, стабильный ORDER BY). Lazy Collections = cursor с functional операциями. PostgreSQL WITH HOLD для cursor вне транзакции. Best practices: cursor для огромных таблиц, bulk операции вместо cursor для UPDATE, мониторинг открытых cursors. Не использовать для маленьких выборок или если можно bulk операцию."
+> "Cursor itera linha a linha no resultado do SQL. Vantagem: não carrega tudo na memória. Laravel cursor() usa server-side cursor no PostgreSQL; no MySQL é unbuffered query. Casos de uso: exportar volume grande para CSV, processar millions+ rows. Chunk vs Cursor: chunk pagina (dá para UPDATE), cursor faz streaming (read-only, ORDER BY estável). Lazy Collections = cursor com operações funcionais. PostgreSQL WITH HOLD deixa o cursor aberto fora da transação. Boas práticas: cursor em tabela enorme, bulk no lugar de cursor para UPDATE, monitorar cursors abertos. Não use em seleção pequena nem quando dá para fazer bulk."
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
