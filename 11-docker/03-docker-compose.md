@@ -1,44 +1,44 @@
 # 12.3 Docker Compose
 
-## Краткое резюме
+## Resumo
 
-> **Docker Compose** — инструмент для управления multi-container приложениями через YAML файл.
+> **Docker Compose** — ferramenta para gerenciar apps multi-container via arquivo YAML.
 >
-> **Основные секции:** services (контейнеры), networks (сети), volumes (данные). `docker-compose up -d` запускает все сервисы в фоне.
+> **Seções principais:** services (containers), networks (redes), volumes (dados). `docker-compose up -d` inicia todos os services em background.
 >
-> **Для Laravel:** nginx + php + mysql + redis + queue worker в одном docker-compose.yml. `docker-compose exec` для выполнения команд в контейнерах.
+> **No Laravel:** nginx + php + mysql + redis + queue worker num docker-compose.yml só. `docker-compose exec` para rodar comandos nos containers.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Базовый docker-compose.yml](#базовый-docker-composeyml)
-- [Laravel docker-compose.yml](#laravel-docker-composeyml)
-- [Настройки services](#настройки-services)
-- [Практические примеры](#практические-примеры)
-- [Полезные команды](#полезные-команды)
-- [Override файлы](#override-файлы)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Docker Compose — инструмент для управления multi-container приложениями. Описывает сервисы в YAML файле.
-
-**Зачем:**
-- Запуск нескольких контейнеров одной командой
-- Настройка связей между контейнерами
-- Управление сетями и volumes
+- [O que é](#o-que-é)
+- [docker-compose.yml básico](#docker-composeyml-básico)
+- [docker-compose.yml do Laravel](#docker-composeyml-do-laravel)
+- [Configuração dos services](#configuração-dos-services)
+- [Exemplos práticos](#exemplos-práticos)
+- [Comandos úteis](#comandos-úteis)
+- [Arquivos override](#arquivos-override)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Базовый docker-compose.yml
+## O que é
 
-**Простой пример:**
+**O que é:**
+Docker Compose gerencia apps multi-container. Você descreve os services num arquivo YAML.
+
+**Para que serve:**
+- Iniciar vários containers com um comando
+- Ligar os containers entre si
+- Gerenciar networks e volumes
+
+---
+
+## docker-compose.yml básico
+
+**Exemplo simples:**
 
 ```yaml
 version: '3.8'
@@ -65,39 +65,39 @@ volumes:
   mysql-data:
 ```
 
-**Команды:**
+**Comandos:**
 
 ```bash
-# Запустить все сервисы
+# Iniciar todos os services
 docker-compose up
 
-# Запустить в фоне
+# Iniciar em background
 docker-compose up -d
 
-# Пересобрать образы
+# Rebuild das images
 docker-compose up --build
 
-# Остановить
+# Parar
 docker-compose down
 
-# Остановить и удалить volumes
+# Parar e remover volumes
 docker-compose down -v
 
-# Посмотреть логи
+# Ver os logs
 docker-compose logs
 
-# Логи конкретного сервиса
+# Logs de um service específico
 docker-compose logs app
 
-# Выполнить команду
+# Rodar um comando
 docker-compose exec app php artisan migrate
 ```
 
 ---
 
-## Laravel docker-compose.yml
+## docker-compose.yml do Laravel
 
-**Полный стек:**
+**Stack completo:**
 
 ```yaml
 version: '3.8'
@@ -180,7 +180,7 @@ volumes:
   mysql-data:
 ```
 
-**Nginx config (docker/nginx/default.conf):**
+**Config do Nginx (docker/nginx/default.conf):**
 
 ```nginx
 server {
@@ -203,24 +203,24 @@ server {
 
 ---
 
-## Настройки services
+## Configuração dos services
 
 **build:**
 
 ```yaml
 services:
   app:
-    # Простой build
+    # Build simples
     build: .
 
-    # С параметрами
+    # Com parâmetros
     build:
       context: .
       dockerfile: Dockerfile.prod
       args:
         PHP_VERSION: 8.2
 
-    # Или использовать готовый образ
+    # Ou usar uma image pronta
     image: php:8.2-fpm
 ```
 
@@ -229,13 +229,13 @@ services:
 ```yaml
 services:
   app:
-    # Переменные окружения
+    # Variáveis de ambiente
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
       - DB_HOST=mysql
 
-    # Или из файла
+    # Ou a partir de um arquivo
     env_file:
       - .env
 ```
@@ -246,7 +246,7 @@ services:
 services:
   app:
     volumes:
-      # Bind mount (локальная папка)
+      # Bind mount (pasta local)
       - ./:/var/www/html
 
       # Named volume
@@ -268,7 +268,7 @@ services:
       # host:container
       - "8080:80"
 
-      # Только container (случайный host port)
+      # Só o container (porta do host aleatória)
       - "80"
 
       # IP:host:container
@@ -283,8 +283,8 @@ services:
     depends_on:
       - mysql
       - redis
-    # Запустит mysql и redis перед app
-    # НО не ждёт готовности MySQL!
+    # Inicia mysql e redis antes do app
+    # MAS não espera o MySQL ficar pronto!
 ```
 
 **networks:**
@@ -303,9 +303,9 @@ networks:
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-**Development setup:**
+**Setup de development:**
 
 ```yaml
 version: '3.8'
@@ -342,29 +342,29 @@ volumes:
   mysql-data:
 ```
 
-**Команды:**
+**Comandos:**
 
 ```bash
-# Запустить
+# Iniciar
 docker-compose up -d
 
-# Установить зависимости
+# Instalar as dependências
 docker-compose exec php composer install
 
-# Миграции
+# Migrations
 docker-compose exec php php artisan migrate
 
-# Создать контроллер
+# Criar o controller
 docker-compose exec php php artisan make:controller UserController
 
-# Тесты
+# Testes
 docker-compose exec php php artisan test
 
-# Посмотреть почту
+# Ver os emails
 # http://localhost:8025
 ```
 
-**Production setup:**
+**Setup de production:**
 
 ```yaml
 version: '3.8'
@@ -425,58 +425,58 @@ volumes:
 
 ---
 
-## Полезные команды
+## Comandos úteis
 
-**Управление:**
+**Gerenciar:**
 
 ```bash
-# Пересоздать контейнеры
+# Recriar os containers
 docker-compose up -d --force-recreate
 
-# Остановить без удаления
+# Parar sem remover
 docker-compose stop
 
-# Запустить остановленные
+# Iniciar os que estão parados
 docker-compose start
 
-# Перезапустить
+# Reiniciar
 docker-compose restart
 
-# Посмотреть статус
+# Ver o status
 docker-compose ps
 
-# Выполнить одноразовую команду
+# Rodar um comando pontual
 docker-compose run --rm php composer install
 ```
 
-**Логи:**
+**Logs:**
 
 ```bash
-# Все логи
+# Todos os logs
 docker-compose logs
 
-# Последние 100 строк
+# Últimas 100 linhas
 docker-compose logs --tail=100
 
-# В реальном времени
+# Em tempo real
 docker-compose logs -f
 
-# Конкретный сервис
+# Um service específico
 docker-compose logs -f php
 ```
 
-**Масштабирование:**
+**Escalar:**
 
 ```bash
-# Запустить 3 экземпляра queue worker
+# Iniciar 3 instâncias do queue worker
 docker-compose up -d --scale queue=3
 ```
 
 ---
 
-## Override файлы
+## Arquivos override
 
-**docker-compose.override.yml (автоматически применяется):**
+**docker-compose.override.yml (aplica sozinho):**
 
 ```yaml
 # docker-compose.yml
@@ -485,7 +485,7 @@ services:
   php:
     image: php:8.2-fpm
 
-# docker-compose.override.yml (для локальной разработки)
+# docker-compose.override.yml (dev local)
 version: '3.8'
 services:
   php:
@@ -495,63 +495,63 @@ services:
       - XDEBUG_MODE=debug
 ```
 
-**Использовать конкретный файл:**
+**Usar um arquivo específico:**
 
 ```bash
-# Production файл
+# Arquivo de production
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Docker Compose управляет multi-container приложениями
-- Описание всех сервисов в одном YAML файле
-- Запуск всего стека одной командой
+**O que é:**
+- Docker Compose gerencia apps multi-container
+- Você descreve todos os services num YAML
+- Inicia o stack inteiro com um comando
 
-**Основные секции:**
-- **services** — контейнеры (app, mysql, redis)
-- **networks** — сети для связи между контейнерами
-- **volumes** — персистентные данные
+**Seções principais:**
+- **services** — containers (app, mysql, redis)
+- **networks** — redes para os containers se falarem
+- **volumes** — dados persistentes
 
-**Команды:**
-- `docker-compose up -d` — запустить в фоне
-- `docker-compose down` — остановить и удалить
-- `docker-compose exec` — выполнить команду в контейнере
-- `docker-compose logs` — посмотреть логи
-- `--scale` — масштабирование сервисов
+**Comandos:**
+- `docker-compose up -d` — iniciar em background
+- `docker-compose down` — parar e remover
+- `docker-compose exec` — rodar comando no container
+- `docker-compose logs` — ver os logs
+- `--scale` — escalar services
 
-**Настройки services:**
-- **depends_on** — зависимости (порядок запуска)
-- **environment** — переменные окружения
-- **volumes** — монтирование папок
-- **ports** — проброс портов (host:container)
-- **restart: always** — автоматический перезапуск
+**Configuração dos services:**
+- **depends_on** — dependências (ordem de start)
+- **environment** — variáveis de ambiente
+- **volumes** — montar pastas
+- **ports** — mapear portas (host:container)
+- **restart: always** — restart automático
 
-**Override файлы:**
-- `docker-compose.override.yml` — автоматически применяется
-- Разные конфиги для dev/prod
-- `-f` для указания конкретного файла
+**Arquivos override:**
+- `docker-compose.override.yml` — aplica sozinho
+- Configs diferentes para dev/prod
+- `-f` para apontar o arquivo
 
 **Laravel:**
-- Стек: nginx + php + mysql + redis + queue
-- Общая сеть для связи по именам (DB_HOST=mysql)
-- Named volumes для данных MySQL
+- Stack: nginx + php + mysql + redis + queue
+- Rede compartilhada, conversam pelo nome (DB_HOST=mysql)
+- Named volumes para os dados do MySQL
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай полный Laravel стек с docker-compose
+### Exercício 1: Monte o stack Laravel completo com docker-compose
 
-Создай docker-compose.yml для Laravel с nginx, php, mysql, redis и queue worker. Добавь Mailhog для тестирования почты.
+**Enunciado:** Crie um docker-compose.yml para Laravel com nginx, php, mysql, redis e queue worker. Inclua Mailhog para testar email.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.yml
@@ -687,70 +687,70 @@ server {
 # Dockerfile
 FROM php:8.2-fpm-alpine
 
-# Установить зависимости
+# Instalar dependências
 RUN apk add --no-cache \
     git \
     curl \
     zip \
     unzip
 
-# Установить PHP extensions
+# Instalar as PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Установить Composer
+# Instalar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Создать рабочую директорию
+# Definir o diretório de trabalho
 WORKDIR /var/www/html
 
-# Права
+# Permissões
 RUN chown -R www-data:www-data /var/www/html
 
 USER www-data
 ```
 
 ```bash
-# Запустить весь стек
+# Iniciar o stack inteiro
 docker-compose up -d
 
-# Установить зависимости
+# Instalar as dependências
 docker-compose exec php composer install
 
-# Создать .env
+# Criar o .env
 docker-compose exec php cp .env.example .env
 
-# Сгенерировать ключ
+# Gerar a key
 docker-compose exec php php artisan key:generate
 
-# Запустить миграции
+# Rodar as migrations
 docker-compose exec php php artisan migrate
 
-# Проверить приложение
+# Conferir a app
 # http://localhost:8080
 
-# Посмотреть почту
+# Ver os emails
 # http://localhost:8025
 
-# Логи всех сервисов
+# Logs de todos os services
 docker-compose logs -f
 
-# Остановить всё
+# Parar tudo
 docker-compose down
 
-# Остановить и удалить volumes
+# Parar e remover volumes
 docker-compose down -v
 ```
 </details>
 
-### Задание 2: Создай override файлы для dev и prod
+### Exercício 2: Crie arquivos override para dev e prod
 
-У тебя базовый docker-compose.yml. Создай docker-compose.override.yml для dev с Xdebug и docker-compose.prod.yml для production без лишних сервисов.
+**Enunciado:** Você tem um docker-compose.yml base. Crie docker-compose.override.yml para dev com Xdebug e docker-compose.prod.yml para production, sem services extras.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
-# docker-compose.yml (базовая конфигурация)
+# docker-compose.yml (config base)
 version: '3.8'
 
 services:
@@ -793,7 +793,7 @@ volumes:
 ```
 
 ```yaml
-# docker-compose.override.yml (dev - применяется автоматически)
+# docker-compose.override.yml (dev — aplica sozinho)
 version: '3.8'
 
 services:
@@ -801,11 +801,11 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./:/var/www/html  # Bind mount для hot reload
+      - ./:/var/www/html  # Bind mount para hot reload
 
   php:
     build:
-      dockerfile: Dockerfile.dev  # Dev Dockerfile с Xdebug
+      dockerfile: Dockerfile.dev  # Dev Dockerfile com Xdebug
     volumes:
       - ./:/var/www/html
     environment:
@@ -820,7 +820,7 @@ services:
       MYSQL_USER: laravel
       MYSQL_PASSWORD: secret
     ports:
-      - "3306:3306"  # Доступ извне для GUI клиентов
+      - "3306:3306"  # Acesso de fora para cliente GUI
     volumes:
       - mysql-data:/var/lib/mysql
 
@@ -828,7 +828,7 @@ services:
     ports:
       - "6379:6379"
 
-  # Только для dev
+  # Só no dev
   mailhog:
     image: mailhog/mailhog
     ports:
@@ -837,7 +837,7 @@ services:
     networks:
       - laravel
 
-  # Только для dev
+  # Só no dev
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     environment:
@@ -863,17 +863,17 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Read-only для безопасности
+      # Read-only por segurança
       - ./public:/var/www/html/public:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./docker/ssl:/etc/nginx/ssl:ro
 
   php:
     build:
-      dockerfile: Dockerfile.prod  # Prod Dockerfile без Xdebug
+      dockerfile: Dockerfile.prod  # Prod Dockerfile sem Xdebug
     restart: always
     volumes:
-      # Только storage (для логов/кеша)
+      # Só o storage (logs/cache)
       - ./storage:/var/www/html/storage
     environment:
       - APP_ENV=production
@@ -889,13 +889,13 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
-    # Не пробрасываем порты (доступ только изнутри)
+    # Sem publicar porta (só acesso interno)
 
   redis:
     restart: always
-    # Не пробрасываем порты
+    # Sem publicar porta
 
-  # Queue worker для production
+  # Queue worker para production
   queue:
     build:
       context: .
@@ -912,7 +912,7 @@ services:
     networks:
       - laravel
 
-  # Scheduler для production
+  # Scheduler para production
   scheduler:
     build:
       context: .
@@ -930,29 +930,29 @@ services:
 ```
 
 ```bash
-# Development (автоматически использует override)
+# Development (usa o override sozinho)
 docker-compose up -d
 
 # Production
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# Build production образы
+# Build das images de production
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml build
 
-# Посмотреть итоговую конфигурацию
+# Ver a config final
 docker-compose config
 
-# Для production
+# Para production
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml config
 ```
 </details>
 
-### Задание 3: Масштабируй queue workers
+### Exercício 3: Escale os queue workers
 
-У тебя Laravel приложение с очередями. Настрой docker-compose для запуска нескольких queue workers и настрой балансировку нагрузки для веб-серверов.
+**Enunciado:** Você tem uma app Laravel com filas. Configure o docker-compose para rodar vários queue workers e faça load balancing nos web servers.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.yml
@@ -995,7 +995,7 @@ services:
     networks:
       - laravel
 
-  # PHP-FPM (общий для всех nginx)
+  # PHP-FPM (compartilhado entre os nginx)
   php:
     build:
       context: .
@@ -1030,7 +1030,7 @@ services:
     networks:
       - laravel
 
-  # Queue Worker (масштабируемый)
+  # Queue Worker (escalável)
   queue:
     build:
       context: .
@@ -1047,9 +1047,9 @@ services:
     networks:
       - laravel
     restart: unless-stopped
-    # НЕ указываем container_name - для масштабирования
+    # NÃO defina container_name — senão não escala
 
-  # Horizon (альтернатива множественным queue workers)
+  # Horizon (alternativa a vários queue workers)
   horizon:
     build:
       context: .
@@ -1082,7 +1082,7 @@ events {
 
 http {
     upstream backend {
-        least_conn;  # Балансировка по наименьшей нагрузке
+        least_conn;  # Balanceia pela menor carga
         server nginx-1:80;
         server nginx-2:80;
     }
@@ -1107,44 +1107,44 @@ http {
 ```
 
 ```bash
-# Запустить с 3 queue workers
+# Iniciar com 3 queue workers
 docker-compose up -d --scale queue=3
 
-# Проверить что запустилось 3 инстанса
+# Conferir se há 3 instâncias
 docker-compose ps
 # NAME                    COMMAND                  STATUS              PORTS
 # laravel_queue_1         "php artisan queue:w…"   Up
 # laravel_queue_2         "php artisan queue:w…"   Up
 # laravel_queue_3         "php artisan queue:w…"   Up
 
-# Посмотреть логи всех workers
+# Ver os logs de todos os workers
 docker-compose logs -f queue
 
-# Масштабировать на лету (до 5 workers)
+# Escalar em tempo real (para 5 workers)
 docker-compose up -d --scale queue=5 --no-recreate
 
-# Уменьшить до 2 workers
+# Reduzir para 2 workers
 docker-compose up -d --scale queue=2 --no-recreate
 
-# Посмотреть статистику ресурсов
+# Ver o uso de recursos
 docker stats
 
-# Мониторинг queue через Redis CLI
+# Monitorar a queue no Redis CLI
 docker-compose exec redis redis-cli
-> LLEN queues:default  # Количество jobs в очереди
+> LLEN queues:default  # Quantidade de jobs na fila
 
-# Horizon dashboard (если используешь Horizon вместо queue)
+# Horizon dashboard (se você usa Horizon no lugar de queue)
 # http://localhost/horizon
 
-# Проверить балансировку нагрузки
+# Testar o load balancing
 for i in {1..10}; do
   curl -s http://localhost | grep "Server:"
 done
-# Должны чередоваться nginx-1 и nginx-2
+# Devem alternar nginx-1 e nginx-2
 ```
 
 ```yaml
-# config/horizon.php (если используешь Horizon для автоматического масштабирования)
+# config/horizon.php (se você usa Horizon para auto-scale)
 'environments' => [
     'production' => [
         'supervisor-1' => [
@@ -1163,7 +1163,7 @@ done
 ```
 
 ```bash
-# Альтернатива: docker-compose с фиксированным числом workers
+# Alternativa: docker-compose com número fixo de workers
 # docker-compose.scale.yml
 version: '3.8'
 
@@ -1190,4 +1190,4 @@ services:
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

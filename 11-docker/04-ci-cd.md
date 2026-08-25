@@ -1,48 +1,48 @@
 # 12.4 CI/CD
 
-## Краткое резюме
+## Resumo
 
-> **CI/CD** — автоматизация тестирования (CI) и деплоя (CD) кода.
+> **CI/CD** — automação de testes (CI) e deploy (CD) do código.
 >
-> **GitHub Actions:** workflow в `.github/workflows/`, jobs и steps. GitLab CI: `.gitlab-ci.yml`, stages (test, build, deploy).
+> **GitHub Actions:** workflow em `.github/workflows/`, jobs e steps. GitLab CI: `.gitlab-ci.yml`, stages (test, build, deploy).
 >
-> **Laravel:** тесты → сборка Docker образа → деплой на сервер. Envoy для deployment через SSH. Zero-downtime с blue-green deployment.
+> **Laravel:** testes → build da imagem Docker → deploy no servidor. Envoy para deployment via SSH. Zero-downtime com blue-green deployment.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [GitHub Actions](#github-actions)
 - [GitLab CI](#gitlab-ci)
 - [Deploy script](#deploy-script)
 - [Laravel Envoy](#laravel-envoy)
-- [Docker в CI/CD](#docker-в-cicd)
-- [Практические примеры](#практические-примеры)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Docker no CI/CD](#docker-no-cicd)
+- [Exemplos práticos](#exemplos-práticos)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-CI/CD — автоматизация тестирования, сборки и деплоя кода.
+**O que é:**
+CI/CD — automação de testes, build e deploy do código.
 
 **CI (Continuous Integration):**
-- Автоматический запуск тестов при каждом commit/PR
-- Проверка code style, phpstan
-- Сборка Docker образов
+- Roda os testes sozinho a cada commit/PR
+- Checa code style, phpstan
+- Build das imagens Docker
 
 **CD (Continuous Deployment):**
-- Автоматический деплой на сервер после успешных тестов
-- Staging → Production pipeline
+- Deploy automático no servidor depois dos testes passarem
+- Pipeline Staging → Production
 
 ---
 
 ## GitHub Actions
 
-**Базовый workflow (.github/workflows/tests.yml):**
+**Workflow básico (.github/workflows/tests.yml):**
 
 ```yaml
 name: Tests
@@ -106,7 +106,7 @@ jobs:
         run: vendor/bin/pint --test
 ```
 
-**Deploy workflow (.github/workflows/deploy.yml):**
+**Workflow de deploy (.github/workflows/deploy.yml):**
 
 ```yaml
 name: Deploy
@@ -155,12 +155,12 @@ variables:
   MYSQL_ROOT_PASSWORD: secret
   MYSQL_DATABASE: testing
 
-# Кеш для зависимостей
+# Cache das dependências
 cache:
   paths:
     - vendor/
 
-# Тесты
+# Testes
 test:
   stage: test
   image: php:8.2-fpm
@@ -180,7 +180,7 @@ test:
     - main
     - merge_requests
 
-# Сборка Docker образа
+# Build da imagem Docker
 build:
   stage: build
   image: docker:latest
@@ -193,7 +193,7 @@ build:
   only:
     - main
 
-# Деплой
+# Deploy
 deploy_production:
   stage: deploy
   image: alpine:latest
@@ -216,7 +216,7 @@ deploy_production:
 
 ## Deploy script
 
-**deploy.sh на сервере:**
+**deploy.sh no servidor:**
 
 ```bash
 #!/bin/bash
@@ -224,34 +224,34 @@ set -e
 
 echo "🚀 Starting deployment..."
 
-# Переключиться в maintenance mode
+# Entrar em maintenance mode
 php artisan down
 
-# Получить изменения
+# Puxar as mudanças
 git pull origin main
 
-# Установить зависимости
+# Instalar dependências
 composer install --no-dev --optimize-autoloader
 
-# Обновить БД
+# Atualizar o banco
 php artisan migrate --force
 
-# Очистить и пересоздать кеш
+# Limpar e recriar o cache
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-# Перезапустить очереди
+# Reiniciar as queues
 php artisan queue:restart
 
-# Выйти из maintenance mode
+# Sair do maintenance mode
 php artisan up
 
 echo "✅ Deployment completed!"
 ```
 
-**Сделать исполняемым:**
+**Tornar executável:**
 
 ```bash
 chmod +x deploy.sh
@@ -328,21 +328,21 @@ chmod +x deploy.sh
 @endtask
 ```
 
-**Запуск:**
+**Como rodar:**
 
 ```bash
-# Локально
+# Local
 envoy run deploy
 
-# С параметрами
+# Com parâmetros
 envoy run deploy --commit=abc123
 ```
 
 ---
 
-## Docker в CI/CD
+## Docker no CI/CD
 
-**Build и push образа:**
+**Build e push da imagem:**
 
 ```yaml
 # .github/workflows/docker.yml
@@ -384,7 +384,7 @@ jobs:
           cache-to: type=registry,ref=myapp/laravel:buildcache,mode=max
 ```
 
-**Deploy с Docker Compose:**
+**Deploy com Docker Compose:**
 
 ```yaml
 deploy:
@@ -397,7 +397,7 @@ deploy:
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
 **Zero-downtime deployment:**
 
@@ -419,20 +419,20 @@ fi
 
 echo "Deploying to $NEW_COLOR on port $NEW_PORT"
 
-# Запустить новую версию
+# Iniciar a versão nova
 docker-compose -f docker-compose.$NEW_COLOR.yml up -d
 
-# Подождать готовности
+# Esperar ficar pronto
 sleep 10
 
-# Проверить health
+# Checar o health
 if curl -f http://localhost:$NEW_PORT/health; then
     echo "Health check passed"
-    # Переключить nginx на новый порт
+    # Trocar o nginx para a porta nova
     sed -i "s/$CURRENT_PORT/$NEW_PORT/g" /etc/nginx/sites-available/default
     nginx -s reload
 
-    # Остановить старую версию
+    # Parar a versão antiga
     docker-compose -f docker-compose.$OLD_COLOR.yml down
 else
     echo "Health check failed, rolling back"
@@ -445,7 +445,7 @@ fi
 
 ```bash
 #!/bin/bash
-# Откатить к предыдущему релизу
+# Voltar para o release anterior
 
 CURRENT=$(readlink /var/www/html/current)
 PREVIOUS=$(ls -t /var/www/html/releases | sed -n 2p)
@@ -461,53 +461,53 @@ echo "Rollback completed"
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- CI/CD автоматизирует тестирование и деплой
-- CI — автоматические тесты при каждом commit
-- CD — автоматический деплой после успешных тестов
+**O que é:**
+- CI/CD automatiza testes e deploy
+- CI — testes automáticos a cada commit
+- CD — deploy automático depois dos testes passarem
 
 **GitHub Actions:**
-- Workflow в `.github/workflows/`
-- Jobs и steps для выполнения команд
-- Services для MySQL, Redis
-- Secrets для чувствительных данных (SSH keys, tokens)
+- Workflow em `.github/workflows/`
+- Jobs e steps para rodar os comandos
+- Services para MySQL, Redis
+- Secrets para dados sensíveis (SSH keys, tokens)
 
 **GitLab CI:**
-- `.gitlab-ci.yml` в корне проекта
+- `.gitlab-ci.yml` na raiz do projeto
 - Stages: test, build, deploy
-- Cache для vendor/
-- Artifacts для передачи между stages
+- Cache do vendor/
+- Artifacts para passar dados entre stages
 
 **Deploy:**
-- Laravel Envoy для SSH deployment
+- Laravel Envoy para deployment via SSH
 - Deploy script: maintenance mode, git pull, composer install, migrate, cache
-- Symlinks для zero-downtime (releases/)
-- Rollback к предыдущему релизу
+- Symlinks para zero-downtime (releases/)
+- Rollback para o release anterior
 
 **Docker:**
-- Build образа в CI
-- Push в registry (Docker Hub, GitLab Registry)
-- Pull на сервере и docker-compose up
+- Build da imagem no CI
+- Push no registry (Docker Hub, GitLab Registry)
+- Pull no servidor e docker-compose up
 
 **Zero-downtime:**
-- Blue-Green deployment с двумя средами
-- Health checks перед переключением
-- Rolling deployment для постепенного обновления
+- Blue-Green deployment com dois ambientes
+- Health checks antes de trocar
+- Rolling deployment para atualizar aos poucos
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой GitHub Actions для Laravel
+### Exercício 1: Configure o GitHub Actions para Laravel
 
-Создай полный CI/CD workflow: тесты (PHPUnit, Pint, PHPStan) + деплой на production при push в main.
+Crie um workflow CI/CD completo: testes (PHPUnit, Pint, PHPStan) + deploy em production no push para main.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # .github/workflows/ci.yml
@@ -645,7 +645,7 @@ name: Deploy
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Ручной запуск
+  workflow_dispatch:  # Disparo manual
 
 jobs:
   deploy-production:
@@ -728,13 +728,13 @@ jobs:
 ```
 
 ```bash
-# Настройка Secrets в GitHub
+# Configurar Secrets no GitHub
 # Settings → Secrets and variables → Actions → New repository secret
 
-# Добавить:
+# Adicionar:
 HOST=your-server.com
 USERNAME=deployer
-SSH_PRIVATE_KEY=<содержимое ~/.ssh/id_rsa>
+SSH_PRIVATE_KEY=<conteúdo de ~/.ssh/id_rsa>
 SLACK_WEBHOOK=https://hooks.slack.com/services/...
 CODECOV_TOKEN=...
 SENTRY_AUTH_TOKEN=...
@@ -743,12 +743,12 @@ SENTRY_PROJECT=your-project
 ```
 </details>
 
-### Задание 2: GitLab CI с Docker build и deploy
+### Exercício 2: GitLab CI com Docker build e deploy
 
-Настрой .gitlab-ci.yml: тесты → build Docker образа → push в registry → deploy на production через docker-compose.
+Configure o `.gitlab-ci.yml`: testes → build da imagem Docker → push no registry → deploy em production com docker-compose.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # .gitlab-ci.yml
@@ -765,7 +765,7 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: "/certs"
 
-# Кеш для ускорения
+# Cache para acelerar
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
@@ -822,11 +822,11 @@ build_docker:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
-    # Build образ с тегом commit SHA
+    # Build da imagem com tag do commit SHA
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
     - docker build -t $CI_REGISTRY_IMAGE:latest .
 
-    # Push в registry
+    # Push no registry
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
   only:
@@ -855,20 +855,20 @@ deploy_staging:
         set -e
         cd /var/www/staging
 
-        # Pull новый образ
+        # Pull da imagem nova
         docker-compose pull
 
-        # Обновить контейнеры
+        # Atualizar os containers
         docker-compose up -d
 
-        # Запустить миграции
+        # Rodar as migrations
         docker-compose exec -T php php artisan migrate --force
 
-        # Очистить кеш
+        # Limpar o cache
         docker-compose exec -T php php artisan config:cache
         docker-compose exec -T php php artisan route:cache
 
-        # Перезапустить queue
+        # Reiniciar a queue
         docker-compose exec -T php php artisan queue:restart
       ENDSSH
   environment:
@@ -887,10 +887,10 @@ deploy_production:
 
         echo "🚀 Starting production deployment..."
 
-        # Backup БД перед деплоем
+        # Backup do banco antes do deploy
         docker-compose exec -T mysql mysqldump -u root -p$MYSQL_ROOT_PASSWORD laravel > backup_$(date +%Y%m%d_%H%M%S).sql
 
-        # Pull новый образ
+        # Pull da imagem nova
         docker-compose pull
 
         # Blue-Green deployment
@@ -904,17 +904,17 @@ deploy_production:
           exit 1
         fi
 
-        # Миграции
+        # Migrations
         docker-compose -f docker-compose.green.yml exec -T php php artisan migrate --force
 
-        # Переключить nginx на green
+        # Trocar o nginx para green
         docker-compose -f docker-compose.nginx.yml restart
 
-        # Остановить blue
+        # Parar o blue
         sleep 30
         docker-compose -f docker-compose.blue.yml down
 
-        # Переименовать green в blue для следующего деплоя
+        # Renomear green para blue no próximo deploy
         mv docker-compose.blue.yml docker-compose.blue.yml.old
         mv docker-compose.green.yml docker-compose.blue.yml
         mv docker-compose.blue.yml.old docker-compose.green.yml
@@ -924,7 +924,7 @@ deploy_production:
   environment:
     name: production
     url: https://example.com
-  when: manual  # Ручное подтверждение
+  when: manual  # Confirmação manual
   only:
     - main
 
@@ -945,10 +945,10 @@ rollback_production:
 
         echo "⏪ Rolling back..."
 
-        # Переключить на предыдущую версию
+        # Voltar para a versão anterior
         docker-compose -f docker-compose.blue.yml up -d
 
-        # Откатить миграции
+        # Reverter as migrations
         docker-compose exec -T php php artisan migrate:rollback --force
 
         echo "✅ Rollback completed!"
@@ -961,7 +961,7 @@ rollback_production:
 ```
 
 ```yaml
-# docker-compose.blue.yml (на сервере)
+# docker-compose.blue.yml (no servidor)
 version: '3.8'
 
 services:
@@ -982,7 +982,7 @@ networks:
 ```
 
 ```yaml
-# docker-compose.green.yml (на сервере)
+# docker-compose.green.yml (no servidor)
 version: '3.8'
 
 services:
@@ -1003,23 +1003,23 @@ networks:
 ```
 
 ```bash
-# Настройка CI/CD Variables в GitLab
+# Configurar CI/CD Variables no GitLab
 # Settings → CI/CD → Variables
 
-# Добавить:
-SSH_PRIVATE_KEY = <содержимое приватного ключа>
+# Adicionar:
+SSH_PRIVATE_KEY = <conteúdo da chave privada>
 SSH_HOST = your-server.com
 SSH_USER = deployer
 MYSQL_ROOT_PASSWORD = your_password
 ```
 </details>
 
-### Задание 3: Laravel Envoy с zero-downtime deployment
+### Exercício 3: Laravel Envoy com zero-downtime deployment
 
-Создай Envoy.blade.php для деплоя Laravel через releases/ структуру с возможностью rollback.
+Crie o `Envoy.blade.php` para deploy do Laravel com a estrutura `releases/` e opção de rollback.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 {{-- Envoy.blade.php --}}
@@ -1035,7 +1035,7 @@ MYSQL_ROOT_PASSWORD = your_password
     $release = date('Y-m-d_H-i-s');
     $release_dir = $releases_dir . '/' . $release;
 
-    // Сколько релизов хранить
+    // Quantos releases guardar
     $keep_releases = 5;
 @endsetup
 
@@ -1067,7 +1067,7 @@ MYSQL_ROOT_PASSWORD = your_password
     reload_services
 @endstory
 
-{{-- Клонирование репозитория --}}
+{{-- Clone do repositório --}}
 @task('clone_repository')
     echo "📦 Cloning repository into {{ $release_dir }}"
 
@@ -1079,7 +1079,7 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "Current commit: $(git rev-parse --short HEAD)"
 @endtask
 
-{{-- Установка зависимостей --}}
+{{-- Instalar dependências --}}
 @task('install_dependencies')
     echo "📚 Installing Composer dependencies"
     cd {{ $release_dir }}
@@ -1094,22 +1094,22 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Dependencies installed"
 @endtask
 
-{{-- Создание symlinks на shared файлы --}}
+{{-- Criar symlinks para os arquivos shared --}}
 @task('create_shared_links')
     echo "🔗 Creating symlinks to shared files"
 
-    # Создать shared директории если их нет
+    # Criar diretórios shared se não existirem
     [ -d {{ $shared_dir }}/storage ] || mkdir -p {{ $shared_dir }}/storage
     [ -d {{ $shared_dir }}/storage/app ] || mkdir -p {{ $shared_dir }}/storage/app
     [ -d {{ $shared_dir }}/storage/framework ] || mkdir -p {{ $shared_dir }}/storage/framework
     [ -d {{ $shared_dir }}/storage/logs ] || mkdir -p {{ $shared_dir }}/storage/logs
 
-    # .env файл
+    # Arquivo .env
     [ -f {{ $shared_dir }}/.env ] || cp {{ $release_dir }}/.env.example {{ $shared_dir }}/.env
 
     cd {{ $release_dir }}
 
-    # Удалить storage и создать symlink
+    # Remover storage e criar o symlink
     rm -rf storage
     ln -nfs {{ $shared_dir }}/storage storage
 
@@ -1117,14 +1117,14 @@ MYSQL_ROOT_PASSWORD = your_password
     rm -f .env
     ln -nfs {{ $shared_dir }}/.env .env
 
-    # Права
+    # Permissões
     chmod -R 775 {{ $shared_dir }}/storage
     chmod -R 775 {{ $release_dir }}/bootstrap/cache
 
     echo "✅ Symlinks created"
 @endtask
 
-{{-- Миграции --}}
+{{-- Migrations --}}
 @task('run_migrations')
     echo "🗄️  Running database migrations"
     cd {{ $release_dir }}
@@ -1134,7 +1134,7 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Migrations completed"
 @endtask
 
-{{-- Оптимизация приложения --}}
+{{-- Otimizar a app --}}
 @task('optimize_application')
     echo "⚡ Optimizing application"
     cd {{ $release_dir }}
@@ -1147,7 +1147,7 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Application optimized"
 @endtask
 
-{{-- Обновление symlink на текущий релиз --}}
+{{-- Atualizar o symlink do release atual --}}
 @task('update_current_symlink')
     echo "🔄 Updating current symlink"
 
@@ -1156,7 +1156,7 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Current release: {{ $release }}"
 @endtask
 
-{{-- Перезапуск сервисов --}}
+{{-- Recarregar os serviços --}}
 @task('reload_services')
     echo "🔄 Reloading services"
 
@@ -1167,7 +1167,7 @@ MYSQL_ROOT_PASSWORD = your_password
     cd {{ $current_dir }}
     php artisan queue:restart
 
-    # Supervisor (если используется)
+    # Supervisor (se estiver em uso)
     sudo supervisorctl reread
     sudo supervisorctl update
     sudo supervisorctl restart laravel-worker:*
@@ -1175,13 +1175,13 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Services reloaded"
 @endtask
 
-{{-- Очистка старых релизов --}}
+{{-- Limpar releases antigos --}}
 @task('cleanup_old_releases')
     echo "🧹 Cleaning up old releases"
 
     cd {{ $releases_dir }}
 
-    # Оставить только последние N релизов
+    # Manter só os últimos N releases
     ls -1dt */ | tail -n +{{ $keep_releases + 1 }} | xargs rm -rf
 
     echo "✅ Cleanup completed (kept {{ $keep_releases }} releases)"
@@ -1201,13 +1201,13 @@ MYSQL_ROOT_PASSWORD = your_password
     fi
 @endtask
 
-{{-- Rollback к предыдущему релизу --}}
+{{-- Rollback para o release anterior --}}
 @task('rollback_to_previous')
     echo "⏪ Rolling back to previous release"
 
     cd {{ $releases_dir }}
 
-    # Найти текущий и предыдущий релиз
+    # Achar o release atual e o anterior
     current_release=$(basename $(readlink {{ $current_dir }}))
     previous_release=$(ls -1dt */ | grep -v "^$current_release/" | head -n 1 | tr -d '/')
 
@@ -1219,13 +1219,13 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "Current: $current_release"
     echo "Rolling back to: $previous_release"
 
-    # Обновить symlink
+    # Atualizar o symlink
     ln -nfs {{ $releases_dir }}/$previous_release {{ $current_dir }}
 
     echo "✅ Rolled back to $previous_release"
 @endtask
 
-{{-- Откат миграций --}}
+{{-- Rollback das migrations --}}
 @task('rollback_migrations')
     echo "🗄️  Rolling back database migrations"
     cd {{ $current_dir }}
@@ -1235,7 +1235,7 @@ MYSQL_ROOT_PASSWORD = your_password
     echo "✅ Migrations rolled back"
 @endtask
 
-{{-- Уведомления --}}
+{{-- Notificações --}}
 @finished
     echo "======================================"
     echo "🎉 Deployment finished!"
@@ -1250,25 +1250,25 @@ MYSQL_ROOT_PASSWORD = your_password
 ```
 
 ```bash
-# Установка Envoy
+# Instalar o Envoy
 composer global require laravel/envoy
 
-# Убедиться что ~/.composer/vendor/bin в PATH
+# Garantir que ~/.composer/vendor/bin está no PATH
 export PATH="$HOME/.composer/vendor/bin:$PATH"
 
-# Деплой на production
+# Deploy em production
 envoy run deploy
 
-# Деплой на staging
+# Deploy em staging
 envoy run deploy_staging
 
 # Rollback
 envoy run rollback
 
-# Деплой с уведомлениями в Slack
+# Deploy com notificações no Slack
 envoy run deploy --slack=https://hooks.slack.com/services/...
 
-# Структура на сервере после деплоя:
+# Estrutura no servidor depois do deploy:
 # /var/www/html/
 # ├── current -> releases/2024-01-15_14-30-00
 # ├── releases/
@@ -1281,7 +1281,7 @@ envoy run deploy --slack=https://hooks.slack.com/services/...
 ```
 
 ```php
-{{-- Envoy с Slack уведомлениями --}}
+{{-- Envoy com notificações no Slack --}}
 @servers(['production' => 'deployer@example.com'])
 
 @setup
@@ -1326,4 +1326,4 @@ envoy run deploy --slack=https://hooks.slack.com/services/...
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

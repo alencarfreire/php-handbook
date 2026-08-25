@@ -1,59 +1,59 @@
-# 12.5 Deployment Strategies
+# 12.5 Estratégias de deploy
 
-## Краткое резюме
+## Resumo
 
-> **Deployment strategies** — стратегии развёртывания приложения без простоя.
+> **Deployment strategies** — estratégias de deploy da app sem downtime.
 >
-> **Blue-Green:** две идентичные среды, деплой в неактивную, потом переключение. **Rolling:** постепенная замена инстансов. **Canary:** новая версия на малый процент трафика.
+> **Blue-Green:** dois ambientes idênticos, deploy no inativo, depois a troca. **Rolling:** troca as instâncias aos poucos. **Canary:** versão nova numa fatia pequena do tráfego.
 >
-> **Database migrations:** backward-compatible, Expand-Contract pattern. Health checks для проверки готовности. Rollback через symlink на предыдущий релиз.
+> **Database migrations:** backward-compatible, Expand-Contract pattern. Health checks para checar se está pronto. Rollback via symlink para o release anterior.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Blue-Green Deployment](#blue-green-deployment)
 - [Rolling Deployment](#rolling-deployment)
 - [Canary Deployment](#canary-deployment)
-- [Recreate](#recreate-с-простоем)
-- [Database Migrations в Production](#database-migrations-в-production)
-- [Практические примеры](#практические-примеры)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Recreate](#recreate-com-downtime)
+- [Database Migrations em production](#database-migrations-em-production)
+- [Exemplos práticos](#exemplos-práticos)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Deployment strategies — стратегии развёртывания приложения на production без простоя.
+**O que é:**
+Deployment strategies — estratégias de deploy da app em production sem downtime.
 
-**Основные стратегии:**
+**Estratégias principais:**
 - Blue-Green Deployment
 - Rolling Deployment
 - Canary Deployment
-- Recreate (с простоем)
+- Recreate (com downtime)
 
 ---
 
 ## Blue-Green Deployment
 
-**Принцип:**
-Две идентичные среды (Blue и Green). Деплой в неактивную, потом переключение.
+**Princípio:**
+Dois ambientes idênticos (Blue e Green). Deploy no inativo, depois a troca.
 
-**Схема:**
+**Esquema:**
 
 ```
 Users → Load Balancer → Blue (current, v1.0)
                      → Green (idle, v1.1)
 
-После деплоя:
+Depois do deploy:
 Users → Load Balancer → Blue (idle, v1.0)
                      → Green (current, v1.1)
 ```
 
-**Реализация с Docker:**
+**Implementação com Docker:**
 
 ```bash
 # docker-compose.blue.yml
@@ -79,7 +79,7 @@ services:
 #!/bin/bash
 set -e
 
-# Определить текущий цвет
+# Descobrir a cor atual
 if docker ps | grep -q "blue"; then
     CURRENT="blue"
     NEW="green"
@@ -90,69 +90,69 @@ else
     NEW_PORT=8000
 fi
 
-echo "Deploying to $NEW"
+echo "Fazendo deploy em $NEW"
 
-# Запустить новую версию
+# Subir a versão nova
 docker-compose -f docker-compose.$NEW.yml up -d
 
-# Подождать готовности
+# Esperar ficar pronto
 sleep 10
 
 # Health check
 if curl -f http://localhost:$NEW_PORT/health; then
-    echo "Health check passed"
+    echo "Health check passou"
 
-    # Переключить nginx
+    # Trocar o nginx
     sed -i "s/proxy_pass http:\/\/localhost:[0-9]\+/proxy_pass http:\/\/localhost:$NEW_PORT/g" /etc/nginx/sites-available/default
     nginx -s reload
 
-    # Остановить старую версию
-    sleep 30  # Подождать завершения текущих запросов
+    # Parar a versão antiga
+    sleep 30  # Esperar as requests atuais terminarem
     docker-compose -f docker-compose.$CURRENT.yml down
 
-    echo "Deployment completed"
+    echo "Deploy concluído"
 else
-    echo "Health check failed, rolling back"
+    echo "Health check falhou, fazendo rollback"
     docker-compose -f docker-compose.$NEW.yml down
     exit 1
 fi
 ```
 
-**Плюсы:**
+**Prós:**
 - ✅ Zero downtime
 - ✅ Instant rollback
-- ✅ Testing в production-like среде
+- ✅ Teste em ambiente igual ao de production
 
-**Минусы:**
-- ❌ Двойные ресурсы
-- ❌ Сложность с database migrations
+**Contras:**
+- ❌ Recursos em dobro
+- ❌ Migrations de DB complicam
 
 ---
 
 ## Rolling Deployment
 
-**Принцип:**
-Постепенная замена инстансов по одному.
+**Princípio:**
+Troca as instâncias uma a uma.
 
-**Схема:**
+**Esquema:**
 
 ```
-Было:
+Antes:
 Server 1 (v1.0) → v1.1
 Server 2 (v1.0)
 Server 3 (v1.0)
 
-Шаг 1:
+Passo 1:
 Server 1 (v1.1)
 Server 2 (v1.0) → v1.1
 Server 3 (v1.0)
 
-Шаг 2:
+Passo 2:
 Server 1 (v1.1)
 Server 2 (v1.1)
 Server 3 (v1.0) → v1.1
 
-Готово:
+Pronto:
 Server 1 (v1.1)
 Server 2 (v1.1)
 Server 3 (v1.1)
@@ -171,8 +171,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1  # Максимум 1 под недоступен
-      maxSurge: 1        # Максимум 1 под сверх replicas
+      maxUnavailable: 1  # No máximo 1 pod fora
+      maxSurge: 1        # No máximo 1 pod além das replicas
   template:
     spec:
       containers:
@@ -180,7 +180,7 @@ spec:
         image: myapp:1.1
 ```
 
-**Capistrano (для PHP):**
+**Capistrano (para PHP):**
 
 ```ruby
 # config/deploy.rb
@@ -188,7 +188,7 @@ set :application, 'myapp'
 set :repo_url, 'git@github.com:user/myapp.git'
 set :deploy_to, '/var/www/html'
 
-# Rolling deploy на 3 серверах
+# Rolling deploy em 3 servidores
 server 'server1.example.com', roles: [:app, :web, :db]
 server 'server2.example.com', roles: [:app, :web]
 server 'server3.example.com', roles: [:app, :web]
@@ -202,33 +202,33 @@ namespace :deploy do
 end
 ```
 
-**Плюсы:**
+**Prós:**
 - ✅ Zero downtime
-- ✅ Не нужны двойные ресурсы
-- ✅ Постепенный rollout
+- ✅ Não precisa de recursos em dobro
+- ✅ Rollout gradual
 
-**Минусы:**
-- ❌ Медленнее чем blue-green
-- ❌ Две версии работают одновременно
+**Contras:**
+- ❌ Mais lento que blue-green
+- ❌ Duas versões no ar ao mesmo tempo
 
 ---
 
 ## Canary Deployment
 
-**Принцип:**
-Новая версия на небольшой процент трафика, потом постепенно увеличиваем.
+**Princípio:**
+Versão nova numa fatia pequena do tráfego. Depois você aumenta aos poucos.
 
-**Схема:**
+**Esquema:**
 
 ```
 Users (95%) → v1.0
 Users (5%)  → v1.1 (canary)
 
-Если OK:
+Se estiver ok:
 Users (50%) → v1.0
 Users (50%) → v1.1
 
-Затем:
+Depois:
 Users (100%) → v1.1
 ```
 
@@ -250,7 +250,7 @@ server {
 **Kubernetes canary:**
 
 ```yaml
-# v1 deployment (90% трафика)
+# v1 deployment (90% do tráfego)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -260,7 +260,7 @@ spec:
 
 ---
 
-# v2 deployment (10% трафика)
+# v2 deployment (10% do tráfego)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -269,27 +269,27 @@ spec:
   replicas: 1
 ```
 
-**Плюсы:**
-- ✅ Тестирование на реальных пользователях
-- ✅ Низкий риск
-- ✅ Можно откатить для небольшого процента
+**Prós:**
+- ✅ Teste com usuário de verdade
+- ✅ Risco baixo
+- ✅ Dá para fazer rollback só da fatia pequena
 
-**Минусы:**
-- ❌ Сложная настройка
-- ❌ Нужен мониторинг метрик
+**Contras:**
+- ❌ Setup mais chato
+- ❌ Precisa monitorar métricas
 
 ---
 
-## Recreate (с простоем)
+## Recreate (com downtime)
 
-**Принцип:**
-Остановить старую версию, запустить новую.
+**Princípio:**
+Para a versão antiga, sobe a nova.
 
-**Реализация:**
+**Implementação:**
 
 ```bash
 #!/bin/bash
-# Простой деплой с downtime
+# Deploy simples com downtime
 
 php artisan down  # Maintenance mode
 
@@ -302,44 +302,44 @@ php artisan view:cache
 
 sudo systemctl reload php8.2-fpm
 
-php artisan up  # Выйти из maintenance
+php artisan up  # Sair do maintenance
 ```
 
-**Плюсы:**
-- ✅ Просто
-- ✅ Нет проблем с migrations
+**Prós:**
+- ✅ Simples
+- ✅ Sem dor de cabeça com migrations
 
-**Минусы:**
+**Contras:**
 - ❌ Downtime
 
 ---
 
-## Database Migrations в Production
+## Database Migrations em production
 
-**Проблема:**
-Blue-Green и Rolling deployment с несовместимыми migrations.
+**Problema:**
+Blue-Green e Rolling deployment com migrations incompatíveis.
 
-**Решение: Backward-compatible migrations**
+**Solução: migrations backward-compatible**
 
 ```php
-// ❌ ПЛОХО: ломает старую версию
+// ❌ RUIM: quebra a versão antiga
 Schema::table('users', function (Blueprint $table) {
     $table->dropColumn('old_field');
     $table->renameColumn('name', 'full_name');
 });
 
-// ✅ ХОРОШО: совместимо со старой версией
-// Шаг 1: добавить новое поле
+// ✅ BOM: compatível com a versão antiga
+// Passo 1: adicionar o campo novo
 Schema::table('users', function (Blueprint $table) {
     $table->string('full_name')->nullable();
 });
 
-// Шаг 2 (следующий деплой): заполнить данные
+// Passo 2 (próximo deploy): preencher os dados
 DB::table('users')->whereNull('full_name')->update([
     'full_name' => DB::raw('name')
 ]);
 
-// Шаг 3 (следующий деплой): удалить старое поле
+// Passo 3 (próximo deploy): remover o campo antigo
 Schema::table('users', function (Blueprint $table) {
     $table->dropColumn('name');
 });
@@ -348,16 +348,16 @@ Schema::table('users', function (Blueprint $table) {
 **Expand-Contract Pattern:**
 
 ```
-1. Expand: добавить новые поля/таблицы
-   → Deploy новую версию (работает с обоими полями)
-2. Migrate: перенести данные
-3. Contract: удалить старые поля
-   → Deploy финальную версию
+1. Expand: adicionar campos/tabelas novos
+   → Deploy da versão nova (funciona com os dois campos)
+2. Migrate: migrar os dados
+3. Contract: remover os campos antigos
+   → Deploy da versão final
 ```
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
 **Health check endpoint:**
 
@@ -388,87 +388,87 @@ Route::get('/health', function () {
 // app/Console/Commands/GracefulShutdown.php
 public function handle()
 {
-    // Остановить приём новых jobs
+    // Parar de receber jobs novos
     Artisan::call('queue:restart');
 
-    // Подождать завершения текущих
+    // Esperar os jobs atuais terminarem
     while (Queue::size() > 0) {
-        $this->info('Waiting for ' . Queue::size() . ' jobs...');
+        $this->info('Esperando ' . Queue::size() . ' jobs...');
         sleep(5);
     }
 
-    $this->info('Shutdown complete');
+    $this->info('Shutdown concluído');
 }
 ```
 
 **Feature flags:**
 
 ```php
-// Включить новую функцию только для 10%
+// Ligar a feature nova só para 10%
 if (random_int(1, 100) <= 10) {
-    // Новая функция
+    // Feature nova
 } else {
-    // Старая функция
+    // Feature antiga
 }
 
-// Или через конфиг
+// Ou via config
 if (config('features.new_payment_flow')) {
-    // Новая функция
+    // Feature nova
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
 **Blue-Green:**
-- Две идентичные среды (Blue и Green)
-- Деплой в неактивную среду, тестирование
-- Переключение load balancer на новую среду
-- Instant rollback — вернуть на старую среду
-- Минус: двойные ресурсы, сложность с DB migrations
+- Dois ambientes idênticos (Blue e Green)
+- Deploy no ambiente inativo, testa
+- Troca o load balancer para o ambiente novo
+- Instant rollback — volta para o ambiente antigo
+- Contra: recursos em dobro, migrations de DB complicam
 
 **Rolling:**
-- Постепенная замена инстансов по одному
-- maxUnavailable — сколько может быть недоступно
-- maxSurge — сколько может быть сверх нормы
-- Не нужны двойные ресурсы
-- Минус: две версии работают одновременно
+- Troca as instâncias uma a uma
+- maxUnavailable — quantas podem ficar fora
+- maxSurge — quantas podem passar do total
+- Não precisa de recursos em dobro
+- Contra: duas versões no ar ao mesmo tempo
 
 **Canary:**
-- Новая версия на малый процент трафика (5-10%)
-- Постепенное увеличение при успехе
-- Мониторинг метрик (ошибки, latency)
-- Rollback если метрики ухудшаются
-- Для critical изменений
+- Versão nova numa fatia pequena do tráfego (5-10%)
+- Aumenta aos poucos se estiver ok
+- Monitora métricas (erro, latency)
+- Rollback se as métricas piorarem
+- Para mudanças críticas
 
 **Database migrations:**
-- Backward-compatible migrations обязательны
+- Migrations backward-compatible são obrigatórias
 - Expand-Contract pattern:
-  1. Добавить новое поле
-  2. Deploy (работает с обоими полями)
-  3. Мигрировать данные
-  4. Удалить старое поле
-- Никогда не делать breaking changes в одном деплое
+  1. Adiciona o campo novo
+  2. Deploy (funciona com os dois campos)
+  3. Migra os dados
+  4. Remove o campo antigo
+- Nunca faça breaking change no mesmo deploy
 
 **Health checks:**
-- `/health` endpoint для проверки готовности
-- Проверка DB, Cache, Queue
-- Graceful shutdown для завершения текущих jobs
-- Feature flags для постепенного rollout функций
+- Endpoint `/health` para checar se está pronto
+- Checa DB, Cache, Queue
+- Graceful shutdown para terminar os jobs atuais
+- Feature flags para rollout gradual de features
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Blue-Green deployment с Docker
+### Exercício 1: Implemente Blue-Green deployment com Docker
 
-Создай Blue-Green deployment для Laravel с автоматическим health check и переключением nginx.
+Crie um Blue-Green deployment para Laravel com health check automático e troca do nginx.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.blue.yml
@@ -527,7 +527,7 @@ networks:
 ```nginx
 # /etc/nginx/sites-available/myapp
 upstream backend {
-    server localhost:8000;  # Будет меняться на 8000/8001
+    server localhost:8000;  # Vai alternar entre 8000/8001
 }
 
 server {
@@ -556,13 +556,13 @@ set -e
 VERSION=$1
 
 if [ -z "$VERSION" ]; then
-    echo "Usage: $0 <version>"
+    echo "Uso: $0 <version>"
     exit 1
 fi
 
-echo "🚀 Starting Blue-Green deployment for version $VERSION"
+echo "🚀 Iniciando Blue-Green deployment da versão $VERSION"
 
-# Определить текущий цвет
+# Descobrir a cor atual
 CURRENT_COLOR="blue"
 if docker ps | grep -q "app-blue"; then
     CURRENT_COLOR="blue"
@@ -574,73 +574,73 @@ else
     NEW_PORT=8000
 fi
 
-echo "Current: $CURRENT_COLOR"
-echo "Deploying to: $NEW_COLOR on port $NEW_PORT"
+echo "Atual: $CURRENT_COLOR"
+echo "Deploy em: $NEW_COLOR na porta $NEW_PORT"
 
-# Запустить новую версию
-echo "📦 Pulling image version $VERSION..."
+# Subir a versão nova
+echo "📦 Baixando a image da versão $VERSION..."
 docker pull myapp:$VERSION
 
-echo "🚀 Starting $NEW_COLOR environment..."
+echo "🚀 Iniciando o ambiente $NEW_COLOR..."
 VERSION=$VERSION docker-compose -f docker-compose.$NEW_COLOR.yml up -d
 
-# Подождать готовности
-echo "⏳ Waiting for $NEW_COLOR to be ready..."
+# Esperar ficar pronto
+echo "⏳ Esperando $NEW_COLOR ficar pronto..."
 MAX_RETRIES=30
 RETRY=0
 
 while [ $RETRY -lt $MAX_RETRIES ]; do
     if curl -f http://localhost:$NEW_PORT/health > /dev/null 2>&1; then
-        echo "✅ Health check passed!"
+        echo "✅ Health check passou!"
         break
     fi
 
     RETRY=$((RETRY+1))
-    echo "Retry $RETRY/$MAX_RETRIES..."
+    echo "Tentativa $RETRY/$MAX_RETRIES..."
     sleep 2
 done
 
 if [ $RETRY -eq $MAX_RETRIES ]; then
-    echo "❌ Health check failed after $MAX_RETRIES attempts"
-    echo "🔄 Rolling back..."
+    echo "❌ Health check falhou depois de $MAX_RETRIES tentativas"
+    echo "🔄 Fazendo rollback..."
     docker-compose -f docker-compose.$NEW_COLOR.yml down
     exit 1
 fi
 
-# Запустить миграции
-echo "🗄️  Running database migrations..."
+# Rodar as migrations
+echo "🗄️  Rodando as migrations..."
 docker-compose -f docker-compose.$NEW_COLOR.yml exec -T app-$NEW_COLOR php artisan migrate --force
 
-# Проверить ещё раз после миграций
+# Checar de novo depois das migrations
 sleep 3
 if ! curl -f http://localhost:$NEW_PORT/health > /dev/null 2>&1; then
-    echo "❌ Health check failed after migrations"
-    echo "🔄 Rolling back migrations and container..."
+    echo "❌ Health check falhou depois das migrations"
+    echo "🔄 Fazendo rollback das migrations e do container..."
     docker-compose -f docker-compose.$NEW_COLOR.yml exec -T app-$NEW_COLOR php artisan migrate:rollback --force
     docker-compose -f docker-compose.$NEW_COLOR.yml down
     exit 1
 fi
 
-# Переключить nginx на новый порт
-echo "🔄 Switching nginx to $NEW_COLOR (port $NEW_PORT)..."
+# Trocar o nginx para a porta nova
+echo "🔄 Trocando o nginx para $NEW_COLOR (porta $NEW_PORT)..."
 sudo sed -i "s/server localhost:[0-9]\+;/server localhost:$NEW_PORT;/" /etc/nginx/sites-available/myapp
 sudo nginx -t && sudo nginx -s reload
 
-echo "✅ Nginx switched to $NEW_COLOR"
+echo "✅ Nginx apontando para $NEW_COLOR"
 
-# Подождать завершения текущих запросов
-echo "⏳ Waiting for current requests to complete (30s)..."
+# Esperar as requests atuais terminarem
+echo "⏳ Esperando as requests atuais terminarem (30s)..."
 sleep 30
 
-# Остановить старую версию
-echo "🛑 Stopping $CURRENT_COLOR environment..."
+# Parar a versão antiga
+echo "🛑 Parando o ambiente $CURRENT_COLOR..."
 docker-compose -f docker-compose.$CURRENT_COLOR.yml down
 
 echo "======================================"
-echo "🎉 Deployment completed successfully!"
+echo "🎉 Deploy concluído com sucesso!"
 echo "======================================"
 echo "Version: $VERSION"
-echo "Active environment: $NEW_COLOR"
+echo "Ambiente ativo: $NEW_COLOR"
 echo "Port: $NEW_PORT"
 ```
 
@@ -649,9 +649,9 @@ echo "Port: $NEW_PORT"
 #!/bin/bash
 set -e
 
-echo "⏪ Starting rollback..."
+echo "⏪ Iniciando o rollback..."
 
-# Определить текущий и предыдущий цвет
+# Descobrir a cor atual e a anterior
 if docker ps | grep -q "app-blue"; then
     CURRENT_COLOR="blue"
     PREVIOUS_COLOR="green"
@@ -664,72 +664,72 @@ else
     PREVIOUS_PORT=8000
 fi
 
-echo "Current: $CURRENT_COLOR (port $CURRENT_PORT)"
-echo "Rolling back to: $PREVIOUS_COLOR (port $PREVIOUS_PORT)"
+echo "Atual: $CURRENT_COLOR (porta $CURRENT_PORT)"
+echo "Rollback para: $PREVIOUS_COLOR (porta $PREVIOUS_PORT)"
 
-# Проверить что предыдущая версия всё ещё существует
+# Checar se a versão anterior ainda existe
 if ! docker ps -a | grep -q "app-$PREVIOUS_COLOR"; then
-    echo "❌ Previous environment ($PREVIOUS_COLOR) not found!"
+    echo "❌ Ambiente anterior ($PREVIOUS_COLOR) não encontrado!"
     exit 1
 fi
 
-# Если предыдущая версия остановлена — запустить
+# Se a versão anterior estiver parada — subir
 if ! docker ps | grep -q "app-$PREVIOUS_COLOR"; then
-    echo "🚀 Starting $PREVIOUS_COLOR environment..."
+    echo "🚀 Iniciando o ambiente $PREVIOUS_COLOR..."
     docker-compose -f docker-compose.$PREVIOUS_COLOR.yml up -d
 
-    # Подождать готовности
+    # Esperar ficar pronto
     sleep 10
 fi
 
 # Health check
 if ! curl -f http://localhost:$PREVIOUS_PORT/health > /dev/null 2>&1; then
-    echo "❌ Health check failed for $PREVIOUS_COLOR"
+    echo "❌ Health check falhou no $PREVIOUS_COLOR"
     exit 1
 fi
 
-# Переключить nginx обратно
-echo "🔄 Switching nginx to $PREVIOUS_COLOR..."
+# Trocar o nginx de volta
+echo "🔄 Trocando o nginx para $PREVIOUS_COLOR..."
 sudo sed -i "s/server localhost:[0-9]\+;/server localhost:$PREVIOUS_PORT;/" /etc/nginx/sites-available/myapp
 sudo nginx -t && sudo nginx -s reload
 
 sleep 10
 
-# Остановить текущую (неработающую) версию
-echo "🛑 Stopping $CURRENT_COLOR environment..."
+# Parar a versão atual (que não está ok)
+echo "🛑 Parando o ambiente $CURRENT_COLOR..."
 docker-compose -f docker-compose.$CURRENT_COLOR.yml down
 
-# Откатить миграции
-echo "🗄️  Rolling back database migrations..."
+# Rollback das migrations
+echo "🗄️  Fazendo rollback das migrations..."
 docker-compose -f docker-compose.$PREVIOUS_COLOR.yml exec -T app-$PREVIOUS_COLOR php artisan migrate:rollback --force
 
 echo "======================================"
-echo "✅ Rollback completed!"
+echo "✅ Rollback concluído!"
 echo "======================================"
-echo "Active environment: $PREVIOUS_COLOR"
+echo "Ambiente ativo: $PREVIOUS_COLOR"
 ```
 
 ```bash
-# Использование:
+# Uso:
 
-# Deploy новой версии
+# Deploy da versão nova
 ./deploy-blue-green.sh v1.2.0
 
-# Rollback к предыдущей версии
+# Rollback para a versão anterior
 ./rollback-blue-green.sh
 
-# Проверить текущий статус
+# Checar o status atual
 docker ps
 curl http://localhost/health
 ```
 </details>
 
-### Задание 2: Реализуй backward-compatible migrations
+### Exercício 2: Implemente migrations backward-compatible
 
-У тебя есть поле `users.name`, нужно разбить на `first_name` и `last_name` без downtime.
+Você tem o campo `users.name`. Precisa quebrar em `first_name` e `last_name` sem downtime.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/2024_01_01_000001_add_first_last_name_to_users.php
@@ -742,13 +742,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Шаг 1: Добавить новые поля
-     * Deploy: v1.0 → v1.1 (поддерживает оба варианта)
+     * Passo 1: adicionar os campos novos
+     * Deploy: v1.0 → v1.1 (suporta os dois formatos)
      */
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            // Добавляем новые поля как nullable
+            // Campos novos como nullable
             $table->string('first_name')->nullable()->after('name');
             $table->string('last_name')->nullable()->after('first_name');
         });
@@ -764,7 +764,7 @@ return new class extends Migration
 ```
 
 ```php
-// app/Models/User.php (v1.1 - работает с обоими вариантами)
+// app/Models/User.php (v1.1 — funciona com os dois formatos)
 class User extends Authenticatable
 {
     protected $fillable = [
@@ -775,15 +775,15 @@ class User extends Authenticatable
         'password',
     ];
 
-    // Accessor для обратной совместимости
+    // Accessor para retrocompatibilidade
     public function getNameAttribute($value)
     {
-        // Если есть name — используем его
+        // Se tem name — usa ele
         if ($value) {
             return $value;
         }
 
-        // Иначе собираем из first_name + last_name
+        // Senão monta com first_name + last_name
         if ($this->first_name && $this->last_name) {
             return $this->first_name . ' ' . $this->last_name;
         }
@@ -791,12 +791,12 @@ class User extends Authenticatable
         return $this->first_name ?? $this->last_name ?? '';
     }
 
-    // Mutator для синхронизации
+    // Mutator para sincronizar
     public function setFirstNameAttribute($value)
     {
         $this->attributes['first_name'] = $value;
 
-        // Синхронизируем name если есть last_name
+        // Sincroniza name se já tem last_name
         if (isset($this->attributes['last_name'])) {
             $this->attributes['name'] = $value . ' ' . $this->attributes['last_name'];
         }
@@ -806,7 +806,7 @@ class User extends Authenticatable
     {
         $this->attributes['last_name'] = $value;
 
-        // Синхронизируем name если есть first_name
+        // Sincroniza name se já tem first_name
         if (isset($this->attributes['first_name'])) {
             $this->attributes['name'] = $this->attributes['first_name'] . ' ' . $value;
         }
@@ -824,12 +824,12 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Шаг 2: Мигрировать данные (после деплоя v1.1)
-     * Deploy: v1.1 остаётся, просто мигрируем данные
+     * Passo 2: migrar os dados (depois do deploy da v1.1)
+     * Deploy: v1.1 continua, só migra os dados
      */
     public function up()
     {
-        // Мигрировать данные порциями для больших таблиц
+        // Migrar em lotes se a tabela for grande
         DB::table('users')
             ->whereNull('first_name')
             ->whereNull('last_name')
@@ -850,7 +850,7 @@ return new class extends Migration
 
     public function down()
     {
-        // Восстановить name из first_name + last_name
+        // Restaurar name a partir de first_name + last_name
         DB::table('users')
             ->whereNotNull('first_name')
             ->chunk(1000, function ($users) {
@@ -867,17 +867,17 @@ return new class extends Migration
 ```
 
 ```php
-// app/Models/User.php (v1.2 - используем только новые поля)
+// app/Models/User.php (v1.2 — usa só os campos novos)
 class User extends Authenticatable
 {
     protected $fillable = [
-        'first_name',  // name удалён из fillable
+        'first_name',  // name saiu do fillable
         'last_name',
         'email',
         'password',
     ];
 
-    // Accessor для обратной совместимости (если кто-то ещё использует name)
+    // Accessor para retrocompatibilidade (se alguém ainda usa name)
     public function getNameAttribute()
     {
         return $this->first_name . ' ' . $this->last_name;
@@ -896,12 +896,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Шаг 3: Удалить старое поле (после деплоя v1.2)
-     * Deploy: v1.2 → v1.3 (использует только new fields)
+     * Passo 3: remover o campo antigo (depois do deploy da v1.2)
+     * Deploy: v1.2 → v1.3 (usa só os campos novos)
      */
     public function up()
     {
-        // Убедиться что все данные мигрированы
+        // Garantir que todos os dados foram migrados
         $unmigrated = DB::table('users')
             ->whereNull('first_name')
             ->whereNull('last_name')
@@ -909,7 +909,7 @@ return new class extends Migration
             ->count();
 
         if ($unmigrated > 0) {
-            throw new \Exception("Found $unmigrated users with unmigrated names. Run migration 2024_01_02_000001 first.");
+            throw new \Exception("Encontrou $unmigrated usuários com name ainda sem migrar. Rode a migration 2024_01_02_000001 primeiro.");
         }
 
         Schema::table('users', function (Blueprint $table) {
@@ -923,7 +923,7 @@ return new class extends Migration
             $table->string('name')->nullable();
         });
 
-        // Восстановить данные
+        // Restaurar os dados
         DB::table('users')->chunk(1000, function ($users) {
             foreach ($users as $user) {
                 $name = trim($user->first_name . ' ' . ($user->last_name ?? ''));
@@ -935,75 +935,75 @@ return new class extends Migration
 ```
 
 ```bash
-# Процесс деплоя:
+# Processo de deploy:
 
-# Деплой v1.1 (добавляет новые поля)
+# Deploy v1.1 (adiciona os campos novos)
 git pull
 composer install
-php artisan migrate  # Запустит 2024_01_01_000001
-# Приложение теперь поддерживает оба варианта (name и first_name/last_name)
+php artisan migrate  # Roda 2024_01_01_000001
+# A app agora suporta os dois formatos (name e first_name/last_name)
 
-# Деплой v1.1 (мигрируем данные) - можно сразу или через некоторое время
-php artisan migrate  # Запустит 2024_01_02_000001
-# Данные мигрированы, но name поле ещё не удалено
+# Deploy v1.1 (migra os dados) — na hora ou um pouco depois
+php artisan migrate  # Roda 2024_01_02_000001
+# Dados migrados, mas o campo name ainda existe
 
-# Деплой v1.2 (обновляем код для использования новых полей)
+# Deploy v1.2 (código passa a usar os campos novos)
 git pull
 composer install
-# Код теперь использует first_name/last_name, но name ещё есть
+# Código usa first_name/last_name, mas name ainda está lá
 
-# Деплой v1.3 (удаляем старое поле)
-php artisan migrate  # Запустит 2024_01_03_000001
-# name поле удалено
+# Deploy v1.3 (remove o campo antigo)
+php artisan migrate  # Roda 2024_01_03_000001
+# Campo name removido
 
-# Важно: между каждым шагом можно делать паузу для проверки
+# Importante: entre cada passo dá para pausar e checar
 ```
 
 ```php
-// Тесты для проверки backward compatibility
+// Testes de backward compatibility
 // tests/Feature/UserMigrationTest.php
 class UserMigrationTest extends TestCase
 {
     /** @test */
     public function it_supports_old_name_field()
     {
-        // Создать через старое API
+        // Criar pela API antiga
         $user = User::create([
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
+            'name' => 'João Silva',
+            'email' => 'joao@email.com',
             'password' => bcrypt('password'),
         ]);
 
-        // Проверить что работает
-        $this->assertEquals('John', $user->first_name);
-        $this->assertEquals('Doe', $user->last_name);
-        $this->assertEquals('John Doe', $user->name);
+        // Checar se funciona
+        $this->assertEquals('João', $user->first_name);
+        $this->assertEquals('Silva', $user->last_name);
+        $this->assertEquals('João Silva', $user->name);
     }
 
     /** @test */
     public function it_supports_new_fields()
     {
-        // Создать через новое API
+        // Criar pela API nova
         $user = User::create([
-            'first_name' => 'Jane',
-            'last_name' => 'Smith',
-            'email' => 'jane@example.com',
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'email' => 'maria@email.com',
             'password' => bcrypt('password'),
         ]);
 
-        // Проверить что работает
-        $this->assertEquals('Jane Smith', $user->name);
+        // Checar se funciona
+        $this->assertEquals('Maria Santos', $user->name);
     }
 }
 ```
 </details>
 
-### Задание 3: Canary deployment с метриками
+### Exercício 3: Canary deployment com métricas
 
-Реализуй canary deployment: запусти новую версию для 10% пользователей, мониторь ошибки, автоматически откатывай если error rate > 5%.
+Implemente canary deployment: rode a versão nova para 10% dos usuários, monitore erros, faça rollback automático se o error rate passar de 5%.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.canary.yml
@@ -1120,7 +1120,7 @@ networks:
 ```nginx
 # /etc/nginx/sites-available/myapp-canary
 upstream backend_v1 {
-    # 90% трафика на v1
+    # 90% do tráfego na v1
     server app-v1-1:80;
     server app-v1-2:80;
     server app-v1-3:80;
@@ -1133,11 +1133,11 @@ upstream backend_v1 {
 }
 
 upstream backend_v2 {
-    # 10% трафика на v2 (canary)
+    # 10% do tráfego na v2 (canary)
     server app-v2-canary:80;
 }
 
-# Выбор backend на основе random
+# Escolher o backend no random
 split_clients "${remote_addr}${http_user_agent}${date_gmt}" $backend {
     90%     backend_v1;
     *       backend_v2;
@@ -1152,7 +1152,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
 
-        # Добавить версию в заголовок для отладки
+        # Adicionar a versão no header para debug
         add_header X-App-Version $upstream_addr always;
     }
 
@@ -1187,17 +1187,17 @@ class CanaryMetrics
         try {
             $response = $next($request);
 
-            // Записать успешный запрос
+            // Registrar request com sucesso
             $this->recordRequest($version, $isCanary, 'success');
 
-            // Записать latency
+            // Registrar latency
             $latency = (microtime(true) - $startTime) * 1000;
             $this->recordLatency($version, $latency);
 
             return $response;
 
         } catch (\Exception $e) {
-            // Записать ошибку
+            // Registrar erro
             $this->recordRequest($version, $isCanary, 'error');
 
             Log::error('Request failed', [
@@ -1215,7 +1215,7 @@ class CanaryMetrics
     {
         $key = "metrics:{$version}:{$status}";
         Cache::increment($key);
-        Cache::expire($key, 3600); // 1 hour TTL
+        Cache::expire($key, 3600); // TTL de 1 hora
 
         if ($isCanary) {
             Cache::increment("metrics:canary:{$status}");
@@ -1228,7 +1228,7 @@ class CanaryMetrics
         $latencies = Cache::get($key, []);
         $latencies[] = $latency;
 
-        // Хранить только последние 1000 значений
+        // Guardar só os últimos 1000 valores
         if (count($latencies) > 1000) {
             $latencies = array_slice($latencies, -1000);
         }
@@ -1239,7 +1239,7 @@ class CanaryMetrics
 ```
 
 ```php
-// routes/web.php - Metrics endpoint
+// routes/web.php - endpoint de métricas
 Route::get('/canary/metrics', function () {
     $v1Metrics = [
         'success' => Cache::get('metrics:1.0.0:success', 0),
@@ -1253,14 +1253,14 @@ Route::get('/canary/metrics', function () {
         'latency' => Cache::get('metrics:2.0.0:latency', []),
     ];
 
-    // Вычислить error rate
+    // Calcular error rate
     $v1Total = $v1Metrics['success'] + $v1Metrics['error'];
     $v1ErrorRate = $v1Total > 0 ? ($v1Metrics['error'] / $v1Total) * 100 : 0;
 
     $v2Total = $v2Metrics['success'] + $v2Metrics['error'];
     $v2ErrorRate = $v2Total > 0 ? ($v2Metrics['error'] / $v2Total) * 100 : 0;
 
-    // Средняя latency
+    // Latency média
     $v1AvgLatency = count($v1Metrics['latency']) > 0
         ? array_sum($v1Metrics['latency']) / count($v1Metrics['latency'])
         : 0;
@@ -1292,21 +1292,21 @@ Route::get('/canary/metrics', function () {
 
 ```bash
 #!/bin/bash
-# canary-monitor.sh - Мониторинг canary и автоматический rollback
+# canary-monitor.sh - Monitora o canary e faz rollback automático
 
 set -e
 
 CANARY_ERROR_THRESHOLD=5.0  # 5% error rate
-CANARY_LATENCY_THRESHOLD=150  # 150% от baseline
-CHECK_INTERVAL=60  # Проверять каждые 60 секунд
-MIN_REQUESTS=100  # Минимум запросов для статистики
+CANARY_LATENCY_THRESHOLD=150  # 150% do baseline
+CHECK_INTERVAL=60  # Checar a cada 60 segundos
+MIN_REQUESTS=100  # Mínimo de requests para estatística
 
-echo "🔍 Starting canary monitoring..."
-echo "Error threshold: ${CANARY_ERROR_THRESHOLD}%"
-echo "Latency threshold: ${CANARY_LATENCY_THRESHOLD}%"
+echo "🔍 Iniciando o monitoramento do canary..."
+echo "Limite de erro: ${CANARY_ERROR_THRESHOLD}%"
+echo "Limite de latency: ${CANARY_LATENCY_THRESHOLD}%"
 
 while true; do
-    # Получить метрики
+    # Buscar as métricas
     METRICS=$(curl -s http://localhost/canary/metrics)
 
     V1_ERROR_RATE=$(echo $METRICS | jq -r '.v1.error_rate')
@@ -1318,50 +1318,50 @@ while true; do
 
     echo "$(date '+%Y-%m-%d %H:%M:%S') - v1: ${V1_ERROR_RATE}% errors, ${V1_LATENCY}ms | v2: ${V2_ERROR_RATE}% errors, ${V2_LATENCY}ms (${V2_REQUESTS} requests)"
 
-    # Проверить минимум запросов
+    # Checar o mínimo de requests
     if [ $(echo "$V2_REQUESTS < $MIN_REQUESTS" | bc) -eq 1 ]; then
-        echo "⏳ Waiting for more requests ($V2_REQUESTS/$MIN_REQUESTS)..."
+        echo "⏳ Esperando mais requests ($V2_REQUESTS/$MIN_REQUESTS)..."
         sleep $CHECK_INTERVAL
         continue
     fi
 
-    # Проверить error rate
+    # Checar error rate
     if [ $(echo "$V2_ERROR_RATE > $CANARY_ERROR_THRESHOLD" | bc) -eq 1 ]; then
-        echo "❌ ALERT: Canary error rate too high: ${V2_ERROR_RATE}% (threshold: ${CANARY_ERROR_THRESHOLD}%)"
-        echo "🔄 Starting automatic rollback..."
+        echo "❌ ALERTA: error rate do canary alto demais: ${V2_ERROR_RATE}% (limite: ${CANARY_ERROR_THRESHOLD}%)"
+        echo "🔄 Iniciando rollback automático..."
 
         # Rollback
         docker-compose stop app-v2-canary
 
-        # Уведомить в Slack
+        # Avisar no Slack
         curl -X POST $SLACK_WEBHOOK \
             -H 'Content-Type: application/json' \
-            -d "{\"text\":\"🚨 Canary rollback triggered! Error rate: ${V2_ERROR_RATE}%\"}"
+            -d "{\"text\":\"🚨 Rollback do canary disparado! Error rate: ${V2_ERROR_RATE}%\"}"
 
         exit 1
     fi
 
-    # Проверить latency (должна быть не более 150% от baseline)
+    # Checar latency (não pode passar de 150% do baseline)
     LATENCY_PERCENT=$(echo "scale=2; ($V2_LATENCY / $V1_LATENCY) * 100" | bc)
 
     if [ $(echo "$LATENCY_PERCENT > $CANARY_LATENCY_THRESHOLD" | bc) -eq 1 ]; then
-        echo "⚠️  WARNING: Canary latency high: ${V2_LATENCY}ms vs ${V1_LATENCY}ms (${LATENCY_PERCENT}%)"
-        # Не rollback автоматически, только предупреждение
+        echo "⚠️  AVISO: latency do canary alta: ${V2_LATENCY}ms vs ${V1_LATENCY}ms (${LATENCY_PERCENT}%)"
+        # Sem rollback automático, só aviso
     fi
 
-    # Проверить если всё хорошо после достаточного числа запросов
+    # Se estiver ok depois de requests suficientes
     if [ $(echo "$V2_REQUESTS > 1000" | bc) -eq 1 ] && \
        [ $(echo "$V2_ERROR_RATE < $V1_ERROR_RATE" | bc) -eq 1 ] && \
        [ $(echo "$LATENCY_PERCENT < 110" | bc) -eq 1 ]; then
-        echo "✅ Canary is performing well! Ready to promote."
+        echo "✅ Canary está bem! Pronto para promover."
         echo "Requests: $V2_REQUESTS"
         echo "Error rate: $V2_ERROR_RATE% (vs $V1_ERROR_RATE%)"
         echo "Latency: $V2_LATENCY ms (vs $V1_LATENCY ms)"
 
-        # Уведомить о успехе
+        # Avisar o sucesso
         curl -X POST $SLACK_WEBHOOK \
             -H 'Content-Type: application/json' \
-            -d "{\"text\":\"✅ Canary deployment successful! Ready to promote to 100%.\"}"
+            -d "{\"text\":\"✅ Canary deployment ok! Pronto para promover a 100%.\"}"
     fi
 
     sleep $CHECK_INTERVAL
@@ -1369,22 +1369,22 @@ done
 ```
 
 ```bash
-# Запуск canary deployment
+# Subir o canary deployment
 
-# 1. Запустить canary (10%)
+# 1. Subir o canary (10%)
 docker-compose -f docker-compose.canary.yml up -d
 
-# 2. Запустить мониторинг
+# 2. Subir o monitoramento
 ./canary-monitor.sh
 
-# 3. Если всё ОК через несколько часов — увеличить до 50%
-# Изменить nginx upstream и перезапустить
+# 3. Se estiver ok depois de algumas horas — subir para 50%
+# Mudar o nginx upstream e recarregar
 
-# 4. Если всё ОК — promote до 100%
-# Заменить все v1 на v2
+# 4. Se estiver ok — promover a 100%
+# Trocar todas as v1 por v2
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

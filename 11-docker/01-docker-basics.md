@@ -1,131 +1,131 @@
-# 12.1 Docker Basics
+# 12.1 O básico do Docker
 
-## Краткое резюме
+## Resumo
 
-> **Docker** — платформа для контейнеризации приложений. Упаковывает приложение с зависимостями в изолированный контейнер.
+> **Docker** — plataforma de containerização de apps. Empacota o app com as dependências num container isolado.
 >
-> **Основные команды:** `docker run` (запустить), `docker ps` (список), `docker exec` (выполнить команду), `docker logs` (логи).
+> **Comandos principais:** `docker run` (rodar), `docker ps` (listar), `docker exec` (executar comando), `docker logs` (logs).
 >
-> **Важно:** Images (образы) vs Containers (запущенные экземпляры), Volumes (персистентные данные), Networks (связь между контейнерами).
+> **Importante:** Images (imagens) vs Containers (instâncias em execução), Volumes (dados persistentes), Networks (comunicação entre containers).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Основные команды](#основные-команды)
-- [Docker для PHP/Laravel](#docker-для-phplaravel)
+- [O que é](#o-que-é)
+- [Comandos principais](#comandos-principais)
+- [Docker para PHP/Laravel](#docker-para-phplaravel)
 - [Networks](#networks)
 - [Volumes](#volumes)
-- [Практические примеры](#практические-примеры)
-- [Очистка](#очистка)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Exemplos práticos](#exemplos-práticos)
+- [Limpeza](#limpeza)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Docker — платформа для контейнеризации приложений. Упаковывает приложение с зависимостями в изолированный контейнер.
+**O que é:**
+Docker — plataforma de containerização de apps. Empacota o app com as dependências num container isolado.
 
-**Основные концепции:**
-- **Image** — образ (шаблон)
-- **Container** — запущенный экземпляр образа
-- **Dockerfile** — инструкции для создания образа
-- **Registry** — хранилище образов (Docker Hub)
+**Conceitos principais:**
+- **Image** — imagem (template)
+- **Container** — instância em execução da image
+- **Dockerfile** — instruções para criar a image
+- **Registry** — repositório de images (Docker Hub)
 
 ---
 
-## Основные команды
+## Comandos principais
 
 **Images:**
 
 ```bash
-# Скачать образ
+# Baixar a image
 docker pull php:8.2-fpm
 
-# Список образов
+# Listar as images
 docker images
 
-# Удалить образ
+# Remover a image
 docker rmi php:8.2-fpm
 
-# Создать образ из Dockerfile
+# Criar a image a partir do Dockerfile
 docker build -t myapp:latest .
 
-# Посмотреть историю образа
+# Ver o histórico da image
 docker history myapp:latest
 ```
 
 **Containers:**
 
 ```bash
-# Запустить контейнер
+# Rodar o container
 docker run nginx
 
-# Запустить в фоне (-d detached)
+# Rodar em background (-d detached)
 docker run -d nginx
 
-# Запустить с именем
+# Rodar com nome
 docker run -d --name my-nginx nginx
 
-# Запустить с портами (-p host:container)
+# Rodar com portas (-p host:container)
 docker run -d -p 8080:80 nginx
 
-# Запустить с volumes
+# Rodar com volumes
 docker run -d -v /local/path:/container/path nginx
 
-# Список запущенных контейнеров
+# Listar os containers em execução
 docker ps
 
-# Список всех контейнеров (включая остановленные)
+# Listar todos os containers (incluindo os parados)
 docker ps -a
 
-# Остановить контейнер
+# Parar o container
 docker stop my-nginx
 
-# Удалить контейнер
+# Remover o container
 docker rm my-nginx
 
-# Удалить остановленный контейнер
+# Remover o container à força
 docker rm -f my-nginx
 ```
 
-**Logs и exec:**
+**Logs e exec:**
 
 ```bash
-# Посмотреть логи
+# Ver os logs
 docker logs my-nginx
 
-# Логи в реальном времени
+# Logs em tempo real
 docker logs -f my-nginx
 
-# Выполнить команду в контейнере
+# Rodar um comando no container
 docker exec my-nginx ls /var/www
 
-# Зайти в контейнер (bash)
+# Entrar no container (bash)
 docker exec -it my-nginx bash
 
-# Зайти в контейнер (sh для alpine)
+# Entrar no container (sh no alpine)
 docker exec -it my-nginx sh
 ```
 
 ---
 
-## Docker для PHP/Laravel
+## Docker para PHP/Laravel
 
-**Запустить PHP приложение:**
+**Rodar um app PHP:**
 
 ```bash
-# Запустить PHP-FPM
+# Rodar o PHP-FPM
 docker run -d \
   --name php-app \
   -v $(pwd):/var/www/html \
   -p 9000:9000 \
   php:8.2-fpm
 
-# Запустить Nginx
+# Rodar o Nginx
 docker run -d \
   --name nginx \
   -v $(pwd):/var/www/html \
@@ -134,33 +134,33 @@ docker run -d \
   --link php-app \
   nginx
 
-# Теперь приложение доступно на http://localhost:8080
+# O app fica em http://localhost:8080
 ```
 
-**Выполнить Composer:**
+**Rodar o Composer:**
 
 ```bash
-# Установить зависимости
+# Instalar as dependências
 docker run --rm \
   -v $(pwd):/app \
   composer install
 
-# Обновить зависимости
+# Atualizar as dependências
 docker run --rm \
   -v $(pwd):/app \
   composer update
 ```
 
-**Выполнить Artisan:**
+**Rodar o Artisan:**
 
 ```bash
-# Запустить миграции
+# Rodar as migrations
 docker exec php-app php artisan migrate
 
-# Очистить кеш
+# Limpar o cache
 docker exec php-app php artisan cache:clear
 
-# Создать контроллер
+# Criar um controller
 docker exec php-app php artisan make:controller UserController
 ```
 
@@ -168,26 +168,26 @@ docker exec php-app php artisan make:controller UserController
 
 ## Networks
 
-**Создание и использование:**
+**Criar e usar:**
 
 ```bash
-# Создать сеть
+# Criar a network
 docker network create myapp-network
 
-# Запустить контейнеры в сети
+# Rodar os containers na network
 docker run -d --name mysql --network myapp-network mysql:8
 docker run -d --name php --network myapp-network php:8.2-fpm
 
-# Контейнеры могут обращаться друг к другу по имени
-# В PHP: DB_HOST=mysql
+# Os containers se falam pelo nome
+# No PHP: DB_HOST=mysql
 
-# Список сетей
+# Listar as networks
 docker network ls
 
-# Подключить контейнер к сети
+# Conectar o container na network
 docker network connect myapp-network my-nginx
 
-# Отключить от сети
+# Desconectar da network
 docker network disconnect myapp-network my-nginx
 ```
 
@@ -195,33 +195,33 @@ docker network disconnect myapp-network my-nginx
 
 ## Volumes
 
-**Типы:**
+**Tipos:**
 
 ```bash
-# 1. Bind mount (локальная папка)
+# 1. Bind mount (pasta local)
 docker run -v /local/path:/container/path nginx
 
-# 2. Named volume (управляется Docker)
+# 2. Named volume (o Docker gerencia)
 docker volume create myapp-data
 docker run -v myapp-data:/var/lib/mysql mysql
 
 # 3. Anonymous volume
 docker run -v /var/lib/mysql mysql
 
-# Список volumes
+# Listar os volumes
 docker volume ls
 
-# Удалить volume
+# Remover o volume
 docker volume rm myapp-data
 
-# Удалить неиспользуемые volumes
+# Remover volumes sem uso
 docker volume prune
 ```
 
-**Laravel volumes:**
+**Volumes no Laravel:**
 
 ```bash
-# Storage для логов и кеша
+# Storage para logs e cache
 docker run -d \
   -v $(pwd)/storage:/var/www/html/storage \
   -v $(pwd)/bootstrap/cache:/var/www/html/bootstrap/cache \
@@ -230,12 +230,12 @@ docker run -d \
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
 **MySQL container:**
 
 ```bash
-# Запустить MySQL
+# Rodar o MySQL
 docker run -d \
   --name mysql \
   -e MYSQL_ROOT_PASSWORD=secret \
@@ -246,10 +246,10 @@ docker run -d \
   -v mysql-data:/var/lib/mysql \
   mysql:8
 
-# Подключиться к MySQL
+# Conectar no MySQL
 docker exec -it mysql mysql -u root -p
 
-# Или из приложения
+# Ou pelo app
 DB_HOST=localhost
 DB_PORT=3306
 DB_DATABASE=laravel
@@ -260,20 +260,20 @@ DB_PASSWORD=secret
 **Redis container:**
 
 ```bash
-# Запустить Redis
+# Rodar o Redis
 docker run -d \
   --name redis \
   -p 6379:6379 \
   redis:alpine
 
-# Подключиться к Redis CLI
+# Conectar no Redis CLI
 docker exec -it redis redis-cli
 ```
 
-**Mailhog (для тестирования почты):**
+**Mailhog (para testar email):**
 
 ```bash
-# Запустить Mailhog
+# Rodar o Mailhog
 docker run -d \
   --name mailhog \
   -p 1025:1025 \
@@ -290,76 +290,76 @@ MAIL_PORT=1025
 
 ---
 
-## Очистка
+## Limpeza
 
-**Удаление контейнеров и образов:**
+**Remover containers e images:**
 
 ```bash
-# Остановить все контейнеры
+# Parar todos os containers
 docker stop $(docker ps -aq)
 
-# Удалить все остановленные контейнеры
+# Remover todos os containers parados
 docker rm $(docker ps -aq)
 
-# Удалить все неиспользуемые образы
+# Remover todas as images sem uso
 docker image prune -a
 
-# Удалить всё (контейнеры, образы, сети, volumes)
+# Remover tudo (containers, images, networks, volumes)
 docker system prune -a --volumes
 
-# Посмотреть сколько места занимает Docker
+# Ver quanto espaço o Docker está usando
 docker system df
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Docker контейнеризирует приложения
-- Image — шаблон/образ, Container — запущенный экземпляр
-- Изоляция процессов, файловой системы, сети
+**O que é:**
+- Docker containeriza apps
+- Image — template/imagem, Container — instância em execução
+- Isola processos, filesystem e rede
 
-**Основные команды:**
-- `docker run` — запустить контейнер
-- `-d` — detached (фон), `-p` — порты, `-v` — volumes
-- `docker ps` — список запущенных контейнеров
-- `docker exec` — выполнить команду в контейнере
-- `docker logs` — посмотреть логи
+**Comandos principais:**
+- `docker run` — rodar o container
+- `-d` — detached (background), `-p` — portas, `-v` — volumes
+- `docker ps` — listar os containers em execução
+- `docker exec` — rodar um comando no container
+- `docker logs` — ver os logs
 
 **Networks:**
-- Контейнеры в одной сети могут обращаться друг к другу по имени
-- `docker network create` — создать сеть
-- `--network` — подключить к сети
+- Containers na mesma network se falam pelo nome
+- `docker network create` — criar a network
+- `--network` — conectar na network
 
 **Volumes:**
-- Персистентные данные (переживают удаление контейнера)
-- Bind mount — локальная папка
-- Named volume — управляется Docker
+- Dados persistentes (sobrevivem à exclusão do container)
+- Bind mount — pasta local
+- Named volume — o Docker gerencia
 
 **Laravel:**
 - PHP-FPM + Nginx + MySQL + Redis
-- Composer и Artisan через `docker exec`
-- docker-compose для управления несколькими контейнерами
+- Composer e Artisan via `docker exec`
+- docker-compose para gerenciar vários containers
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Запусти Laravel приложение в Docker
+### Exercício 1: Rode um app Laravel no Docker
 
-Создай и запусти Laravel приложение с MySQL и Redis без docker-compose.
+**Enunciado:** Crie e rode um app Laravel com MySQL e Redis, sem docker-compose.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Шаг 1: Создать сеть
+# Passo 1: Criar a network
 docker network create laravel-network
 
-# Шаг 2: Запустить MySQL
+# Passo 2: Rodar o MySQL
 docker run -d \
   --name mysql \
   --network laravel-network \
@@ -370,25 +370,25 @@ docker run -d \
   -v mysql-data:/var/lib/mysql \
   mysql:8
 
-# Шаг 3: Запустить Redis
+# Passo 3: Rodar o Redis
 docker run -d \
   --name redis \
   --network laravel-network \
   redis:alpine
 
-# Шаг 4: Создать Dockerfile для PHP
+# Passo 4: Criar o Dockerfile do PHP
 cat > Dockerfile <<'EOF'
 FROM php:8.2-fpm
 
-# Установить расширения
+# Instalar as extensões
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Установить Composer
+# Instalar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Для development: установить зависимости при сборке
+# No development: instala as dependências no build
 COPY composer.json composer.lock ./
 RUN composer install --no-scripts
 
@@ -397,10 +397,10 @@ COPY . .
 RUN chown -R www-data:www-data storage bootstrap/cache
 EOF
 
-# Шаг 5: Собрать образ PHP
+# Passo 5: Fazer o build da image PHP
 docker build -t laravel-app .
 
-# Шаг 6: Запустить PHP-FPM
+# Passo 6: Rodar o PHP-FPM
 docker run -d \
   --name php \
   --network laravel-network \
@@ -412,7 +412,7 @@ docker run -d \
   -e REDIS_HOST=redis \
   laravel-app
 
-# Шаг 7: Создать Nginx конфиг
+# Passo 7: Criar o config do Nginx
 mkdir -p nginx
 cat > nginx/default.conf <<'EOF'
 server {
@@ -432,7 +432,7 @@ server {
 }
 EOF
 
-# Шаг 8: Запустить Nginx
+# Passo 8: Rodar o Nginx
 docker run -d \
   --name nginx \
   --network laravel-network \
@@ -441,20 +441,20 @@ docker run -d \
   -v $(pwd)/nginx/default.conf:/etc/nginx/conf.d/default.conf \
   nginx:alpine
 
-# Шаг 9: Запустить миграции
+# Passo 9: Rodar as migrations
 docker exec php php artisan migrate
 
-# Шаг 10: Проверить
+# Passo 10: Checar
 # http://localhost:8080
 
-# Посмотреть логи
+# Ver os logs
 docker logs php
 docker logs nginx
 
-# Зайти в контейнер
+# Entrar no container
 docker exec -it php bash
 
-# Остановить и удалить всё
+# Parar e remover tudo
 docker stop nginx php redis mysql
 docker rm nginx php redis mysql
 docker network rm laravel-network
@@ -462,29 +462,29 @@ docker volume rm mysql-data
 ```
 </details>
 
-### Задание 2: Debug контейнер с проблемами
+### Exercício 2: Faça debug de um container com problema
 
-Контейнер не запускается или работает неправильно. Найди и исправь проблему.
+**Enunciado:** O container não inicia ou está com problema. Ache e corrija.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Ситуация: контейнер сразу останавливается
+# Situação: o container para na hora
 
-# Шаг 1: Проверить статус
+# Passo 1: Checar o status
 docker ps -a
 # STATUS: Exited (1) 5 seconds ago
 
-# Шаг 2: Посмотреть логи
+# Passo 2: Ver os logs
 docker logs my-app
 # Error: Could not connect to database
 
-# Шаг 3: Проверить переменные окружения
+# Passo 3: Checar as variáveis de ambiente
 docker inspect my-app | grep -A 10 Env
-# DB_HOST не указан!
+# DB_HOST não está definido!
 
-# Шаг 4: Пересоздать с правильными переменными
+# Passo 4: Recriar com as variáveis certas
 docker rm my-app
 docker run -d \
   --name my-app \
@@ -493,114 +493,114 @@ docker run -d \
   --network myapp-network \
   php-app
 
-# Ситуация 2: контейнер работает, но не отвечает
+# Situação 2: o container está no ar, mas não responde
 
-# Проверить порты
+# Checar as portas
 docker ps
-# PORTS: 9000/tcp (нет маппинга!)
+# PORTS: 9000/tcp (sem mapeamento!)
 
-# Пересоздать с портами
+# Recriar com as portas
 docker rm -f my-app
 docker run -d \
   --name my-app \
   -p 8080:80 \
   my-app
 
-# Ситуация 3: Permission denied в storage
+# Situação 3: Permission denied no storage
 
-# Зайти в контейнер
+# Entrar no container
 docker exec -it my-app bash
 
-# Проверить владельца
+# Checar o dono
 ls -la storage/
 # drwxr-xr-x root root
 
-# Исправить права
+# Corrigir as permissões
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
 
-# Выйти и перезапустить
+# Sair e reiniciar
 exit
 docker restart my-app
 
-# Полезные команды для отладки:
+# Comandos úteis para debug:
 
-# Посмотреть процессы в контейнере
+# Ver os processos no container
 docker top my-app
 
-# Статистика ресурсов
+# Estatística de recursos
 docker stats my-app
 
-# Детальная информация
+# Informação detalhada
 docker inspect my-app
 
-# Посмотреть diff файловой системы
+# Ver o diff do filesystem
 docker diff my-app
 
-# Посмотреть какие порты открыты
+# Ver quais portas estão abertas
 docker port my-app
 
-# Протестировать сеть
+# Testar a rede
 docker exec my-app ping mysql
 docker exec my-app nc -zv mysql 3306
 ```
 </details>
 
-### Задание 3: Оптимизируй Docker образ
+### Exercício 3: Otimize a image Docker
 
-У тебя образ весит 2GB. Уменьши его размер.
+**Enunciado:** Sua image pesa 2GB. Diminua o tamanho.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Исходный Dockerfile (плохой)
+# Dockerfile original (ruim)
 cat > Dockerfile.before <<'EOF'
 FROM php:8.2-fpm
 
-# ❌ Каждый RUN = новый слой
+# ❌ Cada RUN = uma layer nova
 RUN apt-get update
 RUN apt-get install -y git
 RUN apt-get install -y curl
 RUN apt-get install -y zip
 
-# ❌ Копируем всё подряд
+# ❌ Copia tudo de uma vez
 COPY . /var/www/html
 
-# ❌ Устанавливаем dev зависимости
+# ❌ Instala as dependências de dev
 RUN composer install
 
 WORKDIR /var/www/html
 EOF
 
-# Собрать
+# Fazer o build
 docker build -f Dockerfile.before -t myapp:before .
 docker images myapp:before
 # myapp      before   abc123   2.1GB
 
-# Оптимизированный Dockerfile
+# Dockerfile otimizado
 cat > Dockerfile <<'EOF'
-# ✅ Используем alpine (меньше)
+# ✅ Usa alpine (menor)
 FROM php:8.2-fpm-alpine
 
-# ✅ Объединяем RUN команды
+# ✅ Junta os RUN
 RUN apk add --no-cache \
     git \
     curl \
     zip \
     && rm -rf /var/cache/apk/*
 
-# ✅ Копируем composer файлы отдельно (кеширование)
+# ✅ Copia os arquivos do Composer separado (cache)
 COPY composer.json composer.lock ./
 
-# ✅ Устанавливаем production зависимости
+# ✅ Instala as dependências de production
 RUN composer install \
     --no-dev \
     --no-scripts \
     --no-autoloader \
     --optimize-autoloader
 
-# ✅ Копируем только нужные файлы
+# ✅ Copia só o que precisa
 COPY app app/
 COPY config config/
 COPY database database/
@@ -610,10 +610,10 @@ COPY routes routes/
 COPY bootstrap bootstrap/
 COPY artisan ./
 
-# Завершаем установку composer
+# Termina a instalação do Composer
 RUN composer dump-autoload --optimize
 
-# Права
+# Permissões
 RUN chown -R www-data:www-data /var/www/html
 
 WORKDIR /var/www/html
@@ -621,7 +621,7 @@ WORKDIR /var/www/html
 CMD ["php-fpm"]
 EOF
 
-# .dockerignore (исключить лишнее)
+# .dockerignore (exclui o que não precisa)
 cat > .dockerignore <<'EOF'
 .git
 .gitignore
@@ -640,16 +640,16 @@ docker-compose.yml
 Dockerfile
 EOF
 
-# Собрать оптимизированный
+# Build da versão otimizada
 docker build -t myapp:after .
 docker images myapp:after
 # myapp      after   def456   350MB
 
-# Сравнить размеры
+# Comparar os tamanhos
 docker images | grep myapp
-# before: 2.1GB → after: 350MB (экономия 83%!)
+# before: 2.1GB → after: 350MB (economia de 83%!)
 
-# Бонус: Multi-stage build
+# Bônus: Multi-stage build
 cat > Dockerfile.multistage <<'EOF'
 # Stage 1: Composer
 FROM composer:latest AS composer
@@ -661,21 +661,21 @@ RUN composer install --no-dev --optimize-autoloader
 FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
 
-# Копируем только vendor из первого stage
+# Copia só o vendor do primeiro stage
 COPY --from=composer /app/vendor ./vendor
 
-# Копируем код
+# Copia o código
 COPY . .
 
-# Остальное...
+# O resto...
 CMD ["php-fpm"]
 EOF
 
 docker build -f Dockerfile.multistage -t myapp:multistage .
-# Ещё меньше!
+# Ainda menor!
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

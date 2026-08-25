@@ -1,134 +1,134 @@
 # 12.2 Dockerfile
 
-## Краткое резюме
+## Resumo
 
-> **Dockerfile** — файл с инструкциями для создания Docker образа.
+> **Dockerfile** — arquivo com as instruções para criar a imagem Docker.
 >
-> **Основные инструкции:** FROM (базовый образ), RUN (команды при сборке), COPY (файлы), CMD (команда запуска), WORKDIR (рабочая директория).
+> **Instruções principais:** FROM (imagem base), RUN (comandos no build), COPY (arquivos), CMD (comando de start), WORKDIR (diretório de trabalho).
 >
-> **Важно:** Multi-stage build для оптимизации, кеширование слоёв, .dockerignore для исключения файлов.
+> **Importante:** multi-stage build para otimizar, cache de camadas, .dockerignore para excluir arquivos.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Базовый Dockerfile](#базовый-dockerfile)
-- [Инструкции Dockerfile](#инструкции-dockerfile)
-- [Laravel Dockerfile](#laravel-dockerfile)
+- [O que é](#o-que-é)
+- [Dockerfile básico](#dockerfile-básico)
+- [Instruções do Dockerfile](#instruções-do-dockerfile)
+- [Dockerfile no Laravel](#dockerfile-no-laravel)
 - [Multi-stage build](#multi-stage-build)
 - [.dockerignore](#dockerignore)
-- [Практические советы](#практические-советы)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Dicas práticas](#dicas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Dockerfile — файл с инструкциями для создания Docker образа. Описывает среду приложения.
+**O que é:**
+Dockerfile — arquivo com as instruções para criar a imagem Docker. Descreve o ambiente da app.
 
-**Основные инструкции:**
-- `FROM` — базовый образ
-- `RUN` — выполнить команду при сборке
-- `COPY` — скопировать файлы
-- `CMD` — команда при запуске контейнера
-- `EXPOSE` — открыть порт
+**Instruções principais:**
+- `FROM` — imagem base
+- `RUN` — rodar comando no build
+- `COPY` — copiar arquivos
+- `CMD` — comando quando o container inicia
+- `EXPOSE` — documentar a porta
 
 ---
 
-## Базовый Dockerfile
+## Dockerfile básico
 
-**Простой пример:**
+**Exemplo simples:**
 
 ```dockerfile
-# Базовый образ
+# Imagem base
 FROM php:8.2-fpm
 
-# Рабочая директория
+# Diretório de trabalho
 WORKDIR /var/www/html
 
-# Скопировать файлы
+# Copiar arquivos
 COPY . /var/www/html
 
-# Установить зависимости
+# Instalar dependências
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     zip \
     unzip
 
-# Установить Composer
+# Instalar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Установить PHP зависимости
+# Instalar dependências PHP
 RUN composer install --no-dev --optimize-autoloader
 
-# Открыть порт
+# Expor a porta
 EXPOSE 9000
 
-# Команда запуска
+# Comando de start
 CMD ["php-fpm"]
 ```
 
-**Собрать образ:**
+**Build da imagem:**
 
 ```bash
-# Собрать
+# Build
 docker build -t myapp:latest .
 
-# Собрать с тегом
+# Build com tag
 docker build -t myapp:1.0.0 .
 
-# Собрать с именем файла
+# Build com outro arquivo
 docker build -f Dockerfile.prod -t myapp:prod .
 ```
 
 ---
 
-## Инструкции Dockerfile
+## Instruções do Dockerfile
 
 **FROM:**
 
 ```dockerfile
-# Официальный образ
+# Imagem oficial
 FROM php:8.2-fpm
 
-# Alpine (меньший размер)
+# Alpine (menor)
 FROM php:8.2-fpm-alpine
 
-# Конкретная версия
+# Versão pinada
 FROM php:8.2.10-fpm
 ```
 
 **WORKDIR:**
 
 ```dockerfile
-# Установить рабочую директорию
+# Definir o diretório de trabalho
 WORKDIR /var/www/html
 
-# Все команды выполняются относительно WORKDIR
+# Os comandos rodam relativos ao WORKDIR
 ```
 
 **COPY vs ADD:**
 
 ```dockerfile
-# COPY (предпочтительнее)
+# COPY (prefira este)
 COPY ./src /var/www/html
 
-# ADD (может распаковывать архивы, скачивать по URL)
+# ADD (descompacta archive e baixa por URL)
 ADD https://example.com/file.tar.gz /tmp/
 ```
 
 **RUN:**
 
 ```dockerfile
-# Каждый RUN создаёт новый слой
+# Cada RUN cria uma camada nova
 RUN apt-get update
 RUN apt-get install -y git
 
-# Лучше: объединить в один слой
+# Melhor: juntar numa camada só
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -138,45 +138,45 @@ RUN apt-get update && apt-get install -y \
 **ENV:**
 
 ```dockerfile
-# Установить переменные окружения
+# Variáveis de ambiente
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 
-# Использование
+# Uso
 RUN echo $APP_ENV
 ```
 
 **ARG:**
 
 ```dockerfile
-# Аргументы для сборки (не доступны в runtime)
+# Argumentos de build (não existem no runtime)
 ARG PHP_VERSION=8.2
 
 FROM php:${PHP_VERSION}-fpm
 
-# Передать при сборке
+# Passar no build
 # docker build --build-arg PHP_VERSION=8.3 -t myapp .
 ```
 
 **EXPOSE:**
 
 ```dockerfile
-# Документация: какой порт использует контейнер
+# Documentação: qual porta o container usa
 EXPOSE 9000
 
-# Не открывает порт! Нужен -p при docker run
+# Não abre a porta! Precisa de -p no docker run
 ```
 
 **CMD vs ENTRYPOINT:**
 
 ```dockerfile
-# CMD (можно переопределить при docker run)
+# CMD (dá para sobrescrever no docker run)
 CMD ["php-fpm"]
 
-# ENTRYPOINT (всегда выполняется)
+# ENTRYPOINT (sempre roda)
 ENTRYPOINT ["php-fpm"]
 
-# Комбинация
+# Combinando
 ENTRYPOINT ["php"]
 CMD ["artisan", "serve"]
 # docker run myapp → php artisan serve
@@ -185,14 +185,14 @@ CMD ["artisan", "serve"]
 
 ---
 
-## Laravel Dockerfile
+## Dockerfile no Laravel
 
 **Production Dockerfile:**
 
 ```dockerfile
 FROM php:8.2-fpm-alpine
 
-# Установить системные зависимости
+# Instalar dependências do sistema
 RUN apk add --no-cache \
     git \
     curl \
@@ -201,31 +201,31 @@ RUN apk add --no-cache \
     zip \
     unzip
 
-# Установить PHP расширения
+# Instalar extensões PHP
 RUN docker-php-ext-install pdo pdo_mysql zip gd
 
-# Установить Composer
+# Instalar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Рабочая директория
+# Diretório de trabalho
 WORKDIR /var/www/html
 
-# Скопировать composer файлы
+# Copiar arquivos do Composer
 COPY composer.json composer.lock ./
 
-# Установить зависимости (без dev)
+# Instalar dependências (sem dev)
 RUN composer install --no-dev --no-scripts --no-autoloader
 
-# Скопировать остальные файлы
+# Copiar o resto dos arquivos
 COPY . .
 
-# Завершить установку Composer
+# Finalizar o Composer
 RUN composer dump-autoload --optimize
 
-# Права доступа
+# Permissões
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Laravel оптимизация
+# Otimização do Laravel
 RUN php artisan config:cache && \
     php artisan route:cache && \
     php artisan view:cache
@@ -240,10 +240,10 @@ CMD ["php-fpm"]
 ```dockerfile
 FROM php:8.2-fpm
 
-# Установить Xdebug для отладки
+# Instalar Xdebug para debug
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 
-# Установить зависимости
+# Instalar dependências
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -252,7 +252,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip
 
-# PHP расширения
+# Extensões PHP
 RUN docker-php-ext-install pdo pdo_mysql zip gd
 
 # Composer
@@ -260,7 +260,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# В dev не копируем код, используем volume
+# No dev não copia o código, usa volume
 # docker run -v $(pwd):/var/www/html
 
 EXPOSE 9000
@@ -272,7 +272,7 @@ CMD ["php-fpm"]
 
 ## Multi-stage build
 
-**Оптимизация размера:**
+**Otimizar o tamanho:**
 
 ```dockerfile
 # Stage 1: Build
@@ -285,14 +285,14 @@ RUN composer install --no-dev --optimize-autoloader
 FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
 
-# Скопировать только vendor из первого stage
+# Copiar só o vendor do primeiro stage
 COPY --from=composer /app/vendor ./vendor
 COPY . .
 
-# ... остальные инструкции
+# ... resto das instruções
 ```
 
-**С Node.js для assets:**
+**Com Node.js para os assets:**
 
 ```dockerfile
 # Stage 1: Build assets
@@ -313,13 +313,13 @@ RUN composer install --no-dev
 FROM php:8.2-fpm-alpine
 WORKDIR /var/www/html
 
-# Скопировать compiled assets
+# Copiar os assets compilados
 COPY --from=node /app/public/build ./public/build
 
-# Скопировать vendor
+# Copiar o vendor
 COPY --from=composer /app/vendor ./vendor
 
-# Скопировать остальное
+# Copiar o resto
 COPY . .
 
 CMD ["php-fpm"]
@@ -329,7 +329,7 @@ CMD ["php-fpm"]
 
 ## .dockerignore
 
-**Исключить из образа:**
+**Excluir da imagem:**
 
 ```
 # .dockerignore
@@ -351,34 +351,34 @@ docker-compose.yml
 
 ---
 
-## Практические советы
+## Dicas práticas
 
-**Кеширование слоёв:**
+**Cache de camadas:**
 
 ```dockerfile
-# ❌ ПЛОХО: весь код копируется, при изменении кеш сбрасывается
+# ❌ RUIM: copia o código inteiro, qualquer mudança derruba o cache
 COPY . .
 RUN composer install
 
-# ✅ ХОРОШО: сначала composer файлы, потом код
+# ✅ BOM: primeiro os arquivos do Composer, depois o código
 COPY composer.json composer.lock ./
 RUN composer install
 COPY . .
-# Composer кеш сохранится если composer.json не менялся
+# O cache do Composer fica se o composer.json não mudou
 ```
 
 **Health check:**
 
 ```dockerfile
-# Проверка здоровья контейнера
+# Checagem de saúde do container
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD php artisan health:check || exit 1
 ```
 
-**Пользователь:**
+**Usuário:**
 
 ```dockerfile
-# Не запускать от root
+# Não rode como root
 RUN addgroup -g 1000 laravel && \
     adduser -D -u 1000 -G laravel laravel
 
@@ -387,50 +387,50 @@ USER laravel
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Dockerfile — инструкции для создания образа
-- Каждая инструкция = слой в образе
-- Слои кешируются для быстрой пересборки
+**O que é:**
+- Dockerfile — instruções para criar a imagem
+- Cada instrução = uma camada na imagem
+- As camadas entram em cache para o rebuild ficar rápido
 
-**Основные инструкции:**
-- **FROM** — базовый образ
-- **RUN** — команды при сборке (apt-get, composer)
-- **COPY** — копировать файлы из хоста
-- **WORKDIR** — рабочая директория
-- **CMD** — команда запуска контейнера
-- **EXPOSE** — документирует порт
+**Instruções principais:**
+- **FROM** — imagem base
+- **RUN** — comandos no build (apt-get, composer)
+- **COPY** — copiar arquivos do host
+- **WORKDIR** — diretório de trabalho
+- **CMD** — comando de start do container
+- **EXPOSE** — documenta a porta
 
 **Multi-stage build:**
-- Отдельные stages для разных задач
-- Composer в одном stage, Node в другом
-- Финальный образ копирует только результаты
-- Уменьшает размер образа
+- Stages separados para tarefas diferentes
+- Composer num stage, Node em outro
+- A imagem final copia só o resultado
+- Diminui o tamanho da imagem
 
-**Оптимизация:**
-- Alpine образы (меньше размер)
-- Объединение RUN команд (меньше слоёв)
-- .dockerignore (исключить лишнее)
-- Кеширование: сначала зависимости, потом код
+**Otimização:**
+- Imagens Alpine (menor)
+- Juntar comandos RUN (menos camadas)
+- .dockerignore (tirar o que não entra)
+- Cache: primeiro as dependências, depois o código
 
 **Laravel:**
-- Composer install до COPY кода
-- Права для storage и bootstrap/cache
-- config:cache, route:cache, view:cache для production
+- Composer install antes do COPY do código
+- Permissões em storage e bootstrap/cache
+- config:cache, route:cache, view:cache em production
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай production Dockerfile с оптимизацией
+### Exercício 1: Crie um Dockerfile de production otimizado
 
-Создай Dockerfile для Laravel с multi-stage build, минимальным размером и кешированием.
+Crie um Dockerfile para Laravel com multi-stage build, tamanho mínimo e cache.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```dockerfile
 # Stage 1: Composer dependencies
@@ -443,7 +443,7 @@ RUN composer install \
     --no-autoloader \
     --prefer-dist
 
-# Stage 2: Node assets (если нужны)
+# Stage 2: Node assets (se precisar)
 FROM node:18-alpine AS node
 WORKDIR /app
 COPY package*.json ./
@@ -455,7 +455,7 @@ RUN npm run build
 # Stage 3: Production image
 FROM php:8.2-fpm-alpine
 
-# Установить системные зависимости (минимум)
+# Instalar dependências do sistema (o mínimo)
 RUN apk add --no-cache \
     libpng \
     libzip \
@@ -471,40 +471,40 @@ RUN apk add --no-cache \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/*
 
-# Opcache для production
+# Opcache em production
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini
 
 WORKDIR /var/www/html
 
-# Скопировать vendor из composer stage
+# Copiar o vendor do stage composer
 COPY --from=composer /app/vendor ./vendor
 
-# Скопировать built assets из node stage
+# Copiar os assets buildados do stage node
 COPY --from=node /app/public/build ./public/build
 
-# Скопировать код приложения
+# Copiar o código da app
 COPY --chown=www-data:www-data . .
 
-# Завершить composer
+# Finalizar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Права (только storage и cache)
+# Permissões (só storage e cache)
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Laravel оптимизация для production
+# Otimização do Laravel em production
 RUN php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache \
     && php artisan event:cache
 
-# Удалить composer (не нужен в production)
+# Remover o Composer (não precisa em production)
 RUN rm /usr/bin/composer
 
-# Переключиться на www-data
+# Trocar para www-data
 USER www-data
 
 EXPOSE 9000
@@ -516,26 +516,26 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
 CMD ["php-fpm"]
 ```
 
-**Результат:**
-- Размер образа: ~100-150MB (вместо 500MB+)
-- Только production зависимости
-- Opcache включен
-- Кеш Laravel предварительно создан
-- Безопасность: работает от www-data
+**Resultado:**
+- Tamanho da imagem: ~100-150MB (em vez de 500MB+)
+- Só dependências de production
+- Opcache ligado
+- Cache do Laravel já gerado
+- Segurança: roda como www-data
 
 </details>
 
-### Задание 2: Development Dockerfile с hot reload
+### Exercício 2: Dockerfile de development com hot reload
 
-Создай development Dockerfile с Xdebug и автоматической перезагрузкой.
+Crie um Dockerfile de development com Xdebug e reload automático.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```dockerfile
 FROM php:8.2-fpm
 
-# Установить зависимости
+# Instalar dependências
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -547,7 +547,7 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-# Установить PHP расширения
+# Instalar extensões PHP
 RUN docker-php-ext-install \
     pdo_mysql \
     mbstring \
@@ -555,35 +555,35 @@ RUN docker-php-ext-install \
     gd \
     bcmath
 
-# Установить Xdebug
+# Instalar Xdebug
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
-# Конфигурация Xdebug
+# Config do Xdebug
 RUN echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_port=9003" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.log=/tmp/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-# PHP development настройки
+# Config de development do PHP
 RUN echo "display_errors=On" >> /usr/local/etc/php/conf.d/dev.ini \
     && echo "error_reporting=E_ALL" >> /usr/local/etc/php/conf.d/dev.ini \
     && echo "memory_limit=512M" >> /usr/local/etc/php/conf.d/dev.ini
 
-# Установить Composer
+# Instalar o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Установить Node.js для Vite
+# Instalar Node.js para o Vite
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
 WORKDIR /var/www/html
 
-# В dev не копируем код - используем volume
+# No dev não copia o código — usa volume
 # docker run -v $(pwd):/var/www/html
 
-# Создать entrypoint для автоматической установки зависимостей
+# Entrypoint que instala as dependências sozinho
 RUN echo '#!/bin/bash\n\
 if [ ! -d "vendor" ]; then\n\
     composer install\n\
@@ -600,7 +600,7 @@ EXPOSE 9000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 ```
 
-**docker-compose.yml для development:**
+**docker-compose.yml para development:**
 
 ```yaml
 version: '3.8'
@@ -612,7 +612,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./:/var/www/html
-      # Исключить vendor и node_modules из хоста
+      # Isolar vendor e node_modules do host
       - /var/www/html/vendor
       - /var/www/html/node_modules
     environment:
@@ -635,14 +635,14 @@ services:
       - "5173:5173"
 ```
 
-**Использование:**
+**Uso:**
 ```bash
-# Запустить
+# Rodar
 docker-compose up -d
 
-# Xdebug подключится автоматически при запросе
-# VS Code: установить PHP Debug extension
-# Конфиг launch.json:
+# O Xdebug conecta sozinho na request
+# VS Code: instale a extension PHP Debug
+# Config do launch.json:
 {
     "name": "Listen for Xdebug",
     "type": "php",
@@ -653,29 +653,29 @@ docker-compose up -d
     }
 }
 
-# Hot reload для Vite работает автоматически
+# Hot reload do Vite funciona sozinho
 # http://localhost:5173
 ```
 
 </details>
 
-### Задание 3: Dockerfile с секретами (без .env в образе)
+### Exercício 3: Dockerfile com secrets (sem .env na imagem)
 
-Создай Dockerfile который не включает .env в финальный образ.
+Crie um Dockerfile que não inclui .env na imagem final.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```dockerfile
-# Production Dockerfile БЕЗ .env в образе
+# Production Dockerfile SEM .env na imagem
 
 FROM php:8.2-fpm-alpine
 
-# Установить зависимости
+# Instalar dependências
 RUN apk add --no-cache \
     libpng libzip mysql-client
 
-# PHP расширения
+# Extensões PHP
 RUN docker-php-ext-install pdo_mysql zip gd
 
 # Composer
@@ -683,30 +683,30 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Скопировать composer файлы
+# Copiar arquivos do Composer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader
 
-# ✅ Скопировать код БЕЗ .env
+# ✅ Copiar o código SEM .env
 COPY --chown=www-data:www-data . .
 
-# ❌ НЕ копировать .env файл!
-# Переменные будут из окружения контейнера
+# ❌ NÃO copie o arquivo .env!
+# As variáveis vêm do ambiente do container
 
-# .dockerignore должен содержать:
+# O .dockerignore precisa ter:
 # .env
 # .env.*
 # .env.example
 
-# Права
+# Permissões
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Создать .env из template (без секретов)
+# Criar .env a partir de um template (sem secrets)
 RUN echo "APP_NAME=Laravel\n\
 APP_ENV=production\n\
 APP_KEY=\n\
 APP_DEBUG=false\n\
-# Остальные переменные будут из окружения\n\
+# O resto das variáveis vem do ambiente\n\
 " > .env.docker
 
 USER www-data
@@ -716,7 +716,7 @@ EXPOSE 9000
 CMD ["php-fpm"]
 ```
 
-**.dockerignore (ВАЖНО!):**
+**.dockerignore (IMPORTANTE!):**
 ```
 .env
 .env.*
@@ -727,7 +727,7 @@ vendor
 tests
 ```
 
-**docker-compose.yml с секретами:**
+**docker-compose.yml com secrets:**
 
 ```yaml
 version: '3.8'
@@ -736,12 +736,12 @@ services:
   php:
     build: .
     environment:
-      # Секреты из переменных окружения хоста
+      # Secrets das variáveis de ambiente do host
       - APP_KEY=${APP_KEY}
       - DB_PASSWORD=${DB_PASSWORD}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
     env_file:
-      # Или из файла (не в git!)
+      # Ou de um arquivo (fora do git!)
       - .env.production
     secrets:
       - db_password
@@ -754,14 +754,14 @@ secrets:
     file: ./secrets/app_key.txt
 ```
 
-**Вариант: использовать Docker secrets:**
+**Opção: usar Docker secrets:**
 
 ```bash
-# Создать секреты
+# Criar os secrets
 echo "secret_password" | docker secret create db_password -
 echo "base64:xxx" | docker secret create app_key -
 
-# Dockerfile чтение секретов
+# Dockerfile lendo secrets
 RUN --mount=type=secret,id=app_key \
     APP_KEY=$(cat /run/secrets/app_key) \
     php artisan config:cache
@@ -770,7 +770,7 @@ RUN --mount=type=secret,id=app_key \
 **Kubernetes ConfigMap + Secrets:**
 
 ```yaml
-# configmap.yaml (не секретные настройки)
+# configmap.yaml (config que não é secret)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -780,7 +780,7 @@ data:
   APP_DEBUG: "false"
 
 ---
-# secret.yaml (секретные данные)
+# secret.yaml (dados secretos)
 apiVersion: v1
 kind: Secret
 metadata:
@@ -791,19 +791,19 @@ data:
   DB_PASSWORD: base64_encoded_password
 ```
 
-**Best practices:**
-1. ❌ Никогда не COPY .env в образ
-2. ✅ Использовать переменные окружения
+**Boas práticas:**
+1. ❌ Nunca faça COPY .env na imagem
+2. ✅ Use variáveis de ambiente
 3. ✅ Docker secrets / Kubernetes secrets
-4. ✅ .dockerignore для защиты
-5. ✅ Сканировать образы на утечки секретов
+4. ✅ .dockerignore para proteger
+5. ✅ Escaneie as imagens em busca de vazamento de secret
 
 ```bash
-# Проверить что .env не попал в образ
+# Conferir se o .env não entrou na imagem
 docker run myapp:latest cat .env
 # cat: can't open '.env': No such file or directory ✅
 
-# Сканировать образ на секреты
+# Escanear a imagem em busca de secrets
 docker scan myapp:latest
 ```
 
@@ -811,4 +811,4 @@ docker scan myapp:latest
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

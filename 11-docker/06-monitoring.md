@@ -1,47 +1,47 @@
-# 12.6 Monitoring и Logging
+# 12.6 Monitoring e Logging
 
-## Краткое резюме
+## Resumo
 
-> **Monitoring** — отслеживание состояния приложения. **Logging** — запись событий.
+> **Monitoring** — acompanhar o estado do app. **Logging** — registrar eventos.
 >
-> **Laravel Logging:** каналы (single, daily, stack, slack), уровни (emergency, error, info). **APM:** Telescope для dev, New Relic/Sentry для production.
+> **Laravel Logging:** channels (single, daily, stack, slack), níveis (emergency, error, info). **APM:** Telescope no dev, New Relic/Sentry em production.
 >
-> **Centralized logging:** ELK Stack или Loki. Health checks для uptime monitoring. Alerting через Slack/email при критических событиях.
+> **Centralized logging:** ELK Stack ou Loki. Health checks para uptime monitoring. Alerting no Slack/email em evento crítico.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
+- [O que é](#o-que-é)
 - [Laravel Logging](#laravel-logging)
 - [Structured Logging](#structured-logging)
 - [Application Performance Monitoring (APM)](#application-performance-monitoring-apm)
-- [Metrics и Monitoring](#metrics-и-monitoring)
+- [Metrics e Monitoring](#metrics-e-monitoring)
 - [Centralized Logging](#centralized-logging)
-- [Health Checks и Uptime Monitoring](#health-checks-и-uptime-monitoring)
+- [Health Checks e Uptime Monitoring](#health-checks-e-uptime-monitoring)
 - [Alerting](#alerting)
-- [Практические советы](#практические-советы)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Dicas práticas](#dicas-práticas)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Monitoring — отслеживание состояния приложения. Logging — запись событий.
+**O que é:**
+Monitoring — acompanhar o estado do app. Logging — registrar eventos.
 
-**Зачем:**
-- Обнаружение проблем
-- Анализ производительности
-- Debugging production ошибок
-- Alerting при критических событиях
+**Para quê:**
+- Detectar problemas
+- Analisar performance
+- Fazer debug de erro em production
+- Alertar em evento crítico
 
 ---
 
 ## Laravel Logging
 
-**Конфигурация (config/logging.php):**
+**Configuração (config/logging.php):**
 
 ```php
 'channels' => [
@@ -71,32 +71,32 @@ Monitoring — отслеживание состояния приложения.
 ],
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 use Illuminate\Support\Facades\Log;
 
-// Разные уровни
-Log::emergency($message);  // Система недоступна
-Log::alert($message);      // Требует немедленного внимания
-Log::critical($message);   // Критическая ошибка
-Log::error($message);      // Ошибка
-Log::warning($message);    // Предупреждение
-Log::notice($message);     // Нормальное, но значимое
-Log::info($message);       // Информация
-Log::debug($message);      // Отладка
+// Níveis
+Log::emergency($message);  // Sistema fora do ar
+Log::alert($message);      // Pede atenção imediata
+Log::critical($message);   // Erro crítico
+Log::error($message);      // Erro
+Log::warning($message);    // Aviso
+Log::notice($message);     // Normal, mas relevante
+Log::info($message);       // Informação
+Log::debug($message);      // Debug
 
-// С контекстом
-Log::info('User logged in', [
+// Com contexto
+Log::info('Usuário fez login', [
     'user_id' => $user->id,
     'ip' => $request->ip(),
 ]);
 
-// Конкретный channel
-Log::channel('slack')->critical('Payment gateway is down!');
+// Channel específico
+Log::channel('slack')->critical('Payment gateway fora do ar!');
 ```
 
-**Custom log channel:**
+**Channel customizado:**
 
 ```php
 // config/logging.php
@@ -106,15 +106,15 @@ Log::channel('slack')->critical('Payment gateway is down!');
     'level' => 'info',
 ],
 
-// Использование
-Log::channel('custom')->info('Payment processed', ['amount' => 100]);
+// Uso
+Log::channel('custom')->info('Pagamento processado', ['amount' => 100]);
 ```
 
 ---
 
 ## Structured Logging
 
-**JSON logging:**
+**Logging em JSON:**
 
 ```php
 // config/logging.php
@@ -124,18 +124,18 @@ Log::channel('custom')->info('Payment processed', ['amount' => 100]);
     'formatter' => Monolog\Formatter\JsonFormatter::class,
 ],
 
-// Лог будет в JSON
-Log::channel('json')->info('User action', [
+// O log sai em JSON
+Log::channel('json')->info('Ação do usuário', [
     'user_id' => 123,
     'action' => 'purchase',
     'amount' => 99.99,
 ]);
 
-// Результат:
-// {"message":"User action","context":{"user_id":123,"action":"purchase","amount":99.99},"level":200,"datetime":"2024-01-15T10:30:00+00:00"}
+// Resultado:
+// {"message":"Ação do usuário","context":{"user_id":123,"action":"purchase","amount":99.99},"level":200,"datetime":"2024-01-15T10:30:00+00:00"}
 ```
 
-**Correlation ID (для трейсинга):**
+**Correlation ID (para tracing):**
 
 ```php
 // app/Http/Middleware/AddCorrelationId.php
@@ -151,14 +151,14 @@ public function handle($request, Closure $next)
     return $response;
 }
 
-// Теперь все логи будут содержать correlation_id
+// Agora todo log leva correlation_id
 ```
 
 ---
 
 ## Application Performance Monitoring (APM)
 
-**Laravel Telescope (для development):**
+**Laravel Telescope (para development):**
 
 ```bash
 composer require laravel/telescope --dev
@@ -167,8 +167,8 @@ php artisan migrate
 ```
 
 ```php
-// Доступно на /telescope
-// Показывает:
+// Disponível em /telescope
+// Mostra:
 // - Requests
 // - Commands
 // - Queries
@@ -181,15 +181,15 @@ php artisan migrate
 **New Relic:**
 
 ```bash
-# Установить PHP extension
+# Instalar a PHP extension
 sudo apt-get install newrelic-php5
 
-# Конфигурация
-newrelic.appname = "My Laravel App"
+# Configuração
+newrelic.appname = "Meu App Laravel"
 newrelic.license = "YOUR_LICENSE_KEY"
 ```
 
-**Sentry (для error tracking):**
+**Sentry (para error tracking):**
 
 ```bash
 composer require sentry/sentry-laravel
@@ -197,19 +197,19 @@ php artisan sentry:publish --dsn=YOUR_DSN
 ```
 
 ```php
-// Автоматически ловит все исключения
-// Или вручную:
+// Pega todas as exceções sozinho
+// Ou na mão:
 try {
     $this->processPayment();
 } catch (\Exception $e) {
     Sentry::captureException($e);
-    Log::error('Payment failed', ['exception' => $e]);
+    Log::error('Pagamento falhou', ['exception' => $e]);
 }
 ```
 
 ---
 
-## Metrics и Monitoring
+## Metrics e Monitoring
 
 **Prometheus + Grafana:**
 
@@ -231,7 +231,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
 ```
 
-**Laravel metrics endpoint:**
+**Endpoint de metrics no Laravel:**
 
 ```php
 // routes/web.php
@@ -248,7 +248,7 @@ Route::get('/metrics', function () {
 })->middleware('auth:sanctum');
 ```
 
-**Custom metrics:**
+**Metrics customizadas:**
 
 ```php
 // app/Metrics/RequestCounter.php
@@ -299,7 +299,7 @@ services:
       - elasticsearch
 ```
 
-**Logstash config:**
+**Config do Logstash:**
 
 ```
 # logstash.conf
@@ -324,7 +324,7 @@ output {
 }
 ```
 
-**Loki + Grafana (lightweight альтернатива):**
+**Loki + Grafana (alternativa mais leve):**
 
 ```yaml
 # docker-compose.yml
@@ -344,7 +344,7 @@ services:
 
 ---
 
-## Health Checks и Uptime Monitoring
+## Health Checks e Uptime Monitoring
 
 **Laravel Health Check:**
 
@@ -384,8 +384,8 @@ Route::get('/health', function () {
 **Uptime monitoring (UptimeRobot, Pingdom):**
 
 ```
-Проверяют /health endpoint каждые 5 минут
-Алерты при downtime:
+Checam o endpoint /health a cada 5 minutos
+Alertas em downtime:
 - Email
 - Slack
 - SMS
@@ -395,7 +395,7 @@ Route::get('/health', function () {
 
 ## Alerting
 
-**Slack notifications:**
+**Notificações no Slack:**
 
 ```php
 // config/logging.php
@@ -407,14 +407,14 @@ Route::get('/health', function () {
     'level' => 'critical',
 ],
 
-// Отправить алерт
-Log::channel('slack')->critical('Database connection lost!', [
+// Enviar o alerta
+Log::channel('slack')->critical('Conexão com o banco caiu!', [
     'server' => gethostname(),
     'timestamp' => now(),
 ]);
 ```
 
-**Email alerts:**
+**Alertas por email:**
 
 ```php
 // app/Notifications/ServerAlert.php
@@ -429,20 +429,20 @@ class ServerAlert extends Notification
     {
         return (new MailMessage)
             ->error()
-            ->subject('Server Alert: High Memory Usage')
-            ->line('Memory usage is above 90%')
-            ->action('Check Dashboard', url('/admin'));
+            ->subject('Alerta do servidor: uso de memória alto')
+            ->line('Uso de memória acima de 90%')
+            ->action('Ver o dashboard', url('/admin'));
     }
 }
 
-// Отправить
+// Enviar
 $admins = User::where('role', 'admin')->get();
 Notification::send($admins, new ServerAlert($details));
 ```
 
 ---
 
-## Практические советы
+## Dicas práticas
 
 **Log rotation:**
 
@@ -462,17 +462,17 @@ Notification::send($admins, new ServerAlert($details));
 }
 ```
 
-**Не логировать sensitive data:**
+**Não logar dado sensível:**
 
 ```php
-// ❌ ПЛОХО
-Log::info('User logged in', [
-    'password' => $request->password,  // Никогда!
+// ❌ RUIM
+Log::info('Usuário fez login', [
+    'password' => $request->password,  // Nunca!
     'credit_card' => $card,
 ]);
 
-// ✅ ХОРОШО
-Log::info('User logged in', [
+// ✅ BOM
+Log::info('Usuário fez login', [
     'user_id' => $user->id,
     'ip' => $request->ip(),
 ]);
@@ -480,59 +480,59 @@ Log::info('User logged in', [
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
 **Laravel Logging:**
-- Каналы: single, daily, stack, slack
-- Уровни: emergency, alert, critical, error, warning, notice, info, debug
-- `Log::channel('name')` для конкретного канала
-- Structured logging через JSON formatter
+- Channels: single, daily, stack, slack
+- Níveis: emergency, alert, critical, error, warning, notice, info, debug
+- `Log::channel('name')` para um channel específico
+- Structured logging com JSON formatter
 
 **APM (Application Performance Monitoring):**
-- **Telescope** для development (queries, requests, jobs, exceptions)
-- **New Relic** для production (performance, errors, transactions)
-- **Sentry** для error tracking и stack traces
+- **Telescope** no development (queries, requests, jobs, exceptions)
+- **New Relic** em production (performance, errors, transactions)
+- **Sentry** para error tracking e stack traces
 
 **Metrics:**
-- Prometheus + Grafana для метрик
-- Custom metrics через Cache::increment()
-- `/metrics` endpoint в Prometheus format
+- Prometheus + Grafana para metrics
+- Custom metrics com Cache::increment()
+- Endpoint `/metrics` no formato Prometheus
 
 **Centralized Logging:**
 - ELK Stack (Elasticsearch, Logstash, Kibana)
-- Loki + Grafana (lightweight альтернатива)
-- Парсинг логов через grok patterns
+- Loki + Grafana (alternativa mais leve)
+- Parse dos logs com grok patterns
 
 **Health Checks:**
-- `/health` endpoint проверяет DB, Cache, Queue, Storage
-- UptimeRobot/Pingdom для uptime monitoring
-- Alerting через Slack/email при проблемах
+- Endpoint `/health` checa DB, Cache, Queue, Storage
+- UptimeRobot/Pingdom para uptime monitoring
+- Alerting no Slack/email quando quebra
 
-**Best Practices:**
-- Log rotation для управления размером
-- Correlation ID для трейсинга запросов
-- Не логировать пароли, токены, credit cards
-- JSON формат для удобного парсинга
+**Boas práticas:**
+- Log rotation para controlar o tamanho
+- Correlation ID para tracing da request
+- Não logar senha, token, cartão
+- Formato JSON para parse fácil
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой centralized logging с ELK Stack
+### Exercício 1: Configure centralized logging com ELK Stack
 
-Создай полный ELK Stack для Laravel: логи → Logstash → Elasticsearch → визуализация в Kibana.
+**Enunciado:** Crie um ELK Stack completo para Laravel: logs → Logstash → Elasticsearch → visualização no Kibana.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # docker-compose.elk.yml
 version: '3.8'
 
 services:
-  # Laravel App
+  # App Laravel
   app:
     image: myapp:latest
     volumes:
@@ -591,7 +591,7 @@ services:
     depends_on:
       - elasticsearch
 
-  # Filebeat (альтернатива для отправки логов)
+  # Filebeat (alternativa para enviar logs)
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.5.0
     container_name: filebeat
@@ -632,14 +632,14 @@ input {
 }
 
 filter {
-  # Парсинг Laravel логов
+  # Parse dos logs do Laravel
   grok {
     match => {
       "message" => "\[%{TIMESTAMP_ISO8601:timestamp}\] %{DATA:environment}\.%{DATA:level}: %{GREEDYDATA:log_message}"
     }
   }
 
-  # Попытка распарсить JSON context
+  # Tentar parsear o JSON do context
   if [log_message] =~ /\{.*\}/ {
     grok {
       match => {
@@ -656,13 +656,13 @@ filter {
     }
   }
 
-  # Дата
+  # Data
   date {
     match => ["timestamp", "ISO8601"]
     target => "@timestamp"
   }
 
-  # Добавить метаданные
+  # Adicionar metadados
   mutate {
     add_field => {
       "application" => "laravel"
@@ -678,7 +678,7 @@ output {
     index => "laravel-logs-%{+YYYY.MM.dd}"
   }
 
-  # Для отладки
+  # Para debug
   stdout {
     codec => rubydebug
   }
@@ -710,7 +710,7 @@ logging.level: info
 ```
 
 ```php
-// config/logging.php - JSON формат для удобного парсинга
+// config/logging.php - formato JSON para parse fácil
 'json' => [
     'driver' => 'daily',
     'path' => storage_path('logs/laravel.log'),
@@ -719,33 +719,33 @@ logging.level: info
     'formatter' => Monolog\Formatter\JsonFormatter::class,
 ],
 
-// Обновить в .env
+// Atualizar no .env
 LOG_CHANNEL=json
 ```
 
 ```bash
-# Запуск ELK Stack
+# Subir o ELK Stack
 docker-compose -f docker-compose.elk.yml up -d
 
-# Проверить что Elasticsearch работает
+# Checar se o Elasticsearch está no ar
 curl http://localhost:9200/_cluster/health
 
-# Открыть Kibana
+# Abrir o Kibana
 # http://localhost:5601
 
-# Создать index pattern в Kibana:
+# Criar o index pattern no Kibana:
 # 1. Management → Index Patterns
 # 2. Create index pattern: "laravel-logs-*"
 # 3. Time field: @timestamp
-# 4. Discover → выбрать laravel-logs-*
+# 4. Discover → selecionar laravel-logs-*
 
-# Примеры поиска в Kibana:
+# Exemplos de busca no Kibana:
 # - level: "error"
 # - context.user_id: 123
-# - message: "Payment failed"
+# - message: "Pagamento falhou"
 # - @timestamp: [now-1h TO now]
 
-# Создать dashboard:
+# Criar o dashboard:
 # 1. Dashboard → Create
 # 2. Add visualization
 # 3. Metrics:
@@ -755,7 +755,7 @@ curl http://localhost:9200/_cluster/health
 ```
 
 ```php
-// app/Http/Middleware/LogRequests.php - Логировать все запросы
+// app/Http/Middleware/LogRequests.php - logar todas as requests
 public function handle($request, Closure $next)
 {
     $startTime = microtime(true);
@@ -764,7 +764,7 @@ public function handle($request, Closure $next)
 
     $duration = (microtime(true) - $startTime) * 1000;
 
-    Log::info('HTTP Request', [
+    Log::info('Request HTTP', [
         'method' => $request->method(),
         'url' => $request->fullUrl(),
         'ip' => $request->ip(),
@@ -778,12 +778,12 @@ public function handle($request, Closure $next)
 ```
 </details>
 
-### Задание 2: Реализуй comprehensive health checks
+### Exercício 2: Implemente health checks completos
 
-Создай полноценный health check endpoint который проверяет все критические компоненты и возвращает детальный статус.
+**Enunciado:** Crie um endpoint de health check completo que verifica os componentes críticos e devolve o status detalhado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/HealthCheckService.php
@@ -849,7 +849,7 @@ class HealthCheckService
             Cache::forget($testKey);
 
             if (!$result) {
-                throw new \Exception('Cache write/read failed');
+                throw new \Exception('Falha de escrita/leitura no cache');
             }
 
             return [
@@ -879,8 +879,8 @@ class HealthCheckService
             $connection = config('queue.default');
             $size = Queue::size();
 
-            // Предупреждение если очередь слишком большая
-            $warning = $size > 1000 ? 'Queue size is high' : null;
+            // Aviso se a queue estiver grande demais
+            $warning = $size > 1000 ? 'Tamanho da queue está alto' : null;
 
             return [
                 'status' => $size < 10000 ? 'ok' : 'degraded',
@@ -902,7 +902,7 @@ class HealthCheckService
             Storage::delete($testFile);
 
             if ($readContent !== $testContent) {
-                throw new \Exception('Storage write/read failed');
+                throw new \Exception('Falha de escrita/leitura no storage');
             }
 
             return [
@@ -918,7 +918,7 @@ class HealthCheckService
         $this->runCheck('external_services', function () {
             $services = [];
 
-            // Проверка API
+            // Checar a API
             if (config('services.payment.enabled')) {
                 try {
                     $response = Http::timeout(5)->get(config('services.payment.health_url'));
@@ -992,7 +992,7 @@ class HealthCheckService
             $result = $check();
             $this->checks[$name] = $result;
 
-            // Если статус не 'ok', пометить как unhealthy
+            // Se o status não for 'ok', marca como unhealthy
             if (isset($result['status']) && $result['status'] !== 'ok') {
                 $this->isHealthy = false;
             }
@@ -1035,7 +1035,7 @@ Route::get('/health', function (HealthCheckService $healthCheck) {
     return response()->json($result, $result['status'] === 'healthy' ? 200 : 503);
 });
 
-// Lightweight health check (только database)
+// Health check leve (só database)
 Route::get('/health/liveness', function () {
     try {
         DB::connection()->getPdo();
@@ -1045,10 +1045,10 @@ Route::get('/health/liveness', function () {
     }
 });
 
-// Readiness check (для Kubernetes)
+// Readiness check (para Kubernetes)
 Route::get('/health/readiness', function () {
     try {
-        // Проверить критические зависимости
+        // Checar dependências críticas
         DB::connection()->getPdo();
         Cache::get('test');
 
@@ -1060,12 +1060,12 @@ Route::get('/health/readiness', function () {
 ```
 
 ```bash
-# Использование
+# Uso
 
-# Полный health check
+# Health check completo
 curl http://localhost/health | jq
 
-# Результат:
+# Resultado:
 # {
 #   "status": "healthy",
 #   "timestamp": "2024-01-15T10:30:00+00:00",
@@ -1098,7 +1098,7 @@ curl http://localhost/health/readiness
 ```
 
 ```yaml
-# Kubernetes deployment с health checks
+# Deployment Kubernetes com health checks
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1113,7 +1113,7 @@ spec:
         ports:
         - containerPort: 80
 
-        # Liveness probe - перезапустить если не отвечает
+        # Liveness probe — reinicia se não responder
         livenessProbe:
           httpGet:
             path: /health/liveness
@@ -1123,7 +1123,7 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 3
 
-        # Readiness probe - не направлять трафик если не готов
+        # Readiness probe — não manda tráfego se não estiver pronto
         readinessProbe:
           httpGet:
             path: /health/readiness
@@ -1160,7 +1160,7 @@ class HealthCheckTest extends TestCase
     /** @test */
     public function health_endpoint_returns_unhealthy_when_database_down()
     {
-        // Mock database connection to fail
+        // Mock da conexão do banco para falhar
         DB::shouldReceive('connection')->andThrow(new \Exception('Connection refused'));
 
         $response = $this->get('/health');
@@ -1172,12 +1172,12 @@ class HealthCheckTest extends TestCase
 ```
 </details>
 
-### Задание 3: Настрой alerting с автоматическим уведомлением
+### Exercício 3: Configure alerting com notificação automática
 
-Создай систему alerting которая автоматически уведомляет в Slack при критических ошибках, высокой нагрузке и downtime.
+**Enunciado:** Crie um sistema de alerting que avisa no Slack em erro crítico, carga alta e downtime.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/AlertService.php
@@ -1191,7 +1191,7 @@ use Illuminate\Support\Facades\Cache;
 
 class AlertService
 {
-    private const ALERT_COOLDOWN = 300; // 5 минут между алертами
+    private const ALERT_COOLDOWN = 300; // 5 minutos entre alertas
 
     public function criticalError(string $message, array $context = []): void
     {
@@ -1202,7 +1202,7 @@ class AlertService
                 'level' => 'critical',
                 'emoji' => ':fire:',
                 'color' => 'danger',
-                'title' => 'Critical Error',
+                'title' => 'Erro crítico',
                 'message' => $message,
                 'context' => $context,
             ]);
@@ -1223,8 +1223,8 @@ class AlertService
                 'level' => 'warning',
                 'emoji' => ':warning:',
                 'color' => 'warning',
-                'title' => 'High Server Load',
-                'message' => 'Server load is above threshold',
+                'title' => 'Carga alta no servidor',
+                'message' => 'Carga do servidor acima do limite',
                 'context' => $metrics,
             ]);
 
@@ -1241,7 +1241,7 @@ class AlertService
                 'level' => 'critical',
                 'emoji' => ':x:',
                 'color' => 'danger',
-                'title' => "Service Down: $service",
+                'title' => "Serviço fora: $service",
                 'message' => $error,
                 'context' => [
                     'service' => $service,
@@ -1249,7 +1249,7 @@ class AlertService
                 ],
             ]);
 
-            $this->sendEmailAlert("Service Down: $service", ['error' => $error], 'critical');
+            $this->sendEmailAlert("Serviço fora: $service", ['error' => $error], 'critical');
             $this->markAlertSent($alertKey);
         }
     }
@@ -1263,8 +1263,8 @@ class AlertService
                 'level' => 'warning',
                 'emoji' => ':snail:',
                 'color' => 'warning',
-                'title' => 'Slow Database Query',
-                'message' => "Query took {$time}ms",
+                'title' => 'Query lenta no banco',
+                'message' => "Query levou {$time}ms",
                 'context' => [
                     'query' => substr($query, 0, 200),
                     'time_ms' => $time,
@@ -1312,7 +1312,7 @@ class AlertService
         try {
             Http::post($webhookUrl, $payload);
         } catch (\Exception $e) {
-            Log::error('Failed to send Slack alert', [
+            Log::error('Falha ao enviar alerta no Slack', [
                 'error' => $e->getMessage(),
                 'alert' => $alert,
             ]);
@@ -1397,7 +1397,7 @@ class MonitorApplicationHealth
         $usedPercent = (($totalSpace - $freeSpace) / $totalSpace) * 100;
 
         if ($usedPercent > 90) {
-            $this->alert->criticalError('Disk space critical', [
+            $this->alert->criticalError('Espaço em disco crítico', [
                 'used_percent' => round($usedPercent, 2),
                 'free_gb' => round($freeSpace / 1024 / 1024 / 1024, 2),
             ]);
@@ -1464,7 +1464,7 @@ class MonitorSlowQueries
 
     public function handle(QueryExecuted $event): void
     {
-        $threshold = config('monitoring.slow_query_threshold', 1000); // 1 second
+        $threshold = config('monitoring.slow_query_threshold', 1000); // 1 segundo
 
         if ($event->time > $threshold) {
             $this->alert->slowQuery($event->sql, $event->time);
@@ -1490,7 +1490,7 @@ class NotifyJobFailed
 
     public function handle(JobFailed $event): void
     {
-        $this->alert->criticalError('Job Failed', [
+        $this->alert->criticalError('Job falhou', [
             'job' => $event->job->resolveName(),
             'connection' => $event->connectionName,
             'queue' => $event->job->getQueue(),
@@ -1513,7 +1513,7 @@ use App\Services\AlertService;
 class MonitorHealth extends Command
 {
     protected $signature = 'monitor:health';
-    protected $description = 'Monitor application health and send alerts';
+    protected $description = 'Monitora a saúde do app e envia alertas';
 
     public function handle(HealthCheckService $healthCheck, AlertService $alert): void
     {
@@ -1524,13 +1524,13 @@ class MonitorHealth extends Command
                 ->filter(fn($check) => $check['status'] !== 'ok')
                 ->toArray();
 
-            $alert->criticalError('Health check failed', [
+            $alert->criticalError('Health check falhou', [
                 'failed_checks' => array_keys($failedChecks),
                 'details' => $failedChecks,
             ]);
         }
 
-        $this->info('Health check completed: ' . $result['status']);
+        $this->info('Health check concluído: ' . $result['status']);
     }
 }
 ```
@@ -1539,10 +1539,10 @@ class MonitorHealth extends Command
 // app/Console/Kernel.php
 protected function schedule(Schedule $schedule): void
 {
-    // Проверять health каждые 5 минут
+    // Checar health a cada 5 minutos
     $schedule->command('monitor:health')->everyFiveMinutes();
 
-    // Очистить старые alerts
+    // Limpar alerts antigos
     $schedule->call(function () {
         Cache::tags('alerts')->flush();
     })->daily();
@@ -1570,24 +1570,24 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 MONITORING_ADMIN_EMAILS=admin@example.com,ops@example.com
 MONITORING_SLOW_QUERY_MS=1000
 
-# Запустить мониторинг вручную
+# Rodar o monitoramento na mão
 php artisan monitor:health
 
-# Или через cron (уже настроен в schedule)
+# Ou via cron (já está no schedule)
 * * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ```php
-// Использование в коде
+// Uso no código
 use App\Services\AlertService;
 
-// В контроллере или сервисе
+// No controller ou no service
 public function processPayment(AlertService $alert)
 {
     try {
         $payment = $this->gateway->charge($amount);
     } catch (\Exception $e) {
-        $alert->criticalError('Payment gateway failed', [
+        $alert->criticalError('Payment gateway falhou', [
             'amount' => $amount,
             'error' => $e->getMessage(),
         ]);
@@ -1600,4 +1600,4 @@ public function processPayment(AlertService $alert)
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
