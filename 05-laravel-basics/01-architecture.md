@@ -1,104 +1,104 @@
-# 4.1 Архитектура Laravel
+# 4.1 Arquitetura do Laravel
 
-## Краткое резюме
+## Resumo
 
-> **Laravel** — MVC фреймворк с архитектурой на Service Container и Service Providers.
+> **Laravel** — framework MVC com arquitetura em Service Container (container de serviços) e Service Providers.
 >
 > **Request Lifecycle:** index.php → Bootstrap → Kernel → Service Providers → Router → Middleware → Controller → Model → View → Response.
 >
-> **Важно:** Service Container для DI, Facades для статического доступа к сервисам.
+> **Importante:** Service Container para DI, Facades para acesso estático aos serviços.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Laravel — MVC фреймворк с архитектурой, построенной на Service Container и Service Providers. Основные компоненты: Router → Middleware → Controller → Model → View.
-
-**Основные принципы:**
-- **MVC паттерн** (Model-View-Controller)
-- **Service Container** (IoC контейнер для DI)
-- **Facades** (статический интерфейс к сервисам)
-- **Request Lifecycle** (жизненный цикл запроса)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
+
+**O que é:**
+Laravel é um framework MVC. A arquitetura gira em torno do Service Container e dos Service Providers. Componentes principais: Router → Middleware → Controller → Model → View.
+
+**Princípios principais:**
+- **MVC** (Model-View-Controller)
+- **Service Container** (container IoC para DI)
+- **Facades** (interface estática para os serviços)
+- **Request Lifecycle** (ciclo de vida do request)
+
+---
+
+## Como funciona
 
 **Request Lifecycle:**
 
 ```
-1. public/index.php (точка входа)
+1. public/index.php (ponto de entrada)
    ↓
-2. Bootstrap (загрузка фреймворка)
+2. Bootstrap (carrega o framework)
    ↓
 3. Kernel (HTTP Kernel)
    ↓
-4. Service Providers (регистрация сервисов)
+4. Service Providers (registra os serviços)
    ↓
-5. Router (маршрутизация)
+5. Router (roteamento)
    ↓
-6. Middleware (обработка запроса)
+6. Middleware (processa o request)
    ↓
-7. Controller (бизнес-логика)
+7. Controller (lógica de negócio)
    ↓
-8. Model (работа с данными)
+8. Model (trabalha com os dados)
    ↓
-9. View (отображение)
+9. View (renderiza)
    ↓
-10. Response (ответ клиенту)
+10. Response (resposta para o cliente)
 ```
 
-**Структура директорий:**
+**Estrutura de pastas:**
 
 ```
 app/
-├── Console/          # Artisan команды
-├── Exceptions/       # Обработка исключений
+├── Console/          # Comandos Artisan
+├── Exceptions/       # Tratamento de exceções
 ├── Http/
-│   ├── Controllers/  # Контроллеры
+│   ├── Controllers/  # Controllers
 │   ├── Middleware/   # Middleware
 │   └── Requests/     # Form Requests
-├── Models/           # Eloquent модели
+├── Models/           # Models Eloquent
 ├── Providers/        # Service Providers
-└── Services/         # Бизнес-логика
+└── Services/         # Lógica de negócio
 
-bootstrap/           # Загрузка фреймворка
-config/             # Конфигурация
+bootstrap/           # Bootstrap do framework
+config/             # Configuração
 database/
-├── migrations/     # Миграции БД
-├── seeders/        # Сидеры
-└── factories/      # Фабрики
+├── migrations/     # Migrations
+├── seeders/        # Seeders
+└── factories/      # Factories
 
-public/             # Публичные файлы
-├── index.php       # Точка входа
+public/             # Arquivos públicos
+├── index.php       # Ponto de entrada
 
 resources/
-├── views/          # Blade шаблоны
-└── js/             # Frontend ресурсы
+├── views/          # Templates Blade
+└── js/             # Assets de frontend
 
 routes/
-├── web.php         # Веб-маршруты
-├── api.php         # API маршруты
-└── console.php     # Artisan команды
+├── web.php         # Rotas web
+├── api.php         # Rotas de API
+└── console.php     # Comandos Artisan
 
-storage/            # Логи, кеш, сессии
-tests/              # Тесты
-vendor/             # Composer зависимости
+storage/            # Logs, cache, sessões
+tests/              # Testes
+vendor/             # Dependências do Composer
 ```
 
-**MVC в Laravel:**
+**MVC no Laravel:**
 
 ```php
 // Model (app/Models/User.php)
@@ -139,7 +139,7 @@ Route::get('/users/{user}', [UserController::class, 'show']);
 **Service Container (IoC):**
 
 ```php
-// Регистрация в AppServiceProvider
+// Registro no AppServiceProvider
 public function register(): void
 {
     $this->app->singleton(PaymentService::class, function ($app) {
@@ -149,7 +149,7 @@ public function register(): void
     });
 }
 
-// Автоматическая инъекция в контроллер
+// Injeção automática no controller
 class OrderController extends Controller
 {
     public function __construct(
@@ -158,7 +158,7 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        // $paymentService автоматически внедрён
+        // $paymentService injetado automaticamente
         $this->paymentService->charge($request->amount);
     }
 }
@@ -166,25 +166,25 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Laravel когда:**
-- Нужен полнофункциональный фреймворк (не микрофреймворк)
-- Проект средний/большой размер
-- Важна скорость разработки
-- Нужен ORM (Eloquent), роутинг, middleware из коробки
-- Команда знает Laravel
+**Use o Laravel quando:**
+- Precisa de um framework completo (não microframework)
+- Projeto de tamanho médio/grande
+- Velocidade de desenvolvimento importa
+- Precisa de ORM (Eloquent), rotas e middleware prontos
+- O time conhece Laravel
 
-**НЕ используй когда:**
-- Микросервис с минимальными зависимостями (Lumen, Slim)
-- Высоконагруженный проект требует максимальной производительности (Symfony components, RoadRunner)
-- Legacy проект на другом фреймворке
+**NÃO use quando:**
+- Microsserviço com dependências mínimas (Lumen, Slim)
+- Projeto de alta carga que exige performance máxima (componentes Symfony, RoadRunner)
+- Projeto legado em outro framework
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Типичная архитектура приложения:**
+**Arquitetura típica do app:**
 
 ```php
 // 1. Route (routes/api.php)
@@ -298,7 +298,7 @@ class OrderResource extends JsonResource
 }
 ```
 
-**Service Provider для инициализации:**
+**Service Provider para inicialização:**
 
 ```php
 // app/Providers/AppServiceProvider.php
@@ -306,7 +306,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Регистрация сервисов
+        // Registro dos serviços
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
                 config('services.payment.key'),
@@ -317,9 +317,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Валидаторы, макросы, event listeners
+        // Validators, macros, event listeners
         Validator::extend('phone', function ($attribute, $value) {
-            return preg_match('/^\+7\d{10}$/', $value);
+            return preg_match('/^\+55\d{10,11}$/', $value);
         });
 
         // Model observers
@@ -328,7 +328,7 @@ class AppServiceProvider extends ServiceProvider
 }
 ```
 
-**Lifecycle в деталях:**
+**Lifecycle em detalhe:**
 
 ```php
 // public/index.php
@@ -338,13 +338,13 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 // app/Http/Kernel.php
 class Kernel extends HttpKernel
 {
-    // Глобальные middleware (выполняются всегда)
+    // Middleware global (roda sempre)
     protected $middleware = [
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
     ];
 
-    // Middleware группы (по имени)
+    // Grupos de middleware (por nome)
     protected $middlewareGroups = [
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
@@ -362,81 +362,81 @@ class Kernel extends HttpKernel
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Laravel использует MVC архитектуру. Request lifecycle: index.php → Bootstrap → Kernel → Service Providers → Router → Middleware → Controller → Model → View → Response. Service Container (IoC) для DI. Структура: app/ (код), routes/ (маршруты), resources/views/ (шаблоны), database/ (миграции). В проектах использую Service слой для бизнес-логики, Form Requests для валидации, Resources для API ответов."
+> "O Laravel usa arquitetura MVC. Request lifecycle: index.php → Bootstrap → Kernel → Service Providers → Router → Middleware → Controller → Model → View → Response. Service Container (IoC) para DI. Estrutura: app/ (código), routes/ (rotas), resources/views/ (templates), database/ (migrations). Nos projetos eu uso camada de Service para a lógica de negócio, Form Requests para validação, Resources para respostas de API."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Объясни Request Lifecycle
+### Exercício 1: Explique o Request Lifecycle
 
-У тебя есть маршрут `POST /api/orders`. Опиши полный путь запроса от `index.php` до ответа клиенту.
+**Enunciado:** Você tem a rota `POST /api/orders`. Descreva o caminho completo do request, de `index.php` até a resposta para o cliente.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```
 1. public/index.php
-   - Точка входа, загрузка автозагрузчика Composer
-   - Создание Application экземпляра
+   - Ponto de entrada, carrega o autoloader do Composer
+   - Cria a instância de Application
 
 2. bootstrap/app.php
-   - Создание Service Container
-   - Регистрация ядра (HTTP Kernel)
+   - Cria o Service Container
+   - Registra o kernel (HTTP Kernel)
 
 3. app/Http/Kernel.php
-   - Загрузка middleware стека
-   - Глобальные middleware (TrustProxies, HandleCors)
+   - Carrega a stack de middleware
+   - Middleware global (TrustProxies, HandleCors)
 
 4. Service Providers (config/app.php)
    - AppServiceProvider::register()
    - RouteServiceProvider::register()
    - EventServiceProvider::register()
-   - ...boot() для всех providers
+   - ...boot() de todos os providers
 
 5. Router (routes/api.php)
-   - Поиск маршрута POST /api/orders
-   - Применение route middleware группы 'api'
+   - Encontra a rota POST /api/orders
+   - Aplica o grupo de route middleware 'api'
 
-6. Middleware группы 'api'
+6. Middleware do grupo 'api'
    - throttle:60,1 (rate limiting)
    - SubstituteBindings (route model binding)
-   - Authenticate (если указан auth:sanctum)
+   - Authenticate (se tiver auth:sanctum)
 
 7. Controller (OrderController::store)
    - Dependency Injection (OrderService)
-   - Form Request валидация (CreateOrderRequest)
+   - Validação via Form Request (CreateOrderRequest)
 
 8. Service Layer (OrderService::create)
-   - Бизнес-логика
-   - DB транзакции
+   - Lógica de negócio
+   - Transações de DB
    - Event dispatching
 
 9. Model (Order::create)
    - Eloquent ORM
-   - Database запрос
+   - Query no banco
 
 10. Response
     - API Resource (OrderResource)
     - JSON serialization
     - HTTP Response
 
-11. Middleware (в обратном порядке)
-    - Финальная обработка Response
+11. Middleware (na ordem inversa)
+    - Processamento final do Response
 
-12. Клиенту
-    - JSON ответ
+12. Cliente
+    - Resposta JSON
 ```
 </details>
 
-### Задание 2: Организуй структуру для новой функции
+### Exercício 2: Organize a estrutura para uma feature nova
 
-Нужна функция "Экспорт заказов в PDF". Какие файлы/классы создашь и где?
+**Enunciado:** Precisa da feature "Exportar pedidos em PDF". Quais arquivos/classes você cria e onde?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Route (routes/api.php)
@@ -512,10 +512,10 @@ class PdfGenerator
 <!DOCTYPE html>
 <html>
 <body>
-    <h1>Orders for {{ $user->name }}</h1>
+    <h1>Pedidos de {{ $user->name }}</h1>
     @foreach($orders as $order)
         <div>
-            Order #{{ $order->id }} - {{ $order->total }}
+            Pedido #{{ $order->id }} - {{ $order->total }}
         </div>
     @endforeach
 </body>
@@ -543,7 +543,7 @@ public function test_user_can_export_orders_to_pdf()
 }
 ```
 
-**Структура директорий:**
+**Estrutura de pastas:**
 ```
 app/
 ├── Http/
@@ -564,31 +564,31 @@ tests/
 ```
 </details>
 
-### Задание 3: Какой паттерн лучше?
+### Exercício 3: Qual pattern é melhor?
 
-У тебя контроллер с 10 методами и 500 строк кода. Как рефакторить?
+**Enunciado:** Você tem um controller com 10 métodos e 500 linhas. Como refatorar?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**Проблема:**
+**Problema:**
 ```php
-// ❌ ПЛОХО: Fat Controller
+// ❌ RUIM: Fat Controller
 class OrderController extends Controller
 {
     public function store(Request $request)
     {
-        // 50 строк валидации
-        // 100 строк бизнес-логики
-        // 50 строк отправки уведомлений
-        // 30 строк логирования
+        // 50 linhas de validação
+        // 100 linhas de lógica de negócio
+        // 50 linhas de envio de notificações
+        // 30 linhas de log
     }
 }
 ```
 
-**Решение 1: Service Layer (рекомендуется)**
+**Solução 1: Service Layer (recomendado)**
 ```php
-// ✅ ХОРОШО: Тонкий контроллер + Service
+// ✅ BOM: Controller fino + Service
 class OrderController extends Controller
 {
     public function __construct(
@@ -606,7 +606,7 @@ class OrderController extends Controller
     }
 }
 
-// Service для бизнес-логики
+// Service para a lógica de negócio
 class OrderService
 {
     public function __construct(
@@ -631,7 +631,7 @@ class OrderService
 }
 ```
 
-**Решение 2: Action Pattern (для сложных операций)**
+**Solução 2: Action Pattern (para operações complexas)**
 ```php
 // Single Action Controller
 class CreateOrderAction extends Controller
@@ -653,7 +653,7 @@ class CreateOrderAction extends Controller
 Route::post('/orders', CreateOrderAction::class);
 ```
 
-**Решение 3: Repository Pattern (для сложных запросов)**
+**Solução 3: Repository Pattern (para queries complexas)**
 ```php
 interface OrderRepository
 {
@@ -677,21 +677,21 @@ class EloquentOrderRepository implements OrderRepository
 }
 ```
 
-**Итоговая структура:**
+**Estrutura final:**
 ```
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   └── OrderController.php (тонкий)
+│   │   └── OrderController.php (fino)
 │   └── Requests/
 │       └── CreateOrderRequest.php
 ├── Services/
-│   ├── OrderService.php (бизнес-логика)
+│   ├── OrderService.php (lógica de negócio)
 │   ├── PaymentService.php
 │   └── NotificationService.php
 ├── Repositories/
-│   ├── OrderRepository.php (интерфейс)
-│   └── EloquentOrderRepository.php (реализация)
+│   ├── OrderRepository.php (interface)
+│   └── EloquentOrderRepository.php (implementação)
 └── Http/Resources/
     └── OrderResource.php
 ```
@@ -699,4 +699,4 @@ app/
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

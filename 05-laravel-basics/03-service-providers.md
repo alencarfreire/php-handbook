@@ -1,49 +1,49 @@
 # 4.3 Service Providers
 
-## Краткое резюме
+## Resumo
 
-> **Service Provider** — класс для регистрации сервисов в Service Container.
+> **Service Provider** — classe que registra serviços no Service Container (container de serviços).
 >
-> **Методы:** `register()` для привязок в контейнере, `boot()` для всего остального (view composers, validators, observers).
+> **Métodos:** `register()` para bindings no container, `boot()` para o resto (view composers, validators, observers).
 >
-> **Важно:** Deferred providers загружаются по требованию, `publishes()` для публикации ресурсов пакета.
+> **Importante:** Deferred providers carregam sob demanda. `publishes()` publica recursos do pacote.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Service Provider — место регистрации сервисов в Service Container. Все сервисы Laravel регистрируются через providers.
-
-**Основные методы:**
-- `register()` — регистрация привязок в контейнере
-- `boot()` — выполняется после регистрации всех providers
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Структура Service Provider:**
+**O que é:**
+Service Provider é o lugar onde você registra serviços no Service Container. Todo serviço do Laravel entra por um provider.
+
+**Métodos principais:**
+- `register()` — bindings no container
+- `boot()` — roda depois de registrar todos os providers
+
+---
+
+## Como funciona
+
+**Estrutura do Service Provider:**
 
 ```php
 // app/Providers/AppServiceProvider.php
 class AppServiceProvider extends ServiceProvider
 {
-    // register() — для регистрации в контейнере
+    // register() — só binding no container
     public function register(): void
     {
-        // Только привязки в контейнере
+        // Só bindings no container
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
                 config('services.payment.key')
@@ -51,10 +51,10 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    // boot() — после регистрации всех providers
+    // boot() — depois de registrar todos os providers
     public function boot(): void
     {
-        // Здесь можно использовать другие сервисы
+        // Aqui você pode usar outros serviços
         View::composer('*', function ($view) {
             $view->with('appName', config('app.name'));
         });
@@ -62,39 +62,39 @@ class AppServiceProvider extends ServiceProvider
         // Model observers
         User::observe(UserObserver::class);
 
-        // Custom validation rules
+        // Regras de validação customizadas
         Validator::extend('phone', function ($attribute, $value) {
-            return preg_match('/^\+7\d{10}$/', $value);
+            return preg_match('/^\+55\d{10,11}$/', $value);
         });
     }
 }
 ```
 
-**Регистрация provider в config/app.php:**
+**Registro do provider em config/app.php:**
 
 ```php
 // config/app.php
 'providers' => [
-    // Framework providers
+    // Providers do framework
     Illuminate\Auth\AuthServiceProvider::class,
     Illuminate\Broadcasting\BroadcastServiceProvider::class,
 
-    // Application providers
+    // Providers da app
     App\Providers\AppServiceProvider::class,
     App\Providers\AuthServiceProvider::class,
     App\Providers\EventServiceProvider::class,
-    App\Providers\PaymentServiceProvider::class,  // Кастомный
+    App\Providers\PaymentServiceProvider::class,  // Customizado
 ],
 ```
 
-**Deferred Providers (отложенная загрузка):**
+**Deferred Providers (carga sob demanda):**
 
 ```php
-// Загружается только когда нужен
+// Carrega só quando precisa
 class PaymentServiceProvider extends ServiceProvider
 {
-    // Отложенная загрузка
-    protected $defer = true;  // Deprecated в Laravel 11+
+    // Carga sob demanda
+    protected $defer = true;  // Deprecated no Laravel 11+
 
     public function register(): void
     {
@@ -103,14 +103,14 @@ class PaymentServiceProvider extends ServiceProvider
         });
     }
 
-    // Что предоставляет
+    // O que disponibiliza
     public function provides(): array
     {
         return [PaymentService::class];
     }
 }
 
-// Laravel 11+ (без $defer)
+// Laravel 11+ (sem $defer)
 class PaymentServiceProvider extends ServiceProvider implements DeferrableProvider
 {
     public function register(): void
@@ -129,26 +129,26 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй register() для:**
-- Регистрации сервисов в контейнере
+**Use register() para:**
+- Registrar serviços no container
 - Bind, singleton, instance
-- Конфигурации без зависимостей от других сервисов
+- Config sem depender de outros serviços
 
-**Используй boot() для:**
+**Use boot() para:**
 - View composers
 - Route macros
 - Validation rules
 - Event listeners
 - Model observers
-- Публикации ресурсов (config, migrations)
+- Publicar recursos (config, migrations)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Кастомный Payment Provider:**
+**Payment Provider customizado:**
 
 ```php
 // app/Providers/PaymentServiceProvider.php
@@ -156,17 +156,17 @@ class PaymentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Регистрация интерфейса
+        // Bind da interface
         $this->app->bind(
             PaymentGateway::class,
             fn() => match (config('payment.driver')) {
                 'stripe' => new StripeGateway(config('payment.stripe.key')),
                 'paypal' => new PayPalGateway(config('payment.paypal.key')),
-                default => throw new \Exception('Unknown payment driver')
+                default => throw new \Exception('Driver de pagamento desconhecido')
             }
         );
 
-        // Singleton для PaymentService
+        // Singleton do PaymentService
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
                 $app->make(PaymentGateway::class),
@@ -177,7 +177,7 @@ class PaymentServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Публикация конфига
+        // Publica o config
         $this->publishes([
             __DIR__.'/../../config/payment.php' => config_path('payment.php'),
         ], 'payment-config');
@@ -204,14 +204,14 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
-        // Model binding с кастомной логикой
+        // Model binding com lógica customizada
         Route::bind('post', function (string $value) {
             return Post::where('slug', $value)
                 ->orWhere('id', $value)
                 ->firstOrFail();
         });
 
-        // Route макрос
+        // Route macro
         Route::macro('apiResource', function (string $name, string $controller) {
             Route::prefix($name)->group(function () use ($controller) {
                 Route::get('/', [$controller, 'index']);
@@ -231,7 +231,7 @@ class RouteServiceProvider extends ServiceProvider
 // app/Providers/EventServiceProvider.php
 class EventServiceProvider extends ServiceProvider
 {
-    // Регистрация listeners
+    // Registro dos listeners
     protected $listen = [
         OrderCreated::class => [
             SendOrderConfirmation::class,
@@ -255,7 +255,7 @@ class EventServiceProvider extends ServiceProvider
         Event::subscribe(OrderEventSubscriber::class);
     }
 
-    // Автообнаружение listeners
+    // Descoberta automática de listeners
     public function shouldDiscoverEvents(): bool
     {
         return true;
@@ -263,7 +263,7 @@ class EventServiceProvider extends ServiceProvider
 }
 ```
 
-**Package Service Provider (создание пакета):**
+**Package Service Provider (criar um pacote):**
 
 ```php
 // packages/analytics/src/AnalyticsServiceProvider.php
@@ -271,38 +271,38 @@ class AnalyticsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Merge конфига
+        // Merge do config
         $this->mergeConfigFrom(
             __DIR__.'/../config/analytics.php',
             'analytics'
         );
 
-        // Регистрация сервиса
+        // Registro do serviço
         $this->app->singleton(Analytics::class, function ($app) {
             return new Analytics(config('analytics'));
         });
 
-        // Алиас
+        // Alias
         $this->app->alias(Analytics::class, 'analytics');
     }
 
     public function boot(): void
     {
-        // Публикация конфига
+        // Publica o config
         $this->publishes([
             __DIR__.'/../config/analytics.php' => config_path('analytics.php'),
         ], 'analytics-config');
 
-        // Публикация views
+        // Publica as views
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'analytics');
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/analytics'),
         ], 'analytics-views');
 
-        // Публикация миграций
+        // Publica as migrations
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
-        // Публикация routes
+        // Publica as routes
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         // Commands
@@ -321,7 +321,7 @@ class AnalyticsServiceProvider extends ServiceProvider
 // app/Providers/AuthServiceProvider.php
 class AuthServiceProvider extends ServiceProvider
 {
-    // Политики
+    // Policies
     protected $policies = [
         Post::class => PostPolicy::class,
         Comment::class => CommentPolicy::class,
@@ -344,7 +344,7 @@ class AuthServiceProvider extends ServiceProvider
 }
 ```
 
-**Database Service Provider (макросы):**
+**Database Service Provider (macros):**
 
 ```php
 // app/Providers/DatabaseServiceProvider.php
@@ -352,55 +352,55 @@ class DatabaseServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Query Builder макрос
+        // Macro do Query Builder
         Builder::macro('whereLike', function (string $column, string $value) {
             return $this->where($column, 'LIKE', "%{$value}%");
         });
 
-        // Collection макрос
+        // Macro da Collection
         Collection::macro('toUpper', function () {
             return $this->map(fn($value) => strtoupper($value));
         });
 
-        // Использование
-        // User::whereLike('name', 'John')->get();
+        // Uso
+        // User::whereLike('name', 'João')->get();
         // collect(['a', 'b'])->toUpper(); // ['A', 'B']
     }
 }
 ```
 
-**Команда создания provider:**
+**Comando para criar o provider:**
 
 ```bash
-# Создать provider
+# Criar o provider
 php artisan make:provider PaymentServiceProvider
 
-# Зарегистрировать в config/app.php автоматически (Laravel 11+)
-# или добавить вручную
+# Registra em config/app.php sozinho (Laravel 11+)
+# ou você adiciona na mão
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Service Provider регистрирует сервисы в контейнере. register() только для привязок (bind, singleton), boot() для всего остального (view composers, validators, observers). Deferred providers грузятся по требованию. publishes() для публикации ресурсов пакета. Все providers регистрируются в config/app.php."
+> "Service Provider registra serviços no Service Container. register() é só binding — bind, singleton. boot() é o resto: view composer, validator, observer. Deferred provider carrega só quando precisa. publishes() publica recurso de pacote. A lista fica em config/app.php."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай кастомный Service Provider
+### Exercício 1: Crie um Service Provider customizado
 
-Создай `AnalyticsServiceProvider` для регистрации `AnalyticsService`, который отправляет события в Google Analytics.
+**Enunciado:** Crie um `AnalyticsServiceProvider` para registrar o `AnalyticsService`, que envia eventos para o Google Analytics.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Создать provider
+// 1. Criar o provider
 // php artisan make:provider AnalyticsServiceProvider
 
-// 2. Реализация (app/Providers/AnalyticsServiceProvider.php)
+// 2. Implementação (app/Providers/AnalyticsServiceProvider.php)
 namespace App\Providers;
 
 use App\Services\AnalyticsService;
@@ -410,7 +410,7 @@ class AnalyticsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Singleton для AnalyticsService
+        // Singleton do AnalyticsService
         $this->app->singleton(AnalyticsService::class, function ($app) {
             return new AnalyticsService(
                 apiKey: config('services.analytics.key'),
@@ -418,10 +418,10 @@ class AnalyticsServiceProvider extends ServiceProvider
             );
         });
 
-        // Алиас для удобства
+        // Alias para facilitar
         $this->app->alias(AnalyticsService::class, 'analytics');
 
-        // Merge конфига (если пакет)
+        // Merge do config (se for pacote)
         $this->mergeConfigFrom(
             __DIR__.'/../../config/analytics.php',
             'analytics'
@@ -430,12 +430,12 @@ class AnalyticsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Публикация конфига
+        // Publica o config
         $this->publishes([
             __DIR__.'/../../config/analytics.php' => config_path('analytics.php'),
         ], 'analytics-config');
 
-        // Макрос для Collection
+        // Macro da Collection
         \Illuminate\Support\Collection::macro('track', function (string $event) {
             app(AnalyticsService::class)->track($event, [
                 'count' => $this->count(),
@@ -482,9 +482,9 @@ class AnalyticsService
                 'data' => $data,
             ]);
 
-            Log::info("Analytics event tracked: {$event}");
+            Log::info("Evento de analytics enviado: {$event}");
         } catch (\Exception $e) {
-            Log::error("Analytics tracking failed: {$e->getMessage()}");
+            Log::error("Falha no tracking de analytics: {$e->getMessage()}");
         }
     }
 }
@@ -495,13 +495,13 @@ return [
     'enabled' => env('ANALYTICS_ENABLED', false),
 ];
 
-// 5. Зарегистрировать (config/app.php)
+// 5. Registrar (config/app.php)
 'providers' => [
     // ...
     App\Providers\AnalyticsServiceProvider::class,
 ],
 
-// 6. Использование
+// 6. Uso
 use App\Services\AnalyticsService;
 
 class OrderController extends Controller
@@ -514,7 +514,7 @@ class OrderController extends Controller
     {
         $order = Order::create($request->validated());
 
-        // Трекинг
+        // Track
         $this->analytics->track('order_created', [
             'order_id' => $order->id,
             'total' => $order->total,
@@ -524,78 +524,78 @@ class OrderController extends Controller
     }
 }
 
-// Или через алиас
+// Ou pelo alias
 app('analytics')->track('page_view', ['url' => request()->url()]);
 
-// Или через макрос
+// Ou pela macro
 $orders = Order::all()->track('orders_fetched');
 ```
 </details>
 
-### Задание 2: register() vs boot()
+### Exercício 2: register() vs boot()
 
-В чём разница? Когда что использовать?
+**Enunciado:** Qual a diferença? Quando usar cada um?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ✅ register() — ТОЛЬКО для регистрации в контейнере
-// - Вызывается ПЕРВЫМ для ВСЕХ providers
-// - НЕ используй другие сервисы (они могут быть не зарегистрированы)
-// - Только bind(), singleton(), instance()
+// ✅ register() — SÓ para registrar no container
+// - Roda PRIMEIRO em TODOS os providers
+// - NÃO use outros serviços (podem ainda não estar registrados)
+// - Só bind(), singleton(), instance()
 
 class PaymentServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // ✅ МОЖНО
+        // ✅ PODE
         $this->app->singleton(PaymentService::class, function ($app) {
             return new PaymentService(
-                config('payment.driver')  // Config доступен
+                config('payment.driver')  // Config já está disponível
             );
         });
 
-        // ✅ МОЖНО
+        // ✅ PODE
         $this->app->bind(PaymentGateway::class, StripeGateway::class);
 
-        // ✅ МОЖНО
+        // ✅ PODE
         $this->mergeConfigFrom(__DIR__.'/../../config/payment.php', 'payment');
 
-        // ❌ НЕЛЬЗЯ — другой сервис может быть не зарегистрирован
-        $logger = app(LoggerInterface::class);  // Ошибка!
+        // ❌ NÃO — o outro serviço pode ainda não estar registrado
+        $logger = app(LoggerInterface::class);  // Erro!
 
-        // ❌ НЕЛЬЗЯ — View ещё не готов
-        View::composer('*', function ($view) {});  // Ошибка!
+        // ❌ NÃO — View ainda não está pronto
+        View::composer('*', function ($view) {});  // Erro!
 
-        // ❌ НЕЛЬЗЯ — DB может быть не готова
-        User::observe(UserObserver::class);  // Ошибка!
+        // ❌ NÃO — DB pode ainda não estar pronta
+        User::observe(UserObserver::class);  // Erro!
     }
 }
 
-// ✅ boot() — для всего остального
-// - Вызывается ПОСЛЕ регистрации ВСЕХ providers
-// - Можно использовать ЛЮБЫЕ сервисы из контейнера
+// ✅ boot() — para todo o resto
+// - Roda DEPOIS de registrar TODOS os providers
+// - Pode usar QUALQUER serviço do container
 // - View composers, validators, observers, macros, event listeners
 
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // ✅ View Composers (доступен View)
+        // ✅ View Composers (View já está disponível)
         View::composer('layouts.app', function ($view) {
             $view->with('appName', config('app.name'));
         });
 
-        // ✅ Model Observers (доступен Eloquent)
+        // ✅ Model Observers (Eloquent já está disponível)
         User::observe(UserObserver::class);
 
-        // ✅ Validation Rules (доступен Validator)
+        // ✅ Validation Rules (Validator já está disponível)
         Validator::extend('phone', function ($attribute, $value) {
-            return preg_match('/^\+7\d{10}$/', $value);
+            return preg_match('/^\+55\d{10,11}$/', $value);
         });
 
-        // ✅ Route Macros (доступен Router)
+        // ✅ Route Macros (Router já está disponível)
         Route::macro('apiResource', function (string $name, string $controller) {
             // ...
         });
@@ -605,63 +605,63 @@ class AppServiceProvider extends ServiceProvider
             return $this->map(fn($v) => strtoupper($v));
         });
 
-        // ✅ Event Listeners (доступен Event)
+        // ✅ Event Listeners (Event já está disponível)
         Event::listen(OrderCreated::class, SendOrderConfirmation::class);
 
-        // ✅ Публикация ресурсов
+        // ✅ Publicar recursos
         $this->publishes([
             __DIR__.'/../../config/payment.php' => config_path('payment.php'),
         ], 'payment-config');
 
-        // ✅ Загрузка миграций
+        // ✅ Carregar migrations
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
-        // ✅ Загрузка routes
+        // ✅ Carregar routes
         $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');
 
-        // ✅ Использование других сервисов
+        // ✅ Usar outros serviços
         $logger = app(LoggerInterface::class);  // OK!
-        $logger->info('AppServiceProvider booted');
+        $logger->info('AppServiceProvider bootou');
     }
 }
 
-// Пример ОШИБКИ
+// Exemplo de ERRO
 class BadServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // ❌ ПЛОХО: используем DB в register()
+        // ❌ RUIM: usa DB no register()
         $this->app->singleton(SettingsService::class, function ($app) {
-            $settings = DB::table('settings')->first();  // Может не работать!
+            $settings = DB::table('settings')->first();  // Pode não funcionar!
             return new SettingsService($settings);
         });
     }
 
-    // ✅ ПРАВИЛЬНО: используем DB в boot()
+    // ✅ CERTO: usa DB no boot()
     public function boot(): void
     {
         $this->app->singleton(SettingsService::class, function ($app) {
-            $settings = DB::table('settings')->first();  // Работает!
+            $settings = DB::table('settings')->first();  // Funciona!
             return new SettingsService($settings);
         });
     }
 }
 ```
 
-**Правило:**
-- **register()** → только **bind(), singleton(), instance()**
-- **boot()** → всё остальное (view, validators, observers, events, macros)
+**Regra:**
+- **register()** → só **bind(), singleton(), instance()**
+- **boot()** → o resto (view, validators, observers, events, macros)
 </details>
 
-### Задание 3: Deferred Provider
+### Exercício 3: Deferred Provider
 
-Создай Deferred Provider для медленного сервиса (например, API клиент), который загружается только когда нужен.
+**Enunciado:** Crie um Deferred Provider para um serviço lento (por exemplo, um cliente de API) que carrega só quando precisa.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Laravel 10 и ниже
+// Laravel 10 e abaixo
 namespace App\Providers;
 
 use App\Services\SlowApiClient;
@@ -669,13 +669,13 @@ use Illuminate\Support\ServiceProvider;
 
 class SlowApiServiceProvider extends ServiceProvider
 {
-    // Отложенная загрузка
+    // Carga sob demanda
     protected $defer = true;
 
     public function register(): void
     {
         $this->app->singleton(SlowApiClient::class, function ($app) {
-            // Медленная инициализация (5 секунд)
+            // Inicialização lenta (5 segundos)
             sleep(5);
 
             return new SlowApiClient(
@@ -685,7 +685,7 @@ class SlowApiServiceProvider extends ServiceProvider
         });
     }
 
-    // Что предоставляет (когда загружать)
+    // O que disponibiliza (quando carregar)
     public function provides(): array
     {
         return [SlowApiClient::class];
@@ -717,16 +717,16 @@ class SlowApiServiceProvider extends ServiceProvider implements DeferrableProvid
     }
 }
 
-// Регистрация (config/app.php)
+// Registro (config/app.php)
 'providers' => [
     // ...
     App\Providers\SlowApiServiceProvider::class,
 ],
 
-// Использование
+// Uso
 class ReportController extends Controller
 {
-    // Provider загрузится ТОЛЬКО при вызове этого контроллера
+    // O provider carrega SÓ quando este controller for chamado
     public function __construct(
         private SlowApiClient $apiClient
     ) {}
@@ -738,12 +738,12 @@ class ReportController extends Controller
     }
 }
 
-// Другие контроллеры НЕ загрузят SlowApiClient
+// Outros controllers NÃO carregam o SlowApiClient
 class UserController extends Controller
 {
     public function index()
     {
-        // SlowApiServiceProvider НЕ загружен (быстрее!)
+        // SlowApiServiceProvider NÃO carregou (mais rápido!)
         return User::all();
     }
 }
@@ -757,39 +757,39 @@ class SlowApiClient
         private string $apiKey,
         private string $baseUrl
     ) {
-        // Медленная инициализация
-        // Загрузка сертификатов, подключение к API и т.д.
+        // Inicialização lenta
+        // Carrega certificados, conecta na API etc.
     }
 
     public function fetchData(): array
     {
-        // API запрос
+        // Request da API
         return [];
     }
 }
 ```
 
-**Когда использовать Deferred Providers:**
-- Медленные сервисы (API клиенты, сложная инициализация)
-- Сервисы, которые используются редко
-- Пакеты с тяжёлыми зависимостями
+**Quando usar Deferred Providers:**
+- Serviços lentos (clientes de API, inicialização pesada)
+- Serviços que quase ninguém usa
+- Pacotes com dependência pesada
 
-**Плюсы:**
-- Ускоряет загрузку приложения
-- Экономит память
+**Prós:**
+- Acelera o boot da app
+- Economiza memória
 
-**Минусы:**
-- Не работает для сервисов, нужных в boot() других providers
-- Не подходит для глобальных сервисов (Logger, Cache)
+**Contras:**
+- Não serve se outro provider precisa do serviço no `boot()`
+- Não serve para serviço global (Logger, Cache)
 
 ```php
-// Проверка: когда загружается provider
+// Teste: quando o provider carrega
 Route::get('/test', function () {
-    // SlowApiServiceProvider ещё НЕ загружен
+    // SlowApiServiceProvider ainda NÃO carregou
 
-    app(SlowApiClient::class);  // Сейчас загрузится (5 секунд)
+    app(SlowApiClient::class);  // Agora carrega (5 segundos)
 
-    // SlowApiServiceProvider загружен
+    // SlowApiServiceProvider carregou
 
     return 'OK';
 });
@@ -798,4 +798,4 @@ Route::get('/test', function () {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

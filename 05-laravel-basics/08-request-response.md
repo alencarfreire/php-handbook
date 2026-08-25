@@ -1,40 +1,40 @@
 # 4.8 Request / Response
 
-## Краткое резюме
+## Resumo
 
-> **Request** — объект HTTP запроса с данными формы, файлами, заголовками, cookies.
+> **Request** — objeto do HTTP request: dados de formulário, arquivos, headers, cookies.
 >
-> **Response** — объект ответа, возвращает view, json, redirect, download, stream.
+> **Response** — objeto da resposta: devolve view, json, redirect, download, stream.
 >
-> **Важно:** Валидация через $request->validate(), работа с файлами через file(), макросы для расширения, JSON для API.
+> **Importante:** Validação com $request->validate(), arquivos com file(), macros para estender, JSON para API.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Request — объект HTTP запроса (данные, заголовки, файлы). Response — объект ответа (контент, статус, заголовки).
-
-**Основное:**
-- `Request` — входные данные ($request->input(), $request->file())
-- `Response` — возврат данных (view, json, download)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Request (получение данных):**
+**O que é:**
+Request — objeto do HTTP request (dados, headers, arquivos). Response — objeto da resposta (conteúdo, status, headers).
+
+**O essencial:**
+- `Request` — dados de entrada ($request->input(), $request->file())
+- `Response` — devolver dados (view, json, download)
+
+---
+
+## Como funciona
+
+**Request (pegar os dados):**
 
 ```php
 use Illuminate\Http\Request;
@@ -43,26 +43,26 @@ class UserController extends Controller
 {
     public function store(Request $request)
     {
-        // Получить значение
+        // Pegar o valor
         $name = $request->input('name');
-        $email = $request->input('email', 'default@example.com');  // С дефолтом
+        $email = $request->input('email', 'default@example.com');  // Com default
 
-        // Все данные
+        // Todos os dados
         $all = $request->all();
         $only = $request->only(['name', 'email']);
         $except = $request->except(['password']);
 
-        // Query параметры (?page=1)
+        // Query params (?page=1)
         $page = $request->query('page', 1);
 
-        // Route параметры (/users/{id})
+        // Route params (/users/{id})
         $id = $request->route('id');
 
         // Headers
         $token = $request->header('Authorization');
         $userAgent = $request->userAgent();
 
-        // Метод запроса
+        // Método do request
         $method = $request->method();  // GET, POST, etc.
         $isPost = $request->isMethod('post');
 
@@ -71,52 +71,52 @@ class UserController extends Controller
         $fullUrl = $request->fullUrl();  // http://example.com/users?page=1
         $path = $request->path();      // users
 
-        // IP адрес
+        // IP
         $ip = $request->ip();
 
-        // JSON запрос
+        // Request JSON
         if ($request->isJson()) {
             $data = $request->json()->all();
         }
 
-        // Проверка наличия
+        // Checar se existe
         if ($request->has('name')) {
-            // name присутствует
+            // name está presente
         }
 
         if ($request->filled('name')) {
-            // name присутствует и не пустое
+            // name está presente e não está vazio
         }
     }
 }
 ```
 
-**Файлы в Request:**
+**Arquivos no Request:**
 
 ```php
 public function upload(Request $request)
 {
-    // Получить файл
+    // Pegar o arquivo
     $file = $request->file('photo');
 
-    // Проверка загрузки
+    // Checar se fez upload
     if ($request->hasFile('photo')) {
-        // Информация о файле
+        // Info do arquivo
         $extension = $file->extension();
         $size = $file->getSize();
         $originalName = $file->getClientOriginalName();
 
-        // Сохранить файл
+        // Salvar o arquivo
         $path = $file->store('photos');  // storage/app/photos/
         $path = $file->storeAs('photos', 'custom-name.jpg');
 
-        // Публичное хранилище
+        // Storage público
         $path = $file->storePublicly('avatars', 's3');
     }
 }
 ```
 
-**Response (возврат данных):**
+**Response (devolver dados):**
 
 ```php
 use Illuminate\Http\Response;
@@ -134,15 +134,15 @@ class UserController extends Controller
     {
         return response()->json([
             'data' => User::all(),
-            'message' => 'Success'
+            'message' => 'Sucesso'
         ]);
     }
 
-    // Кастомный статус
+    // Status customizado
     public function show(User $user)
     {
         if (!$user->isActive()) {
-            return response()->json(['error' => 'User inactive'], 403);
+            return response()->json(['error' => 'Usuário inativo'], 403);
         }
 
         return response()->json($user);
@@ -156,13 +156,13 @@ class UserController extends Controller
         return redirect()->route('users.show', $user);
     }
 
-    // Download файла
+    // Download de arquivo
     public function download()
     {
         return response()->download(storage_path('app/file.pdf'));
     }
 
-    // Stream файла
+    // Stream de arquivo
     public function stream()
     {
         return response()->file(storage_path('app/video.mp4'));
@@ -178,49 +178,49 @@ class UserController extends Controller
 }
 ```
 
-**Headers в Response:**
+**Headers no Response:**
 
 ```php
 return response()->json($data)
-    ->header('X-Custom-Header', 'Value')
+    ->header('X-Custom-Header', 'Valor')
     ->header('Content-Type', 'application/json')
     ->withHeaders([
-        'X-Header-One' => 'Value 1',
-        'X-Header-Two' => 'Value 2',
+        'X-Header-One' => 'Valor 1',
+        'X-Header-Two' => 'Valor 2',
     ]);
 ```
 
-**Cookies в Response:**
+**Cookies no Response:**
 
 ```php
-return response('Content')
-    ->cookie('name', 'value', $minutes, $path, $domain, $secure, $httpOnly);
+return response('Conteúdo')
+    ->cookie('nome', 'valor', $minutes, $path, $domain, $secure, $httpOnly);
 
-// Или
-return response('Content')->withCookie(cookie('name', 'value', 60));
+// Ou
+return response('Conteúdo')->withCookie(cookie('nome', 'valor', 60));
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **Request:**
-- `$request->input()` — форма данные
-- `$request->query()` — query параметры
-- `$request->file()` — загрузка файлов
-- `$request->header()` — заголовки
+- `$request->input()` — dados do formulário
+- `$request->query()` — query params
+- `$request->file()` — upload de arquivos
+- `$request->header()` — headers
 
 **Response:**
-- `response()->json()` — API ответы
-- `view()` — HTML страницы
-- `redirect()` — перенаправления
-- `response()->download()` — скачивание файлов
+- `response()->json()` — respostas de API
+- `view()` — páginas HTML
+- `redirect()` — redirecionamentos
+- `response()->download()` — download de arquivos
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**API Controller с JSON Response:**
+**API Controller com JSON Response:**
 
 ```php
 namespace App\Http\Controllers\Api;
@@ -237,7 +237,7 @@ class ProductController extends Controller
     {
         $query = Product::query();
 
-        // Фильтрация
+        // Filtro
         if ($request->filled('category')) {
             $query->where('category_id', $request->input('category'));
         }
@@ -246,12 +246,12 @@ class ProductController extends Controller
             $query->where('name', 'like', "%{$request->input('search')}%");
         }
 
-        // Сортировка
+        // Ordenação
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        // Пагинация
+        // Paginação
         $perPage = $request->input('per_page', 20);
         $products = $query->paginate($perPage);
 
@@ -262,7 +262,7 @@ class ProductController extends Controller
     {
         $product = Product::create($request->validated());
 
-        // Загрузка изображения
+        // Upload da imagem
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
             $product->update(['image_path' => $path]);
@@ -273,7 +273,7 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        // Вернуть с relationships
+        // Devolver com relationships
         return new ProductResource($product->load(['category', 'reviews']));
     }
 
@@ -293,7 +293,7 @@ class ProductController extends Controller
 }
 ```
 
-**Загрузка файлов:**
+**Upload de arquivos:**
 
 ```php
 class AvatarController extends Controller
@@ -306,25 +306,25 @@ class AvatarController extends Controller
 
         $user = $request->user();
 
-        // Удалить старый аватар
+        // Apagar o avatar antigo
         if ($user->avatar_path) {
             Storage::delete($user->avatar_path);
         }
 
-        // Сохранить новый
+        // Salvar o novo
         $path = $request->file('avatar')->store('avatars', 'public');
 
         $user->update(['avatar_path' => $path]);
 
         return response()->json([
-            'message' => 'Avatar uploaded',
+            'message' => 'Avatar enviado',
             'url' => Storage::url($path),
         ]);
     }
 }
 ```
 
-**Stream больших файлов:**
+**Stream de arquivos grandes:**
 
 ```php
 class ExportController extends Controller
@@ -334,10 +334,10 @@ class ExportController extends Controller
         return response()->streamDownload(function () {
             $handle = fopen('php://output', 'w');
 
-            // CSV заголовки
-            fputcsv($handle, ['ID', 'Name', 'Email', 'Created At']);
+            // Headers do CSV
+            fputcsv($handle, ['ID', 'Nome', 'Email', 'Criado em']);
 
-            // Загрузка по одному (экономия памяти)
+            // Carrega um por um (economiza memória)
             User::cursor()->each(function ($user) use ($handle) {
                 fputcsv($handle, [
                     $user->id,
@@ -353,13 +353,13 @@ class ExportController extends Controller
 }
 ```
 
-**Кастомные Response классы:**
+**Classes de Response customizadas:**
 
 ```php
 // app/Http/Responses/ApiResponse.php
 class ApiResponse
 {
-    public static function success($data, string $message = 'Success', int $status = 200)
+    public static function success($data, string $message = 'Sucesso', int $status = 200)
     {
         return response()->json([
             'success' => true,
@@ -378,30 +378,30 @@ class ApiResponse
     }
 }
 
-// Использование
+// Uso
 class ProductController extends Controller
 {
     public function store(Request $request)
     {
         $product = Product::create($request->validated());
 
-        return ApiResponse::success($product, 'Product created', 201);
+        return ApiResponse::success($product, 'Produto criado', 201);
     }
 
     public function destroy(Product $product)
     {
         if ($product->orders()->exists()) {
-            return ApiResponse::error('Cannot delete product with orders', 422);
+            return ApiResponse::error('Não dá para apagar produto com pedidos', 422);
         }
 
         $product->delete();
 
-        return ApiResponse::success(null, 'Product deleted');
+        return ApiResponse::success(null, 'Produto apagado');
     }
 }
 ```
 
-**Request Macro (расширение):**
+**Request Macro (estender):**
 
 ```php
 // app/Providers/AppServiceProvider.php
@@ -409,7 +409,7 @@ use Illuminate\Http\Request;
 
 public function boot(): void
 {
-    // Кастомный метод для Request
+    // Método customizado no Request
     Request::macro('isMobile', function () {
         return str_contains($this->userAgent(), 'Mobile');
     });
@@ -423,12 +423,12 @@ public function boot(): void
     });
 }
 
-// Использование
+// Uso
 if ($request->isMobile()) {
     return view('mobile.index');
 }
 
-Log::info('User info', $request->ipInfo());
+Log::info('Info do usuário', $request->ipInfo());
 ```
 
 **Response Macro:**
@@ -439,7 +439,7 @@ use Illuminate\Support\Facades\Response;
 
 public function boot(): void
 {
-    Response::macro('success', function ($data, $message = 'Success') {
+    Response::macro('success', function ($data, $message = 'Sucesso') {
         return response()->json([
             'success' => true,
             'message' => $message,
@@ -455,12 +455,12 @@ public function boot(): void
     });
 }
 
-// Использование
-return response()->success($user, 'User created');
-return response()->error('Invalid credentials', 401);
+// Uso
+return response()->success($user, 'Usuário criado');
+return response()->error('Credenciais inválidas', 401);
 ```
 
-**Валидация и ошибки в Request:**
+**Validação e erros no Request:**
 
 ```php
 class UserController extends Controller
@@ -473,13 +473,13 @@ class UserController extends Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        // Если валидация провалилась:
-        // - Веб: redirect назад с ошибками
-        // - API: JSON с ошибками (422)
+        // Se a validação falhar:
+        // - Web: redirect de volta com os erros
+        // - API: JSON com os erros (422)
     }
 }
 
-// Кастомная обработка ошибок валидации
+// Tratamento customizado de erro de validação
 public function store(Request $request)
 {
     $validator = Validator::make($request->all(), [
@@ -492,26 +492,26 @@ public function store(Request $request)
         ], 422);
     }
 
-    // Продолжить...
+    // Segue...
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Request содержит данные запроса: input() для формы, query() для query параметров, file() для файлов, header() для заголовков. Response возвращает данные: json() для API, view() для HTML, redirect() для перенаправлений, download() для файлов. response()->streamDownload() для больших файлов (экономия памяти). Request/Response макросы для расширения функциональности. Валидация через $request->validate() возвращает 422 для API, redirect для веба."
+> "Request tem os dados do request: input() no formulário, query() nos query params, file() no arquivo, header() no header. Response devolve: json() na API, view() no HTML, redirect() para redirecionar, download() para arquivo. Arquivo grande eu uso streamDownload() — economiza memória. Macro em Request e Response para estender. validate() devolve 422 na API e redirect no web."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй загрузку аватара с валидацией и оптимизацией
+### Exercício 1: Implemente upload de avatar com validação e otimização
 
-Пользователь загружает аватар. Необходимо: валидация (image, max 2MB), изменение размера до 300x300, сохранение в public storage, удаление старого.
+**Enunciado:** O usuário faz upload do avatar. Precisa: validação (image, max 2MB), redimensionar para 300x300, salvar no public storage, apagar o antigo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/AvatarController.php
@@ -531,30 +531,30 @@ class AvatarController extends Controller
 
         $user = $request->user();
 
-        // Удалить старый аватар
+        // Apagar o avatar antigo
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);
         }
 
-        // Получить файл
+        // Pegar o arquivo
         $file = $request->file('avatar');
 
-        // Оптимизировать изображение
+        // Otimizar a imagem
         $image = Image::make($file)
             ->fit(300, 300)
             ->encode('jpg', 85);
 
-        // Генерировать уникальное имя
+        // Gerar nome único
         $filename = 'avatars/' . $user->id . '_' . time() . '.jpg';
 
-        // Сохранить в public storage
+        // Salvar no public storage
         Storage::disk('public')->put($filename, $image->stream());
 
-        // Обновить пользователя
+        // Atualizar o usuário
         $user->update(['avatar_path' => $filename]);
 
         return response()->json([
-            'message' => 'Avatar uploaded successfully',
+            'message' => 'Avatar enviado',
             'url' => Storage::url($filename),
         ]);
     }
@@ -569,7 +569,7 @@ class AvatarController extends Controller
         }
 
         return response()->json([
-            'message' => 'Avatar deleted successfully',
+            'message' => 'Avatar apagado',
         ]);
     }
 }
@@ -582,12 +582,12 @@ Route::middleware('auth:sanctum')->group(function () {
 ```
 </details>
 
-### Задание 2: Создай API Response Helper с консистентной структурой
+### Exercício 2: Crie um API Response Helper com estrutura consistente
 
-Реализуй helper для унифицированных API ответов: success, error, validation error.
+**Enunciado:** Implemente um helper para respostas de API no mesmo formato: success, error, validation error.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Responses/ApiResponse.php
@@ -599,7 +599,7 @@ class ApiResponse
 {
     public static function success(
         mixed $data = null,
-        string $message = 'Success',
+        string $message = 'Sucesso',
         int $status = 200
     ): JsonResponse {
         return response()->json([
@@ -628,7 +628,7 @@ class ApiResponse
 
     public static function validationError(
         array $errors,
-        string $message = 'Validation failed'
+        string $message = 'Falha na validação'
     ): JsonResponse {
         return response()->json([
             'success' => false,
@@ -637,23 +637,23 @@ class ApiResponse
         ], 422);
     }
 
-    public static function notFound(string $message = 'Resource not found'): JsonResponse
+    public static function notFound(string $message = 'Recurso não encontrado'): JsonResponse
     {
         return self::error($message, 404);
     }
 
-    public static function unauthorized(string $message = 'Unauthorized'): JsonResponse
+    public static function unauthorized(string $message = 'Não autenticado'): JsonResponse
     {
         return self::error($message, 401);
     }
 
-    public static function forbidden(string $message = 'Forbidden'): JsonResponse
+    public static function forbidden(string $message = 'Acesso negado'): JsonResponse
     {
         return self::error($message, 403);
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 namespace App\Http\Controllers\Api;
 
 use App\Http\Responses\ApiResponse;
@@ -666,14 +666,14 @@ class ProductController extends Controller
     {
         $products = Product::paginate(20);
 
-        return ApiResponse::success($products, 'Products retrieved successfully');
+        return ApiResponse::success($products, 'Produtos listados');
     }
 
     public function store(CreateProductRequest $request)
     {
         $product = Product::create($request->validated());
 
-        return ApiResponse::success($product, 'Product created', 201);
+        return ApiResponse::success($product, 'Produto criado', 201);
     }
 
     public function show(Product $product)
@@ -685,18 +685,18 @@ class ProductController extends Controller
     {
         if ($product->orders()->exists()) {
             return ApiResponse::error(
-                'Cannot delete product with existing orders',
+                'Não dá para apagar produto com pedidos',
                 422
             );
         }
 
         $product->delete();
 
-        return ApiResponse::success(null, 'Product deleted');
+        return ApiResponse::success(null, 'Produto apagado');
     }
 }
 
-// app/Exceptions/Handler.php - для обработки ошибок
+// app/Exceptions/Handler.php — tratamento de erros
 public function render($request, Throwable $exception)
 {
     if ($request->wantsJson()) {
@@ -722,12 +722,12 @@ public function render($request, Throwable $exception)
 ```
 </details>
 
-### Задание 3: Реализуй Stream Export для больших данных
+### Exercício 3: Implemente Stream Export para volume grande
 
-Создай endpoint для экспорта пользователей в CSV с использованием streaming (без загрузки всех данных в память).
+**Enunciado:** Crie um endpoint para exportar usuários em CSV com streaming (sem carregar tudo na memória).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/ExportController.php
@@ -752,17 +752,17 @@ class ExportController extends Controller
         return Response::streamDownload(function () use ($filters) {
             $handle = fopen('php://output', 'w');
 
-            // CSV заголовки
+            // Headers do CSV
             fputcsv($handle, [
                 'ID',
-                'Name',
+                'Nome',
                 'Email',
-                'Role',
-                'Created At',
-                'Last Login',
+                'Papel',
+                'Criado em',
+                'Último login',
             ]);
 
-            // Построить query
+            // Montar a query
             $query = User::query();
 
             if (!empty($filters['role'])) {
@@ -777,7 +777,7 @@ class ExportController extends Controller
                 $query->whereDate('created_at', '<=', $filters['to_date']);
             }
 
-            // Cursor для экономии памяти (по одной записи)
+            // Cursor para economizar memória (um registro por vez)
             $query->cursor()->each(function ($user) use ($handle) {
                 fputcsv($handle, [
                     $user->id,
@@ -785,7 +785,7 @@ class ExportController extends Controller
                     $user->email,
                     $user->role,
                     $user->created_at->format('Y-m-d H:i:s'),
-                    $user->last_login_at?->format('Y-m-d H:i:s') ?? 'Never',
+                    $user->last_login_at?->format('Y-m-d H:i:s') ?? 'Nunca',
                 ]);
             });
 
@@ -834,4 +834,4 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

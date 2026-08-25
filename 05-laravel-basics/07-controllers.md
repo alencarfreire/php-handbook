@@ -1,41 +1,41 @@
-# 4.7 Контроллеры (Controllers)
+# 4.7 Controllers
 
-## Краткое резюме
+## Resumo
 
-> **Controllers** — классы для обработки HTTP запросов, группируют логику по действиям.
+> **Controllers** — classes que tratam request HTTP. Agrupam a lógica por ação.
 >
-> **Типы:** Resource (CRUD), API Resource (без create/edit), Single Action (__invoke), Nested Resource.
+> **Tipos:** Resource (CRUD), API Resource (sem create/edit), Single Action (__invoke), Nested Resource.
 >
-> **Важно:** DI через конструктор/метод, бизнес-логику в Service, валидацию в Form Request, авторизацию через authorize().
+> **Importante:** DI no construtor ou no método. Lógica de negócio no Service. Validação no Form Request. Autorização com authorize().
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Контроллеры группируют логику обработки HTTP запросов. Принимают Request, обрабатывают и возвращают Response.
-
-**Основное:**
-- Находятся в `app/Http/Controllers/`
-- Методы соответствуют действиям (index, show, store, update, destroy)
-- Resource controllers для CRUD
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовый контроллер:**
+**O que é:**
+Controllers agrupam a lógica de tratar request HTTP. Recebem Request, processam e devolvem Response.
+
+**O essencial:**
+- Ficam em `app/Http/Controllers/`
+- Métodos batem com as ações (index, show, store, update, destroy)
+- Resource controllers para CRUD
+
+---
+
+## Como funciona
+
+**Controller básico:**
 
 ```php
 namespace App\Http\Controllers;
@@ -75,10 +75,10 @@ class UserController extends Controller
 **Resource Controller:**
 
 ```php
-// Создать resource controller
+// Criar resource controller
 php artisan make:controller UserController --resource
 
-// Сгенерирует методы:
+// Gera os métodos:
 class UserController extends Controller
 {
     public function index()     // GET /users
@@ -94,7 +94,7 @@ class UserController extends Controller
 **API Resource Controller:**
 
 ```php
-// Без create/edit (для API)
+// Sem create/edit (para API)
 php artisan make:controller Api/UserController --api
 
 class UserController extends Controller
@@ -102,23 +102,23 @@ class UserController extends Controller
     public function index()     // GET /api/users
     public function store()     // POST /api/users
     public function show()      // GET /api/users/{user}
-    public function update()    // PUT /PATCH /api/users/{user}
+    public function update()    // PUT/PATCH /api/users/{user}
     public function destroy()   // DELETE /api/users/{user}
 }
 ```
 
-**Dependency Injection в контроллере:**
+**Dependency Injection no controller:**
 
 ```php
 class OrderController extends Controller
 {
-    // Инъекция через конструктор
+    // Injeção pelo construtor
     public function __construct(
         private OrderService $orderService,
         private PaymentService $paymentService
     ) {}
 
-    // Инъекция в метод
+    // Injeção no método
     public function store(
         CreateOrderRequest $request,
         NotificationService $notificationService
@@ -128,27 +128,27 @@ class OrderController extends Controller
             $request->validated()
         );
 
-        $notificationService->send($request->user(), 'Order created');
+        $notificationService->send($request->user(), 'Pedido criado');
 
         return new OrderResource($order);
     }
 }
 ```
 
-**Middleware в контроллере:**
+**Middleware no controller:**
 
 ```php
 class UserController extends Controller
 {
     public function __construct()
     {
-        // Для всех методов
+        // Em todos os métodos
         $this->middleware('auth');
 
-        // Только для некоторых
+        // Só em alguns
         $this->middleware('role:admin')->only(['destroy', 'update']);
 
-        // Кроме некоторых
+        // Exceto alguns
         $this->middleware('guest')->except(['logout']);
     }
 }
@@ -156,24 +156,24 @@ class UserController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Контроллер для:**
-- Обработка HTTP запросов
-- Валидация (через Form Request)
-- Вызов сервисов
-- Возврат Response/View/JSON
+**Controller serve para:**
+- Tratar request HTTP
+- Validação (via Form Request)
+- Chamar services
+- Devolver Response/View/JSON
 
-**НЕ для:**
-- ❌ Бизнес-логика (вынести в Service)
-- ❌ Работа с БД напрямую (через Repository/Service)
-- ❌ Сложные вычисления (в Service)
+**NÃO serve para:**
+- ❌ Lógica de negócio (vai para o Service)
+- ❌ Mexer no banco direto (passa por Repository/Service)
+- ❌ Cálculo complexo (fica no Service)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**RESTful контроллер с сервисом:**
+**Controller RESTful com service:**
 
 ```php
 namespace App\Http\Controllers\Api;
@@ -240,7 +240,7 @@ class OrderController extends Controller
 }
 ```
 
-**Single Action Controller (одно действие):**
+**Single Action Controller (uma ação):**
 
 ```php
 // app/Http/Controllers/SendNewsletterController.php
@@ -248,18 +248,18 @@ class SendNewsletterController extends Controller
 {
     public function __invoke(Request $request)
     {
-        // Логика отправки
+        // Lógica de envio
         Newsletter::send($request->all());
 
-        return response()->json(['message' => 'Newsletter sent']);
+        return response()->json(['message' => 'Newsletter enviada']);
     }
 }
 
-// В маршруте (без указания метода)
+// Na rota (sem apontar o método)
 Route::post('/newsletter', SendNewsletterController::class);
 ```
 
-**Invokable Controller для сложного действия:**
+**Invokable Controller para ação complexa:**
 
 ```php
 // app/Http/Controllers/ExportUsersController.php
@@ -278,7 +278,7 @@ class ExportUsersController extends Controller
     }
 }
 
-// Маршрут
+// Rota
 Route::get('/users/export', ExportUsersController::class)
     ->middleware('role:admin');
 ```
@@ -286,7 +286,7 @@ Route::get('/users/export', ExportUsersController::class)
 **Nested Resource Controller:**
 
 ```php
-// Комментарии для постов
+// Comentários de posts
 class PostCommentController extends Controller
 {
     // GET /posts/{post}/comments
@@ -323,21 +323,21 @@ class PostCommentController extends Controller
     }
 }
 
-// Маршрут
+// Rota
 Route::resource('posts.comments', PostCommentController::class)
     ->only(['index', 'store', 'destroy']);
 ```
 
-**Controller с кастомными методами:**
+**Controller com métodos customizados:**
 
 ```php
 class PostController extends Controller
 {
-    // RESTful методы
+    // Métodos RESTful
     public function index() { /* ... */ }
     public function show(Post $post) { /* ... */ }
 
-    // Кастомные методы
+    // Métodos customizados
     public function publish(Post $post)
     {
         $this->authorize('publish', $post);
@@ -357,7 +357,7 @@ class PostController extends Controller
     }
 }
 
-// Маршруты
+// Rotas
 Route::resource('posts', PostController::class);
 Route::post('/posts/{post}/publish', [PostController::class, 'publish'])
     ->name('posts.publish');
@@ -365,7 +365,7 @@ Route::post('/posts/{post}/unpublish', [PostController::class, 'unpublish'])
     ->name('posts.unpublish');
 ```
 
-**Возврат разных типов Response:**
+**Devolver tipos diferentes de Response:**
 
 ```php
 class ProductController extends Controller
@@ -374,24 +374,24 @@ class ProductController extends Controller
     {
         $products = Product::paginate(20);
 
-        // JSON для API
+        // JSON para API
         if ($request->wantsJson()) {
             return ProductResource::collection($products);
         }
 
-        // View для веба
+        // View para a web
         return view('products.index', compact('products'));
     }
 
     public function download(Product $product)
     {
-        // Скачать файл
+        // Baixar arquivo
         return Storage::download($product->file_path);
     }
 
     public function export()
     {
-        // Stream для больших файлов
+        // Stream para arquivo grande
         return response()->streamDownload(function () {
             $products = Product::cursor();
 
@@ -403,21 +403,21 @@ class ProductController extends Controller
 }
 ```
 
-**Организация контроллеров:**
+**Organização dos controllers:**
 
 ```
 app/Http/Controllers/
-├── Api/                      # API контроллеры
+├── Api/                      # Controllers de API
 │   ├── V1/
 │   │   ├── UserController.php
 │   │   └── OrderController.php
 │   └── V2/
 │       └── UserController.php
-├── Admin/                    # Админка
+├── Admin/                    # Admin
 │   ├── DashboardController.php
 │   ├── UserController.php
 │   └── PostController.php
-├── Auth/                     # Аутентификация
+├── Auth/                     # Autenticação
 │   ├── LoginController.php
 │   ├── RegisterController.php
 │   └── ForgotPasswordController.php
@@ -426,17 +426,17 @@ app/Http/Controllers/
 └── UserController.php
 ```
 
-**Form Request в контроллере:**
+**Form Request no controller:**
 
 ```php
 class OrderController extends Controller
 {
     public function store(CreateOrderRequest $request)
     {
-        // Валидация уже прошла
+        // Validação já passou
         $validated = $request->validated();
 
-        // Создать заказ
+        // Criar o pedido
         $order = Order::create([
             'user_id' => $request->user()->id,
             ...$validated,
@@ -466,20 +466,20 @@ class CreateOrderRequest extends FormRequest
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Контроллеры обрабатывают HTTP запросы. Resource controller для CRUD (index, show, store, update, destroy), API controller без create/edit. DI через конструктор или метод. Бизнес-логику выношу в Service, валидацию в Form Request. authorize() для проверки прав. Single Action Controller с __invoke() для одного действия. Middleware через конструктор this->middleware()."
+> "Controllers tratam request HTTP. Resource controller para CRUD (index, show, store, update, destroy), API controller sem create/edit. DI pelo construtor ou pelo método. Lógica de negócio eu coloco no Service, validação no Form Request. authorize() para checar permissão. Single Action Controller com __invoke() para uma ação só. Middleware pelo construtor: $this->middleware()."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Nested Resource Controller
+### Exercício 1: Nested Resource Controller
 
-Реализуй контроллер для комментариев к постам: `POST /posts/{post}/comments`, `GET /posts/{post}/comments`, `DELETE /posts/{post}/comments/{comment}`.
+**Enunciado:** Implemente o controller de comentários de posts: `POST /posts/{post}/comments`, `GET /posts/{post}/comments`, `DELETE /posts/{post}/comments/{comment}`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/PostCommentController.php
@@ -516,7 +516,7 @@ class PostCommentController extends Controller
             'body' => $request->validated()['body'],
         ]);
 
-        // Уведомить автора поста
+        // Notificar o autor do post
         $post->user->notify(new CommentCreated($comment));
 
         return new CommentResource($comment->load('user'));
@@ -525,7 +525,7 @@ class PostCommentController extends Controller
     // DELETE /posts/{post}/comments/{comment}
     public function destroy(Post $post, Comment $comment)
     {
-        // Проверить что комментарий принадлежит посту
+        // Conferir se o comentário pertence ao post
         if ($comment->post_id !== $post->id) {
             abort(404);
         }
@@ -555,12 +555,12 @@ class CreateCommentRequest extends FormRequest
 ```
 </details>
 
-### Задание 2: Реализуй Single Action Controller для экспорта
+### Exercício 2: Single Action Controller de export
 
-Создай invokable controller для экспорта пользователей в Excel с фильтрацией.
+**Enunciado:** Crie um invokable controller para exportar usuários para Excel, com filtro.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/ExportUsersController.php
@@ -636,18 +636,18 @@ class UsersExport implements FromQuery, WithHeadings
 
     public function headings(): array
     {
-        return ['ID', 'Name', 'Email', 'Role', 'Created At'];
+        return ['ID', 'Nome', 'Email', 'Role', 'Criado em'];
     }
 }
 ```
 </details>
 
-### Задание 3: Создай API Controller с Service Layer
+### Exercício 3: API Controller com Service Layer
 
-Реализуй OrderController, который использует OrderService для бизнес-логики и возвращает API Resources.
+**Enunciado:** Implemente o OrderController. Ele usa OrderService para a lógica de negócio e devolve API Resources.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/Api/OrderController.php
@@ -747,7 +747,7 @@ class OrderService
 
             $order->update(['total' => $total]);
 
-            // Отправить уведомление
+            // Enviar notificação
             $user->notify(new OrderCreated($order));
 
             return $order;
@@ -759,7 +759,7 @@ class OrderService
         DB::transaction(function () use ($order) {
             $order->update(['status' => 'cancelled']);
 
-            // Вернуть товары на склад
+            // Devolver os produtos ao estoque
             foreach ($order->items as $item) {
                 $item->product->increment('stock', $item->quantity);
             }
@@ -784,4 +784,4 @@ class CreateOrderRequest extends FormRequest
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

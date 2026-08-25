@@ -1,72 +1,72 @@
 # 4.4 Facades
 
-## Краткое резюме
+## Resumo
 
-> **Facades** — статический интерфейс к сервисам из Service Container.
+> **Facades** — interface estática para serviços do Service Container (container de serviços).
 >
-> **Пример:** `Cache::get()` вместо `app('cache')->get()`. Используется `__callStatic()` для вызова методов.
+> **Exemplo:** `Cache::get()` no lugar de `app('cache')->get()`. Usa `__callStatic()` para chamar os métodos.
 >
-> **Важно:** Можно mock-ать в тестах, Real-time Facades через `Facades\App\Services\ServiceName`.
+> **Importante:** Dá para mockar nos testes. Real-time Facades via `Facades\App\Services\ServiceName`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Facades — статический интерфейс к классам в Service Container. Выглядят как статические методы, но работают через контейнер.
-
-**Основное:**
-- `Cache::get()` вместо `app('cache')->get()`
-- Статический синтаксис, динамическое связывание
-- Testable (можно mock-ать)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Внутреннее устройство:**
+**O que é:**
+Facades — interface estática para classes no Service Container. Parecem métodos estáticos, mas passam pelo container.
+
+**O essencial:**
+- `Cache::get()` no lugar de `app('cache')->get()`
+- Sintaxe estática, binding dinâmico
+- Testable (dá para mockar)
+
+---
+
+## Como funciona
+
+**Por dentro:**
 
 ```php
-// Facade класс
+// Classe Facade
 use Illuminate\Support\Facades\Facade;
 
 class Cache extends Facade
 {
-    // Ключ в контейнере
+    // Chave no container
     protected static function getFacadeAccessor()
     {
         return 'cache';
     }
 }
 
-// Использование
-Cache::get('key');  // Эквивалентно app('cache')->get('key')
+// Uso
+Cache::get('key');  // Equivale a app('cache')->get('key')
 ```
 
-**Magic method __callStatic:**
+**Método mágico __callStatic:**
 
 ```php
-// Внутри Facade класса
+// Dentro da classe Facade
 public static function __callStatic($method, $args)
 {
-    $instance = static::getFacadeRoot();  // Получить из контейнера
+    $instance = static::getFacadeRoot();  // Pega do container
 
-    return $instance->$method(...$args);  // Вызвать метод
+    return $instance->$method(...$args);  // Chama o método
 }
 ```
 
-**Популярные Facades:**
+**Facades mais usadas:**
 
 ```php
 use Illuminate\Support\Facades\DB;
@@ -82,62 +82,62 @@ DB::table('users')->where('active', 1)->get();
 Cache::remember('users', 3600, fn() => User::all());
 
 // Logs
-Log::info('User registered', ['user_id' => $user->id]);
+Log::info('Usuário registrado', ['user_id' => $user->id]);
 
 // Storage
-Storage::disk('s3')->put('file.txt', 'content');
+Storage::disk('s3')->put('file.txt', 'conteúdo');
 
 // Mail
 Mail::to($user)->send(new Welcome($user));
 ```
 
-**Real-time Facades (автоматические):**
+**Real-time Facades (automáticas):**
 
 ```php
-// Обычный класс (БЕЗ Facade)
+// Classe comum (SEM Facade)
 namespace App\Services;
 
 class PaymentService
 {
     public function charge(int $amount): bool
     {
-        // Logic
+        // Lógica
     }
 }
 
-// Использование через Real-time Facade
+// Uso via Real-time Facade
 use Facades\App\Services\PaymentService;
 
-PaymentService::charge(1000);  // Автоматически создаётся facade
+PaymentService::charge(1000);  // O Laravel cria a facade sozinho
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы:**
-- ✅ Короткий синтаксис
-- ✅ Testable (можно mock)
-- ✅ IDE autocompletion (с laravel-ide-helper)
+**Prós:**
+- ✅ Sintaxe curta
+- ✅ Testable (dá para mockar)
+- ✅ Autocomplete da IDE (com laravel-ide-helper)
 
-**Минусы:**
-- ❌ Скрывает зависимости (не видны в конструкторе)
-- ❌ Сложнее тестировать (нужны специальные методы)
-- ❌ Статические вызовы выглядят как глобальное состояние
+**Contras:**
+- ❌ Esconde as dependências (não aparecem no construtor)
+- ❌ Mais difícil de testar (precisa de métodos especiais)
+- ❌ Chamada estática parece estado global
 
-**Когда использовать:**
-- Routes, migrations, seeders (короткий код)
-- Controllers (если не злоупотреблять)
+**Quando usar:**
+- Rotas, migrations, seeders (código curto)
+- Controllers (se não exagerar)
 
-**Когда НЕ использовать:**
-- Services (лучше DI через конструктор)
-- Тесты (mock facades сложнее)
+**Quando NÃO usar:**
+- Services (melhor DI pelo construtor)
+- Testes (mockar facade é mais chato)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Использование в контроллере:**
+**Uso no controller:**
 
 ```php
 use Illuminate\Support\Facades\Cache;
@@ -149,7 +149,7 @@ class ProductController extends Controller
     {
         // Cache facade
         $products = Cache::remember('products.all', 3600, function () {
-            Log::info('Loading products from database');
+            Log::info('Carregando produtos do banco');
             return Product::all();
         });
 
@@ -160,39 +160,39 @@ class ProductController extends Controller
     {
         $product = Product::create($request->validated());
 
-        // Cache очистка
+        // Limpa o cache
         Cache::forget('products.all');
 
         // Log
-        Log::info('Product created', ['id' => $product->id]);
+        Log::info('Produto criado', ['id' => $product->id]);
 
         return redirect()->route('products.show', $product);
     }
 }
 ```
 
-**Создание кастомного Facade:**
+**Facade customizada:**
 
 ```php
-// 1. Сервис (app/Services/PaymentService.php)
+// 1. Service (app/Services/PaymentService.php)
 namespace App\Services;
 
 class PaymentService
 {
     public function charge(User $user, int $amount): bool
     {
-        // Payment logic
+        // Lógica de pagamento
         return true;
     }
 
     public function refund(Order $order): bool
     {
-        // Refund logic
+        // Lógica de reembolso
         return true;
     }
 }
 
-// 2. Регистрация в Service Provider
+// 2. Registro no Service Provider
 public function register(): void
 {
     $this->app->singleton('payment', function ($app) {
@@ -200,7 +200,7 @@ public function register(): void
     });
 }
 
-// 3. Facade класс (app/Facades/Payment.php)
+// 3. Classe Facade (app/Facades/Payment.php)
 namespace App\Facades;
 
 use Illuminate\Support\Facades\Facade;
@@ -209,11 +209,11 @@ class Payment extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'payment';  // Ключ в контейнере
+        return 'payment';  // Chave no container
     }
 }
 
-// 4. Использование
+// 4. Uso
 use App\Facades\Payment;
 
 Payment::charge($user, 1000);
@@ -223,25 +223,25 @@ Payment::refund($order);
 **Real-time Facades:**
 
 ```php
-// Сервис (app/Services/NotificationService.php)
+// Service (app/Services/NotificationService.php)
 namespace App\Services;
 
 class NotificationService
 {
     public function send(User $user, string $message): void
     {
-        // Send notification
+        // Envia notificação
     }
 }
 
-// Использование БЕЗ создания Facade класса
+// Uso SEM criar classe Facade
 use Facades\App\Services\NotificationService;
 
-// Laravel автоматически создаст facade
-NotificationService::send($user, 'Hello');
+// O Laravel cria a facade sozinho
+NotificationService::send($user, 'Olá');
 ```
 
-**Мок-тестирование Facades:**
+**Mock de Facades nos testes:**
 
 ```php
 use Illuminate\Support\Facades\Cache;
@@ -249,13 +249,13 @@ use Illuminate\Support\Facades\Mail;
 
 public function test_product_creation_clears_cache()
 {
-    // Mock Cache facade
+    // Mock da Cache facade
     Cache::shouldReceive('forget')
         ->once()
         ->with('products.all');
 
     $response = $this->postJson('/api/products', [
-        'name' => 'Test Product',
+        'name' => 'Produto Teste',
     ]);
 
     $response->assertStatus(201);
@@ -263,16 +263,16 @@ public function test_product_creation_clears_cache()
 
 public function test_order_confirmation_email_sent()
 {
-    // Fake Mail (не отправляет реально)
+    // Fake Mail (não envia de verdade)
     Mail::fake();
 
     $user = User::factory()->create();
     $order = Order::factory()->create(['user_id' => $user->id]);
 
-    // Trigger event
+    // Dispara o event
     event(new OrderCreated($order));
 
-    // Assert email sent
+    // Confirma que o email foi enviado
     Mail::assertSent(OrderConfirmation::class, function ($mail) use ($user) {
         return $mail->hasTo($user->email);
     });
@@ -282,22 +282,22 @@ public function test_order_confirmation_email_sent()
 **Facade vs Dependency Injection:**
 
 ```php
-// ❌ ПЛОХО: Facade в сервисе (скрывает зависимости)
+// ❌ RUIM: Facade no service (esconde as dependências)
 class OrderService
 {
     public function create(array $data): Order
     {
         $order = Order::create($data);
 
-        // Скрытая зависимость
+        // Dependência escondida
         Cache::forget('orders');
-        Log::info('Order created');
+        Log::info('Pedido criado');
 
         return $order;
     }
 }
 
-// ✅ ХОРОШО: DI (явные зависимости)
+// ✅ BOM: DI (dependências explícitas)
 class OrderService
 {
     public function __construct(
@@ -309,15 +309,15 @@ class OrderService
     {
         $order = Order::create($data);
 
-        // Явные зависимости (видны в конструкторе)
+        // Dependências explícitas (aparecem no construtor)
         $this->cache->forget('orders');
-        $this->logger->info('Order created');
+        $this->logger->info('Pedido criado');
 
         return $order;
     }
 }
 
-// ✅ OK: Facade в контроллере (для коротких операций)
+// ✅ OK: Facade no controller (operações curtas)
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -325,57 +325,57 @@ class OrderController extends Controller
         $order = Order::create($request->validated());
 
         Cache::forget('orders');
-        Log::info('Order created');
+        Log::info('Pedido criado');
 
         return new OrderResource($order);
     }
 }
 ```
 
-**Facade с алиасом:**
+**Facade com alias:**
 
 ```php
 // config/app.php
 'aliases' => [
     'Cache' => Illuminate\Support\Facades\Cache::class,
     'DB' => Illuminate\Support\Facades\DB::class,
-    'Payment' => App\Facades\Payment::class,  // Кастомный
+    'Payment' => App\Facades\Payment::class,  // Customizada
 ],
 
-// Теперь можно использовать без use
+// Agora funciona sem use
 Cache::get('key');
 Payment::charge($user, 1000);
 ```
 
-**IDE autocompletion:**
+**Autocomplete na IDE:**
 
 ```bash
-# Установить laravel-ide-helper
+# Instalar laravel-ide-helper
 composer require --dev barryvdh/laravel-ide-helper
 
-# Сгенерировать аннотации
+# Gerar as anotações
 php artisan ide-helper:generate
 
-# Теперь IDE знает о методах Facades
-Cache::get('key');  // IDE подсказывает методы
+# Agora a IDE conhece os métodos das Facades
+Cache::get('key');  // A IDE sugere os métodos
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Facades — статический интерфейс к сервисам из контейнера. Cache::get() вместо app('cache')->get(). Внутри используется __callStatic() для вызова методов. Можно mock-ать в тестах (Cache::shouldReceive()). Real-time Facades создаются автоматически через namespace Facades\App\Services\ServiceName. Не злоупотребляю в сервисах — предпочитаю DI через конструктор для явных зависимостей."
+> "Facade é interface estática para serviço do container. Cache::get() no lugar de app('cache')->get(). Por dentro usa __callStatic() para chamar o método. Dá para mockar no teste (Cache::shouldReceive()). Real-time Facade o Laravel cria sozinho, namespace Facades\App\Services\ServiceName. Em service eu não abuso — prefiro DI no construtor, a dependência fica explícita."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай кастомный Facade
+### Exercício 1: Crie uma Facade customizada
 
-Создай Facade для `SettingsService`, который загружает настройки из БД.
+**Enunciado:** Crie uma Facade para `SettingsService`, que carrega as configurações do banco.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Service (app/Services/SettingsService.php)
@@ -427,14 +427,14 @@ class SettingsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Регистрация с ключом 'settings'
+        // Registro com a chave 'settings'
         $this->app->singleton('settings', function ($app) {
             return new SettingsService();
         });
     }
 }
 
-// 3. Facade класс (app/Facades/Settings.php)
+// 3. Classe Facade (app/Facades/Settings.php)
 namespace App\Facades;
 
 use Illuminate\Support\Facades\Facade;
@@ -450,48 +450,48 @@ class Settings extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return 'settings';  // Ключ в контейнере
+        return 'settings';  // Chave no container
     }
 }
 
-// 4. Регистрация provider (config/app.php)
+// 4. Registro do provider (config/app.php)
 'providers' => [
     // ...
     App\Providers\SettingsServiceProvider::class,
 ],
 
-// 5. Регистрация alias (config/app.php) - опционально
+// 5. Registro do alias (config/app.php) — opcional
 'aliases' => [
     // ...
     'Settings' => App\Facades\Settings::class,
 ],
 
-// 6. Использование
+// 6. Uso
 use App\Facades\Settings;
 
-// В контроллере
+// No controller
 class HomeController extends Controller
 {
     public function index()
     {
-        $siteName = Settings::get('site_name', 'My Site');
+        $siteName = Settings::get('site_name', 'Meu Site');
         $maintenance = Settings::get('maintenance_mode', false);
 
         return view('home', compact('siteName', 'maintenance'));
     }
 }
 
-// В Blade
+// No Blade
 {{ Settings::get('site_name') }}
 
-// Установить значение
-Settings::set('site_name', 'New Site Name');
+// Definir valor
+Settings::set('site_name', 'Novo nome do site');
 
-// Все настройки
+// Todas as configurações
 $allSettings = Settings::all();
 ```
 
-**PHPDoc для IDE autocompletion:**
+**PHPDoc para autocomplete na IDE:**
 ```php
 /**
  * @method static mixed get(string $key, mixed $default = null)
@@ -503,15 +503,15 @@ $allSettings = Settings::all();
 ```
 </details>
 
-### Задание 2: Facade vs Dependency Injection
+### Exercício 2: Facade vs Dependency Injection
 
-Когда использовать Facade, а когда DI? Исправь код.
+**Enunciado:** Quando usar Facade e quando usar DI? Corrija o código.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ ПЛОХО: Facade в Service (скрывает зависимости)
+// ❌ RUIM: Facade no Service (esconde as dependências)
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
@@ -524,21 +524,21 @@ class OrderService
     {
         $order = Order::create($data);
 
-        // Скрытые зависимости (не видны в конструкторе)
+        // Dependências escondidas (não aparecem no construtor)
         Cache::forget('orders.all');
-        Log::info('Order created', ['id' => $order->id]);
+        Log::info('Pedido criado', ['id' => $order->id]);
         Mail::to($order->user)->send(new OrderConfirmation($order));
 
         return $order;
     }
 
-    // Проблемы:
-    // 1. Сложно тестировать (нужен Mockery)
-    // 2. Скрытые зависимости (не ясно, что использует)
-    // 3. Нельзя подменить в тестах без специальных методов
+    // Problemas:
+    // 1. Difícil de testar (precisa de Mockery)
+    // 2. Dependências escondidas (não dá para ver o que usa)
+    // 3. Não dá para trocar no teste sem métodos especiais
 }
 
-// ✅ ХОРОШО: DI в Service (явные зависимости)
+// ✅ BOM: DI no Service (dependências explícitas)
 namespace App\Services;
 
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
@@ -547,7 +547,7 @@ use Psr\Log\LoggerInterface;
 
 class OrderService
 {
-    // Явные зависимости (видны в конструкторе)
+    // Dependências explícitas (aparecem no construtor)
     public function __construct(
         private CacheRepository $cache,
         private LoggerInterface $logger,
@@ -558,21 +558,21 @@ class OrderService
     {
         $order = Order::create($data);
 
-        // Те же действия, но через DI
+        // As mesmas ações, mas via DI
         $this->cache->forget('orders.all');
-        $this->logger->info('Order created', ['id' => $order->id]);
+        $this->logger->info('Pedido criado', ['id' => $order->id]);
         $this->mailer->to($order->user)->send(new OrderConfirmation($order));
 
         return $order;
     }
 
-    // Плюсы:
-    // 1. Легко тестировать (mock в конструкторе)
-    // 2. Явные зависимости (видно, что использует)
-    // 3. Подмена в контейнере или в тесте
+    // Prós:
+    // 1. Fácil de testar (mock no construtor)
+    // 2. Dependências explícitas (dá para ver o que usa)
+    // 3. Troca no container ou no teste
 }
 
-// ✅ OK: Facade в Controller (короткие операции)
+// ✅ OK: Facade no Controller (operações curtas)
 namespace App\Http\Controllers;
 
 use App\Facades\Settings;
@@ -582,14 +582,14 @@ use Illuminate\Support\Facades\Log;
 class OrderController extends Controller
 {
     public function __construct(
-        private OrderService $orderService  // Service через DI
+        private OrderService $orderService  // Service via DI
     ) {}
 
     public function store(Request $request)
     {
-        // Facade для простых операций в контроллере — OK
+        // Facade para operação simples no controller — OK
         Cache::forget('orders.all');
-        Log::info('Order creation started');
+        Log::info('Criação do pedido iniciada');
 
         $order = $this->orderService->create($request->validated());
 
@@ -606,7 +606,7 @@ class OrderController extends Controller
     }
 }
 
-// ✅ ОТЛИЧНО: Facade в Routes, Migrations, Seeders
+// ✅ ÓTIMO: Facade em rotas, migrations, seeders
 // routes/api.php
 use Illuminate\Support\Facades\Route;
 
@@ -623,7 +623,7 @@ class UserSeeder extends Seeder
     {
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@example.com',
+            'email' => 'admin@email.com',
             'password' => Hash::make('password'),
         ]);
     }
@@ -639,20 +639,20 @@ Schema::create('orders', function (Blueprint $table) {
 });
 ```
 
-**Правило:**
-- **Services** → DI через конструктор (явные зависимости)
-- **Controllers** → Facade OK для простых операций
-- **Routes, Migrations, Seeders** → Facade (короткий код)
-- **Tests** → DI или Mockery для Facades
+**Regra:**
+- **Services** → DI pelo construtor (dependências explícitas)
+- **Controllers** → Facade OK para operação simples
+- **Rotas, migrations, seeders** → Facade (código curto)
+- **Tests** → DI ou Mockery para Facades
 
-**Тестирование:**
+**Testes:**
 ```php
-// Service с DI — легко тестировать
+// Service com DI — fácil de testar
 class OrderServiceTest extends TestCase
 {
     public function test_order_creation()
     {
-        // Mock через конструктор
+        // Mock pelo construtor
         $cacheMock = $this->createMock(CacheRepository::class);
         $loggerMock = $this->createMock(LoggerInterface::class);
         $mailerMock = $this->createMock(Mailer::class);
@@ -668,7 +668,7 @@ class OrderServiceTest extends TestCase
     }
 }
 
-// Facade — нужен Mockery
+// Facade — precisa de Mockery
 class OrderServiceWithFacadeTest extends TestCase
 {
     public function test_order_creation()
@@ -687,12 +687,12 @@ class OrderServiceWithFacadeTest extends TestCase
 ```
 </details>
 
-### Задание 3: Real-time Facade
+### Exercício 3: Real-time Facade
 
-Используй Real-time Facade для `PaymentService` без создания Facade класса.
+**Enunciado:** Use Real-time Facade para `PaymentService` sem criar a classe Facade.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Service (app/Services/PaymentService.php)
@@ -706,24 +706,24 @@ class PaymentService
 
     public function charge(int $amount): bool
     {
-        // Payment API call
+        // Chamada da API de pagamento
         return true;
     }
 
     public function refund(string $transactionId): bool
     {
-        // Refund API call
+        // Chamada da API de reembolso
         return true;
     }
 
     public function getBalance(): int
     {
-        // Get balance
+        // Busca o saldo
         return 10000;
     }
 }
 
-// 2. Регистрация в контейнере (app/Providers/AppServiceProvider.php)
+// 2. Registro no container (app/Providers/AppServiceProvider.php)
 public function register(): void
 {
     $this->app->singleton(PaymentService::class, function ($app) {
@@ -733,17 +733,17 @@ public function register(): void
     });
 }
 
-// 3. Использование Real-time Facade (БЕЗ создания Facade класса!)
+// 3. Uso da Real-time Facade (SEM criar classe Facade!)
 namespace App\Http\Controllers;
 
-// Добавить префикс Facades\ к namespace
+// Prefixo Facades\ no namespace
 use Facades\App\Services\PaymentService;
 
 class OrderController extends Controller
 {
     public function store(Request $request)
     {
-        // Использовать как статические методы
+        // Usa como métodos estáticos
         $charged = PaymentService::charge($request->amount);
 
         if ($charged) {
@@ -751,7 +751,7 @@ class OrderController extends Controller
             return new OrderResource($order);
         }
 
-        return response()->json(['error' => 'Payment failed'], 400);
+        return response()->json(['error' => 'Pagamento falhou'], 400);
     }
 
     public function refund(Order $order)
@@ -760,10 +760,10 @@ class OrderController extends Controller
 
         if ($refunded) {
             $order->update(['status' => 'refunded']);
-            return response()->json(['message' => 'Refunded']);
+            return response()->json(['message' => 'Reembolsado']);
         }
 
-        return response()->json(['error' => 'Refund failed'], 400);
+        return response()->json(['error' => 'Reembolso falhou'], 400);
     }
 
     public function balance()
@@ -774,21 +774,21 @@ class OrderController extends Controller
     }
 }
 
-// 4. В Blade
+// 4. No Blade
 @php
     use Facades\App\Services\PaymentService;
 @endphp
 
-<div>Balance: {{ PaymentService::getBalance() }}</div>
+<div>Saldo: {{ PaymentService::getBalance() }}</div>
 
-// 5. Тестирование Real-time Facade
+// 5. Teste da Real-time Facade
 use Facades\App\Services\PaymentService;
 
 class OrderControllerTest extends TestCase
 {
     public function test_order_creation_charges_payment()
     {
-        // Mock Real-time Facade
+        // Mock da Real-time Facade
         PaymentService::shouldReceive('charge')
             ->once()
             ->with(1000)
@@ -818,17 +818,17 @@ class OrderControllerTest extends TestCase
 }
 ```
 
-**Как работает Real-time Facade:**
+**Como funciona a Real-time Facade:**
 ```php
-// Обычный вызов
+// Chamada normal
 use App\Services\PaymentService;
 app(PaymentService::class)->charge(1000);
 
-// Real-time Facade (автоматически)
+// Real-time Facade (automática)
 use Facades\App\Services\PaymentService;
 PaymentService::charge(1000);
 
-// Laravel автоматически создаёт Facade класс:
+// O Laravel cria a classe Facade sozinho:
 namespace Facades\App\Services;
 
 class PaymentService extends \Illuminate\Support\Facades\Facade
@@ -840,22 +840,22 @@ class PaymentService extends \Illuminate\Support\Facades\Facade
 }
 ```
 
-**Плюсы Real-time Facades:**
-- Не нужно создавать Facade класс
-- Короткий синтаксис
-- Работает с любым классом
+**Prós das Real-time Facades:**
+- Não precisa criar a classe Facade
+- Sintaxe curta
+- Funciona com qualquer classe
 
-**Минусы:**
-- Не все знают про эту фичу
-- IDE может не подсказывать методы (нужен laravel-ide-helper)
-- Скрывает зависимости (как обычные Facades)
+**Contras:**
+- Nem todo mundo conhece essa feature
+- A IDE pode não sugerir os métodos (precisa do laravel-ide-helper)
+- Esconde as dependências (como as Facades comuns)
 
-**Когда использовать:**
-- В контроллерах для коротких операций
-- В Blade шаблонах
-- Когда не хочется создавать Facade класс
+**Quando usar:**
+- Em controllers para operações curtas
+- Em templates Blade
+- Quando você não quer criar a classe Facade
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

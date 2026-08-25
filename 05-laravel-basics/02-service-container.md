@@ -1,116 +1,116 @@
 # 4.2 Service Container
 
-## Краткое резюме
+## Resumo
 
-> **Service Container** — IoC контейнер для управления зависимостями в Laravel.
+> **Service Container (container de serviços)** — container IoC do Laravel para gerenciar dependências.
 >
-> **Регистрация:** `bind()` (новый экземпляр), `singleton()` (один на запрос), `instance()` (существующий объект).
+> **Registro:** `bind()` (instância nova), `singleton()` (uma por request), `instance()` (objeto que já existe).
 >
-> **Важно:** Автоматическая инъекция через конструктор, интерфейсы связываются с реализациями.
+> **Importante:** injeção automática pelo construtor. Interface liga na implementação.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Service Container (IoC контейнер) — ядро Laravel для управления зависимостями. Автоматически создаёт объекты и внедряет их зависимости.
-
-**Основное:**
-- Регистрация сервисов (`bind`, `singleton`)
-- Разрешение зависимостей (автоматическая инъекция)
-- Dependency Injection через конструктор
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Регистрация сервисов:**
+**O que é:**
+Service Container — o núcleo do Laravel para gerenciar dependências. Cria os objetos e injeta as dependências sozinho.
+
+**O essencial:**
+- Registro de serviços (`bind`, `singleton`)
+- Resolução de dependências (injeção automática)
+- Dependency Injection pelo construtor
+
+---
+
+## Como funciona
+
+**Registro de serviços:**
 
 ```php
 // app/Providers/AppServiceProvider.php
 public function register(): void
 {
-    // bind — каждый раз новый экземпляр
+    // bind — instância nova toda vez
     $this->app->bind(PaymentGateway::class, StripeGateway::class);
 
-    // singleton — один экземпляр на весь запрос
+    // singleton — uma instância por request
     $this->app->singleton(CacheService::class, function ($app) {
         return new CacheService(
             $app->make('cache.store')
         );
     });
 
-    // instance — использовать уже существующий объект
+    // instance — usa um objeto que já existe
     $logger = new Logger('app');
     $this->app->instance(Logger::class, $logger);
 }
 ```
 
-**Разрешение зависимостей:**
+**Resolução de dependências:**
 
 ```php
-// 1. Через конструктор (автоматически)
+// 1. Pelo construtor (automático)
 class OrderController extends Controller
 {
-    // Laravel автоматически создаст OrderService
+    // O Laravel cria o OrderService sozinho
     public function __construct(
         private OrderService $orderService
     ) {}
 }
 
-// 2. Через app() helper
+// 2. Pelo helper app()
 $service = app(OrderService::class);
 
-// 3. Через resolve()
+// 3. Por resolve()
 $service = resolve(OrderService::class);
 
-// 4. Через make()
+// 4. Por make()
 $service = app()->make(OrderService::class);
 
-// 5. Через фасад
+// 5. Pela facade
 use Illuminate\Support\Facades\App;
 $service = App::make(OrderService::class);
 ```
 
-**Contextual Binding (контекстная привязка):**
+**Contextual Binding (binding contextual):**
 
 ```php
-// Разные реализации для разных классов
+// Implementações diferentes para classes diferentes
 public function register(): void
 {
-    // OrderService получит StripeGateway
+    // OrderService recebe StripeGateway
     $this->app->when(OrderService::class)
         ->needs(PaymentGateway::class)
         ->give(StripeGateway::class);
 
-    // RefundService получит PayPalGateway
+    // RefundService recebe PayPalGateway
     $this->app->when(RefundService::class)
         ->needs(PaymentGateway::class)
         ->give(PayPalGateway::class);
 }
 ```
 
-**Binding Interfaces:**
+**Binding de interfaces:**
 
 ```php
-// Интерфейс
+// Interface
 interface PaymentGateway
 {
     public function charge(int $amount): bool;
 }
 
-// Реализация
+// Implementação
 class StripeGateway implements PaymentGateway
 {
     public function charge(int $amount): bool
@@ -119,7 +119,7 @@ class StripeGateway implements PaymentGateway
     }
 }
 
-// Регистрация
+// Registro
 public function register(): void
 {
     $this->app->bind(
@@ -128,10 +128,10 @@ public function register(): void
     );
 }
 
-// Использование
+// Uso
 class OrderService
 {
-    // Автоматически получит StripeGateway
+    // Recebe StripeGateway sozinho
     public function __construct(
         private PaymentGateway $gateway
     ) {}
@@ -140,33 +140,33 @@ class OrderService
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй когда:**
-- Нужна подмена реализаций (интерфейсы)
-- Тестирование (mock зависимостей)
-- Singleton сервисы (например, логгер)
-- Сложная инициализация объектов
+**Use quando:**
+- Precisa trocar a implementação (interfaces)
+- Teste (mock das dependências)
+- Serviços singleton (logger, por exemplo)
+- Inicialização pesada do objeto
 
-**Не используй когда:**
-- Простые value objects без зависимостей
+**Não use quando:**
+- Value object simples, sem dependência
 - DTO (Data Transfer Objects)
-- Eloquent модели (они сами создаются)
+- Models Eloquent (eles se criam sozinhos)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Типичный пример с интерфейсами:**
+**Exemplo típico com interfaces:**
 
 ```php
-// 1. Интерфейс (app/Contracts/NotificationService.php)
+// 1. Interface (app/Contracts/NotificationService.php)
 interface NotificationService
 {
     public function send(User $user, string $message): void;
 }
 
-// 2. Реализации
+// 2. Implementações
 class EmailNotificationService implements NotificationService
 {
     public function __construct(
@@ -191,10 +191,10 @@ class SmsNotificationService implements NotificationService
     }
 }
 
-// 3. Регистрация (app/Providers/AppServiceProvider.php)
+// 3. Registro (app/Providers/AppServiceProvider.php)
 public function register(): void
 {
-    // Выбор реализации по конфигу
+    // Escolhe a implementação pelo config
     $this->app->bind(
         NotificationService::class,
         config('notifications.driver') === 'sms'
@@ -203,7 +203,7 @@ public function register(): void
     );
 }
 
-// 4. Использование
+// 4. Uso
 class OrderService
 {
     public function __construct(
@@ -214,10 +214,10 @@ class OrderService
     {
         $order = Order::create($data);
 
-        // Отправит через Email или SMS в зависимости от конфига
+        // Envia por email ou SMS, conforme o config
         $this->notificationService->send(
             $user,
-            "Заказ #{$order->id} создан"
+            "Pedido #{$order->id} criado"
         );
 
         return $order;
@@ -225,13 +225,13 @@ class OrderService
 }
 ```
 
-**Singleton для дорогих операций:**
+**Singleton para operações caras:**
 
 ```php
 // Service Provider
 public function register(): void
 {
-    // Один экземпляр на весь запрос
+    // Uma instância por request
     $this->app->singleton(ElasticsearchClient::class, function ($app) {
         return new ElasticsearchClient(
             config('services.elasticsearch.host')
@@ -239,7 +239,7 @@ public function register(): void
     });
 }
 
-// Использование в разных контроллерах
+// Uso em controllers diferentes
 class ProductController
 {
     public function __construct(
@@ -248,19 +248,19 @@ class ProductController
 
     public function search(Request $request)
     {
-        // Используется тот же экземпляр, что и в UserController
+        // Mesma instância do UserController
         return $this->elasticsearch->search($request->query('q'));
     }
 }
 ```
 
-**Contextual Binding для разных реализаций:**
+**Contextual Binding para implementações diferentes:**
 
 ```php
 // Service Provider
 public function register(): void
 {
-    // ProductService использует ProductCache
+    // ProductService usa ProductCache
     $this->app->when(ProductService::class)
         ->needs(CacheRepository::class)
         ->give(function ($app) {
@@ -270,7 +270,7 @@ public function register(): void
             );
         });
 
-    // UserService использует UserCache
+    // UserService usa UserCache
     $this->app->when(UserService::class)
         ->needs(CacheRepository::class)
         ->give(function ($app) {
@@ -282,10 +282,10 @@ public function register(): void
 }
 ```
 
-**Tagged Services (группировка):**
+**Tagged Services (agrupamento):**
 
 ```php
-// Регистрация с тегами
+// Registro com tags
 public function register(): void
 {
     $this->app->bind(StripePayment::class);
@@ -299,14 +299,14 @@ public function register(): void
     ], 'payment.gateways');
 }
 
-// Использование всех сервисов с тегом
+// Uso de todos os serviços da tag
 class PaymentRouter
 {
     private array $gateways;
 
     public function __construct()
     {
-        // Получить все сервисы с тегом
+        // Pega todos os serviços da tag
         $this->gateways = app()->tagged('payment.gateways');
     }
 
@@ -323,14 +323,14 @@ class PaymentRouter
 }
 ```
 
-**Extending (расширение связанных сервисов):**
+**Extending (estender serviços já registrados):**
 
 ```php
-// Изменить существующую регистрацию
+// Altera um registro que já existe
 public function register(): void
 {
     $this->app->extend(PaymentService::class, function ($service, $app) {
-        // Добавить логирование
+        // Adiciona log
         return new PaymentServiceWithLogging(
             $service,
             $app->make(Logger::class)
@@ -339,7 +339,7 @@ public function register(): void
 }
 ```
 
-**Тестирование с mock:**
+**Teste com mock:**
 
 ```php
 // tests/Feature/OrderTest.php
@@ -351,10 +351,10 @@ public function test_order_creation_sends_notification()
         ->once()
         ->with(Mockery::type(User::class), Mockery::type('string'));
 
-    // Подменить в контейнере
+    // Substitui no container
     $this->app->instance(NotificationService::class, $notificationMock);
 
-    // Тест
+    // Teste
     $user = User::factory()->create();
     $response = $this->actingAs($user)->postJson('/api/orders', [
         'product_id' => 1,
@@ -367,35 +367,35 @@ public function test_order_creation_sends_notification()
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Service Container — IoC контейнер для DI в Laravel. bind() создаёт новый экземпляр каждый раз, singleton() — один на запрос. Автоматическая инъекция через конструктор. Регистрирую в Service Providers. Интерфейсы связываю с реализациями через bind(Interface::class, Implementation::class). Contextual binding для разных реализаций. В тестах подменяю через app()->instance()."
+> "Service Container é o container IoC do Laravel para DI. bind() cria instância nova toda vez, singleton() é uma por request. A injeção pelo construtor é automática. Eu registro no Service Provider. Interface liga na implementação com bind(Interface::class, Implementation::class). Contextual binding quando a implementação muda conforme a classe. No teste eu substituo com app()->instance()."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой Contextual Binding
+### Exercício 1: Configure o Contextual Binding
 
-У тебя есть два сервиса: `EmailService` и `SmsService`. Оба реализуют `NotificationInterface`. `OrderService` должен использовать Email, а `UserService` — SMS. Настрой контейнер.
+**Enunciado:** Você tem dois serviços: `EmailService` e `SmsService`. Os dois implementam `NotificationInterface`. `OrderService` usa email. `UserService` usa SMS. Configure o container.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Интерфейс (app/Contracts/NotificationInterface.php)
+// 1. Interface (app/Contracts/NotificationInterface.php)
 interface NotificationInterface
 {
     public function send(string $message): void;
 }
 
-// 2. Реализации
+// 2. Implementações
 class EmailService implements NotificationInterface
 {
     public function send(string $message): void
     {
         Mail::raw($message, function ($mail) {
-            $mail->to('user@example.com');
+            $mail->to('joao@email.com');
         });
     }
 }
@@ -411,18 +411,18 @@ class SmsService implements NotificationInterface
 // 3. Service Provider (app/Providers/AppServiceProvider.php)
 public function register(): void
 {
-    // OrderService получит EmailService
+    // OrderService recebe EmailService
     $this->app->when(OrderService::class)
         ->needs(NotificationInterface::class)
         ->give(EmailService::class);
 
-    // UserService получит SmsService
+    // UserService recebe SmsService
     $this->app->when(UserService::class)
         ->needs(NotificationInterface::class)
         ->give(SmsService::class);
 }
 
-// 4. Использование
+// 4. Uso
 class OrderService
 {
     public function __construct(
@@ -433,8 +433,8 @@ class OrderService
     {
         $order = Order::create($data);
 
-        // Отправит через Email
-        $this->notification->send("Order #{$order->id} created");
+        // Envia por email
+        $this->notification->send("Pedido #{$order->id} criado");
 
         return $order;
     }
@@ -450,8 +450,8 @@ class UserService
     {
         $user = User::create($data);
 
-        // Отправит через SMS
-        $this->notification->send("Welcome {$user->name}!");
+        // Envia por SMS
+        $this->notification->send("Bem-vindo, {$user->name}!");
 
         return $user;
     }
@@ -459,19 +459,19 @@ class UserService
 ```
 </details>
 
-### Задание 2: Singleton vs Bind
+### Exercício 2: Singleton vs Bind
 
-Когда использовать `singleton()`, а когда `bind()`? Приведи примеры.
+**Enunciado:** Quando usar `singleton()` e quando usar `bind()`? Dê exemplos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ✅ SINGLETON — один экземпляр на весь запрос
-// Используй для:
-// - Дорогих операций (DB подключения, HTTP клиенты)
-// - Stateful сервисов (кеш, логгер)
-// - Сервисов без изменяемого состояния
+// ✅ SINGLETON — uma instância por request
+// Use para:
+// - Operação cara (conexão de DB, cliente HTTP)
+// - Serviço stateful (cache, logger)
+// - Serviço sem estado mutável compartilhado de propósito
 
 public function register(): void
 {
@@ -502,27 +502,27 @@ public function register(): void
     });
 }
 
-// ✅ BIND — новый экземпляр каждый раз
-// Используй для:
-// - Stateless сервисов
+// ✅ BIND — instância nova toda vez
+// Use para:
+// - Serviço stateless
 // - Value Objects
-// - Сервисов с изменяемым состоянием
+// - Serviço com estado mutável
 
 public function register(): void
 {
-    // 1. Order Calculator (каждый расчёт — новый объект)
+    // 1. Order Calculator (cada cálculo — objeto novo)
     $this->app->bind(OrderCalculator::class, function ($app) {
         return new OrderCalculator(
             taxRate: config('shop.tax_rate')
         );
     });
 
-    // 2. PDF Generator (новый файл каждый раз)
+    // 2. PDF Generator (arquivo novo toda vez)
     $this->app->bind(PdfGenerator::class, function ($app) {
         return new PdfGenerator();
     });
 
-    // 3. Payment Processor (новая транзакция)
+    // 3. Payment Processor (transação nova)
     $this->app->bind(PaymentProcessor::class, function ($app) {
         return new PaymentProcessor(
             $app->make(PaymentGateway::class)
@@ -530,34 +530,34 @@ public function register(): void
     });
 }
 
-// Пример проблемы с bind вместо singleton
+// Exemplo do problema: bind no lugar de singleton
 class OrderService
 {
     public function __construct(
-        private DatabaseConnection $db  // ❌ Каждый раз новое подключение!
+        private DatabaseConnection $db  // ❌ Conexão nova toda vez!
     ) {}
 }
 
-// Если зарегистрирован через bind():
-$service1 = app(OrderService::class);  // Создаст DB connection #1
-$service2 = app(OrderService::class);  // Создаст DB connection #2 (плохо!)
+// Se registrou com bind():
+$service1 = app(OrderService::class);  // Cria DB connection #1
+$service2 = app(OrderService::class);  // Cria DB connection #2 (ruim!)
 
-// Если зарегистрирован через singleton():
-$service1 = app(OrderService::class);  // Создаст DB connection #1
-$service2 = app(OrderService::class);  // Использует DB connection #1 (хорошо!)
+// Se registrou com singleton():
+$service1 = app(OrderService::class);  // Cria DB connection #1
+$service2 = app(OrderService::class);  // Reusa DB connection #1 (bom!)
 ```
 
-**Правило:**
-- **singleton()** — если сервис **дорогой** или **stateful**
-- **bind()** — если сервис **дешёвый** и **stateless**
+**Regra:**
+- **singleton()** — se o serviço é **caro** ou **stateful**
+- **bind()** — se o serviço é **barato** e **stateless**
 </details>
 
-### Задание 3: Mock сервис в тесте
+### Exercício 3: Mock do serviço no teste
 
-Тебе нужно протестировать `OrderService`, но не вызывать реальный `PaymentGateway`. Как подменить?
+**Enunciado:** Você precisa testar o `OrderService` sem chamar o `PaymentGateway` de verdade. Como substituir?
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Service (app/Services/OrderService.php)
@@ -574,7 +574,7 @@ class OrderService
             'total' => $data['total'],
         ]);
 
-        // Оплата через gateway
+        // Cobra pelo gateway
         $this->paymentGateway->charge($order->total);
 
         return $order;
@@ -589,25 +589,25 @@ class OrderServiceTest extends TestCase
 {
     public function test_order_creation_charges_payment()
     {
-        // 1. Создать mock PaymentGateway
+        // 1. Cria o mock PaymentGateway
         $paymentMock = Mockery::mock(PaymentGateway::class);
 
-        // 2. Настроить ожидания
+        // 2. Configura as expectativas
         $paymentMock->shouldReceive('charge')
             ->once()
             ->with(1000)
             ->andReturn(true);
 
-        // 3. Подменить в контейнере
+        // 3. Substitui no container
         $this->app->instance(PaymentGateway::class, $paymentMock);
 
-        // 4. Тест
+        // 4. Teste
         $user = User::factory()->create();
-        $service = app(OrderService::class);  // Получит наш mock
+        $service = app(OrderService::class);  // Recebe o nosso mock
 
         $order = $service->create($user, ['total' => 1000]);
 
-        // 5. Проверки
+        // 5. Checagens
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
             'user_id' => $user->id,
@@ -617,17 +617,17 @@ class OrderServiceTest extends TestCase
 
     public function test_payment_failure_throws_exception()
     {
-        // Mock с исключением
+        // Mock que lança exceção
         $paymentMock = Mockery::mock(PaymentGateway::class);
         $paymentMock->shouldReceive('charge')
             ->once()
-            ->andThrow(new PaymentException('Card declined'));
+            ->andThrow(new PaymentException('Cartão recusado'));
 
         $this->app->instance(PaymentGateway::class, $paymentMock);
 
-        // Ожидаем исключение
+        // Esperamos a exceção
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Card declined');
+        $this->expectExceptionMessage('Cartão recusado');
 
         $user = User::factory()->create();
         $service = app(OrderService::class);
@@ -641,24 +641,24 @@ class OrderServiceTest extends TestCase
     }
 }
 
-// Альтернатива: Laravel Mock (без Mockery)
+// Alternativa: Laravel Mock (sem Mockery)
 class OrderServiceTest extends TestCase
 {
     public function test_with_laravel_mock()
     {
-        // Создать mock
+        // Cria o mock
         $paymentMock = $this->createMock(PaymentGateway::class);
 
-        // Настроить ожидания
+        // Configura as expectativas
         $paymentMock->expects($this->once())
             ->method('charge')
             ->with(1000)
             ->willReturn(true);
 
-        // Подменить
+        // Substitui
         $this->app->instance(PaymentGateway::class, $paymentMock);
 
-        // Тест
+        // Teste
         $user = User::factory()->create();
         $service = app(OrderService::class);
         $order = $service->create($user, ['total' => 1000]);
@@ -668,27 +668,27 @@ class OrderServiceTest extends TestCase
 }
 ```
 
-**Способы подмены:**
-1. **app()->instance()** — подменить любой класс
-2. **Mockery::mock()** — мощный mock framework
-3. **createMock()** — встроенный PHPUnit mock
-4. **bind()** в тесте — временная регистрация
+**Formas de substituir:**
+1. **app()->instance()** — substitui qualquer classe
+2. **Mockery::mock()** — framework de mock mais poderoso
+3. **createMock()** — mock nativo do PHPUnit
+4. **bind()** no teste — registro temporário
 
 ```php
-// Способ 4: Временная регистрация
+// Forma 4: registro temporário
 public function test_with_fake_implementation()
 {
-    // Fake реализация
+    // Implementação fake
     $this->app->bind(PaymentGateway::class, function () {
         return new class implements PaymentGateway {
             public function charge(int $amount): bool
             {
-                return true;  // Всегда успешно
+                return true;  // Sempre dá certo
             }
         };
     });
 
-    // Тест
+    // Teste
     $service = app(OrderService::class);
     // ...
 }
@@ -697,4 +697,4 @@ public function test_with_fake_implementation()
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

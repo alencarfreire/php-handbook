@@ -1,77 +1,77 @@
-# 4.5 Маршрутизация (Routing)
+# 4.5 Rotas (Routing)
 
-## Краткое резюме
+## Resumo
 
-> **Routing** — система маршрутизации Laravel, связывающая URL с контроллерами/замыканиями.
+> **Routing** — sistema de rotas do Laravel. Liga URL a controller ou closure.
 >
-> **Файлы:** routes/web.php (с сессиями, CSRF) и routes/api.php (stateless, throttle).
+> **Arquivos:** routes/web.php (sessões, CSRF) e routes/api.php (stateless, throttle).
 >
-> **Важно:** Route Model Binding, Resource routes для CRUD, группы с prefix/middleware/name, rate limiting.
+> **Importante:** Route Model Binding, Resource routes para CRUD, grupos com prefix/middleware/name, rate limiting.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Система маршрутизации Laravel связывает URL с контроллерами/замыканиями. Поддерживает REST, параметры, middleware, группы.
-
-**Основные файлы:**
-- `routes/web.php` — веб-маршруты (с сессиями, CSRF)
-- `routes/api.php` — API маршруты (без сессий, с throttle)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовый синтаксис:**
+**O que é:**
+Sistema de rotas do Laravel. Liga URL a controller ou closure. Suporta REST, parâmetros, middleware, grupos.
+
+**Arquivos principais:**
+- `routes/web.php` — rotas web (sessões, CSRF)
+- `routes/api.php` — rotas de API (sem sessão, com throttle)
+
+---
+
+## Como funciona
+
+**Sintaxe básica:**
 
 ```php
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-// GET запрос
+// Request GET
 Route::get('/users', [UserController::class, 'index']);
 
-// POST запрос
+// Request POST
 Route::post('/users', [UserController::class, 'store']);
 
-// PUT/PATCH запрос
+// Request PUT/PATCH
 Route::put('/users/{id}', [UserController::class, 'update']);
 Route::patch('/users/{id}', [UserController::class, 'update']);
 
-// DELETE запрос
+// Request DELETE
 Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-// Несколько методов
+// Vários métodos
 Route::match(['get', 'post'], '/form', [FormController::class, 'handle']);
 
-// Любой метод
+// Qualquer método
 Route::any('/debug', [DebugController::class, 'index']);
 
-// Closure (без контроллера)
+// Closure (sem controller)
 Route::get('/hello', function () {
-    return 'Hello World';
+    return 'Olá, mundo';
 });
 ```
 
-**Параметры маршрута:**
+**Parâmetros da rota:**
 
 ```php
-// Обязательный параметр
+// Parâmetro obrigatório
 Route::get('/users/{id}', [UserController::class, 'show']);
 
-// Необязательный параметр
+// Parâmetro opcional
 Route::get('/users/{id?}', [UserController::class, 'show']);
 
 // Regex constraint
@@ -81,43 +81,43 @@ Route::get('/users/{id}', [UserController::class, 'show'])
 Route::get('/posts/{slug}', [PostController::class, 'show'])
     ->where('slug', '[a-z0-9-]+');
 
-// Несколько constraints
+// Vários constraints
 Route::get('/users/{id}/posts/{postId}', [PostController::class, 'show'])
     ->where(['id' => '[0-9]+', 'postId' => '[0-9]+']);
 
-// Глобальные constraints (в RouteServiceProvider)
+// Constraints globais (no RouteServiceProvider)
 Route::pattern('id', '[0-9]+');
 ```
 
-**Именованные маршруты:**
+**Rotas nomeadas:**
 
 ```php
-// Определение
+// Definição
 Route::get('/users/{id}', [UserController::class, 'show'])
     ->name('users.show');
 
-// Использование
+// Uso
 $url = route('users.show', ['id' => 1]);  // /users/1
 return redirect()->route('users.show', ['id' => 1]);
 
-// В Blade
-<a href="{{ route('users.show', $user) }}">View User</a>
+// No Blade
+<a href="{{ route('users.show', $user) }}">Ver usuário</a>
 ```
 
 **Route Model Binding:**
 
 ```php
-// Автоматическая привязка (по id)
+// Binding automático (por id)
 Route::get('/users/{user}', function (User $user) {
-    return $user->email;  // Laravel автоматически найдёт User::find($id)
+    return $user->email;  // Laravel acha User::find($id) sozinho
 });
 
-// По другому полю (slug)
+// Por outro campo (slug)
 Route::get('/posts/{post:slug}', function (Post $post) {
     return $post->title;  // Post::where('slug', $slug)->firstOrFail()
 });
 
-// Кастомная логика (в RouteServiceProvider)
+// Lógica customizada (no RouteServiceProvider)
 Route::bind('post', function (string $value) {
     return Post::where('slug', $value)
         ->orWhere('id', $value)
@@ -125,7 +125,7 @@ Route::bind('post', function (string $value) {
 });
 ```
 
-**Группы маршрутов:**
+**Grupos de rotas:**
 
 ```php
 // Prefix
@@ -146,7 +146,7 @@ Route::name('admin.')->group(function () {
         ->name('users.index');  // admin.users.index
 });
 
-// Комбинация
+// Combinação
 Route::prefix('api')
     ->middleware('auth:sanctum')
     ->name('api.')
@@ -159,10 +159,10 @@ Route::prefix('api')
 **Resource Routes:**
 
 ```php
-// RESTful маршруты
+// Rotas RESTful
 Route::resource('posts', PostController::class);
 
-// Генерирует:
+// Gera:
 // GET    /posts              index
 // GET    /posts/create       create
 // POST   /posts              store
@@ -171,40 +171,40 @@ Route::resource('posts', PostController::class);
 // PUT    /posts/{post}       update
 // DELETE /posts/{post}       destroy
 
-// Только некоторые действия
+// Só algumas actions
 Route::resource('posts', PostController::class)
     ->only(['index', 'show']);
 
 Route::resource('posts', PostController::class)
     ->except(['create', 'edit']);
 
-// API resource (без create/edit)
+// API resource (sem create/edit)
 Route::apiResource('posts', PostController::class);
-// Генерирует только: index, store, show, update, destroy
+// Gera só: index, store, show, update, destroy
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **web.php vs api.php:**
 
 | web.php | api.php |
 |---------|---------|
-| Сессии, CSRF | Без сессий |
+| Sessões, CSRF | Sem sessões |
 | Cookies | Stateless |
-| Для веб-приложений | Для API |
+| Para apps web | Para API |
 | Middleware: web | Middleware: api |
 
 **Resource routes:**
-- ✅ Используй для стандартных CRUD
-- ❌ Не используй для нестандартных действий (добавь отдельные маршруты)
+- ✅ Use para CRUD padrão
+- ❌ Não use para actions fora do padrão (crie rotas à parte)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**RESTful API маршруты:**
+**Rotas de API RESTful:**
 
 ```php
 // routes/api.php
@@ -214,11 +214,11 @@ use App\Http\Controllers\Api\{
     OrderController,
 };
 
-// Публичные маршруты
+// Rotas públicas
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Защищённые маршруты
+// Rotas protegidas
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
@@ -236,7 +236,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 ```
 
-**Admin панель с префиксом:**
+**Painel admin com prefix:**
 
 ```php
 // routes/web.php
@@ -250,7 +250,7 @@ Route::prefix('admin')
         Route::resource('users', AdminUserController::class);
         Route::resource('posts', AdminPostController::class);
 
-        // Кастомные действия
+        // Actions customizadas
         Route::post('/users/{user}/ban', [AdminUserController::class, 'ban'])
             ->name('users.ban');
 
@@ -264,18 +264,18 @@ Route::prefix('admin')
 // /admin/users/5/ban → admin.users.ban
 ```
 
-**Route Model Binding с кастомной логикой:**
+**Route Model Binding com lógica customizada:**
 
 ```php
 // app/Providers/RouteServiceProvider.php
 public function boot(): void
 {
-    // Привязка User по uuid
+    // Bind de User por uuid
     Route::bind('user', function (string $value) {
         return User::where('uuid', $value)->firstOrFail();
     });
 
-    // Привязка Post по slug или id
+    // Bind de Post por slug ou id
     Route::bind('post', function (string $value) {
         return Post::where('slug', $value)
             ->orWhere('id', $value)
@@ -283,25 +283,25 @@ public function boot(): void
     });
 }
 
-// Использование
+// Uso
 Route::get('/users/{user}', [UserController::class, 'show']);
 // /users/550e8400-e29b-41d4-a716-446655440000
 
 Route::get('/posts/{post}', [PostController::class, 'show']);
-// /posts/my-first-post или /posts/123
+// /posts/my-first-post ou /posts/123
 ```
 
 **Subdomain routing:**
 
 ```php
-// Поддомены
+// Subdomínios
 Route::domain('{account}.myapp.com')->group(function () {
     Route::get('/dashboard', function (string $account) {
-        return "Dashboard for {$account}";
+        return "Dashboard de {$account}";
     });
 });
 
-// tenant1.myapp.com/dashboard → "Dashboard for tenant1"
+// tenant1.myapp.com/dashboard → "Dashboard de tenant1"
 ```
 
 **Rate Limiting:**
@@ -326,7 +326,7 @@ public function boot(): void
     });
 }
 
-// Использование
+// Uso
 Route::middleware('throttle:api')->group(function () {
     Route::apiResource('products', ProductController::class);
 });
@@ -338,48 +338,48 @@ Route::post('/upload', [UploadController::class, 'store'])
 **Fallback route:**
 
 ```php
-// Обработка 404
+// Tratamento de 404
 Route::fallback(function () {
-    return response()->json(['error' => 'Not Found'], 404);
+    return response()->json(['error' => 'Não encontrado'], 404);
 });
 ```
 
 **Redirect routes:**
 
 ```php
-// Редирект
+// Redirect
 Route::redirect('/old-url', '/new-url', 301);
 
 // Permanent redirect
 Route::permanentRedirect('/old-url', '/new-url');
 ```
 
-**View routes (без контроллера):**
+**View routes (sem controller):**
 
 ```php
-// Просто вернуть view
+// Só devolver a view
 Route::view('/about', 'pages.about');
 
-// С данными
+// Com dados
 Route::view('/welcome', 'welcome', ['name' => 'Laravel']);
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Маршруты в routes/web.php (с CSRF, сессиями) и routes/api.php (stateless). Route Model Binding автоматически находит модель по id или другому полю. Resource routes для CRUD (apiResource без create/edit). Группы с prefix, middleware, name. Rate limiting через RateLimiter::for(). Именованные маршруты для route() helper."
+> "Rotas em routes/web.php (com CSRF, sessões) e routes/api.php (stateless). Route Model Binding acha o model sozinho por id ou outro campo. Resource routes para CRUD (apiResource sem create/edit). Grupos com prefix, middleware, name. Rate limiting com RateLimiter::for(). Rotas nomeadas com o helper route()."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой API маршруты с версионированием
+### Exercício 1: Rotas de API com versionamento
 
-Создай API маршруты для `Product` с версионированием v1 и v2. V1 использует стандартный CRUD, V2 добавляет кастомное действие `publish`.
+**Enunciado:** Crie rotas de API para `Product` com versionamento v1 e v2. V1 usa CRUD padrão. V2 adiciona a action customizada `publish`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // routes/api.php
@@ -401,24 +401,24 @@ Route::prefix('v2')
     ->group(function () {
         Route::apiResource('products', ProductV2Controller::class);
 
-        // Кастомное действие
+        // Action customizada
         Route::post('products/{product}/publish', [ProductV2Controller::class, 'publish'])
             ->name('products.publish');
     });
 
-// Генерирует:
+// Gera:
 // POST /api/v1/products → api.v1.products.store
 // GET  /api/v1/products → api.v1.products.index
 // POST /api/v2/products/{product}/publish → api.v2.products.publish
 ```
 </details>
 
-### Задание 2: Реализуй subdomain routing для мультитенантности
+### Exercício 2: Subdomain routing para multi-tenancy
 
-Настрой маршруты для tenant-приложения, где каждый клиент имеет свой поддомен (tenant1.app.com, tenant2.app.com).
+**Enunciado:** Configure rotas para um app multi-tenant. Cada cliente tem o próprio subdomínio (tenant1.app.com, tenant2.app.com).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // routes/web.php
@@ -445,25 +445,25 @@ class IdentifyTenant
 
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
 
-        // Установить текущего tenant
+        // Definir o tenant atual
         app()->instance('current.tenant', $tenant);
 
         return $next($request);
     }
 }
 
-// Использование:
+// Uso:
 // tenant1.myapp.com/dashboard → tenant.dashboard
 // tenant1.myapp.com/users → tenant.users.index
 ```
 </details>
 
-### Задание 3: Настрой Rate Limiting с разными лимитами
+### Exercício 3: Rate limiting com limites diferentes
 
-Создай rate limiting для API: обычные пользователи — 60 запросов/мин, premium — без лимитов, гости — 10 запросов/мин.
+**Enunciado:** Crie rate limiting para a API: usuários comuns — 60 requests/min, premium — sem limite, visitantes — 10 requests/min.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Providers/RouteServiceProvider.php
@@ -476,16 +476,16 @@ public function boot(): void
     // API rate limiter
     RateLimiter::for('api', function (Request $request) {
         if (!$request->user()) {
-            // Гости: 10/мин по IP
+            // Visitantes: 10/min por IP
             return Limit::perMinute(10)->by($request->ip());
         }
 
         if ($request->user()->isPremium()) {
-            // Premium: без лимитов
+            // Premium: sem limite
             return Limit::none();
         }
 
-        // Обычные пользователи: 60/мин
+        // Usuários comuns: 60/min
         return Limit::perMinute(60)->by($request->user()->id);
     });
 
@@ -509,4 +509,4 @@ Route::post('/upload', [UploadController::class, 'store'])
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

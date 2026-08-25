@@ -1,41 +1,41 @@
 # 4.6 Middleware
 
-## Краткое резюме
+## Resumo
 
-> **Middleware** — фильтры HTTP запросов, выполняются до/после контроллера.
+> **Middleware** — filtros de request HTTP. Rodam antes/depois do controller.
 >
-> **Типы:** Before (перед контроллером), After (после), Terminable (после отправки ответа).
+> **Tipos:** Before (antes do controller), After (depois), Terminable (depois de enviar a response).
 >
-> **Важно:** Регистрация в Kernel.php (глобальные, группы, алиасы), параметры через middleware('role:admin'), цепочка middleware pipeline.
+> **Importante:** Registro no Kernel.php (global, grupos, aliases), parâmetros com middleware('role:admin'), cadeia do middleware pipeline.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Middleware — фильтры HTTP запросов. Выполняются до/после контроллера. Используются для аутентификации, логирования, CORS, и т.д.
-
-**Основное:**
-- Обрабатывают запрос перед контроллером
-- Могут изменять Request/Response
-- Цепочка middleware (middleware pipeline)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Структура middleware:**
+**O que é:**
+Middleware — filtros de request HTTP. Rodam antes/depois do controller. Servem para autenticação, log, CORS, etc.
+
+**O essencial:**
+- Processam a request antes do controller
+- Podem alterar Request/Response
+- Cadeia de middleware (middleware pipeline)
+
+---
+
+## Como funciona
+
+**Estrutura do middleware:**
 
 ```php
 namespace App\Http\Middleware;
@@ -45,31 +45,31 @@ use Illuminate\Http\Request;
 
 class CheckAge
 {
-    // Выполняется ПЕРЕД контроллером
+    // Roda ANTES do controller
     public function handle(Request $request, Closure $next)
     {
-        // Проверка до контроллера
+        // Checagem antes do controller
         if ($request->age < 18) {
             return redirect('home');
         }
 
-        // Передать дальше
+        // Passa adiante
         return $next($request);
     }
 }
 ```
 
-**After Middleware (после контроллера):**
+**After Middleware (depois do controller):**
 
 ```php
 class LogResponse
 {
     public function handle(Request $request, Closure $next)
 {
-        // Сначала выполнить контроллер
+        // Primeiro roda o controller
         $response = $next($request);
 
-        // Обработка после контроллера
+        // Processa depois do controller
         Log::info('Response', [
             'status' => $response->status(),
             'content' => $response->getContent(),
@@ -80,7 +80,7 @@ class LogResponse
 }
 ```
 
-**Параметры middleware:**
+**Parâmetros do middleware:**
 
 ```php
 class CheckRole
@@ -95,24 +95,24 @@ class CheckRole
     }
 }
 
-// Использование
+// Uso
 Route::get('/admin', [AdminController::class, 'index'])
     ->middleware('role:admin');
 ```
 
-**Регистрация middleware:**
+**Registro do middleware:**
 
 ```php
 // app/Http/Kernel.php
 class Kernel extends HttpKernel
 {
-    // Глобальные middleware (выполняются для ВСЕХ запросов)
+    // Middleware global (roda em TODAS as requests)
     protected $middleware = [
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
     ];
 
-    // Middleware группы
+    // Grupos de middleware
     protected $middlewareGroups = [
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
@@ -127,7 +127,7 @@ class Kernel extends HttpKernel
         ],
     ];
 
-    // Алиасы middleware (для использования в маршрутах)
+    // Aliases de middleware (para usar nas rotas)
     protected $middlewareAliases = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
@@ -136,22 +136,22 @@ class Kernel extends HttpKernel
 }
 ```
 
-**Применение middleware:**
+**Aplicando middleware:**
 
 ```php
-// В маршруте
+// Na rota
 Route::get('/profile', [ProfileController::class, 'show'])
     ->middleware('auth');
 
 Route::get('/admin', [AdminController::class, 'index'])
     ->middleware(['auth', 'role:admin']);
 
-// В группе
+// No grupo
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
 
-// В контроллере (конструктор)
+// No controller (construtor)
 class UserController extends Controller
 {
     public function __construct()
@@ -165,26 +165,26 @@ class UserController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй middleware для:**
-- Аутентификация (auth, guest)
-- Авторизация (роли, права)
+**Use middleware para:**
+- Autenticação (auth, guest)
+- Autorização (roles, permissões)
 - Rate limiting
 - CORS
-- Логирование
-- Кеширование ответов
-- Модификация запроса/ответа
+- Log
+- Cache de response
+- Alterar request/response
 
-**Не используй для:**
-- Бизнес-логика (это в сервисах)
-- Работа с БД напрямую (только проверки)
+**Não use para:**
+- Regra de negócio (isso fica no service)
+- Acesso direto ao banco (só checagens)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Проверка роли:**
+**Checagem de role:**
 
 ```php
 // app/Http/Middleware/CheckRole.php
@@ -197,19 +197,19 @@ class CheckRole
         }
 
         if (!$request->user()->hasAnyRole($roles)) {
-            abort(403, 'Access denied');
+            abort(403, 'Acesso negado');
         }
 
         return $next($request);
     }
 }
 
-// Регистрация в Kernel.php
+// Registro no Kernel.php
 protected $middlewareAliases = [
     'role' => \App\Http\Middleware\CheckRole::class,
 ];
 
-// Использование
+// Uso
 Route::middleware('role:admin,moderator')->group(function () {
     Route::get('/admin/users', [UserController::class, 'index']);
 });
@@ -226,10 +226,10 @@ class ApiToken
         $token = $request->header('X-API-Token');
 
         if (!$token || !$this->isValidToken($token)) {
-            return response()->json(['error' => 'Invalid token'], 401);
+            return response()->json(['error' => 'Token inválido'], 401);
         }
 
-        // Добавить пользователя в request
+        // Coloca o usuário no request
         $request->merge(['api_user' => $this->getUserByToken($token)]);
 
         return $next($request);
@@ -244,7 +244,7 @@ class ApiToken
 }
 ```
 
-**CORS Middleware (кастомный):**
+**CORS Middleware (customizado):**
 
 ```php
 // app/Http/Middleware/Cors.php
@@ -252,7 +252,7 @@ class Cors
 {
     public function handle(Request $request, Closure $next)
     {
-        // Preflight запрос (OPTIONS)
+        // Request preflight (OPTIONS)
         if ($request->isMethod('OPTIONS')) {
             return response('', 200)
                 ->header('Access-Control-Allow-Origin', '*')
@@ -260,7 +260,7 @@ class Cors
                 ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         }
 
-        // Обычный запрос
+        // Request normal
         $response = $next($request);
 
         return $response
@@ -271,7 +271,7 @@ class Cors
 }
 ```
 
-**Логирование запросов:**
+**Log de requests:**
 
 ```php
 // app/Http/Middleware/LogRequests.php
@@ -281,14 +281,14 @@ class LogRequests
     {
         $startTime = microtime(true);
 
-        // Выполнить запрос
+        // Executa a request
         $response = $next($request);
 
-        // Время выполнения
+        // Tempo de execução
         $duration = microtime(true) - $startTime;
 
-        // Логировать
-        Log::info('Request processed', [
+        // Loga
+        Log::info('Request processada', [
             'method' => $request->method(),
             'url' => $request->fullUrl(),
             'ip' => $request->ip(),
@@ -302,7 +302,7 @@ class LogRequests
 }
 ```
 
-**Force JSON Response (для API):**
+**Force JSON Response (para API):**
 
 ```php
 // app/Http/Middleware/ForceJsonResponse.php
@@ -310,14 +310,14 @@ class ForceJsonResponse
 {
     public function handle(Request $request, Closure $next)
     {
-        // Добавить Accept: application/json
+        // Seta Accept: application/json
         $request->headers->set('Accept', 'application/json');
 
         return $next($request);
     }
 }
 
-// Применить ко всем API маршрутам
+// Aplica em todas as rotas de API
 // app/Http/Kernel.php
 protected $middlewareGroups = [
     'api' => [
@@ -327,7 +327,7 @@ protected $middlewareGroups = [
 ];
 ```
 
-**Tenant Middleware (мультитенантность):**
+**Tenant Middleware (multi-tenancy):**
 
 ```php
 // app/Http/Middleware/IdentifyTenant.php
@@ -335,12 +335,12 @@ class IdentifyTenant
 {
     public function handle(Request $request, Closure $next)
     {
-        // Определить tenant по поддомену
+        // Descobre o tenant pelo subdomínio
         $subdomain = explode('.', $request->getHost())[0];
 
         $tenant = Tenant::where('subdomain', $subdomain)->firstOrFail();
 
-        // Установить соединение с БД tenant
+        // Seta a conexão com o banco do tenant
         config([
             'database.connections.tenant.database' => "tenant_{$tenant->id}",
         ]);
@@ -348,7 +348,7 @@ class IdentifyTenant
         DB::purge('tenant');
         DB::reconnect('tenant');
 
-        // Сохранить в request
+        // Guarda no request
         $request->attributes->set('tenant', $tenant);
 
         return $next($request);
@@ -364,23 +364,23 @@ class CacheResponse
 {
     public function handle(Request $request, Closure $next, int $ttl = 3600)
     {
-        // Только для GET запросов
+        // Só para GET
         if ($request->method() !== 'GET') {
             return $next($request);
         }
 
         $key = 'response:' . md5($request->fullUrl());
 
-        // Проверить кеш
+        // Checa o cache
         if ($cached = Cache::get($key)) {
             return response($cached['content'], $cached['status'])
                 ->withHeaders($cached['headers']);
         }
 
-        // Выполнить запрос
+        // Executa a request
         $response = $next($request);
 
-        // Кешировать только успешные ответы
+        // Cacheia só respostas de sucesso
         if ($response->status() === 200) {
             Cache::put($key, [
                 'content' => $response->getContent(),
@@ -393,21 +393,21 @@ class CacheResponse
     }
 }
 
-// Использование
+// Uso
 Route::get('/products', [ProductController::class, 'index'])
-    ->middleware('cache:600');  // 10 минут
+    ->middleware('cache:600');  // 10 minutos
 ```
 
-**Команда создания middleware:**
+**Comando para criar middleware:**
 
 ```bash
-# Создать middleware
+# Criar middleware
 php artisan make:middleware CheckAge
 
-# Middleware будет создан в app/Http/Middleware/CheckAge.php
+# O middleware vai para app/Http/Middleware/CheckAge.php
 ```
 
-**Terminable Middleware (выполнение после отправки ответа):**
+**Terminable Middleware (roda depois de enviar a response):**
 
 ```php
 class TerminableMiddleware
@@ -417,13 +417,13 @@ class TerminableMiddleware
         return $next($request);
     }
 
-    // Выполнится ПОСЛЕ отправки ответа клиенту
+    // Roda DEPOIS de enviar a response para o cliente
     public function terminate(Request $request, $response)
     {
-        // Тяжёлые операции (не блокируют ответ)
-        Log::info('Response sent to client');
+        // Operações pesadas (não bloqueiam a response)
+        Log::info('Response enviada ao cliente');
 
-        // Аналитика
+        // Analytics
         Analytics::track($request, $response);
     }
 }
@@ -431,20 +431,20 @@ class TerminableMiddleware
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Middleware обрабатывает запрос до/после контроллера. handle($request, $next) — основной метод. Глобальные в $middleware, группы в $middlewareGroups, алиасы в $middlewareAliases. Применяются через ->middleware() в маршрутах или в конструкторе контроллера. Параметры через middleware('role:admin'). Terminable middleware с terminate() выполняется после отправки ответа. Использую для auth, роли, rate limiting, логирования, CORS."
+> "Middleware processa a request antes e depois do controller. handle($request, $next) é o método principal. Global fica em $middleware, grupos em $middlewareGroups, aliases em $middlewareAliases. Você aplica com ->middleware() na rota ou no construtor do controller. Parâmetro entra assim: middleware('role:admin'). Terminable middleware com terminate() roda depois de enviar a response. Uso para auth, role, rate limiting, log, CORS."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай middleware для проверки подписки
+### Exercício 1: Crie um middleware de checagem de assinatura
 
-Пользователь должен иметь активную подписку для доступа к премиум-функциям. Если подписка истекла, вернуть 403.
+**Enunciado:** O usuário precisa ter assinatura ativa para acessar recursos premium. Se a assinatura expirou, devolve 403.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/CheckSubscription.php
@@ -460,22 +460,22 @@ class CheckSubscription
         $user = $request->user();
 
         if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Não autorizado'], 401);
         }
 
-        // Проверка активности подписки
+        // Checa se a assinatura está ativa
         if (!$user->hasActiveSubscription()) {
             return response()->json([
-                'error' => 'Subscription required',
-                'message' => 'Please upgrade to access this feature'
+                'error' => 'Assinatura necessária',
+                'message' => 'Faça upgrade para acessar este recurso'
             ], 403);
         }
 
-        // Проверка конкретного плана (если указан)
+        // Checa o plano específico (se passou)
         if ($plan && !$user->hasSubscription($plan)) {
             return response()->json([
-                'error' => 'Plan upgrade required',
-                'message' => "This feature requires {$plan} plan"
+                'error' => 'Upgrade de plano necessário',
+                'message' => "Este recurso exige o plano {$plan}"
             ], 403);
         }
 
@@ -483,12 +483,12 @@ class CheckSubscription
     }
 }
 
-// Регистрация в app/Http/Kernel.php
+// Registro em app/Http/Kernel.php
 protected $middlewareAliases = [
     'subscription' => \App\Http\Middleware\CheckSubscription::class,
 ];
 
-// Использование
+// Uso
 Route::middleware(['auth:sanctum', 'subscription'])->group(function () {
     Route::get('/premium/features', [PremiumController::class, 'index']);
 });
@@ -499,12 +499,12 @@ Route::middleware(['auth:sanctum', 'subscription:pro'])->group(function () {
 ```
 </details>
 
-### Задание 2: Реализуй Terminable Middleware для аналитики
+### Exercício 2: Implemente Terminable Middleware para analytics
 
-Создай middleware, который логирует запросы в аналитику ПОСЛЕ отправки ответа клиенту (чтобы не замедлять response).
+**Enunciado:** Crie um middleware que manda as requests para analytics DEPOIS de enviar a response ao cliente (para não atrasar a response).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/TrackAnalytics.php
@@ -522,19 +522,19 @@ class TrackAnalytics
 
     public function handle(Request $request, Closure $next)
     {
-        // Before: сохранить время начала
+        // Before: guarda o horário de início
         $request->attributes->set('start_time', microtime(true));
 
         return $next($request);
     }
 
-    // Выполняется ПОСЛЕ отправки ответа клиенту
+    // Roda DEPOIS de enviar a response para o cliente
     public function terminate(Request $request, $response)
     {
-        // Время выполнения
+        // Tempo de execução
         $duration = microtime(true) - $request->attributes->get('start_time');
 
-        // Отправить в аналитику (не блокирует ответ)
+        // Envia para analytics (não bloqueia a response)
         $this->analytics->track([
             'user_id' => $request->user()?->id,
             'method' => $request->method(),
@@ -542,13 +542,13 @@ class TrackAnalytics
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'status' => $response->status(),
-            'duration' => round($duration * 1000, 2), // мс
+            'duration' => round($duration * 1000, 2), // ms
             'timestamp' => now(),
         ]);
     }
 }
 
-// Регистрация в Kernel.php (глобально)
+// Registro no Kernel.php (global)
 protected $middleware = [
     \App\Http\Middleware\TrackAnalytics::class,
 ];
@@ -558,19 +558,19 @@ class AnalyticsService
 {
     public function track(array $data): void
     {
-        // Отправить в очередь для асинхронной обработки
+        // Manda para a queue (processamento assíncrono)
         dispatch(new TrackAnalyticsJob($data));
     }
 }
 ```
 </details>
 
-### Задание 3: Настрой CORS middleware с белым списком доменов
+### Exercício 3: Configure CORS middleware com whitelist de origens
 
-Создай CORS middleware, который разрешает запросы только с доверенных доменов из конфига.
+**Enunciado:** Crie um CORS middleware que só aceita requests de origens confiáveis do config.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/cors.php
@@ -587,7 +587,7 @@ return [
 
     'exposed_headers' => ['X-Total-Count'],
 
-    'max_age' => 86400, // 24 часа
+    'max_age' => 86400, // 24 horas
 ];
 
 // app/Http/Middleware/Cors.php
@@ -603,14 +603,14 @@ class Cors
         $origin = $request->header('Origin');
         $allowedOrigins = config('cors.allowed_origins');
 
-        // Проверить origin
+        // Checa o origin
         if (!in_array($origin, $allowedOrigins)) {
             if ($request->isMethod('OPTIONS')) {
                 return response('', 403);
             }
         }
 
-        // Preflight запрос
+        // Request preflight
         if ($request->isMethod('OPTIONS')) {
             return response('', 200)
                 ->header('Access-Control-Allow-Origin', $origin)
@@ -619,7 +619,7 @@ class Cors
                 ->header('Access-Control-Max-Age', config('cors.max_age'));
         }
 
-        // Обычный запрос
+        // Request normal
         $response = $next($request);
 
         return $response
@@ -630,7 +630,7 @@ class Cors
     }
 }
 
-// Регистрация для API
+// Registro para API
 protected $middlewareGroups = [
     'api' => [
         \App\Http\Middleware\Cors::class,
@@ -642,4 +642,4 @@ protected $middlewareGroups = [
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
