@@ -1,41 +1,41 @@
 # 5.5 Jobs & Queues
 
-## Краткое резюме
+## Resumo
 
-> **Jobs & Queues** — система асинхронного выполнения задач в фоне. Job — класс с логикой (SendEmail, ProcessFile), Queue — очередь задач.
+> **Jobs & Queues** — sistema de execução assíncrona em background. Job é a classe com a lógica (SendEmail, ProcessFile). Queue (fila) é a fila de jobs.
 >
-> **Dispatch:** `JobName::dispatch()` отправляет в очередь. Worker (`queue:work`) обрабатывает задачи.
+> **Dispatch:** `JobName::dispatch()` manda para a queue. O worker (`queue:work`) processa os jobs.
 >
-> **Важно:** `ShouldQueue` для асинхронности, `delay()` для отсрочки, `tries` для повторов. Job chains для последовательности, batches для параллельных задач.
+> **Importante:** `ShouldQueue` para assíncrono, `delay()` para adiar, `tries` para retry. Job chains para sequência, batches para jobs em paralelo.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Jobs — задачи, выполняемые в фоне (отправка email, обработка файлов). Queues — очереди задач для асинхронного выполнения.
-
-**Основное:**
-- Job — задача в фоне
-- Queue — очередь задач
-- Worker — процесс, выполняющий задачи
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Создание Job:**
+**O que é:**
+Jobs — tarefas em background (enviar email, processar arquivo). Queues — filas de jobs para execução assíncrona.
+
+**O essencial:**
+- Job — tarefa em background
+- Queue — fila de jobs
+- Worker — processo que executa os jobs
+
+---
+
+## Como funciona
+
+**Criar o Job:**
 
 ```bash
 php artisan make:job SendWelcomeEmail
@@ -56,13 +56,13 @@ class SendWelcomeEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // Количество попыток
+    // Tentativas
     public $tries = 3;
 
-    // Timeout (секунды)
+    // Timeout (segundos)
     public $timeout = 60;
 
-    // Очередь
+    // Queue
     public $queue = 'emails';
 
     public function __construct(public User $user)
@@ -71,11 +71,11 @@ class SendWelcomeEmail implements ShouldQueue
 
     public function handle(): void
     {
-        // Отправить email
+        // Enviar email
         $this->user->notify(new WelcomeNotification());
     }
 
-    // Обработка ошибок
+    // Tratamento de erro
     public function failed(\Throwable $exception): void
     {
         Log::error('Failed to send welcome email', [
@@ -86,32 +86,32 @@ class SendWelcomeEmail implements ShouldQueue
 }
 ```
 
-**Dispatch (вызов) Job:**
+**Dispatch (chamar) o Job:**
 
 ```php
 use App\Jobs\SendWelcomeEmail;
 
-// Отправить в очередь
+// Mandar para a queue
 SendWelcomeEmail::dispatch($user);
 
-// Dispatch с задержкой
+// Dispatch com delay
 SendWelcomeEmail::dispatch($user)->delay(now()->addMinutes(10));
 
-// Dispatch на конкретную очередь
+// Dispatch em uma queue específica
 SendWelcomeEmail::dispatch($user)->onQueue('emails');
 
-// Dispatch синхронно (без очереди)
+// Dispatch síncrono (sem queue)
 SendWelcomeEmail::dispatchSync($user);
 
-// Dispatch после DB commit
+// Dispatch depois do DB commit
 SendWelcomeEmail::dispatch($user)->afterCommit();
 
-// Dispatch если условие истинно
+// Dispatch se a condição for verdadeira
 SendWelcomeEmail::dispatchIf($user->isActive(), $user);
 SendWelcomeEmail::dispatchUnless($user->isBanned(), $user);
 ```
 
-**Настройка очередей (.env):**
+**Configurar as queues (.env):**
 
 ```env
 # database/migrations/xxxx_create_jobs_table.php
@@ -120,54 +120,54 @@ php artisan migrate
 
 QUEUE_CONNECTION=database
 
-# Или Redis
+# Ou Redis
 QUEUE_CONNECTION=redis
 
-# Или Sync (без очереди, синхронно)
+# Ou Sync (sem queue, síncrono)
 QUEUE_CONNECTION=sync
 ```
 
-**Запуск Worker:**
+**Rodar o Worker:**
 
 ```bash
-# Запустить worker (обрабатывает задачи)
+# Iniciar o worker (processa os jobs)
 php artisan queue:work
 
-# С конкретной очередью
+# Com uma queue específica
 php artisan queue:work --queue=emails,default
 
-# С timeout
+# Com timeout
 php artisan queue:work --timeout=60
 
-# Перезапуск при изменении кода
+# Reinicia quando o código muda
 php artisan queue:work --timeout=60 --tries=3
 
-# Остановить worker после текущей задачи
+# Parar o worker depois do job atual
 php artisan queue:restart
 
-# Одна задача (для cron)
+# Um job (para cron)
 php artisan queue:work --once
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Jobs когда:**
-- Долгие операции (отправка email, обработка файлов)
-- Не блокировать HTTP response
-- Ресурсоёмкие задачи
-- Интеграция с внешними API
+**Use Jobs quando:**
+- Operação longa (enviar email, processar arquivo)
+- Não bloquear o HTTP response
+- Tarefa pesada
+- Integração com API externa
 
-**Не используй когда:**
-- Простые быстрые операции
-- Нужен немедленный результат
+**Não use quando:**
+- Operação simples e rápida
+- Precisa do resultado na hora
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Обработка загруженного файла:**
+**Processar arquivo enviado:**
 
 ```php
 // Job
@@ -181,7 +181,7 @@ class ProcessUploadedFile implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 300;  // 5 минут
+    public $timeout = 300;  // 5 minutos
 
     public function __construct(public Upload $upload)
     {
@@ -189,20 +189,20 @@ class ProcessUploadedFile implements ShouldQueue
 
     public function handle(): void
     {
-        // Получить файл из storage
+        // Pegar o arquivo do storage
         $filePath = $this->upload->file_path;
         $content = Storage::get($filePath);
 
-        // Обработать файл
+        // Processar o arquivo
         $processedData = $this->process($content);
 
-        // Сохранить результат
+        // Salvar o resultado
         Storage::put(
             str_replace('.csv', '_processed.csv', $filePath),
             $processedData
         );
 
-        // Обновить статус
+        // Atualizar o status
         $this->upload->update([
             'status' => 'completed',
             'processed_at' => now(),
@@ -211,7 +211,7 @@ class ProcessUploadedFile implements ShouldQueue
 
     private function process(string $content): string
     {
-        // Логика обработки
+        // Lógica de processamento
         return $content;
     }
 
@@ -233,28 +233,28 @@ class UploadController extends Controller
             'file' => 'required|file|mimes:csv|max:10240',
         ]);
 
-        // Сохранить файл
+        // Salvar o arquivo
         $path = $request->file('file')->store('uploads');
 
-        // Создать запись
+        // Criar o registro
         $upload = Upload::create([
             'user_id' => $request->user()->id,
             'file_path' => $path,
             'status' => 'pending',
         ]);
 
-        // Отправить в очередь
+        // Mandar para a queue
         ProcessUploadedFile::dispatch($upload);
 
         return response()->json([
-            'message' => 'File uploaded, processing started',
+            'message' => 'Arquivo enviado, processamento iniciado',
             'upload_id' => $upload->id,
         ], 202);
     }
 }
 ```
 
-**Job Chains (цепочка задач):**
+**Job Chains (cadeia de jobs):**
 
 ```php
 use Illuminate\Support\Facades\Bus;
@@ -265,45 +265,45 @@ Bus::chain([
     new SendReportEmail($upload),
 ])->dispatch();
 
-// С обработкой ошибок
+// Com tratamento de erro
 Bus::chain([
     new ProcessUploadedFile($upload),
     new GenerateReport($upload),
 ])->catch(function (\Throwable $e) {
-    // Вызовется если любая задача провалилась
+    // Roda se qualquer job falhar
     Log::error('Job chain failed', ['error' => $e->getMessage()]);
 })->dispatch();
 ```
 
-**Job Batches (пакеты задач):**
+**Job Batches (lote de jobs):**
 
 ```php
 use Illuminate\Support\Facades\Bus;
 
-// Создать batch
+// Criar o batch
 $batch = Bus::batch([
     new ProcessUser($user1),
     new ProcessUser($user2),
     new ProcessUser($user3),
 ])->then(function () {
-    // Все задачи выполнены
+    // Todos os jobs terminaram
     Log::info('All users processed');
 })->catch(function () {
-    // Одна из задач провалилась
+    // Um dos jobs falhou
 })->finally(function () {
-    // Всегда выполнится
+    // Sempre roda
 })->dispatch();
 
-// Проверить статус batch
+// Checar o status do batch
 $batch = Bus::findBatch($batchId);
-$batch->finished();  // Все завершены
-$batch->cancelled();  // Отменён
-$batch->totalJobs;  // Всего задач
-$batch->processedJobs();  // Обработано
-$batch->pendingJobs;  // Осталось
+$batch->finished();  // Todos concluídos
+$batch->cancelled();  // Cancelado
+$batch->totalJobs;  // Total de jobs
+$batch->processedJobs();  // Processados
+$batch->pendingJobs;  // Pendentes
 ```
 
-**Rate Limiting (ограничение частоты):**
+**Rate Limiting (limite de frequência):**
 
 ```php
 use Illuminate\Support\Facades\RateLimiter;
@@ -314,18 +314,18 @@ class ProcessApiRequest implements ShouldQueue
 
     public function handle(): void
     {
-        // Выполнить не более 10 задач в минуту
+        // No máximo 10 jobs por minuto
         RateLimiter::attempt(
             'api-requests',
             $perMinute = 10,
             function () {
-                // Логика запроса
+                // Lógica da request
                 Http::get('https://api.example.com');
             }
         );
     }
 
-    // Или через middleware
+    // Ou via middleware
     public function middleware(): array
     {
         return [new RateLimited('api-requests')];
@@ -333,7 +333,7 @@ class ProcessApiRequest implements ShouldQueue
 }
 ```
 
-**Unique Jobs (предотвратить дубли):**
+**Unique Jobs (evitar duplicata):**
 
 ```php
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -344,18 +344,18 @@ class ProcessOrder implements ShouldQueue, ShouldBeUnique
     {
     }
 
-    // Уникальный ключ (одна задача на order)
+    // Chave única (um job por order)
     public function uniqueId(): string
     {
         return $this->order->id;
     }
 
-    // Время уникальности (секунды)
-    public $uniqueFor = 3600;  // 1 час
+    // Tempo de unicidade (segundos)
+    public $uniqueFor = 3600;  // 1 hora
 
     public function handle(): void
     {
-        // Обработка заказа
+        // Processar o pedido
     }
 }
 ```
@@ -380,60 +380,60 @@ class RateLimited
     }
 }
 
-// Использование в Job
+// Uso no Job
 public function middleware(): array
 {
     return [new RateLimited()];
 }
 ```
 
-**Failed Jobs (обработка провалившихся):**
+**Failed Jobs (tratar os que falharam):**
 
 ```bash
-# Создать таблицу для failed jobs
+# Criar a tabela de failed jobs
 php artisan queue:failed-table
 php artisan migrate
 
-# Посмотреть провалившиеся задачи
+# Ver os jobs que falharam
 php artisan queue:failed
 
-# Повторить задачу
+# Retentar o job
 php artisan queue:retry {id}
 
-# Повторить все
+# Retentar todos
 php artisan queue:retry all
 
-# Удалить провалившуюся задачу
+# Remover o job que falhou
 php artisan queue:forget {id}
 
-# Очистить все провалившиеся
+# Limpar todos os failed
 php artisan queue:flush
 ```
 
-**Мониторинг очередей:**
+**Monitorar as queues:**
 
 ```php
-// В AppServiceProvider
+// No AppServiceProvider
 use Illuminate\Support\Facades\Queue;
 
 public function boot(): void
 {
     Queue::before(function (JobProcessing $event) {
-        // Перед выполнением задачи
+        // Antes de executar o job
         Log::info('Job starting', [
             'job' => $event->job->resolveName(),
         ]);
     });
 
     Queue::after(function (JobProcessed $event) {
-        // После выполнения задачи
+        // Depois de executar o job
         Log::info('Job completed', [
             'job' => $event->job->resolveName(),
         ]);
     });
 
     Queue::failing(function (JobFailed $event) {
-        // Задача провалилась
+        // O job falhou
         Log::error('Job failed', [
             'job' => $event->job->resolveName(),
             'exception' => $event->exception->getMessage(),
@@ -442,7 +442,7 @@ public function boot(): void
 }
 ```
 
-**Supervisor (для production):**
+**Supervisor (em production):**
 
 ```ini
 ; /etc/supervisor/conf.d/laravel-worker.conf
@@ -461,7 +461,7 @@ stopwaitsecs=3600
 ```
 
 ```bash
-# Перезапустить supervisor
+# Reiniciar o supervisor
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl start laravel-worker:*
@@ -469,46 +469,46 @@ sudo supervisorctl start laravel-worker:*
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Jobs — задачи в фоне (SendEmail, ProcessFile)
-- Реализуют `ShouldQueue` для асинхронного выполнения
-- Worker обрабатывает задачи через `queue:work`
+**O que é:**
+- Jobs — tarefas em background (SendEmail, ProcessFile)
+- Implementam `ShouldQueue` para rodar assíncrono
+- O worker processa via `queue:work`
 
 **Dispatch:**
 ```php
-JobName::dispatch($data);              // В очередь
-JobName::dispatch($data)->delay(10);   // С задержкой
-JobName::dispatchSync($data);          // Синхронно
+JobName::dispatch($data);              // Na queue
+JobName::dispatch($data)->delay(10);   // Com delay
+JobName::dispatchSync($data);          // Síncrono
 ```
 
-**Настройка:**
+**Configuração:**
 - Drivers: `database`, `redis`, `sync`
-- `tries` — количество попыток
-- `timeout` — максимальное время выполнения
-- `queue` — имя очереди
+- `tries` — número de tentativas
+- `timeout` — tempo máximo de execução
+- `queue` — nome da queue
 
-**Продвинутое:**
-- **Job Chains** — последовательное выполнение: `Bus::chain([Job1, Job2])`
-- **Job Batches** — параллельные задачи: `Bus::batch([...])`
-- **ShouldBeUnique** — предотвращение дублей
-- **Rate Limiting** — ограничение частоты
-- **Supervisor** — для production
+**Avançado:**
+- **Job Chains** — execução em sequência: `Bus::chain([Job1, Job2])`
+- **Job Batches** — jobs em paralelo: `Bus::batch([...])`
+- **ShouldBeUnique** — evita duplicata
+- **Rate Limiting** — limite de frequência
+- **Supervisor** — em production
 - **Failed Jobs** — `queue:failed`, `queue:retry`
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Job с повторами и timeout
+### Exercício 1: Job com retry e timeout
 
-Создай `ProcessVideoJob` который обрабатывает видео. Должно быть 3 попытки, timeout 5 минут, очередь `videos`. При ошибке сохрани лог в базу.
+Crie um `ProcessVideoJob` que processa vídeo. 3 tentativas, timeout de 5 minutos, queue `videos`. Se falhar, grave o log no banco.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Jobs;
@@ -527,7 +527,7 @@ class ProcessVideoJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 300; // 5 минут
+    public $timeout = 300; // 5 minutos
     public $queue = 'videos';
 
     public function __construct(public Video $video)
@@ -538,11 +538,11 @@ class ProcessVideoJob implements ShouldQueue
     {
         $this->video->update(['status' => 'processing']);
 
-        // Обработка видео (например, конвертация)
+        // Processar o vídeo (ex.: conversão)
         $inputPath = Storage::path($this->video->original_path);
         $outputPath = Storage::path($this->video->processed_path);
 
-        // Здесь логика обработки видео
+        // Aqui entra a lógica de processar o vídeo
         // exec("ffmpeg -i {$inputPath} {$outputPath}");
 
         $this->video->update([
@@ -566,17 +566,17 @@ class ProcessVideoJob implements ShouldQueue
     }
 }
 
-// Использование
+// Uso
 ProcessVideoJob::dispatch($video);
 ```
 </details>
 
-### Задание 2: Job Chain для загрузки файла
+### Exercício 2: Job Chain para upload de arquivo
 
-Создай цепочку: `DownloadFileJob` → `ProcessFileJob` → `NotifyUserJob`. При ошибке в любом шаге отправь email админу.
+Crie a chain: `DownloadFileJob` → `ProcessFileJob` → `NotifyUserJob`. Se qualquer passo falhar, envie email para o admin.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Jobs;
@@ -586,7 +586,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-// Job 1: Скачать файл
+// Job 1: Baixar o arquivo
 class DownloadFileJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -604,7 +604,7 @@ class DownloadFileJob implements ShouldQueue
     }
 }
 
-// Job 2: Обработать файл
+// Job 2: Processar o arquivo
 class ProcessFileJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -618,9 +618,9 @@ class ProcessFileJob implements ShouldQueue
         $content = Storage::get($this->import->file_path);
         $rows = array_map('str_getcsv', explode("\n", $content));
 
-        // Обработка строк
+        // Processar as linhas
         foreach ($rows as $row) {
-            // Логика импорта
+            // Lógica de importação
         }
 
         $this->import->update([
@@ -630,7 +630,7 @@ class ProcessFileJob implements ShouldQueue
     }
 }
 
-// Job 3: Уведомить пользователя
+// Job 3: Notificar o usuário
 class NotifyUserJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -647,7 +647,7 @@ class NotifyUserJob implements ShouldQueue
     }
 }
 
-// Запуск цепочки
+// Disparar a chain
 Bus::chain([
     new DownloadFileJob($import, $url),
     new ProcessFileJob($import),
@@ -665,12 +665,12 @@ Bus::chain([
 ```
 </details>
 
-### Задание 3: Unique Job для экспорта
+### Exercício 3: Unique Job para export
 
-Создай `ExportUsersJob` который можно запустить только 1 раз в час для каждого пользователя. Если задача уже в очереди, не добавляй новую.
+Crie um `ExportUsersJob` que só pode rodar 1 vez por hora para cada usuário. Se o job já está na queue, não adicione outro.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Jobs;
@@ -688,17 +688,17 @@ class ExportUsersJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 600; // 10 минут
+    public $timeout = 600; // 10 minutos
     public $tries = 2;
 
-    // Уникальность на 1 час
+    // Unicidade por 1 hora
     public $uniqueFor = 3600;
 
     public function __construct(public User $requestedBy)
     {
     }
 
-    // Уникальный ключ (один экспорт на пользователя)
+    // Chave única (um export por usuário)
     public function uniqueId(): string
     {
         return "export-users-{$this->requestedBy->id}";
@@ -708,7 +708,7 @@ class ExportUsersJob implements ShouldQueue, ShouldBeUnique
     {
         $users = User::with('profile')->get();
 
-        $csv = "ID,Name,Email,Created At\n";
+        $csv = "ID,Nome,Email,Criado em\n";
         foreach ($users as $user) {
             $csv .= "{$user->id},{$user->name},{$user->email},{$user->created_at}\n";
         }
@@ -722,21 +722,21 @@ class ExportUsersJob implements ShouldQueue, ShouldBeUnique
     }
 }
 
-// В контроллере
+// No controller
 public function export(Request $request)
 {
-    // Попытка добавить в очередь
+    // Tenta enfileirar
     ExportUsersJob::dispatch($request->user());
 
     return response()->json([
-        'message' => 'Export started. You will be notified when ready.',
+        'message' => 'Export iniciado. Você será notificado quando estiver pronto.',
     ], 202);
 }
 
-// Если задача уже в очереди, она не добавится повторно
+// Se o job já está na queue, não entra de novo
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

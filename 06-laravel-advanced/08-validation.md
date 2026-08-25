@@ -1,41 +1,41 @@
 # 5.8 Validation
 
-## Краткое резюме
+## Resumo
 
-> **Validation** — проверка входных данных через встроенные правила (required, email, unique, exists, etc.) или кастомные.
+> **Validação** — checagem dos dados de entrada com regras prontas (required, email, unique, exists, etc.) ou customizadas.
 >
-> `$request->validate()` — простая валидация в контроллере. **Form Request** — отдельный класс с `authorize()`, `rules()`, `messages()`.
+> `$request->validate()` — validação simples no controller. **Form Request** — classe separada com `authorize()`, `rules()`, `messages()`.
 >
-> **Кастомные правила:** через `make:rule` или closure. `withValidator()` для дополнительной логики. Вложенные массивы: `array`, `array.*`.
+> **Regras customizadas:** via `make:rule` ou closure. `withValidator()` para lógica extra. Arrays aninhados: `array`, `array.*`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Валидация — проверка входных данных. Laravel предоставляет встроенные правила и возможность создания кастомных.
-
-**Основное:**
-- `$request->validate()` — в контроллере
-- Form Request — отдельный класс
-- Кастомные правила
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовая валидация в контроллере:**
+**O que é:**
+Validação é checar os dados de entrada. O Laravel traz regras prontas e deixa você criar as suas.
+
+**O essencial:**
+- `$request->validate()` — no controller
+- Form Request — classe separada
+- Regras customizadas
+
+---
+
+## Como funciona
+
+**Validação básica no controller:**
 
 ```php
 public function store(Request $request)
@@ -54,58 +54,58 @@ public function store(Request $request)
 }
 ```
 
-**Популярные правила:**
+**Regras mais usadas:**
 
 ```php
 [
-    // Обязательное поле
+    // Campo obrigatório
     'email' => 'required',
 
-    // Строка
+    // String
     'name' => 'string|min:3|max:255',
 
     // Email
     'email' => 'email:rfc,dns',
 
-    // Число
+    // Número
     'age' => 'integer|min:18|max:100',
     'price' => 'numeric|between:0,9999.99',
 
     // Boolean
     'is_active' => 'boolean',
 
-    // Дата
+    // Data
     'birth_date' => 'date|before:today',
     'start_date' => 'date|after:tomorrow',
     'end_date' => 'date|after:start_date',
 
-    // Файл
+    // Arquivo
     'avatar' => 'file|image|mimes:jpeg,png|max:2048',  // 2MB
 
-    // Массив
+    // Array
     'tags' => 'array|min:1|max:5',
     'tags.*' => 'string',
 
-    // Существует в БД
+    // Existe no banco
     'user_id' => 'exists:users,id',
 
-    // Уникальное значение
+    // Valor único
     'email' => 'unique:users,email',
-    'email' => 'unique:users,email,'.$user->id,  // Игнорировать текущего
+    'email' => 'unique:users,email,'.$user->id,  // Ignorar o atual
 
-    // Одно из значений
+    // Um dos valores
     'status' => 'in:pending,approved,rejected',
 
     // Regex
-    'phone' => 'regex:/^\+7\d{10}$/',
+    'phone' => 'regex:/^\+55\d{10,11}$/',
 
-    // Подтверждение (password_confirmation)
+    // Confirmação (password_confirmation)
     'password' => 'confirmed|min:8',
 
     // Nullable
     'middle_name' => 'nullable|string|max:255',
 
-    // Sometimes (только если присутствует)
+    // Sometimes (só se o campo vier)
     'bio' => 'sometimes|string|max:1000',
 
     // Required if
@@ -114,13 +114,13 @@ public function store(Request $request)
     // Required with
     'state' => 'required_with:city,zip',
 
-    // Distinct (уникальные значения в массиве)
+    // Distinct (valores únicos no array)
     'emails' => 'array',
     'emails.*' => 'email|distinct',
 ]
 ```
 
-**Form Request (вынести валидацию):**
+**Form Request (tirar a validação do controller):**
 
 ```bash
 php artisan make:request CreatePostRequest
@@ -133,13 +133,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class CreatePostRequest extends FormRequest
 {
-    // Авторизация
+    // Autorização
     public function authorize(): bool
     {
         return $this->user()->can('create', Post::class);
     }
 
-    // Правила валидации
+    // Regras de validação
     public function rules(): array
     {
         return [
@@ -153,26 +153,26 @@ class CreatePostRequest extends FormRequest
         ];
     }
 
-    // Кастомные сообщения
+    // Mensagens customizadas
     public function messages(): array
     {
         return [
-            'title.required' => 'Заголовок обязателен',
-            'slug.unique' => 'Такой slug уже существует',
-            'tags.max' => 'Максимум 5 тегов',
+            'title.required' => 'O título é obrigatório',
+            'slug.unique' => 'Esse slug já existe',
+            'tags.max' => 'No máximo 5 tags',
         ];
     }
 
-    // Кастомные имена атрибутов
+    // Nomes customizados dos atributos
     public function attributes(): array
     {
         return [
-            'title' => 'заголовок',
-            'body' => 'содержимое',
+            'title' => 'título',
+            'body' => 'conteúdo',
         ];
     }
 
-    // Подготовка данных перед валидацией
+    // Preparar os dados antes da validação
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -181,10 +181,10 @@ class CreatePostRequest extends FormRequest
     }
 }
 
-// Использование в контроллере
+// Uso no controller
 public function store(CreatePostRequest $request)
 {
-    // Валидация уже прошла
+    // A validação já passou
     $post = Post::create($request->validated());
 
     return response()->json($post, 201);
@@ -193,23 +193,23 @@ public function store(CreatePostRequest $request)
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Контроллер $request->validate():**
-- Простая валидация
-- Разовые запросы
+**Controller `$request->validate()`:**
+- Validação simples
+- Request pontual
 
 **Form Request:**
-- Сложная валидация
-- Многократное использование
-- Нужна авторизация
-- Кастомные сообщения
+- Validação complexa
+- Reuso
+- Precisa de autorização
+- Mensagens customizadas
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Комплексная валидация заказа:**
+**Validação completa de pedido:**
 
 ```php
 namespace App\Http\Requests;
@@ -228,15 +228,15 @@ class CreateOrderRequest extends FormRequest
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1|max:100',
 
-            // Валидация на основе другого поля
+            // Validação baseada em outro campo
             'shipping_address' => 'required_if:delivery_method,courier',
 
-            // Условная валидация
+            // Validação condicional
             'payment_method' => 'required|in:card,cash,online',
             'card_number' => 'required_if:payment_method,card|digits:16',
             'card_cvv' => 'required_if:payment_method,card|digits:3',
 
-            // Кастомное правило
+            // Regra customizada
             'promo_code' => ['nullable', 'string', new ValidPromoCode()],
         ];
     }
@@ -244,24 +244,24 @@ class CreateOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.required' => 'Корзина не может быть пустой',
-            'items.*.product_id.exists' => 'Товар не найден',
-            'card_number.required_if' => 'Укажите номер карты',
+            'items.required' => 'O carrinho não pode ficar vazio',
+            'items.*.product_id.exists' => 'Produto não encontrado',
+            'card_number.required_if' => 'Informe o número do cartão',
         ];
     }
 
-    // Дополнительная валидация
+    // Validação extra
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Проверить наличие товаров на складе
+            // Checar estoque
             foreach ($this->input('items', []) as $item) {
                 $product = Product::find($item['product_id']);
 
                 if ($product && $product->stock < $item['quantity']) {
                     $validator->errors()->add(
                         "items.{$item['product_id']}.quantity",
-                        "Недостаточно товара на складе (доступно: {$product->stock})"
+                        "Estoque insuficiente (disponível: {$product->stock})"
                     );
                 }
             }
@@ -270,7 +270,7 @@ class CreateOrderRequest extends FormRequest
 }
 ```
 
-**Кастомное правило:**
+**Regra customizada:**
 
 ```bash
 php artisan make:rule ValidPromoCode
@@ -291,17 +291,17 @@ class ValidPromoCode implements Rule
         $promoCode = PromoCode::where('code', $value)->first();
 
         if (!$promoCode) {
-            $this->message = 'Промокод не найден';
+            $this->message = 'Cupom não encontrado';
             return false;
         }
 
         if ($promoCode->expires_at < now()) {
-            $this->message = 'Промокод истёк';
+            $this->message = 'Cupom expirado';
             return false;
         }
 
         if ($promoCode->uses_count >= $promoCode->max_uses) {
-            $this->message = 'Промокод исчерпан';
+            $this->message = 'Cupom esgotado';
             return false;
         }
 
@@ -310,15 +310,15 @@ class ValidPromoCode implements Rule
 
     public function message(): string
     {
-        return $this->message ?? 'Промокод недействителен';
+        return $this->message ?? 'Cupom inválido';
     }
 }
 
-// Использование
+// Uso
 'promo_code' => ['nullable', 'string', new ValidPromoCode()],
 ```
 
-**Closure правило (без класса):**
+**Regra com closure (sem classe):**
 
 ```php
 use Illuminate\Validation\Rule;
@@ -328,13 +328,13 @@ $request->validate([
         'required',
         'email',
         function ($attribute, $value, $fail) {
-            if (!str_ends_with($value, '@company.com')) {
-                $fail('Используйте корпоративную почту');
+            if (!str_ends_with($value, '@empresa.com')) {
+                $fail('Use o email corporativo');
             }
         },
     ],
 
-    // Или Rule::forEach для массивов
+    // Ou Rule::forEach para arrays
     'users.*.email' => [
         'required',
         'email',
@@ -347,7 +347,7 @@ $request->validate([
 ]);
 ```
 
-**Conditional Rules:**
+**Regras condicionais:**
 
 ```php
 public function rules(): array
@@ -357,7 +357,7 @@ public function rules(): array
         'body' => 'required|string',
     ];
 
-    // Добавить правила для обновления
+    // Regras extras no update
     if ($this->isMethod('put') || $this->isMethod('patch')) {
         $rules['slug'] = [
             'required',
@@ -366,7 +366,7 @@ public function rules(): array
         ];
     }
 
-    // Conditional правила
+    // Regras condicionais
     if ($this->input('type') === 'premium') {
         $rules['premium_content'] = 'required|string';
     }
@@ -375,7 +375,7 @@ public function rules(): array
 }
 ```
 
-**Nested Array Validation:**
+**Validação de array aninhado:**
 
 ```php
 $request->validate([
@@ -388,7 +388,7 @@ $request->validate([
 ]);
 ```
 
-**Sometimes (условное добавление правил):**
+**Sometimes (adicionar regra sob condição):**
 
 ```php
 use Illuminate\Validation\Validator;
@@ -406,18 +406,18 @@ if ($validator->fails()) {
 }
 ```
 
-**Custom Error Bag:**
+**Error bag customizado:**
 
 ```php
 public function store(CreatePostRequest $request, CreateTagRequest $tagRequest)
 {
-    // Разные error bags для разных форм
+    // Error bags diferentes para cada form
     $request->validateWithBag('post', $request->rules());
     $tagRequest->validateWithBag('tag', $tagRequest->rules());
 }
 ```
 
-**Manual Validation:**
+**Validação manual:**
 
 ```php
 use Illuminate\Support\Facades\Validator;
@@ -427,10 +427,10 @@ $validator = Validator::make($request->all(), [
     'password' => 'required|min:8',
 ]);
 
-// Добавить кастомные ошибки
+// Adicionar erros customizados
 $validator->after(function ($validator) {
     if ($this->somethingElseIsInvalid()) {
-        $validator->errors()->add('field', 'Something is wrong!');
+        $validator->errors()->add('field', 'Algo deu errado!');
     }
 });
 
@@ -443,29 +443,29 @@ if ($validator->fails()) {
 $validated = $validator->validated();
 ```
 
-**Bail Rule (остановить при первой ошибке):**
+**Regra bail (parar no primeiro erro):**
 
 ```php
 $request->validate([
-    // Остановить валидацию email при первой ошибке
+    // Para a validação do email no primeiro erro
     'email' => 'bail|required|email|unique:users',
 
-    // Без bail проверит все правила даже если required провалилось
+    // Sem bail, testa todas as regras mesmo se required falhar
     'password' => 'required|min:8|confirmed',
 ]);
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Способы валидации:**
-- `$request->validate()` — быстрая валидация в контроллере
-- **Form Request** — отдельный класс для сложных случаев
+**Formas de validar:**
+- `$request->validate()` — validação rápida no controller
+- **Form Request** — classe separada para o caso complexo
 
-**Популярные правила:**
+**Regras mais usadas:**
 ```php
 'email' => 'required|email|unique:users,email',
 'age' => 'integer|min:18|max:100',
@@ -479,35 +479,35 @@ $request->validate([
 
 **Form Request:**
 ```php
-authorize()  // Проверка прав
-rules()      // Правила валидации
-messages()   // Кастомные сообщения
-attributes() // Имена полей
-prepareForValidation()  // Подготовка данных
-withValidator()  // Доп. валидация
+authorize()  // Checa permissão
+rules()      // Regras de validação
+messages()   // Mensagens customizadas
+attributes() // Nomes dos campos
+prepareForValidation()  // Prepara os dados
+withValidator()  // Validação extra
 ```
 
-**Кастомные правила:**
-- `make:rule` — отдельный класс
-- Closure — для простых случаев
-- `Rule::forEach` — для массивов
+**Regras customizadas:**
+- `make:rule` — classe separada
+- Closure — caso simples
+- `Rule::forEach` — para arrays
 
-**Продвинутое:**
-- `bail` — остановка при первой ошибке
-- `sometimes` — условные правила
-- `required_if`, `required_with` — зависимые правила
-- Вложенные массивы: `orders.*.items.*.quantity`
+**Avançado:**
+- `bail` — para no primeiro erro
+- `sometimes` — regras condicionais
+- `required_if`, `required_with` — regras dependentes
+- Arrays aninhados: `orders.*.items.*.quantity`
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Form Request с условной валидацией
+### Exercício 1: Form Request com validação condicional
 
-Создай `UpdateProfileRequest`. Поле `email` должно быть уникальным (кроме текущего пользователя). Поле `company_name` обязательно только если `account_type === 'business'`.
+Crie um `UpdateProfileRequest`. O campo `email` tem que ser único (exceto o usuário atual). O campo `company_name` só é obrigatório se `account_type === 'business'`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Http\Requests;
@@ -519,7 +519,7 @@ class UpdateProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Пользователь может редактировать только свой профиль
+        // O usuário só edita o próprio perfil
         return $this->user()->id === $this->route('user')->id;
     }
 
@@ -528,7 +528,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
 
-            // Email уникален, кроме текущего пользователя
+            // Email único, exceto o usuário atual
             'email' => [
                 'required',
                 'email',
@@ -537,11 +537,11 @@ class UpdateProfileRequest extends FormRequest
 
             'account_type' => 'required|in:personal,business',
 
-            // Обязательно только для business
+            // Obrigatório só para business
             'company_name' => 'required_if:account_type,business|string|max:255',
             'company_vat' => 'nullable|string|max:50',
 
-            'phone' => 'nullable|regex:/^\+7\d{10}$/',
+            'phone' => 'nullable|regex:/^\+55\d{10,11}$/',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ];
     }
@@ -549,22 +549,22 @@ class UpdateProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => 'Этот email уже используется',
-            'company_name.required_if' => 'Укажите название компании для бизнес-аккаунта',
-            'phone.regex' => 'Телефон должен быть в формате +79001234567',
+            'email.unique' => 'Esse email já está em uso',
+            'company_name.required_if' => 'Informe o nome da empresa para conta business',
+            'phone.regex' => 'O telefone deve estar no formato +5511999999999',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'company_name' => 'название компании',
-            'company_vat' => 'ИНН',
+            'company_name' => 'nome da empresa',
+            'company_vat' => 'CNPJ',
         ];
     }
 }
 
-// Контроллер
+// Controller
 public function update(UpdateProfileRequest $request, User $user)
 {
     $user->update($request->validated());
@@ -574,12 +574,12 @@ public function update(UpdateProfileRequest $request, User $user)
 ```
 </details>
 
-### Задание 2: Кастомное правило для промокода
+### Exercício 2: Regra customizada para cupom
 
-Создай кастомное правило `ValidPromoCode` которое проверяет: промокод существует, не истёк, не исчерпан, подходит для текущего пользователя (минимальная сумма заказа).
+Crie a regra customizada `ValidPromoCode` que checa: o cupom existe, não expirou, não esgotou e serve para o usuário atual (valor mínimo do pedido).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // php artisan make:rule ValidPromoCode
@@ -604,27 +604,27 @@ class ValidPromoCode implements Rule
         $promoCode = PromoCode::where('code', $value)->first();
 
         if (!$promoCode) {
-            $this->message = 'Промокод не найден';
+            $this->message = 'Cupom não encontrado';
             return false;
         }
 
         if (!$promoCode->is_active) {
-            $this->message = 'Промокод неактивен';
+            $this->message = 'Cupom inativo';
             return false;
         }
 
         if ($promoCode->expires_at && $promoCode->expires_at < now()) {
-            $this->message = 'Промокод истёк';
+            $this->message = 'Cupom expirado';
             return false;
         }
 
         if ($promoCode->max_uses && $promoCode->uses_count >= $promoCode->max_uses) {
-            $this->message = 'Промокод исчерпан';
+            $this->message = 'Cupom esgotado';
             return false;
         }
 
         if ($promoCode->min_order_amount && $this->orderTotal < $promoCode->min_order_amount) {
-            $this->message = "Минимальная сумма заказа: {$promoCode->min_order_amount} руб.";
+            $this->message = "Valor mínimo do pedido: R$ {$promoCode->min_order_amount}";
             return false;
         }
 
@@ -633,11 +633,11 @@ class ValidPromoCode implements Rule
 
     public function message(): string
     {
-        return $this->message ?? 'Промокод недействителен';
+        return $this->message ?? 'Cupom inválido';
     }
 }
 
-// Использование в Request
+// Uso no Request
 public function rules(): array
 {
     return [
@@ -666,12 +666,12 @@ private function getOrderTotal(): float
 ```
 </details>
 
-### Задание 3: Вложенная валидация массивов
+### Exercício 3: Validação de arrays aninhados
 
-Создай валидацию для массового импорта пользователей. Формат: `[{name, email, roles: [{id, expires_at}]}]`. Проверь уникальность email в БД и внутри массива.
+Crie a validação para importação em massa de usuários. Formato: `[{name, email, roles: [{id, expires_at}]}]`. Cheque unicidade do email no banco e dentro do array.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Http\Requests;
@@ -694,8 +694,8 @@ class ImportUsersRequest extends FormRequest
             'users.*.email' => [
                 'required',
                 'email',
-                'distinct',  // Уникальность внутри массива
-                Rule::unique('users', 'email'),  // Уникальность в БД
+                'distinct',  // Único dentro do array
+                Rule::unique('users', 'email'),  // Único no banco
             ],
             'users.*.password' => 'required|string|min:8',
             'users.*.roles' => 'required|array|min:1',
@@ -707,35 +707,35 @@ class ImportUsersRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'users.*.email.distinct' => 'Email :input дублируется в списке',
-            'users.*.email.unique' => 'Email :input уже существует в системе',
-            'users.*.roles.min' => 'Пользователь должен иметь хотя бы одну роль',
-            'users.*.roles.*.id.exists' => 'Роль не найдена',
+            'users.*.email.distinct' => 'O email :input está duplicado na lista',
+            'users.*.email.unique' => 'O email :input já existe no sistema',
+            'users.*.roles.min' => 'O usuário precisa ter pelo menos um role',
+            'users.*.roles.*.id.exists' => 'Role não encontrado',
         ];
     }
 
-    // Дополнительная валидация
+    // Validação extra
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             $users = $this->input('users', []);
 
             foreach ($users as $index => $user) {
-                // Проверить что роли не дублируются
+                // Checar se os roles não se repetem
                 $roleIds = collect($user['roles'] ?? [])->pluck('id');
 
                 if ($roleIds->count() !== $roleIds->unique()->count()) {
                     $validator->errors()->add(
                         "users.{$index}.roles",
-                        'Роли не должны дублироваться'
+                        'Os roles não podem se repetir'
                     );
                 }
 
-                // Проверить что email имеет корпоративный домен
-                if (isset($user['email']) && !str_ends_with($user['email'], '@company.com')) {
+                // Checar se o email é do domínio corporativo
+                if (isset($user['email']) && !str_ends_with($user['email'], '@empresa.com')) {
                     $validator->errors()->add(
                         "users.{$index}.email",
-                        'Используйте корпоративную почту @company.com'
+                        'Use o email corporativo @empresa.com'
                     );
                 }
             }
@@ -743,7 +743,7 @@ class ImportUsersRequest extends FormRequest
     }
 }
 
-// Контроллер
+// Controller
 public function import(ImportUsersRequest $request)
 {
     $imported = [];
@@ -756,7 +756,7 @@ public function import(ImportUsersRequest $request)
                 'password' => bcrypt($userData['password']),
             ]);
 
-            // Прикрепить роли
+            // Vincular os roles
             foreach ($userData['roles'] as $role) {
                 $user->roles()->attach($role['id'], [
                     'expires_at' => $role['expires_at'] ?? null,
@@ -768,7 +768,7 @@ public function import(ImportUsersRequest $request)
     });
 
     return response()->json([
-        'message' => 'Users imported successfully',
+        'message' => 'Usuários importados com sucesso',
         'count' => count($imported),
     ], 201);
 }
@@ -777,4 +777,4 @@ public function import(ImportUsersRequest $request)
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

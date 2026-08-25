@@ -1,44 +1,43 @@
 # 5.4 Events & Listeners
 
-## Краткое резюме
+## Resumo
 
-> **Events** — события в приложении (OrderCreated, UserRegistered). **Listeners** — обработчики этих событий (SendEmail, LogActivity).
+> **Events** — eventos no app (OrderCreated, UserRegistered). **Listeners** — quem trata esses events (SendEmail, LogActivity).
 >
-> **Паттерн:** Event-Listener разделяет логику на модули. Одно событие → несколько обработчиков.
+> **Padrão:** Event-Listener separa a lógica em módulos. Um event → vários handlers.
 >
-> **Регистрация:** в `EventServiceProvider`. **Dispatch:** `EventName::dispatch()`.
+> **Registro:** no `EventServiceProvider`. **Dispatch:** `EventName::dispatch()`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Создание Events/Listeners](#как-работает)
-- [Регистрация](#как-работает)
-- [Dispatch событий](#как-работает)
-- [Model Events/Observers](#пример-из-практики)
-- [Queued Listeners](#пример-из-практики)
-- [Когда использовать](#когда-использовать)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Events — события в приложении (создан пользователь, отправлен заказ). Listeners — обработчики событий (отправить email, записать лог).
-
-**Основное:**
-- Event — что произошло
-- Listener — что сделать
-- Регистрация в EventServiceProvider
+- [O que é](#o-que-é)
+- [Criar Events/Listeners](#como-funciona)
+- [Registro](#como-funciona)
+- [Dispatch de events](#como-funciona)
+- [Model Events/Observers](#exemplo-prático)
+- [Queued Listeners](#exemplo-prático)
+- [Quando usar](#quando-usar)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Создание Event:**
+**O que é:**
+Events — o que aconteceu no app (usuário criado, pedido enviado). Listeners — quem reage (manda email, grava log).
+
+- Event — o que aconteceu
+- Listener — o que fazer
+- Registro no EventServiceProvider
+
+---
+
+## Como funciona
+
+**Criar o Event:**
 
 ```bash
 php artisan make:event OrderCreated
@@ -61,7 +60,7 @@ class OrderCreated
 }
 ```
 
-**Создание Listener:**
+**Criar o Listener:**
 
 ```bash
 php artisan make:listener SendOrderConfirmation --event=OrderCreated
@@ -84,7 +83,7 @@ class SendOrderConfirmation
 }
 ```
 
-**Регистрация в EventServiceProvider:**
+**Registro no EventServiceProvider:**
 
 ```php
 namespace App\Providers;
@@ -110,7 +109,7 @@ class EventServiceProvider extends ServiceProvider
 }
 ```
 
-**Dispatch (вызов) события:**
+**Dispatch (disparo) do event:**
 
 ```php
 use App\Events\OrderCreated;
@@ -121,10 +120,10 @@ class OrderController extends Controller
     {
         $order = Order::create($request->validated());
 
-        // Вызвать событие
+        // Dispara o event
         OrderCreated::dispatch($order);
 
-        // Или через helper
+        // Ou pelo helper
         event(new OrderCreated($order));
 
         return response()->json($order, 201);
@@ -134,23 +133,23 @@ class OrderController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Events когда:**
-- Одно действие вызывает несколько последствий
-- Разные части приложения должны реагировать на событие
-- Нужна асинхронная обработка (queue)
-- Модульность (разделение логики)
+**Use Events quando:**
+- Uma ação gera várias consequências
+- Partes diferentes do app precisam reagir ao event
+- Precisa de processamento assíncrono (queue)
+- Modularidade (separar a lógica)
 
-**Не используй когда:**
-- Простая последовательная логика (вызови сервис напрямую)
-- Только один обработчик (лучше прямой вызов)
+**Não use quando:**
+- Lógica sequencial simples (chame o service direto)
+- Só um handler (melhor chamar direto)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Комплексная обработка заказа:**
+**Fluxo completo de um pedido:**
 
 ```php
 // Event
@@ -186,12 +185,12 @@ class UpdateInventory
     }
 }
 
-class NotifyAdmin implements ShouldQueue  // Асинхронно
+class NotifyAdmin implements ShouldQueue  // Assíncrono
 {
     public function handle(OrderCreated $event): void
     {
         if ($event->order->total > 10000) {
-            // Отправить уведомление админу о крупном заказе
+            // Notifica o admin de um pedido grande (acima de R$ 10.000)
             Admin::notify(new LargeOrderNotification($event->order));
         }
     }
@@ -208,7 +207,7 @@ class RecordAnalytics implements ShouldQueue
     }
 }
 
-// Регистрация
+// Registro
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
@@ -221,7 +220,7 @@ class EventServiceProvider extends ServiceProvider
     ];
 }
 
-// Использование
+// Uso
 class OrderService
 {
     public function create(User $user, array $data): Order
@@ -240,7 +239,7 @@ class OrderService
 
             DB::commit();
 
-            // Вызвать все listeners
+            // Dispara todos os listeners
             OrderCreated::dispatch($order);
 
             return $order;
@@ -252,7 +251,7 @@ class OrderService
 }
 ```
 
-**Event Subscribers (группировка listeners):**
+**Event Subscribers (agrupa listeners):**
 
 ```php
 namespace App\Listeners;
@@ -264,17 +263,17 @@ class OrderEventSubscriber
 {
     public function handleOrderCreated(OrderCreated $event): void
     {
-        // Логика для OrderCreated
+        // Lógica do OrderCreated
     }
 
     public function handleOrderPaid(OrderPaid $event): void
     {
-        // Логика для OrderPaid
+        // Lógica do OrderPaid
     }
 
     public function handleOrderShipped(OrderShipped $event): void
     {
-        // Логика для OrderShipped
+        // Lógica do OrderShipped
     }
 
     public function subscribe(Dispatcher $events): void
@@ -296,7 +295,7 @@ class OrderEventSubscriber
     }
 }
 
-// Регистрация в EventServiceProvider
+// Registro no EventServiceProvider
 class EventServiceProvider extends ServiceProvider
 {
     protected $subscribe = [
@@ -305,7 +304,7 @@ class EventServiceProvider extends ServiceProvider
 }
 ```
 
-**Model Events (встроенные):**
+**Model Events (nativos):**
 
 ```php
 namespace App\Models;
@@ -314,38 +313,38 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    // Автоматические события: creating, created, updating, updated, deleting, deleted, etc.
+    // Events automáticos: creating, created, updating, updated, deleting, deleted, etc.
 
     protected static function booted(): void
     {
-        // Событие при создании
+        // Event no creating
         static::creating(function (Post $post) {
             $post->slug = Str::slug($post->title);
         });
 
-        // Событие после создания
+        // Event depois do created
         static::created(function (Post $post) {
             Cache::forget('posts.all');
         });
 
-        // Событие при обновлении
+        // Event no updating
         static::updating(function (Post $post) {
             if ($post->isDirty('status') && $post->status === 'published') {
-                // Опубликован
+                // Publicou
                 event(new PostPublished($post));
             }
         });
 
-        // Событие при удалении
+        // Event no deleting
         static::deleting(function (Post $post) {
-            // Удалить связанные комментарии
+            // Apaga os comments relacionados
             $post->comments()->delete();
         });
     }
 }
 ```
 
-**Observer (альтернатива model events):**
+**Observer (alternativa aos model events):**
 
 ```bash
 php artisan make:observer UserObserver --model=User
@@ -365,34 +364,34 @@ class UserObserver
 
     public function created(User $user): void
     {
-        // Отправить welcome email
+        // Envia o welcome email
         $user->notify(new WelcomeNotification());
     }
 
     public function updating(User $user): void
     {
         if ($user->isDirty('email')) {
-            // Email изменён, отправить подтверждение
+            // Email mudou, manda confirmação
             $user->email_verified_at = null;
         }
     }
 
     public function deleted(User $user): void
     {
-        // Удалить связанные данные
+        // Apaga os dados relacionados
         $user->posts()->delete();
         $user->orders()->delete();
     }
 }
 
-// Регистрация в EventServiceProvider или AppServiceProvider
+// Registro no EventServiceProvider ou AppServiceProvider
 public function boot(): void
 {
     User::observe(UserObserver::class);
 }
 ```
 
-**Queued Listeners (асинхронные):**
+**Queued Listeners (assíncronos):**
 
 ```php
 namespace App\Listeners;
@@ -402,24 +401,24 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendOrderConfirmation implements ShouldQueue
 {
-    // Очередь для выполнения
+    // Queue de execução
     public $queue = 'emails';
 
-    // Задержка перед выполнением
-    public $delay = 60;  // 60 секунд
+    // Delay antes de executar
+    public $delay = 60;  // 60 segundos
 
-    // Количество попыток
+    // Número de tentativas
     public $tries = 3;
 
     public function handle(OrderCreated $event): void
     {
-        // Отправить email
+        // Envia o email
     }
 
-    // Обработка ошибок
+    // Tratamento de erro
     public function failed(OrderCreated $event, \Throwable $exception): void
     {
-        Log::error('Failed to send order confirmation', [
+        Log::error('Falha ao enviar confirmação do pedido', [
             'order_id' => $event->order->id,
             'error' => $exception->getMessage(),
         ]);
@@ -427,23 +426,23 @@ class SendOrderConfirmation implements ShouldQueue
 }
 ```
 
-**Условный Dispatch:**
+**Dispatch condicional:**
 
 ```php
-// Dispatch только если условие истинно
+// Dispatch só se a condição for verdadeira
 OrderCreated::dispatchIf(
     $order->total > 1000,
     $order
 );
 
-// Dispatch только если условие ложно
+// Dispatch só se a condição for falsa
 OrderCreated::dispatchUnless(
     $order->isFree(),
     $order
 );
 ```
 
-**After Response (выполнить после отправки ответа):**
+**After Response (roda depois de enviar a response):**
 
 ```php
 namespace App\Events;
@@ -452,47 +451,47 @@ use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 class OrderCreated implements ShouldDispatchAfterCommit
 {
-    // Dispatch после DB::commit()
+    // Dispatch depois do DB::commit()
 }
 ```
 
-**Closure Listeners (без класса):**
+**Closure Listeners (sem classe):**
 
 ```php
-// В EventServiceProvider
+// No EventServiceProvider
 use App\Events\OrderCreated;
 use Illuminate\Support\Facades\Event;
 
 public function boot(): void
 {
     Event::listen(OrderCreated::class, function (OrderCreated $event) {
-        // Простая логика без создания класса
-        Log::info('Order created', ['order_id' => $event->order->id]);
+        // Lógica simples, sem criar classe
+        Log::info('Pedido criado', ['order_id' => $event->order->id]);
     });
 
     // Wildcard listener
     Event::listen('order.*', function (string $eventName, array $data) {
-        // Слушать все события order.*
+        // Escuta todos os events order.*
     });
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Events — события (OrderCreated), Listeners — обработчики (SendEmail, UpdateInventory). Регистрация в EventServiceProvider через $listen. Dispatch через EventName::dispatch() или event(). Queued Listeners с ShouldQueue выполняются асинхронно. Model events (creating, created, updating) через booted() или Observer. Event Subscriber группирует listeners. dispatchIf/dispatchUnless для условного вызова. ShouldDispatchAfterCommit для вызова после commit."
+> "Events são os eventos (OrderCreated), Listeners são quem trata (SendEmail, UpdateInventory). Registro no EventServiceProvider pelo $listen. Dispatch com EventName::dispatch() ou event(). Queued Listeners com ShouldQueue rodam assíncrono. Model events (creating, created, updating) no booted() ou no Observer. Event Subscriber agrupa listeners. dispatchIf/dispatchUnless para disparo condicional. ShouldDispatchAfterCommit dispara depois do commit."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Event + Listeners
+### Exercício 1: Crie Event + Listeners
 
-При регистрации пользователя нужно: отправить welcome email, создать профиль, записать в лог. Реализуй через Events.
+**Enunciado:** No registro do usuário precisa: mandar welcome email, criar perfil, gravar no log. Faça isso com Events.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/UserRegistered.php
@@ -541,7 +540,7 @@ class LogUserRegistration
 {
     public function handle(UserRegistered $event): void
     {
-        Log::info('New user registered', [
+        Log::info('Novo usuário registrado', [
             'user_id' => $event->user->id,
             'email' => $event->user->email,
         ]);
@@ -557,7 +556,7 @@ protected $listen = [
     ],
 ];
 
-// В контроллере
+// No controller
 public function register(Request $request)
 {
     $user = User::create($request->validated());
@@ -569,12 +568,12 @@ public function register(Request $request)
 ```
 </details>
 
-### Задание 2: Observer для Post
+### Exercício 2: Observer para Post
 
-Создай Observer для модели Post который автоматически генерирует slug при создании и очищает кэш при обновлении.
+**Enunciado:** Crie um Observer para o model Post que gera o slug na criação e limpa o cache na atualização.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Observers/PostObserver.php
@@ -588,11 +587,11 @@ class PostObserver
 {
     public function creating(Post $post): void
     {
-        // Автоматически генерировать slug
+        // Gera o slug automaticamente
         if (empty($post->slug)) {
             $post->slug = Str::slug($post->title);
 
-            // Проверить уникальность
+            // Checa unicidade
             $originalSlug = $post->slug;
             $count = 1;
 
@@ -605,14 +604,14 @@ class PostObserver
 
     public function created(Post $post): void
     {
-        // Очистить кэш после создания
+        // Limpa o cache depois de criar
         Cache::forget('posts.all');
         Cache::forget("posts.category.{$post->category_id}");
     }
 
     public function updating(Post $post): void
     {
-        // Если меняется статус на published
+        // Se o status virou published
         if ($post->isDirty('status') && $post->status === 'published') {
             $post->published_at = now();
         }
@@ -620,24 +619,24 @@ class PostObserver
 
     public function updated(Post $post): void
     {
-        // Очистить кэш после обновления
+        // Limpa o cache depois de atualizar
         Cache::forget("posts.{$post->id}");
         Cache::forget('posts.all');
     }
 
     public function deleted(Post $post): void
     {
-        // Удалить комментарии и лайки
+        // Apaga comments e likes
         $post->comments()->delete();
         $post->likes()->delete();
 
-        // Очистить кэш
+        // Limpa o cache
         Cache::forget("posts.{$post->id}");
         Cache::forget('posts.all');
     }
 }
 
-// Регистрация в AppServiceProvider или EventServiceProvider
+// Registro no AppServiceProvider ou EventServiceProvider
 use App\Models\Post;
 use App\Observers\PostObserver;
 
@@ -648,12 +647,12 @@ public function boot(): void
 ```
 </details>
 
-### Задание 3: Queued Listener с повторами
+### Exercício 3: Queued Listener com retries
 
-Создай Listener для отправки SMS который выполняется в очереди, делает 3 попытки с задержкой 60 секунд, и логирует ошибки.
+**Enunciado:** Crie um Listener de SMS que roda na queue, tenta 3 vezes com delay de 60 segundos e loga o erro.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/OrderShipped.php
@@ -683,16 +682,16 @@ class SendShippingSms implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    // Очередь для выполнения
+    // Queue de execução
     public $queue = 'notifications';
 
-    // Количество попыток
+    // Número de tentativas
     public $tries = 3;
 
-    // Задержка между попытками (секунды)
+    // Delay entre tentativas (segundos)
     public $backoff = 60;
 
-    // Таймаут выполнения (секунды)
+    // Timeout de execução (segundos)
     public $timeout = 30;
 
     public function __construct(
@@ -705,30 +704,30 @@ class SendShippingSms implements ShouldQueue
 
         $this->smsService->send(
             $order->user->phone,
-            "Your order #{$order->id} has been shipped!"
+            "Seu pedido #{$order->id} foi enviado!"
         );
 
-        Log::info('Shipping SMS sent', [
+        Log::info('SMS de envio enviado', [
             'order_id' => $order->id,
             'phone' => $order->user->phone,
         ]);
     }
 
-    // Обработка ошибки после всех попыток
+    // Roda depois de esgotar as tentativas
     public function failed(OrderShipped $event, \Throwable $exception): void
     {
-        Log::error('Failed to send shipping SMS after all retries', [
+        Log::error('Falha ao enviar SMS de envio depois de todas as tentativas', [
             'order_id' => $event->order->id,
             'error' => $exception->getMessage(),
             'attempts' => $this->attempts(),
         ]);
 
-        // Можно отправить уведомление админу
+        // Dá para notificar o admin
         // Admin::notify(new SmsFailedNotification($event->order));
     }
 }
 
-// Регистрация в EventServiceProvider
+// Registro no EventServiceProvider
 protected $listen = [
     OrderShipped::class => [
         SendShippingSms::class,
@@ -739,4 +738,4 @@ protected $listen = [
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,59 +1,59 @@
-# 5.3 Migrations & Seeders
+# 5.3 Migrations e Seeders
 
-## Краткое резюме
+## Resumo
 
-> **Migrations** — версионный контроль для БД. `up()` создает, `down()` откатывает изменения.
+> **Migrations** — controle de versão do banco. `up()` cria, `down()` reverte as mudanças.
 >
-> **Seeders** — наполнение БД тестовыми данными. **Factories** — генерация моделей для тестов и seeders.
+> **Seeders** — popular o banco com dados de teste. **Factories** — gerar models para testes e seeders.
 >
-> **Команды:** `migrate`, `migrate:rollback`, `migrate:fresh --seed`.
+> **Comandos:** `migrate`, `migrate:rollback`, `migrate:fresh --seed`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Создание миграций](#как-работает)
-- [Типы колонок](#как-работает)
-- [Foreign Keys](#как-работает)
+- [O que é](#o-que-é)
+- [Criar migrations](#como-funciona)
+- [Tipos de colunas](#como-funciona)
+- [Foreign Keys](#como-funciona)
 - [Seeders](#seeders)
 - [Factories](#factories)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Migrations — версионный контроль для БД (создание/изменение таблиц). Seeders — заполнение БД тестовыми данными.
+**O que é:**
+Migrations — controle de versão do banco (criar/alterar tabelas). Seeders — popular o banco com dados de teste.
 
-**Основное:**
-- Migrations — структура БД в коде
-- Seeders — тестовые данные
-- Factories — генерация моделей
+**O essencial:**
+- Migrations — estrutura do banco no código
+- Seeders — dados de teste
+- Factories — gerar models
 
 ---
 
-## Как работает
+## Como funciona
 
-**Создание миграции:**
+**Criar a migration:**
 
 ```bash
-# Создать таблицу
+# Criar a tabela
 php artisan make:migration create_users_table
 
-# Изменить таблицу
+# Alterar a tabela
 php artisan make:migration add_status_to_users_table
 
-# С флагами
+# Com flags
 php artisan make:migration create_posts_table --create=posts
 php artisan make:migration add_category_to_posts --table=posts
 ```
 
-**Структура миграции:**
+**Estrutura da migration:**
 
 ```php
 use Illuminate\Database\Migrations\Migration;
@@ -82,16 +82,16 @@ return new class extends Migration
 };
 ```
 
-**Типы колонок:**
+**Tipos de colunas:**
 
 ```php
 Schema::create('products', function (Blueprint $table) {
-    // Numeric
+    // Numérico
     $table->id();  // BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY
     $table->bigInteger('views');
     $table->integer('stock');
     $table->tinyInteger('status');
-    $table->decimal('price', 8, 2);  // 8 знаков, 2 после запятой
+    $table->decimal('price', 8, 2);  // 8 dígitos, 2 depois da vírgula
     $table->float('rating', 8, 2);
 
     // String
@@ -99,7 +99,7 @@ Schema::create('products', function (Blueprint $table) {
     $table->text('description');  // TEXT
     $table->longText('content');  // LONGTEXT
 
-    // Date/Time
+    // Data/hora
     $table->date('birth_date');  // DATE
     $table->dateTime('published_at');  // DATETIME
     $table->timestamp('verified_at');  // TIMESTAMP
@@ -120,30 +120,30 @@ Schema::create('products', function (Blueprint $table) {
 });
 ```
 
-**Модификаторы колонок:**
+**Modificadores de colunas:**
 
 ```php
 $table->string('email')->nullable();  // NULL
 $table->string('role')->default('user');  // DEFAULT
 $table->string('name')->unique();  // UNIQUE
-$table->string('description')->comment('Product description');  // COMMENT
+$table->string('description')->comment('Descrição do produto');  // COMMENT
 $table->integer('order')->unsigned();  // UNSIGNED
 $table->timestamp('created_at')->useCurrent();  // DEFAULT CURRENT_TIMESTAMP
 $table->timestamp('updated_at')->useCurrentOnUpdate();  // ON UPDATE CURRENT_TIMESTAMP
 ```
 
-**Индексы:**
+**Índices:**
 
 ```php
 Schema::table('users', function (Blueprint $table) {
     $table->string('email')->unique();  // UNIQUE
     $table->index('email');  // INDEX
-    $table->index(['user_id', 'created_at']);  // Composite index
+    $table->index(['user_id', 'created_at']);  // Índice composto
 
-    // Именованный индекс
+    // Índice nomeado
     $table->index('email', 'idx_users_email');
 
-    // Удалить индекс
+    // Remover o índice
     $table->dropIndex('idx_users_email');
     $table->dropUnique(['email']);
 });
@@ -159,7 +159,7 @@ Schema::create('posts', function (Blueprint $table) {
     $table->timestamps();
 });
 
-// Эквивалентно:
+// Equivale a:
 $table->unsignedBigInteger('user_id');
 $table->foreign('user_id')
     ->references('id')
@@ -167,59 +167,59 @@ $table->foreign('user_id')
     ->onDelete('cascade')
     ->onUpdate('cascade');
 
-// Удалить FK
+// Remover a FK
 $table->dropForeign(['user_id']);
-$table->dropForeign('posts_user_id_foreign');  // По имени
+$table->dropForeign('posts_user_id_foreign');  // Pelo nome
 ```
 
-**Изменение таблицы:**
+**Alterar a tabela:**
 
 ```php
 Schema::table('users', function (Blueprint $table) {
-    // Добавить колонку
+    // Adicionar coluna
     $table->string('phone')->nullable()->after('email');
 
-    // Изменить колонку (требует doctrine/dbal)
+    // Alterar coluna (precisa do doctrine/dbal)
     $table->string('name', 100)->change();
 
-    // Переименовать колонку
+    // Renomear coluna
     $table->renameColumn('name', 'full_name');
 
-    // Удалить колонку
+    // Remover coluna
     $table->dropColumn('phone');
     $table->dropColumn(['phone', 'address']);
 });
 
-// Переименовать таблицу
+// Renomear tabela
 Schema::rename('posts', 'articles');
 
-// Удалить таблицу
+// Remover tabela
 Schema::drop('users');
 Schema::dropIfExists('users');
 ```
 
-**Выполнение миграций:**
+**Rodar as migrations:**
 
 ```bash
-# Выполнить все миграции
+# Rodar todas as migrations
 php artisan migrate
 
-# Откатить последний batch
+# Reverter o último batch
 php artisan migrate:rollback
 
-# Откатить все миграции
+# Reverter todas as migrations
 php artisan migrate:reset
 
-# Откатить и заново выполнить
+# Reverter e rodar de novo
 php artisan migrate:refresh
 
-# Откатить, выполнить и засеять
+# Reverter, rodar e popular (seed)
 php artisan migrate:refresh --seed
 
-# Удалить все таблицы и заново создать
+# Dropar todas as tabelas e criar de novo
 php artisan migrate:fresh
 
-# Статус миграций
+# Status das migrations
 php artisan migrate:status
 ```
 
@@ -227,13 +227,13 @@ php artisan migrate:status
 
 ## Seeders
 
-**Создание Seeder:**
+**Criar o Seeder:**
 
 ```bash
 php artisan make:seeder UserSeeder
 ```
 
-**Структура Seeder:**
+**Estrutura do Seeder:**
 
 ```php
 namespace Database\Seeders;
@@ -246,25 +246,25 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Создать одного пользователя
+        // Criar um usuário
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@example.com',
+            'email' => 'admin@email.com',
             'password' => Hash::make('password'),
         ]);
 
-        // Создать несколько
+        // Criar vários
         User::insert([
             [
-                'name' => 'John',
-                'email' => 'john@example.com',
+                'name' => 'João',
+                'email' => 'joao@email.com',
                 'password' => Hash::make('password'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Jane',
-                'email' => 'jane@example.com',
+                'name' => 'Maria',
+                'email' => 'maria@email.com',
                 'password' => Hash::make('password'),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -285,7 +285,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Вызвать другие seeders
+        // Chamar outros seeders
         $this->call([
             UserSeeder::class,
             PostSeeder::class,
@@ -295,16 +295,16 @@ class DatabaseSeeder extends Seeder
 }
 ```
 
-**Запуск Seeders:**
+**Rodar os Seeders:**
 
 ```bash
-# Запустить все seeders
+# Rodar todos os seeders
 php artisan db:seed
 
-# Запустить конкретный seeder
+# Rodar um seeder específico
 php artisan db:seed --class=UserSeeder
 
-# Миграции + seeders
+# Migrations + seeders
 php artisan migrate:fresh --seed
 ```
 
@@ -312,13 +312,13 @@ php artisan migrate:fresh --seed
 
 ## Factories
 
-**Создание Factory:**
+**Criar a Factory:**
 
 ```bash
 php artisan make:factory UserFactory
 ```
 
-**Структура Factory:**
+**Estrutura da Factory:**
 
 ```php
 namespace Database\Factories;
@@ -340,7 +340,7 @@ class UserFactory extends Factory
         ];
     }
 
-    // State (модификация)
+    // State (modificação)
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -357,31 +357,31 @@ class UserFactory extends Factory
 }
 ```
 
-**Использование Factories:**
+**Usar as Factories:**
 
 ```php
-// Создать одного пользователя
+// Criar um usuário
 $user = User::factory()->create();
 
-// Создать несколько
+// Criar vários
 $users = User::factory()->count(10)->create();
 
-// С кастомными атрибутами
+// Com atributos customizados
 $user = User::factory()->create([
-    'name' => 'John Doe',
-    'email' => 'john@example.com',
+    'name' => 'João Silva',
+    'email' => 'joao@email.com',
 ]);
 
-// Использовать state
+// Usar o state
 $admin = User::factory()->admin()->create();
 $unverified = User::factory()->unverified()->create();
 
-// Создать с relationships
+// Criar com relationships
 $user = User::factory()
     ->has(Post::factory()->count(3))
     ->create();
 
-// Эквивалентно:
+// Equivale a:
 $user = User::factory()
     ->hasPosts(3)
     ->create();
@@ -389,28 +389,28 @@ $user = User::factory()
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **Migrations:**
-- Любые изменения структуры БД
-- Контроль версий БД
-- CI/CD (автоматическое развёртывание)
+- Qualquer mudança na estrutura do banco
+- Versionar o banco
+- CI/CD (deploy automático)
 
 **Seeders:**
-- Тестовые данные для разработки
-- Начальные данные (роли, настройки)
-- Demo данные
+- Dados de teste no desenvolvimento
+- Dados iniciais (roles, configs)
+- Dados de demo
 
 **Factories:**
-- Unit/Feature тесты
-- Генерация тестовых данных
-- Быстрое наполнение БД
+- Testes unit/feature
+- Gerar dados de teste
+- Popular o banco rápido
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**E-commerce миграции:**
+**Migrations de e-commerce:**
 
 ```php
 // database/migrations/xxxx_create_products_table.php
@@ -453,7 +453,7 @@ Schema::create('order_items', function (Blueprint $table) {
 });
 ```
 
-**Seeders с Factories:**
+**Seeders com Factories:**
 
 ```php
 // database/seeders/DatabaseSeeder.php
@@ -461,10 +461,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Создать категории
+        // Criar categorias
         $categories = Category::factory()->count(5)->create();
 
-        // Создать продукты для каждой категории
+        // Criar produtos para cada categoria
         $categories->each(function ($category) {
             Product::factory()
                 ->count(10)
@@ -472,7 +472,7 @@ class DatabaseSeeder extends Seeder
                 ->create();
         });
 
-        // Создать пользователей с заказами
+        // Criar usuários com pedidos
         User::factory()
             ->count(20)
             ->has(
@@ -482,15 +482,15 @@ class DatabaseSeeder extends Seeder
             )
             ->create();
 
-        // Админ пользователь
+        // Usuário admin
         User::factory()->admin()->create([
-            'email' => 'admin@example.com',
+            'email' => 'admin@email.com',
         ]);
     }
 }
 ```
 
-**Factory с relationships:**
+**Factory com relationships:**
 
 ```php
 // database/factories/OrderFactory.php
@@ -514,26 +514,26 @@ class OrderFactory extends Factory
     }
 }
 
-// Использование
+// Uso
 $order = Order::factory()->paid()->create();
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Migrations — версионный контроль БД, up() создаёт, down() откатывает. Schema::create() для новых таблиц, Schema::table() для изменений. Foreign keys через foreignId()->constrained()->onDelete('cascade'). Seeders наполняют БД (DatabaseSeeder, db:seed). Factories генерируют модели (User::factory()->create()), используются в тестах и seeders. migrate:fresh --seed пересоздаёт БД с данными. Factories с states для вариаций (admin(), unverified())."
+> "Migrations são o controle de versão do banco. up() cria, down() reverte. Schema::create() para tabela nova, Schema::table() para alteração. Foreign key com foreignId()->constrained()->onDelete('cascade'). Seeder popula o banco (DatabaseSeeder, db:seed). Factory gera model (User::factory()->create()) — uso em teste e seeder. migrate:fresh --seed recria o banco com dados. Factory com state para variação (admin(), unverified())."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай миграцию с индексами
+### Exercício 1: Crie uma migration com índices
 
-Создай миграцию для таблицы `posts` с полями: title, slug (уникальный), content, status (enum), published_at. Добавь правильные индексы.
+**Enunciado:** Crie uma migration para a tabela `posts` com os campos: title, slug (único), content, status (enum), published_at. Coloque os índices certos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/xxxx_create_posts_table.php
@@ -556,10 +556,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Индексы для частых запросов
-            $table->index(['status', 'published_at']);  // Список опубликованных
-            $table->index(['user_id', 'status']);       // Посты пользователя
-            $table->index('created_at');                // Сортировка по дате
+            // Índices para queries frequentes
+            $table->index(['status', 'published_at']);  // Lista de publicados
+            $table->index(['user_id', 'status']);       // Posts do usuário
+            $table->index('created_at');                // Ordenar por data
         });
     }
 
@@ -571,12 +571,12 @@ return new class extends Migration
 ```
 </details>
 
-### Задание 2: Напиши Seeder с Factory
+### Exercício 2: Escreva um Seeder com Factory
 
-Создай Seeder который создаст 5 категорий, для каждой категории 10 продуктов, и 50 пользователей.
+**Enunciado:** Crie um Seeder que gera 5 categorias, 10 produtos por categoria e 50 usuários.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/factories/CategoryFactory.php
@@ -603,7 +603,7 @@ class ProductFactory extends Factory
             'description' => fake()->paragraph(),
             'price' => fake()->randomFloat(2, 10, 1000),
             'stock' => fake()->numberBetween(0, 100),
-            'is_active' => fake()->boolean(80),  // 80% активных
+            'is_active' => fake()->boolean(80),  // 80% ativos
         ];
     }
 
@@ -621,17 +621,17 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Создать 5 категорий
+        // Criar 5 categorias
         $categories = Category::factory()->count(5)->create();
 
-        // Для каждой категории создать 10 продуктов
+        // Para cada categoria, criar 10 produtos
         $categories->each(function ($category) {
             Product::factory()
                 ->count(10)
                 ->for($category)
                 ->create();
 
-            // Добавить 2 продукта без наличия
+            // Adicionar 2 produtos sem estoque
             Product::factory()
                 ->count(2)
                 ->outOfStock()
@@ -639,7 +639,7 @@ class ProductSeeder extends Seeder
                 ->create();
         });
 
-        // Создать 50 пользователей
+        // Criar 50 usuários
         User::factory()->count(50)->create();
     }
 }
@@ -657,12 +657,12 @@ class DatabaseSeeder extends Seeder
 ```
 </details>
 
-### Задание 3: Миграция изменения таблицы
+### Exercício 3: Migration de alteração de tabela
 
-Добавь в существующую таблицу `users` поля: `phone` (nullable), `avatar` (nullable), `is_verified` (boolean, default false). Также добавь индекс на phone.
+**Enunciado:** Na tabela `users` já existente, adicione os campos: `phone` (nullable), `avatar` (nullable), `is_verified` (boolean, default false). Inclua um índice em phone.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // database/migrations/xxxx_add_profile_fields_to_users_table.php
@@ -679,7 +679,7 @@ return new class extends Migration
             $table->string('avatar')->nullable()->after('phone');
             $table->boolean('is_verified')->default(false)->after('avatar');
 
-            // Индекс для поиска по телефону
+            // Índice para busca por telefone
             $table->index('phone');
         });
     }
@@ -697,4 +697,4 @@ return new class extends Migration
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

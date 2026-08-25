@@ -1,43 +1,43 @@
 # 5.6 Notifications
 
-## Краткое резюме
+## Resumo
 
-> **Notifications** — единая система отправки уведомлений через разные каналы (mail, database, SMS, Slack, broadcast).
+> **Notifications** — sistema único para enviar notificações por canais diferentes (mail, database, SMS, Slack, broadcast).
 >
-> **Создание:** `make:notification OrderShipped`. Метод `via()` определяет каналы, `toMail()`/`toArray()` — формат.
+> **Criar:** `make:notification OrderShipped`. O método `via()` define os canais, `toMail()`/`toArray()` — o formato.
 >
-> **Отправка:** `$user->notify(new Notification())`. Database канал сохраняет в БД, `markAsRead()` отмечает прочитанным. `ShouldQueue` для асинхронности.
+> **Enviar:** `$user->notify(new Notification())`. O canal database guarda no banco, `markAsRead()` marca como lida. `ShouldQueue` para ir para a queue.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Notifications — система отправки уведомлений через разные каналы (email, SMS, Slack, database). Единый интерфейс для всех типов уведомлений.
+**O que é:**
+Notifications — sistema para enviar notificações por canais diferentes (email, SMS, Slack, database). Uma interface só para todos os tipos.
 
-**Каналы:**
+**Canais:**
 - Mail (email)
-- Database (в БД)
+- Database (no banco)
 - Broadcast (WebSockets)
 - SMS (Vonage/Twilio)
 - Slack
 
 ---
 
-## Как работает
+## Como funciona
 
-**Создание Notification:**
+**Criar a Notification:**
 
 ```bash
 php artisan make:notification OrderShipped
@@ -60,54 +60,54 @@ class OrderShipped extends Notification implements ShouldQueue
     {
     }
 
-    // Каналы доставки
+    // Canais de entrega
     public function via(object $notifiable): array
     {
-        // Отправить через email и database
+        // Enviar por email e database
         return ['mail', 'database'];
     }
 
-    // Email уведомление
+    // Notificação por email
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Order Shipped')
-            ->greeting("Hello {$notifiable->name}!")
-            ->line("Your order #{$this->order->id} has been shipped.")
-            ->action('View Order', url("/orders/{$this->order->id}"))
-            ->line('Thank you for your purchase!');
+            ->subject('Pedido enviado')
+            ->greeting("Olá, {$notifiable->name}!")
+            ->line("Seu pedido #{$this->order->id} foi enviado.")
+            ->action('Ver pedido', url("/orders/{$this->order->id}"))
+            ->line('Obrigado pela compra!');
     }
 
-    // Database уведомление
+    // Notificação no database
     public function toArray(object $notifiable): array
     {
         return [
             'order_id' => $this->order->id,
             'order_number' => $this->order->number,
-            'message' => "Your order #{$this->order->number} has been shipped.",
+            'message' => "Seu pedido #{$this->order->number} foi enviado.",
         ];
     }
 }
 ```
 
-**Отправка уведомлений:**
+**Enviar notificações:**
 
 ```php
 use App\Notifications\OrderShipped;
 
-// Отправить одному пользователю
+// Enviar para um usuário
 $user = User::find(1);
 $user->notify(new OrderShipped($order));
 
-// Отправить нескольким
+// Enviar para vários
 Notification::send($users, new OrderShipped($order));
 
-// Отправить анонимному (без модели User)
-Notification::route('mail', 'guest@example.com')
+// Enviar para anônimo (sem model User)
+Notification::route('mail', 'guest@email.com')
     ->notify(new OrderShipped($order));
 ```
 
-**Notifiable trait в модели:**
+**Trait Notifiable no model:**
 
 ```php
 use Illuminate\Notifications\Notifiable;
@@ -116,19 +116,19 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    // Кастомный email для уведомлений
+    // Email customizado para notificações
     public function routeNotificationForMail(): string
     {
         return $this->notification_email ?: $this->email;
     }
 
-    // Кастомный телефон для SMS
+    // Telefone customizado para SMS
     public function routeNotificationForVonage(): string
     {
         return $this->phone;
     }
 
-    // Кастомный Slack webhook
+    // Slack webhook customizado
     public function routeNotificationForSlack(): string
     {
         return $this->slack_webhook_url;
@@ -138,23 +138,23 @@ class User extends Authenticatable
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Notifications когда:**
-- Нужно отправлять через несколько каналов
-- Уведомления пользователям (заказы, комментарии, etc.)
-- Нужна очередь (ShouldQueue)
-- Нужна история уведомлений (database канал)
+**Use Notifications quando:**
+- Precisa enviar por vários canais
+- Notificações para o usuário (pedidos, comentários, etc.)
+- Precisa de queue (`ShouldQueue`)
+- Precisa de histórico (canal database)
 
-**Не используй когда:**
-- Простая отправка email (используй Mailable напрямую)
-- Системные логи (используй Log)
+**Não use quando:**
+- Email simples (use Mailable direto)
+- Log de sistema (use Log)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Комплексное уведомление с выбором канала:**
+**Notificação completa com escolha de canal:**
 
 ```php
 namespace App\Notifications;
@@ -175,17 +175,17 @@ class OrderCreated extends Notification implements ShouldQueue
     {
         $channels = ['database'];
 
-        // Email для пользователей
+        // Email para usuários
         if ($notifiable->email_notifications_enabled) {
             $channels[] = 'mail';
         }
 
-        // SMS для премиум пользователей
+        // SMS para usuários premium
         if ($notifiable->isPremium()) {
             $channels[] = 'vonage';
         }
 
-        // Slack для админов
+        // Slack para admins
         if ($notifiable->isAdmin()) {
             $channels[] = 'slack';
         }
@@ -196,12 +196,12 @@ class OrderCreated extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New Order #' . $this->order->number)
-            ->greeting("Hello {$notifiable->name}!")
-            ->line("Your order #{$this->order->number} has been created.")
-            ->line("Total: ${$this->order->total}")
-            ->action('View Order', route('orders.show', $this->order))
-            ->line('Thank you for your order!');
+            ->subject('Novo pedido #' . $this->order->number)
+            ->greeting("Olá, {$notifiable->name}!")
+            ->line("Seu pedido #{$this->order->number} foi criado.")
+            ->line("Total: R$ {$this->order->total}")
+            ->action('Ver pedido', route('orders.show', $this->order))
+            ->line('Obrigado pelo pedido!');
     }
 
     public function toArray(object $notifiable): array
@@ -210,66 +210,66 @@ class OrderCreated extends Notification implements ShouldQueue
             'order_id' => $this->order->id,
             'order_number' => $this->order->number,
             'total' => $this->order->total,
-            'message' => "Order #{$this->order->number} created.",
+            'message' => "Pedido #{$this->order->number} criado.",
         ];
     }
 
     public function toVonage(object $notifiable): array
     {
         return [
-            'content' => "Your order #{$this->order->number} has been created. Total: ${$this->order->total}",
+            'content' => "Seu pedido #{$this->order->number} foi criado. Total: R$ {$this->order->total}",
         ];
     }
 
     public function toSlack(object $notifiable): SlackMessage
     {
         return (new SlackMessage)
-            ->from('Order Bot', ':package:')
+            ->from('Bot de Pedidos', ':package:')
             ->to('#orders')
-            ->content("New order #{$this->order->number}")
+            ->content("Novo pedido #{$this->order->number}")
             ->attachment(function ($attachment) {
-                $attachment->title('Order Details')
+                $attachment->title('Detalhes do pedido')
                     ->fields([
-                        'Order' => $this->order->number,
-                        'Customer' => $this->order->user->name,
-                        'Total' => '$' . $this->order->total,
+                        'Pedido' => $this->order->number,
+                        'Cliente' => $this->order->user->name,
+                        'Total' => 'R$ ' . $this->order->total,
                     ])
-                    ->action('View Order', route('admin.orders.show', $this->order));
+                    ->action('Ver pedido', route('admin.orders.show', $this->order));
             });
     }
 }
 ```
 
-**Database Notifications (хранение в БД):**
+**Database Notifications (guardar no banco):**
 
 ```bash
-# Создать таблицу
+# Criar a tabela
 php artisan notifications:table
 php artisan migrate
 ```
 
 ```php
-// Получить уведомления пользователя
-$notifications = $user->notifications;  // Все
-$unread = $user->unreadNotifications;  // Непрочитанные
+// Pegar as notificações do usuário
+$notifications = $user->notifications;  // Todas
+$unread = $user->unreadNotifications;  // Não lidas
 
-// Отметить как прочитанное
+// Marcar como lida
 $notification = $user->notifications()->first();
 $notification->markAsRead();
 
-// Отметить все как прочитанные
+// Marcar todas como lidas
 $user->unreadNotifications->markAsRead();
 
-// Удалить уведомление
+// Apagar a notificação
 $notification->delete();
 
-// Фильтрация
+// Filtrar
 $orderNotifications = $user->notifications()
     ->where('type', OrderShipped::class)
     ->get();
 ```
 
-**API для уведомлений:**
+**API de notificações:**
 
 ```php
 // Controller
@@ -321,24 +321,24 @@ class NotificationController extends Controller
 }
 ```
 
-**On-Demand Notifications (без модели):**
+**On-Demand Notifications (sem model):**
 
 ```php
 use Illuminate\Support\Facades\Notification;
 
-// Отправить гостю
-Notification::route('mail', 'guest@example.com')
-    ->route('vonage', '+79001234567')
+// Enviar para um guest
+Notification::route('mail', 'guest@email.com')
+    ->route('vonage', '+5511987654321')
     ->notify(new InvoicePaid($invoice));
 
-// Отправить нескольким каналам
+// Enviar para vários canais
 Notification::route('mail', [
-    'support@example.com',
-    'admin@example.com',
+    'suporte@email.com',
+    'admin@email.com',
 ])->notify(new ErrorOccurred($error));
 ```
 
-**Custom Notification Channel:**
+**Canal customizado:**
 
 ```bash
 php artisan make:notification-channel TelegramChannel
@@ -353,17 +353,17 @@ class TelegramChannel
 {
     public function send(object $notifiable, Notification $notification): void
     {
-        // Получить Telegram chat ID
+        // Pegar o Telegram chat ID
         $chatId = $notifiable->routeNotificationFor('telegram');
 
         if (!$chatId) {
             return;
         }
 
-        // Получить данные из notification
+        // Pegar os dados da notification
         $message = $notification->toTelegram($notifiable);
 
-        // Отправить в Telegram
+        // Enviar no Telegram
         Http::post("https://api.telegram.org/bot{$this->token}/sendMessage", [
             'chat_id' => $chatId,
             'text' => $message,
@@ -379,7 +379,7 @@ public function via(object $notifiable): array
 
 public function toTelegram(object $notifiable): string
 {
-    return "Order #{$this->order->number} created!";
+    return "Pedido #{$this->order->number} criado!";
 }
 
 // User model
@@ -389,7 +389,7 @@ public function routeNotificationForTelegram(): string
 }
 ```
 
-**Conditional Notifications:**
+**Notifications condicionais:**
 
 ```php
 class OrderShipped extends Notification
@@ -398,17 +398,17 @@ class OrderShipped extends Notification
     {
         $channels = [];
 
-        // Email только если включены уведомления
+        // Email só se as notificações estiverem ligadas
         if ($notifiable->notify_via_email) {
             $channels[] = 'mail';
         }
 
-        // SMS только для премиум
+        // SMS só para premium
         if ($notifiable->isPremium() && $notifiable->phone) {
             $channels[] = 'vonage';
         }
 
-        // Всегда в database
+        // Sempre no database
         $channels[] = 'database';
 
         return $channels;
@@ -436,7 +436,7 @@ class NewMessage extends Notification
         ]);
     }
 
-    // Канал для broadcast
+    // Canal do broadcast
     public function broadcastOn(): array
     {
         return [new PrivateChannel("user.{$this->notifiable->id}")];
@@ -447,57 +447,57 @@ class NewMessage extends Notification
 Echo.private(`user.${userId}`)
     .notification((notification) => {
         console.log(notification);
-        // Показать уведомление
+        // Mostrar a notificação
     });
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Notifications — система для отправки уведомлений через разные каналы
-- Единый интерфейс для mail, database, SMS, Slack, broadcast
-- Создание: `php artisan make:notification OrderShipped`
+**O que é:**
+- Notifications — sistema para enviar notificações por canais diferentes
+- Uma interface só para mail, database, SMS, Slack, broadcast
+- Criar: `php artisan make:notification OrderShipped`
 
-**Структура:**
+**Estrutura:**
 ```php
-via()      // Определяет каналы ['mail', 'database']
-toMail()   // Формат для email
-toArray()  // Формат для database/broadcast
+via()      // Define os canais ['mail', 'database']
+toMail()   // Formato do email
+toArray()  // Formato do database/broadcast
 ```
 
-**Отправка:**
+**Envio:**
 ```php
-$user->notify(new OrderShipped($order));           // Одному
-Notification::send($users, new OrderShipped());    // Нескольким
-Notification::route('mail', 'email@example.com')   // Без модели
+$user->notify(new OrderShipped($order));           // Um usuário
+Notification::send($users, new OrderShipped());    // Vários
+Notification::route('mail', 'email@email.com')     // Sem model
     ->notify(new OrderShipped());
 ```
 
 **Database Notifications:**
-- Таблица: `notifications:table` + `migrate`
-- Получение: `$user->notifications`, `$user->unreadNotifications`
-- Прочитано: `$notification->markAsRead()`
+- Tabela: `notifications:table` + `migrate`
+- Pegar: `$user->notifications`, `$user->unreadNotifications`
+- Lida: `$notification->markAsRead()`
 
-**Продвинутое:**
-- **ShouldQueue** — асинхронная отправка
-- **Custom channels** — свои каналы (Telegram, etc.)
-- **Broadcast** — real-time через WebSockets
-- **Conditional** — выбор канала по условию
+**Avançado:**
+- **ShouldQueue** — envio na queue (assíncrono)
+- **Custom channels** — canais próprios (Telegram, etc.)
+- **Broadcast** — real-time via WebSockets
+- **Conditional** — escolha do canal por condição
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Notification с выбором канала
+### Exercício 1: Notification com escolha de canal
 
-Создай `CommentPostedNotification`. Если у пользователя включены email-уведомления — отправь email, если нет — только в database. Премиум пользователям дополнительно в SMS.
+**Enunciado:** Crie `CommentPostedNotification`. Se o usuário tiver notificações por email ligadas — envie email. Se não — só no database. Usuários premium também recebem SMS.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 namespace App\Notifications;
@@ -520,12 +520,12 @@ class CommentPostedNotification extends Notification implements ShouldQueue
     {
         $channels = ['database'];
 
-        // Email если включены уведомления
+        // Email se as notificações estiverem ligadas
         if ($notifiable->email_notifications_enabled) {
             $channels[] = 'mail';
         }
 
-        // SMS для премиум
+        // SMS para premium
         if ($notifiable->isPremium() && $notifiable->phone) {
             $channels[] = 'vonage';
         }
@@ -536,12 +536,12 @@ class CommentPostedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('New comment on your post')
-            ->greeting("Hello {$notifiable->name}!")
-            ->line("{$this->comment->user->name} commented on your post:")
+            ->subject('Novo comentário no seu post')
+            ->greeting("Olá, {$notifiable->name}!")
+            ->line("{$this->comment->user->name} comentou no seu post:")
             ->line("\"{$this->comment->body}\"")
-            ->action('View Comment', route('posts.show', $this->comment->post_id))
-            ->line('Thank you for using our application!');
+            ->action('Ver comentário', route('posts.show', $this->comment->post_id))
+            ->line('Obrigado por usar nosso app!');
     }
 
     public function toArray(object $notifiable): array
@@ -551,29 +551,29 @@ class CommentPostedNotification extends Notification implements ShouldQueue
             'post_id' => $this->comment->post_id,
             'author' => $this->comment->user->name,
             'body' => $this->comment->body,
-            'message' => "{$this->comment->user->name} commented on your post",
+            'message' => "{$this->comment->user->name} comentou no seu post",
         ];
     }
 
     public function toVonage(object $notifiable): array
     {
         return [
-            'content' => "New comment from {$this->comment->user->name}",
+            'content' => "Novo comentário de {$this->comment->user->name}",
         ];
     }
 }
 
-// Отправка
+// Envio
 $post->user->notify(new CommentPostedNotification($comment));
 ```
 </details>
 
-### Задание 2: Database Notifications API
+### Exercício 2: API de Database Notifications
 
-Создай API endpoint для получения уведомлений: список всех, только непрочитанных, отметка как прочитанного, удаление.
+**Enunciado:** Crie um API endpoint para notificações: lista todas, só as não lidas, marcar como lida, apagar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // routes/api.php
@@ -586,7 +586,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // app/Http/Controllers/NotificationController.php
-namespace App\Http\Controllers;
+namespace App\Http/Controllers;
 
 use Illuminate\Http\Request;
 
@@ -622,7 +622,7 @@ class NotificationController extends Controller
         $notification->markAsRead();
 
         return response()->json([
-            'message' => 'Notification marked as read',
+            'message' => 'Notificação marcada como lida',
         ]);
     }
 
@@ -633,7 +633,7 @@ class NotificationController extends Controller
             ->markAsRead();
 
         return response()->json([
-            'message' => 'All notifications marked as read',
+            'message' => 'Todas as notificações marcadas como lidas',
         ]);
     }
 
@@ -650,12 +650,12 @@ class NotificationController extends Controller
 ```
 </details>
 
-### Задание 3: Custom Notification Channel (Telegram)
+### Exercício 3: Custom Notification Channel (Telegram)
 
-Создай кастомный канал для отправки уведомлений в Telegram.
+**Enunciado:** Crie um canal customizado para enviar notificações no Telegram.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Channels/TelegramChannel.php
@@ -668,17 +668,17 @@ class TelegramChannel
 {
     public function send(object $notifiable, Notification $notification): void
     {
-        // Получить chat_id пользователя
+        // Pegar o chat_id do usuário
         $chatId = $notifiable->routeNotificationFor('telegram', $notification);
 
         if (!$chatId) {
             return;
         }
 
-        // Получить сообщение из notification
+        // Pegar a mensagem da notification
         $message = $notification->toTelegram($notifiable);
 
-        // Отправить в Telegram API
+        // Enviar na API do Telegram
         Http::post("https://api.telegram.org/bot" . config('services.telegram.bot_token') . "/sendMessage", [
             'chat_id' => $chatId,
             'text' => $message,
@@ -706,9 +706,9 @@ class OrderShipped extends Notification
 
     public function toTelegram(object $notifiable): string
     {
-        return "<b>Order Shipped</b>\n\n" .
-               "Your order #{$this->order->number} has been shipped!\n" .
-               "Track: {$this->order->tracking_number}";
+        return "<b>Pedido enviado</b>\n\n" .
+               "Seu pedido #{$this->order->number} foi enviado!\n" .
+               "Rastreio: {$this->order->tracking_number}";
     }
 
     // ... toMail(), toArray()
@@ -725,11 +725,11 @@ public function routeNotificationForTelegram(): ?string
     'bot_token' => env('TELEGRAM_BOT_TOKEN'),
 ],
 
-// Использование
+// Uso
 $user->notify(new OrderShipped($order));
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

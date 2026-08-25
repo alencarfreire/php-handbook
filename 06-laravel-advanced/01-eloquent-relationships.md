@@ -1,34 +1,35 @@
 # 5.1 Eloquent Relationships
 
-## Краткое резюме
+## Resumo
 
-> **Eloquent Relationships** — способ связывать модели между собой без SQL JOIN.
+> **Eloquent Relationships** — jeito de ligar models sem escrever SQL JOIN.
 >
-> **Типы:** hasOne/belongsTo (1:1), hasMany/belongsTo (1:N), belongsToMany (N:N), hasManyThrough (через промежуточную), morphTo/morphMany (полиморфные).
+> **Tipos:** hasOne/belongsTo (1:1), hasMany/belongsTo (1:N), belongsToMany (N:N), hasManyThrough (via model intermediário), morphTo/morphMany (polimórficas).
 >
-> **Важно:** Eager loading через `with()` решает N+1 проблему.
+> **Importante:** eager loading com `with()` resolve o N+1.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Типы связей](#типы-связей)
-- [Eager Loading](#eager-loading-n1-проблема)
-- [Has/WhereHas запросы](#exists-queries-проверка-наличия)
-- [WithCount](#counting-related-models)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Tipos de relacionamento](#tipos-de-relacionamento)
+- [Quando usar](#quando-usar)
+- [Eager Loading](#eager-loading-problema-n1)
+- [Has/WhereHas](#exists-queries-checar-existência)
+- [WithCount](#contar-models-relacionados)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-Relationships (связи) в Eloquent — способ связывать модели между собой. Заменяют SQL JOIN и упрощают работу со связанными данными.
+**O que é:**
+Relationships no Eloquent ligam models entre si. Substituem SQL JOIN e simplificam o trabalho com dados relacionados.
 
-**Типы связей:**
+**Tipos de relacionamento:**
 - One to One (1:1) — hasOne / belongsTo
 - One to Many (1:N) — hasMany / belongsTo
 - Many to Many (N:N) — belongsToMany
@@ -37,12 +38,12 @@ Relationships (связи) в Eloquent — способ связывать мо�
 
 ---
 
-## Типы связей
+## Tipos de relacionamento
 
 ### One to One (hasOne / belongsTo)
 
 ```php
-// User имеет один Profile
+// User tem um Profile
 class User extends Model
 {
     public function profile()
@@ -51,7 +52,7 @@ class User extends Model
     }
 }
 
-// Profile принадлежит User
+// Profile pertence a User
 class Profile extends Model
 {
     public function user()
@@ -60,7 +61,7 @@ class Profile extends Model
     }
 }
 
-// Использование
+// Uso
 $user = User::find(1);
 $profile = $user->profile;  // SELECT * FROM profiles WHERE user_id = 1
 
@@ -71,7 +72,7 @@ $user = $profile->user;  // SELECT * FROM users WHERE id = $profile->user_id
 ### One to Many (hasMany / belongsTo)
 
 ```php
-// User имеет много Posts
+// User tem muitos Posts
 class User extends Model
 {
     public function posts()
@@ -80,7 +81,7 @@ class User extends Model
     }
 }
 
-// Post принадлежит User
+// Post pertence a User
 class Post extends Model
 {
     public function user()
@@ -89,7 +90,7 @@ class Post extends Model
     }
 }
 
-// Использование
+// Uso
 $user = User::find(1);
 $posts = $user->posts;  // SELECT * FROM posts WHERE user_id = 1
 
@@ -97,18 +98,18 @@ foreach ($user->posts as $post) {
     echo $post->title;
 }
 
-// Создать пост для пользователя
+// Criar post para o usuário
 $user->posts()->create([
-    'title' => 'New Post',
-    'body' => 'Content',
+    'title' => 'Novo Post',
+    'body' => 'Conteúdo',
 ]);
 ```
 
 ### Many to Many (belongsToMany)
 
 ```php
-// User имеет много Roles, Role имеет много Users
-// Промежуточная таблица: role_user (user_id, role_id)
+// User tem muitas Roles, Role tem muitos Users
+// Tabela pivot: role_user (user_id, role_id)
 
 class User extends Model
 {
@@ -126,26 +127,26 @@ class Role extends Model
     }
 }
 
-// Использование
+// Uso
 $user = User::find(1);
-$roles = $user->roles;  // JOIN через role_user
+$roles = $user->roles;  // JOIN via role_user
 
-// Прикрепить роль
+// Anexar role
 $user->roles()->attach($roleId);
 $user->roles()->attach([1, 2, 3]);
 
-// Открепить роль
+// Remover role
 $user->roles()->detach($roleId);
-$user->roles()->detach();  // Открепить все
+$user->roles()->detach();  // Remover todas
 
-// Синхронизировать (удалить старые, добавить новые)
+// Sincronizar (remove as antigas, adiciona as novas)
 $user->roles()->sync([1, 2, 3]);
 
-// Toggle (прикрепить если нет, открепить если есть)
+// Toggle (anexa se não tiver, remove se tiver)
 $user->roles()->toggle([1, 2]);
 ```
 
-### Pivot таблица с доп. полями
+### Tabela pivot com campos extras
 
 ```php
 class User extends Model
@@ -153,18 +154,18 @@ class User extends Model
     public function roles()
     {
         return $this->belongsToMany(Role::class)
-            ->withPivot('expires_at', 'is_active')  // Дополнительные поля
-            ->withTimestamps();  // created_at, updated_at в pivot
+            ->withPivot('expires_at', 'is_active')  // Campos extras
+            ->withTimestamps();  // created_at, updated_at no pivot
     }
 }
 
-// Использование
+// Uso
 foreach ($user->roles as $role) {
     echo $role->pivot->expires_at;
     echo $role->pivot->is_active;
 }
 
-// Создать с pivot полями
+// Criar com campos do pivot
 $user->roles()->attach($roleId, [
     'expires_at' => now()->addYear(),
     'is_active' => true,
@@ -175,33 +176,33 @@ $user->roles()->attach($roleId, [
 
 ```php
 // Country -> User -> Post
-// Получить все посты страны через пользователей
+// Pegar todos os posts do país via users
 
 class Country extends Model
 {
     public function posts()
     {
         return $this->hasManyThrough(
-            Post::class,      // Финальная модель
-            User::class,      // Промежуточная модель
-            'country_id',     // FK на countries в users
-            'user_id',        // FK на users в posts
+            Post::class,      // Model final
+            User::class,      // Model intermediário
+            'country_id',     // FK de countries em users
+            'user_id',        // FK de users em posts
             'id',             // PK countries
             'id'              // PK users
         );
     }
 }
 
-// Использование
+// Uso
 $country = Country::find(1);
-$posts = $country->posts;  // Все посты пользователей этой страны
+$posts = $country->posts;  // Todos os posts dos users desse país
 ```
 
-### Polymorphic Relations (полиморфные)
+### Polymorphic Relations (polimórficas)
 
 ```php
-// Комментарии для Post и Video
-// Таблица comments: id, commentable_id, commentable_type, body
+// Comments para Post e Video
+// Tabela comments: id, commentable_id, commentable_type, body
 
 class Comment extends Model
 {
@@ -227,59 +228,59 @@ class Video extends Model
     }
 }
 
-// Использование
+// Uso
 $post = Post::find(1);
 $comments = $post->comments;
 
 $post->comments()->create([
-    'body' => 'Great post!',
+    'body' => 'Ótimo post!',
 ]);
 
 $comment = Comment::find(1);
-$commentable = $comment->commentable;  // Post или Video
+$commentable = $comment->commentable;  // Post ou Video
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-| Связь | Пример | Когда использовать |
+| Relacionamento | Exemplo | Quando usar |
 |-------|--------|-------------------|
-| **hasOne / belongsTo** | User → Profile | Один к одному |
-| **hasMany / belongsTo** | User → Posts | Один ко многим |
-| **belongsToMany** | User ↔ Roles | Многие ко многим |
-| **hasManyThrough** | Country → Posts (через Users) | Через промежуточную модель |
-| **Polymorphic** | Comments для разных моделей | Универсальная связь |
+| **hasOne / belongsTo** | User → Profile | Um para um |
+| **hasMany / belongsTo** | User → Posts | Um para muitos |
+| **belongsToMany** | User ↔ Roles | Muitos para muitos |
+| **hasManyThrough** | Country → Posts (via Users) | Via model intermediário |
+| **Polymorphic** | Comments para models diferentes | Relacionamento genérico |
 
 ---
 
-## Eager Loading (N+1 проблема)
+## Eager Loading (problema N+1)
 
-### Проблема N+1
+### O problema N+1
 
 ```php
-// ❌ ПЛОХО: N+1 запросов
-$users = User::all();  // 1 запрос
+// ❌ RUIM: N+1 queries
+$users = User::all();  // 1 query
 
 foreach ($users as $user) {
-    echo $user->profile->bio;  // N запросов
+    echo $user->profile->bio;  // N queries
 }
 
-// ✅ ХОРОШО: 2 запроса
-$users = User::with('profile')->get();  // 2 запроса (users + profiles)
+// ✅ BOM: 2 queries
+$users = User::with('profile')->get();  // 2 queries (users + profiles)
 
 foreach ($users as $user) {
-    echo $user->profile->bio;  // Без запросов
+    echo $user->profile->bio;  // Sem query extra
 }
 ```
 
-### Вложенный Eager Loading
+### Eager Loading aninhado
 
 ```php
-// Вложенный eager loading
+// Eager loading aninhado
 $users = User::with(['posts.comments.user'])->get();
 
-// Условный eager loading
+// Eager loading condicional
 $users = User::with(['posts' => function ($query) {
     $query->where('published', true)->orderBy('created_at', 'desc');
 }])->get();
@@ -290,60 +291,60 @@ $users = User::with(['posts' => function ($query) {
 ```php
 $users = User::all();
 
-// Загрузить отношения после
+// Carregar relationships depois
 $users->load('posts');
 $users->load(['posts.comments']);
 
-// Загрузить только если не загружены
+// Carregar só se ainda não estiver carregado
 $users->loadMissing('posts');
 ```
 
 ---
 
-## Exists Queries (проверка наличия)
+## Exists Queries (checar existência)
 
 ```php
-// Пользователи с постами
+// Users com posts
 $users = User::has('posts')->get();
 
-// Пользователи с более чем 3 постами
+// Users com mais de 3 posts
 $users = User::has('posts', '>', 3)->get();
 
-// Пользователи с опубликованными постами
+// Users com posts publicados
 $users = User::whereHas('posts', function ($query) {
     $query->where('published', true);
 })->get();
 
-// Пользователи БЕЗ постов
+// Users SEM posts
 $users = User::doesntHave('posts')->get();
 ```
 
 ---
 
-## Counting Related Models
+## Contar models relacionados
 
 ```php
-// Подсчёт постов для каждого пользователя (1 запрос)
+// Conta posts de cada user (1 query)
 $users = User::withCount('posts')->get();
 
 foreach ($users as $user) {
-    echo $user->posts_count;  // Без дополнительных запросов
+    echo $user->posts_count;  // Sem query extra
 }
 
-// С условием
+// Com condição
 $users = User::withCount(['posts' => function ($query) {
     $query->where('published', true);
 }])->get();
 
-// Несколько счётчиков
+// Vários contadores
 $users = User::withCount(['posts', 'comments', 'likes'])->get();
 ```
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-### E-commerce отношения
+### Relacionamentos de e-commerce
 
 ```php
 // User hasMany Orders
@@ -415,7 +416,7 @@ class Product extends Model
     }
 }
 
-// Использование
+// Uso
 $user = User::with(['orders.items.product'])->find(1);
 
 foreach ($user->orders as $order) {
@@ -428,7 +429,7 @@ foreach ($user->orders as $order) {
 ### Polymorphic Comments
 
 ```php
-// Comment для Post, Video, Product
+// Comment para Post, Video, Product
 class Comment extends Model
 {
     public function commentable()
@@ -460,56 +461,56 @@ class Video extends Model
     use HasComments;
 }
 
-// Использование
+// Uso
 $post = Post::find(1);
 $post->comments()->create([
     'user_id' => auth()->id(),
-    'body' => 'Great post!',
+    'body' => 'Ótimo post!',
 ]);
 
-// Получить все комментарии с пользователем
+// Pegar todos os comments com o user
 $comments = $post->comments()->with('user')->get();
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Типы связей:**
+**Tipos de relacionamento:**
 - hasOne/belongsTo (1:1) — User → Profile
 - hasMany/belongsTo (1:N) — User → Posts
-- belongsToMany (N:N) — User ↔ Roles (через pivot таблицу)
-- hasManyThrough — Country → Posts через Users
-- Polymorphic — универсальные связи (Comments для разных моделей)
+- belongsToMany (N:N) — User ↔ Roles (via tabela pivot)
+- hasManyThrough — Country → Posts via Users
+- Polymorphic — relationship genérica (Comments para models diferentes)
 
 **Eager Loading:**
-- `with()` загружает связи заранее (решает N+1 проблему)
-- `load()` загружает после получения модели
-- Вложенный: `with(['posts.comments.user'])`
+- `with()` carrega as relationships de antemão (resolve o N+1)
+- `load()` carrega depois que você já tem o model
+- Aninhado: `with(['posts.comments.user'])`
 
-**Работа с Many to Many:**
-- `attach()` — прикрепить
-- `detach()` — открепить
-- `sync()` — синхронизировать
-- `withPivot()` — дополнительные поля в pivot
+**Many to Many:**
+- `attach()` — anexa
+- `detach()` — remove
+- `sync()` — sincroniza
+- `withPivot()` — campos extras no pivot
 
-**Запросы:**
-- `has()` / `whereHas()` — фильтрация по наличию связей
-- `withCount()` — подсчёт без загрузки
-- `doesntHave()` — отсутствие связей
+**Queries:**
+- `has()` / `whereHas()` — filtra pela existência da relationship
+- `withCount()` — conta sem carregar
+- `doesntHave()` — ausência de relationship
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой belongsToMany с pivot
+### Exercício 1: Configure belongsToMany com pivot
 
-У тебя есть `User` и `Project`. Пользователь может быть в нескольких проектах с ролью (`role`) и датой присоединения (`joined_at`). Настрой связь.
+**Enunciado:** Você tem `User` e `Project`. O usuário pode estar em vários projects, com role (`role`) e data de entrada (`joined_at`). Configure a relationship.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration: create_project_user_table
@@ -545,7 +546,7 @@ class Project extends Model
     }
 }
 
-// Использование
+// Uso
 $user->projects()->attach($projectId, [
     'role' => 'admin',
     'joined_at' => now(),
@@ -557,9 +558,9 @@ foreach ($user->projects as $project) {
 ```
 </details>
 
-### Задание 2: Исправь N+1 проблему
+### Exercício 2: Corrija o N+1
 
-Что не так в этом коде? Исправь.
+**Enunciado:** O que está errado neste código? Corrija.
 
 ```php
 $users = User::all();
@@ -574,12 +575,12 @@ return response()->json([
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Проблема: N+1 запросов для posts
+// Problema: N+1 queries para posts
 
-// Решение
+// Solução
 $users = User::withCount('posts')
     ->with(['posts' => function ($query) {
         $query->latest()->limit(1);
@@ -589,19 +590,19 @@ $users = User::withCount('posts')
 return response()->json([
     'data' => $users->map(fn($user) => [
         'name' => $user->name,
-        'posts_count' => $user->posts_count,  // Из withCount
-        'latest_post' => $user->posts->first()?->title,  // Из with
+        'posts_count' => $user->posts_count,  // Do withCount
+        'latest_post' => $user->posts->first()?->title,  // Do with
     ]),
 ]);
 ```
 </details>
 
-### Задание 3: Реализуй Polymorphic связь
+### Exercício 3: Implemente relationship polimórfica
 
-Создай `Image` модель которая может быть прикреплена к `Post`, `User`, `Product`. Реализуй связь.
+**Enunciado:** Crie o model `Image` que pode ser anexado a `Post`, `User` e `Product`. Implemente a relationship.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // Migration: create_images_table
@@ -623,7 +624,7 @@ class Image extends Model
     }
 }
 
-// Trait для переиспользования
+// Trait para reutilizar
 trait HasImages
 {
     public function images()
@@ -653,21 +654,21 @@ class Product extends Model
     use HasImages;
 }
 
-// Использование
+// Uso
 $post = Post::find(1);
 $post->images()->create(['url' => 'https://example.com/image.jpg']);
 
-$images = $post->images;  // Все изображения поста
+$images = $post->images;  // Todas as imagens do post
 
-// Получить все изображения с их владельцами
+// Pegar todas as imagens com os donos
 $images = Image::with('imageable')->get();
 
 foreach ($images as $image) {
-    $owner = $image->imageable;  // Post, User или Product
+    $owner = $image->imageable;  // Post, User ou Product
 }
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,44 +1,44 @@
 # 5.2 Query Builder
 
-## Краткое резюме
+## Resumo
 
-> **Query Builder** — fluent интерфейс для построения SQL запросов без написания чистого SQL.
+> **Query Builder** é uma interface fluente para montar SQL sem escrever SQL puro.
 >
-> **Основа:** `DB::table('users')` + методы `where()`, `join()`, `groupBy()`, `orderBy()`.
+> **Base:** `DB::table('users')` + métodos `where()`, `join()`, `groupBy()`, `orderBy()`.
 >
-> **Защита:** автоматическая защита от SQL injection через параметры.
+> **Proteção:** SQL injection fica bloqueado — os valores vão como parâmetro.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Базовые запросы](#как-работает)
-- [INSERT, UPDATE, DELETE](#как-работает)
-- [JOIN](#как-работает)
-- [Aggregates](#как-работает)
-- [Транзакции](#пример-из-практики)
-- [Когда использовать](#когда-использовать)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Query Builder — fluent интерфейс для построения SQL запросов. Защищает от SQL injection, поддерживает все базы данных.
-
-**Основное:**
-- `DB::table()` — начало запроса
-- Fluent методы: where, join, groupBy, orderBy
-- Защита от SQL injection
+- [O que é](#o-que-é)
+- [Consultas básicas](#como-funciona)
+- [INSERT, UPDATE, DELETE](#como-funciona)
+- [JOIN](#como-funciona)
+- [Aggregates](#como-funciona)
+- [Transações](#exemplo-prático)
+- [Quando usar](#quando-usar)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Базовые запросы:**
+**O que é:**
+Query Builder é uma interface fluente para montar SQL. Protege contra SQL injection. Funciona em qualquer banco que o Laravel suporte.
+
+**O essencial:**
+- `DB::table()` — começa a query
+- Métodos fluentes: where, join, groupBy, orderBy
+- Proteção contra SQL injection
+
+---
+
+## Como funciona
+
+**Consultas básicas:**
 
 ```php
 use Illuminate\Support\Facades\DB;
@@ -48,13 +48,13 @@ $users = DB::table('users')->get();
 $user = DB::table('users')->where('id', 1)->first();
 $email = DB::table('users')->where('id', 1)->value('email');
 
-// SELECT с условиями
+// SELECT com condições
 $users = DB::table('users')
     ->where('active', true)
     ->where('age', '>', 18)
     ->get();
 
-// OR условие
+// Condição OR
 $users = DB::table('users')
     ->where('role', 'admin')
     ->orWhere('role', 'moderator')
@@ -77,71 +77,71 @@ $users = DB::table('users')
 
 // WHERE LIKE
 $users = DB::table('users')
-    ->where('name', 'like', '%John%')
+    ->where('name', 'like', '%João%')
     ->get();
 ```
 
 **INSERT:**
 
 ```php
-// Вставить одну запись
+// Inserir um registro
 DB::table('users')->insert([
-    'name' => 'John',
-    'email' => 'john@example.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
 ]);
 
-// Вставить несколько
+// Inserir vários
 DB::table('users')->insert([
-    ['name' => 'John', 'email' => 'john@example.com'],
-    ['name' => 'Jane', 'email' => 'jane@example.com'],
+    ['name' => 'João', 'email' => 'joao@email.com'],
+    ['name' => 'Maria', 'email' => 'maria@email.com'],
 ]);
 
-// Вставить и получить ID
+// Inserir e pegar o ID
 $id = DB::table('users')->insertGetId([
-    'name' => 'John',
-    'email' => 'john@example.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
 ]);
 
-// Вставить или обновить (upsert)
+// Inserir ou atualizar (upsert)
 DB::table('users')->upsert([
-    ['email' => 'john@example.com', 'name' => 'John'],
-    ['email' => 'jane@example.com', 'name' => 'Jane'],
-], ['email'], ['name']);  // Уникальные поля, обновляемые поля
+    ['email' => 'joao@email.com', 'name' => 'João'],
+    ['email' => 'maria@email.com', 'name' => 'Maria'],
+], ['email'], ['name']);  // Campos únicos, campos que atualizam
 ```
 
 **UPDATE:**
 
 ```php
-// Обновить
+// Atualizar
 DB::table('users')
     ->where('id', 1)
-    ->update(['name' => 'John Doe']);
+    ->update(['name' => 'João Silva']);
 
-// Инкремент/декремент
+// increment / decrement
 DB::table('users')->increment('views');
 DB::table('users')->increment('views', 5);
 DB::table('users')->decrement('likes');
 
-// Инкремент с дополнительным update
+// increment com update extra
 DB::table('users')->increment('views', 1, ['updated_at' => now()]);
 
 // Update or Insert
 DB::table('users')->updateOrInsert(
-    ['email' => 'john@example.com'],  // Условие поиска
-    ['name' => 'John', 'active' => true]  // Данные для update/insert
+    ['email' => 'joao@email.com'],  // Condição de busca
+    ['name' => 'João', 'active' => true]  // Dados do update/insert
 );
 ```
 
 **DELETE:**
 
 ```php
-// Удалить
+// Deletar
 DB::table('users')->where('id', 1)->delete();
 
-// Удалить все
+// Deletar todos
 DB::table('users')->delete();
 
-// Truncate (быстрее)
+// Truncate (mais rápido)
 DB::table('users')->truncate();
 ```
 
@@ -159,14 +159,14 @@ $users = DB::table('users')
     ->leftJoin('profiles', 'users.id', '=', 'profiles.user_id')
     ->get();
 
-// Multiple JOIN
+// Vários JOIN
 $users = DB::table('users')
     ->join('orders', 'users.id', '=', 'orders.user_id')
     ->join('products', 'orders.product_id', '=', 'products.id')
     ->select('users.name', 'products.name as product')
     ->get();
 
-// JOIN с условием
+// JOIN com condição
 $users = DB::table('users')
     ->join('posts', function ($join) {
         $join->on('users.id', '=', 'posts.user_id')
@@ -188,15 +188,15 @@ $avg = DB::table('orders')->avg('amount');
 $min = DB::table('products')->min('price');
 $max = DB::table('products')->max('price');
 
-// Существование
-$exists = DB::table('users')->where('email', 'john@example.com')->exists();
-$notExists = DB::table('users')->where('email', 'john@example.com')->doesntExist();
+// Existência
+$exists = DB::table('users')->where('email', 'joao@email.com')->exists();
+$notExists = DB::table('users')->where('email', 'joao@email.com')->doesntExist();
 ```
 
 **GROUP BY, HAVING:**
 
 ```php
-// Группировка
+// Agrupamento
 $users = DB::table('orders')
     ->select('user_id', DB::raw('SUM(amount) as total'))
     ->groupBy('user_id')
@@ -213,47 +213,47 @@ $users = DB::table('orders')
 **ORDER BY, LIMIT:**
 
 ```php
-// Сортировка
+// Ordenação
 $users = DB::table('users')
     ->orderBy('name', 'asc')
     ->orderBy('created_at', 'desc')
     ->get();
 
-// Случайная сортировка
+// Ordenação aleatória
 $users = DB::table('users')->inRandomOrder()->get();
 
 // LIMIT, OFFSET
 $users = DB::table('users')->limit(10)->get();
 $users = DB::table('users')->offset(10)->limit(10)->get();
 
-// Пагинация
+// Paginação
 $users = DB::table('users')->paginate(15);
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Query Builder когда:**
-- Сложные JOIN запросы
-- Агрегатные функции
-- Raw SQL с параметрами
-- Bulk операции
+**Query Builder quando:**
+- JOIN complexo
+- Funções de agregação
+- Raw SQL com parâmetros
+- Operação em lote (bulk)
 
-**Eloquent когда:**
-- CRUD операции
-- Работа с relationships
+**Eloquent quando:**
+- CRUD
+- Relationships
 - Events, observers
 - Soft deletes
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Сложный запрос с JOIN и агрегацией:**
+**Query pesada com JOIN e agregação:**
 
 ```php
-// Пользователи с количеством заказов и общей суммой
+// Usuários com quantidade de pedidos e valor total
 $users = DB::table('users')
     ->leftJoin('orders', 'users.id', '=', 'orders.user_id')
     ->select(
@@ -272,7 +272,7 @@ $users = DB::table('users')
 **Subqueries:**
 
 ```php
-// Пользователи с последним заказом
+// Usuários com o último pedido
 $latestOrders = DB::table('orders')
     ->select('user_id', DB::raw('MAX(created_at) as last_order_date'))
     ->groupBy('user_id');
@@ -283,7 +283,7 @@ $users = DB::table('users')
     })
     ->get();
 
-// Или через whereIn с subquery
+// Ou com whereIn e subquery
 $activeUsers = DB::table('users')
     ->whereIn('id', function ($query) {
         $query->select('user_id')
@@ -307,11 +307,11 @@ DB::transaction(function () {
     ]);
 });
 
-// Ручное управление транзакциями
+// Controle manual da transação
 DB::beginTransaction();
 
 try {
-    // Запросы
+    // Queries
     DB::table('users')->where('id', 1)->update(['balance' => DB::raw('balance - 100')]);
     DB::table('users')->where('id', 2)->update(['balance' => DB::raw('balance + 100')]);
 
@@ -325,7 +325,7 @@ try {
 **Raw expressions:**
 
 ```php
-// DB::raw() для сложных выражений
+// DB::raw() para expressões complexas
 $users = DB::table('users')
     ->select(DB::raw('COUNT(*) as user_count, status'))
     ->where('status', '<>', 1)
@@ -343,18 +343,18 @@ $users = DB::table('users')
     ->get();
 ```
 
-**Chunking (обработка больших данных):**
+**Chunking (volume grande):**
 
 ```php
-// Обработка по частям (экономия памяти)
+// Processar em partes (economiza memória)
 DB::table('users')->orderBy('id')->chunk(100, function ($users) {
     foreach ($users as $user) {
-        // Обработать пользователя
+        // Processar o usuário
         processUser($user);
     }
 });
 
-// Lazy (Generator под капотом)
+// Lazy (Generator por baixo)
 DB::table('users')->orderBy('id')->lazy()->each(function ($user) {
     processUser($user);
 });
@@ -380,7 +380,7 @@ $users = DB::table('users')
     })
     ->get();
 
-// unless (противоположность when)
+// unless (o inverso de when)
 $users = DB::table('users')
     ->unless(auth()->user()->isAdmin(), function ($query) {
         return $query->where('user_id', auth()->id());
@@ -388,18 +388,18 @@ $users = DB::table('users')
     ->get();
 ```
 
-**Debugging:**
+**Debug:**
 
 ```php
-// Получить SQL запрос
+// Pegar o SQL
 $query = DB::table('users')->where('active', true)->toSql();
 // SELECT * FROM users WHERE active = ?
 
-// С параметрами
+// Com os parâmetros
 $query = DB::table('users')->where('active', true);
 dd($query->toSql(), $query->getBindings());
 
-// Вывести запрос в лог
+// Mandar a query para o log
 DB::enableQueryLog();
 
 DB::table('users')->where('active', true)->get();
@@ -407,7 +407,7 @@ DB::table('users')->where('active', true)->get();
 $queries = DB::getQueryLog();
 dd($queries);
 
-// Вывести все запросы (в AppServiceProvider)
+// Logar todas as queries (no AppServiceProvider)
 DB::listen(function ($query) {
     Log::info('Query', [
         'sql' => $query->sql,
@@ -419,20 +419,20 @@ DB::listen(function ($query) {
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Query Builder — fluent интерфейс для SQL с защитой от инъекций. DB::table() для начала, методы where/join/groupBy/orderBy для построения. Transactions через DB::transaction() или beginTransaction/commit/rollBack. chunk/lazy/cursor для больших данных (экономия памяти). DB::raw() для сложных выражений. when() для условных clauses. toSql()/getBindings() для отладки. Использую Query Builder для сложных JOIN и агрегаций, Eloquent для CRUD и relationships."
+> "Query Builder é interface fluente para SQL, com proteção contra injection. Começo com DB::table() e monto com where, join, groupBy, orderBy. Transação: DB::transaction() ou beginTransaction/commit/rollBack. Volume grande: chunk, lazy, cursor — economiza memória. DB::raw() para expressão complexa. when() para cláusula condicional. toSql() e getBindings() para debug. Query Builder no JOIN pesado e na agregação. Eloquent no CRUD e no relationship."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Построй сложный отчет
+### Exercício 1: Monte um relatório complexo
 
-Получи список пользователей с количеством их заказов и общей суммой покупок за последние 30 дней.
+**Enunciado:** Traga a lista de usuários com a quantidade de pedidos e o valor total das compras nos últimos 30 dias.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 $users = DB::table('users')
@@ -453,38 +453,38 @@ $users = DB::table('users')
 ```
 </details>
 
-### Задание 2: Реализуй транзакцию перевода
+### Exercício 2: Implemente a transação de transferência
 
-Реализуй перевод денег между двумя пользователями с проверкой баланса.
+**Enunciado:** Implemente a transferência de dinheiro entre dois usuários, com checagem de saldo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 public function transfer(int $fromUserId, int $toUserId, float $amount): void
 {
     DB::transaction(function () use ($fromUserId, $toUserId, $amount) {
-        // Получить баланс отправителя с блокировкой
+        // Pega o saldo do remetente com lock
         $fromUser = DB::table('users')
             ->where('id', $fromUserId)
             ->lockForUpdate()
             ->first();
 
         if (!$fromUser || $fromUser->balance < $amount) {
-            throw new \Exception('Insufficient funds');
+            throw new \Exception('Saldo insuficiente');
         }
 
-        // Списать у отправителя
+        // Debita o remetente
         DB::table('users')
             ->where('id', $fromUserId)
             ->update(['balance' => DB::raw("balance - {$amount}")]);
 
-        // Зачислить получателю
+        // Credita o destinatário
         DB::table('users')
             ->where('id', $toUserId)
             ->update(['balance' => DB::raw("balance + {$amount}")]);
 
-        // Записать транзакцию
+        // Grava a transação
         DB::table('transactions')->insert([
             'from_user_id' => $fromUserId,
             'to_user_id' => $toUserId,
@@ -496,15 +496,15 @@ public function transfer(int $fromUserId, int $toUserId, float $amount): void
 ```
 </details>
 
-### Задание 3: Обработай большую выборку
+### Exercício 3: Processe uma seleção grande
 
-Обнови поле `status` для 100,000 неактивных пользователей порциями, чтобы не упала память.
+**Enunciado:** Atualize o campo `status` de 100.000 usuários inativos em partes, para a memória não estourar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Вариант 1: chunk
+// Opção 1: chunk
 DB::table('users')
     ->where('last_login_at', '<', now()->subYear())
     ->where('status', 'active')
@@ -519,10 +519,10 @@ DB::table('users')
                 'updated_at' => now(),
             ]);
 
-        Log::info("Updated {$users->count()} users");
+        Log::info("Atualizados {$users->count()} usuários");
     });
 
-// Вариант 2: lazy (более эффективно)
+// Opção 2: lazy (mais eficiente)
 DB::table('users')
     ->where('last_login_at', '<', now()->subYear())
     ->where('status', 'active')
@@ -538,4 +538,4 @@ DB::table('users')
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

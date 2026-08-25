@@ -1,30 +1,30 @@
 # 5.7 API Resources
 
-## Что это
+## O que é
 
-**Что это:**
-API Resources — слой трансформации моделей в JSON. Контролируют, какие данные и в каком формате возвращать в API.
+**O que é:**
+API Resources transformam models em JSON. Você controla o que volta na API e em que formato.
 
-**Основное:**
-- Resource — для одной модели
-- ResourceCollection — для коллекций
-- Скрывают внутреннюю структуру БД
+**O essencial:**
+- Resource — um model
+- ResourceCollection — coleção
+- Escondem a estrutura interna do banco
 
 ---
 
-## Как работает
+## Como funciona
 
-**Создание Resource:**
+**Criar o Resource:**
 
 ```bash
-# Resource для одной модели
+# Resource para um model
 php artisan make:resource UserResource
 
-# Resource для коллекции
+# Resource para coleção
 php artisan make:resource UserCollection
 ```
 
-**Базовый Resource:**
+**Resource básico:**
 
 ```php
 namespace App\Http\Resources;
@@ -46,7 +46,7 @@ class UserResource extends JsonResource
 }
 ```
 
-**Использование в контроллере:**
+**Uso no controller:**
 
 ```php
 use App\Http\Resources\UserResource;
@@ -67,7 +67,7 @@ class UserController extends Controller
 }
 ```
 
-**Resource с relationships:**
+**Resource com relationships:**
 
 ```php
 class PostResource extends JsonResource
@@ -81,13 +81,13 @@ class PostResource extends JsonResource
             'body' => $this->body,
             'created_at' => $this->created_at->toISOString(),
 
-            // Всегда загружать автора
+            // Autor — só se veio no eager load
             'author' => new UserResource($this->whenLoaded('user')),
 
-            // Условно загружать комментарии
+            // Comments — só se vieram no eager load
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
 
-            // Условное поле
+            // Campo condicional
             'is_editable' => $this->when(
                 $request->user()?->can('update', $this->resource),
                 true
@@ -96,7 +96,7 @@ class PostResource extends JsonResource
     }
 }
 
-// В контроллере с eager loading
+// No controller, com eager loading
 public function show(Post $post)
 {
     return new PostResource($post->load(['user', 'comments']));
@@ -112,7 +112,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class PostCollection extends ResourceCollection
 {
-    // Обернуть в data
+    // Envolver em data
     public $collects = PostResource::class;
 
     public function toArray(Request $request): array
@@ -127,17 +127,17 @@ class PostCollection extends ResourceCollection
         ];
     }
 
-    // Добавить дополнительные данные
+    // Dados extras
     public function with(Request $request): array
     {
         return [
             'success' => true,
-            'message' => 'Posts retrieved successfully',
+            'message' => 'Posts listados com sucesso',
         ];
     }
 }
 
-// Использование
+// Uso
 public function index()
 {
     $posts = Post::with('user')->paginate(20);
@@ -148,23 +148,23 @@ public function index()
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй API Resources когда:**
+**Use API Resources quando:**
 - API endpoints
-- Нужно скрыть поля модели
-- Трансформация данных
-- Условные поля
+- Precisa esconder campo do model
+- Precisa transformar dado
+- Campo condicional
 
-**Не используй когда:**
-- Внутренние запросы (между сервисами)
-- Простой CRUD без трансформации
+**Não use quando:**
+- Request interno (entre serviços)
+- CRUD simples, sem transformação
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Комплексный Resource с условной логикой:**
+**Resource completo com lógica condicional:**
 
 ```php
 namespace App\Http\Resources;
@@ -179,31 +179,31 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'total' => $this->total,
 
-            // Форматирование даты
+            // Formatar data
             'created_at' => $this->created_at->toISOString(),
             'created_at_human' => $this->created_at->diffForHumans(),
 
-            // Вложенные ресурсы
+            // Resources aninhados
             'user' => new UserResource($this->whenLoaded('user')),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
 
-            // Условные поля (только для владельца или админа)
+            // Campos condicionais (só dono ou admin)
             $this->mergeWhen($this->isViewableBy($request->user()), [
                 'payment_method' => $this->payment_method,
                 'billing_address' => $this->billing_address,
                 'shipping_address' => $this->shipping_address,
             ]),
 
-            // Условное поле
+            // Campo condicional
             'can_cancel' => $this->when(
                 $request->user()?->can('cancel', $this->resource),
                 true
             ),
 
-            // Computed поле
+            // Campo computed
             'is_shipped' => $this->status === 'shipped',
 
-            // Pivot данные
+            // Dados do pivot
             'pivot' => $this->whenPivotLoaded('order_product', function () {
                 return [
                     'quantity' => $this->pivot->quantity,
@@ -213,7 +213,7 @@ class OrderResource extends JsonResource
         ];
     }
 
-    // Дополнительные мета-данные
+    // Metadados extras
     public function with(Request $request): array
     {
         return [
@@ -244,23 +244,23 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'avatar_url' => $this->avatar_url,
 
-            // Вложенные коллекции
+            // Coleções aninhadas
             'posts' => PostResource::collection($this->whenLoaded('posts')),
             'orders' => OrderResource::collection($this->whenLoaded('orders')),
 
-            // Счётчики
+            // Contadores
             'posts_count' => $this->when(
                 $this->posts_count !== null,
                 $this->posts_count
             ),
 
-            // Последний пост
+            // Último post
             'latest_post' => new PostResource($this->whenLoaded('latestPost')),
         ];
     }
 }
 
-// Контроллер
+// Controller
 public function show(User $user)
 {
     return new UserResource(
@@ -281,16 +281,16 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
 
-            // Показать body только для авторизованных
+            // body só para autenticados
             'body' => $this->when($request->user(), $this->body),
 
-            // Показать только для админов
+            // Só para admin
             $this->mergeWhen($request->user()?->isAdmin(), [
                 'views_count' => $this->views,
                 'ip_address' => $this->ip_address,
             ]),
 
-            // Показать draft только для автора
+            // draft só para o autor
             'draft' => $this->when(
                 $request->user()?->id === $this->user_id,
                 $this->draft
@@ -300,12 +300,12 @@ class PostResource extends JsonResource
 }
 ```
 
-**Resource с параметрами:**
+**Resource com parâmetros:**
 
 ```php
 class PostResource extends JsonResource
 {
-    // Передать параметры через конструктор
+    // Passar parâmetros pelo construtor
     public function __construct($resource, private bool $detailed = false)
     {
         parent::__construct($resource);
@@ -319,7 +319,7 @@ class PostResource extends JsonResource
             'excerpt' => $this->excerpt,
         ];
 
-        // Детальная версия
+        // Versão detalhada
         if ($this->detailed) {
             $data['body'] = $this->body;
             $data['meta_description'] = $this->meta_description;
@@ -330,7 +330,7 @@ class PostResource extends JsonResource
     }
 }
 
-// Использование
+// Uso
 return new PostResource($post, detailed: true);
 ```
 
@@ -374,24 +374,24 @@ class PostCollection extends ResourceCollection
 **Wrapping and Unwrapping:**
 
 ```php
-// Изменить обёртку (по умолчанию 'data')
+// Trocar o wrap (padrão: 'data')
 class PostResource extends JsonResource
 {
-    public static $wrap = 'post';  // Обернуть в 'post'
+    public static $wrap = 'post';  // Envolver em 'post'
 }
 
-// Или отключить обёртку
+// Ou desligar o wrap
 class PostResource extends JsonResource
 {
     public static $wrap = null;
 }
 
-// Или глобально в AppServiceProvider
+// Ou global no AppServiceProvider
 use Illuminate\Http\Resources\Json\JsonResource;
 
 public function boot(): void
 {
-    JsonResource::withoutWrapping();  // Отключить для всех
+    JsonResource::withoutWrapping();  // Desligar para todos
 }
 ```
 
@@ -408,7 +408,7 @@ class PostController extends Controller
     }
 }
 
-// Вернёт:
+// Retorna:
 {
     "data": [...],
     "links": {
@@ -443,6 +443,10 @@ class UserResource extends JsonResource
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "API Resources трансформируют модели в JSON. Resource для одной модели, ResourceCollection для коллекций. toArray() определяет структуру. whenLoaded() для relationships (избегает N+1). when() для условных полей. mergeWhen() для группы полей. ResourceCollection::collection() для пагинации. with() для дополнительных мета-данных. withoutWrapping() отключает обёртку data. Использую для API endpoints, скрытия полей, трансформации данных."
+> "API Resources transformam models em JSON. Resource para um model, ResourceCollection para coleção. toArray() define a estrutura. whenLoaded() nos relationships — evita N+1. when() para campo condicional. mergeWhen() para um grupo de campos. ResourceCollection::collection() para paginação. with() para metadados extras. withoutWrapping() tira o wrap data. Uso em API endpoints, para esconder campo e transformar dado."
+
+---
+
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
