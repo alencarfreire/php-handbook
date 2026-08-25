@@ -1,74 +1,74 @@
 # 8.1 XSS (Cross-Site Scripting)
 
-## Краткое резюме
+## Resumo
 
-> **XSS (Cross-Site Scripting)** — внедрение вредоносного JavaScript в веб-страницу для кражи cookies, токенов или выполнения действий от имени пользователя.
+> **XSS (Cross-Site Scripting)** — injeção de JavaScript malicioso na página para roubar cookies, tokens ou executar ações em nome do usuário.
 >
-> **Типы:** Reflected (через URL), Stored (в БД), DOM-based (через JavaScript).
+> **Tipos:** Reflected (pela URL), Stored (no banco), DOM-based (pelo JavaScript).
 >
-> **Защита:** Blade `{{ }}` автоматически экранирует, HTMLPurifier для rich text, Content Security Policy, HTTPOnly cookies.
+> **Proteção:** Blade `{{ }}` escapa automaticamente, HTMLPurifier para rich text, Content Security Policy, HTTPOnly cookies.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать защиту](#когда-использовать-защиту)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-XSS — внедрение вредоносного JavaScript в веб-страницу. Атакующий может украсть cookies, токены, выполнить действия от имени пользователя.
-
-**Типы XSS:**
-- **Reflected XSS** — через URL параметры
-- **Stored XSS** — сохранён в БД
-- **DOM-based XSS** — через JavaScript
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Reflected XSS (через URL):**
+**O que é:**
+XSS é injetar JavaScript malicioso na página. O atacante pode roubar cookies, tokens e executar ações em nome do usuário.
+
+**Tipos de XSS:**
+- **Reflected XSS** — pelos parâmetros da URL
+- **Stored XSS** — gravado no banco
+- **DOM-based XSS** — pelo JavaScript
+
+---
+
+## Como funciona
+
+**Reflected XSS (pela URL):**
 
 ```php
-// ❌ УЯЗВИМЫЙ код
+// ❌ Código VULNERÁVEL
 Route::get('/search', function (Request $request) {
     $query = $request->input('q');
-    return "Результаты поиска: {$query}";
+    return "Resultados da busca: {$query}";
 });
 
-// Атака:
+// Ataque:
 // /search?q=<script>alert('XSS')</script>
-// Выполнится JavaScript
+// O JavaScript executa
 
-// ✅ ЗАЩИТА: экранирование
+// ✅ PROTEÇÃO: escape
 Route::get('/search', function (Request $request) {
     $query = htmlspecialchars($request->input('q'), ENT_QUOTES, 'UTF-8');
-    return "Результаты поиска: {$query}";
+    return "Resultados da busca: {$query}";
 });
 
-// Или через Blade (автоматически экранирует)
+// Ou via Blade (escapa automaticamente)
 return view('search', ['query' => $request->input('q')]);
-// В Blade: Результаты: {{ $query }}
+// No Blade: Resultados: {{ $query }}
 ```
 
-**Stored XSS (сохранён в БД):**
+**Stored XSS (gravado no banco):**
 
 ```php
-// ❌ УЯЗВИМЫЙ код
+// ❌ Código VULNERÁVEL
 class CommentController extends Controller
 {
     public function store(Request $request)
     {
         Comment::create([
-            'body' => $request->input('body'),  // Не валидируется
+            'body' => $request->input('body'),  // Sem validação
         ]);
     }
 
@@ -78,13 +78,13 @@ class CommentController extends Controller
     }
 }
 
-// В Blade (без экранирования)
-{!! $comment->body !!}  // ❌ Выполнит <script>
+// No Blade (sem escape)
+{!! $comment->body !!}  // ❌ Executa o <script>
 
-// Атакующий отправляет:
+// O atacante envia:
 // body: <script>fetch('/steal-token?token='+document.cookie)</script>
 
-// ✅ ЗАЩИТА 1: Валидация
+// ✅ PROTEÇÃO 1: Validação
 public function store(Request $request)
 {
     $validated = $request->validate([
@@ -94,10 +94,10 @@ public function store(Request $request)
     Comment::create($validated);
 }
 
-// ✅ ЗАЩИТА 2: Экранирование в Blade
-{{ $comment->body }}  // Автоматически htmlspecialchars()
+// ✅ PROTEÇÃO 2: Escape no Blade
+{{ $comment->body }}  // htmlspecialchars() automático
 
-// ✅ ЗАЩИТА 3: Очистка HTML (если нужен rich text)
+// ✅ PROTEÇÃO 3: Limpar HTML (se precisar de rich text)
 use Mews\Purifier\Facades\Purifier;
 
 public function store(Request $request)
@@ -111,76 +111,76 @@ public function store(Request $request)
 **DOM-based XSS:**
 
 ```javascript
-// ❌ УЯЗВИМЫЙ JavaScript
+// ❌ JavaScript VULNERÁVEL
 const params = new URLSearchParams(window.location.search);
 const message = params.get('msg');
-document.getElementById('output').innerHTML = message;  // Опасно!
+document.getElementById('output').innerHTML = message;  // Perigoso!
 
-// Атака:
+// Ataque:
 // ?msg=<img src=x onerror="alert('XSS')">
 
-// ✅ ЗАЩИТА
-document.getElementById('output').textContent = message;  // Безопасно
+// ✅ PROTEÇÃO
+document.getElementById('output').textContent = message;  // Seguro
 ```
 
 ---
 
-## Когда использовать защиту
+## Quando usar
 
-**Всегда защищайся от XSS:**
-- ✅ Любой пользовательский ввод
-- ✅ URL параметры
-- ✅ Формы
-- ✅ API данные
+**Sempre se proteja de XSS:**
+- ✅ Qualquer input do usuário
+- ✅ Parâmetros da URL
+- ✅ Formulários
+- ✅ Dados da API
 
-**Laravel защищает автоматически:**
-- Blade {{ }} экранирует HTML
-- Form Request валидирует
-- CSRF токены
+**O Laravel protege automaticamente:**
+- Blade {{ }} escapa HTML
+- Form Request valida
+- Tokens CSRF
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Безопасный вывод в Blade:**
+**Saída segura no Blade:**
 
 ```blade
-{{-- ✅ Автоматически экранирует --}}
+{{-- ✅ Escapa automaticamente --}}
 <h1>{{ $post->title }}</h1>
 <p>{{ $comment->body }}</p>
 
-{{-- ❌ НЕ экранирует (только для доверенного HTML) --}}
+{{-- ❌ NÃO escapa (só para HTML confiável) --}}
 {!! $post->body !!}
 
-{{-- ✅ Безопасный rich text --}}
+{{-- ✅ Rich text seguro --}}
 {!! Purifier::clean($post->body) !!}
 
-{{-- ✅ Экранирование в атрибутах --}}
+{{-- ✅ Escape em atributos --}}
 <input type="text" value="{{ $user->name }}">
 <a href="{{ $url }}">Link</a>
 
-{{-- ❌ ОПАСНО: JavaScript контекст --}}
+{{-- ❌ PERIGOSO: contexto JavaScript --}}
 <script>
-    var name = "{{ $user->name }}";  // Может сломать JS
+    var name = "{{ $user->name }}";  // Pode quebrar o JS
 </script>
 
-{{-- ✅ Безопасно: JSON encode --}}
+{{-- ✅ Seguro: JSON encode --}}
 <script>
     var user = @json($user);  // Laravel helper
 </script>
 ```
 
-**HTMLPurifier для rich text:**
+**HTMLPurifier para rich text:**
 
 ```bash
 composer require mews/purifier
 ```
 
 ```php
-// config/purifier.php (опубликовать)
+// config/purifier.php (publicar)
 php artisan vendor:publish --provider="Mews\Purifier\PurifierServiceProvider"
 
-// Использование
+// Uso
 use Mews\Purifier\Facades\Purifier;
 
 class PostController extends Controller
@@ -194,13 +194,13 @@ class PostController extends Controller
 
         Post::create([
             'title' => $validated['title'],
-            'body' => Purifier::clean($validated['body']),  // Очистка
+            'body' => Purifier::clean($validated['body']),  // Limpeza
         ]);
     }
 }
 
-// В Blade
-{!! $post->body !!}  // Безопасно (уже очищен)
+// No Blade
+{!! $post->body !!}  // Seguro (já foi limpo)
 ```
 
 **Content Security Policy (CSP):**
@@ -213,26 +213,26 @@ class AddSecurityHeaders
     {
         $response = $next($request);
 
-        // Запретить inline scripts
+        // Bloquear inline scripts
         $response->headers->set(
             'Content-Security-Policy',
             "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
         );
 
-        // Предотвратить XSS
+        // Prevenir XSS
         $response->headers->set('X-XSS-Protection', '1; mode=block');
 
-        // Предотвратить clickjacking
+        // Prevenir clickjacking
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
 
-        // Запретить MIME sniffing
+        // Bloquear MIME sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
         return $response;
     }
 }
 
-// Зарегистрировать в Kernel.php
+// Registrar em Kernel.php
 protected $middleware = [
     \App\Http\Middleware\AddSecurityHeaders::class,
 ];
@@ -242,21 +242,21 @@ protected $middleware = [
 
 ```php
 // config/session.php
-'http_only' => true,  // JavaScript не может прочитать cookie
+'http_only' => true,  // JavaScript não consegue ler o cookie
 
-// Установить cookie вручную
-return response('Content')->cookie(
+// Setar cookie na mão
+return response('Conteúdo')->cookie(
     'token',
     $value,
     $minutes = 60,
     $path = '/',
     $domain = null,
-    $secure = true,  // Только HTTPS
-    $httpOnly = true  // Защита от XSS
+    $secure = true,  // Só HTTPS
+    $httpOnly = true  // Proteção contra XSS
 );
 ```
 
-**Sanitize пользовательский ввод:**
+**Sanitizar o input do usuário:**
 
 ```php
 class CommentController extends Controller
@@ -267,10 +267,10 @@ class CommentController extends Controller
             'body' => 'required|string|max:1000',
         ]);
 
-        // Удалить HTML теги (если не нужен rich text)
+        // Remover tags HTML (se não precisar de rich text)
         $body = strip_tags($validated['body']);
 
-        // Или оставить только определённые теги
+        // Ou deixar só tags específicas
         $body = strip_tags($validated['body'], '<b><i><u><a>');
 
         Comment::create(['body' => $body]);
@@ -278,23 +278,23 @@ class CommentController extends Controller
 }
 ```
 
-**Vue.js / React защита:**
+**Proteção no Vue.js / React:**
 
 ```javascript
-// Vue автоматически экранирует
-<div>{{ message }}</div>  // Безопасно
+// Vue escapa automaticamente
+<div>{{ message }}</div>  // Seguro
 
-// v-html опасен
-<div v-html="message"></div>  // ❌ XSS уязвимость
+// v-html é perigoso
+<div v-html="message"></div>  // ❌ vulnerabilidade XSS
 
-// React автоматически экранирует
-<div>{message}</div>  // Безопасно
+// React escapa automaticamente
+<div>{message}</div>  // Seguro
 
-// dangerouslySetInnerHTML опасен
+// dangerouslySetInnerHTML é perigoso
 <div dangerouslySetInnerHTML={{__html: message}} />  // ❌ XSS
 ```
 
-**Тестирование на XSS:**
+**Teste de XSS:**
 
 ```php
 // tests/Feature/XssTest.php
@@ -310,30 +310,30 @@ class XssTest extends TestCase
 
         $comment = Comment::latest()->first();
 
-        // Проверить, что сохранён как есть
+        // Checar se gravou como está
         $this->assertEquals($xssPayload, $comment->body);
 
-        // Проверить, что экранирован при выводе
+        // Checar se escapou na saída
         $response = $this->get("/comments/{$comment->id}");
-        $response->assertDontSee('<script>', false);  // false = не экранировать в поиске
-        $response->assertSee('&lt;script&gt;', false);  // Экранированная версия
+        $response->assertDontSee('<script>', false);  // false = não escapar na busca
+        $response->assertSee('&lt;script&gt;', false);  // Versão escapada
     }
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "XSS — внедрение JavaScript в страницу. Типы: Reflected (через URL), Stored (в БД), DOM-based (через JS). Защита: Blade {{ }} автоматически экранирует, {!! !!} не экранирует. HTMLPurifier для rich text (Purifier::clean()). Content Security Policy запрещает inline scripts. HTTPOnly cookies защищают от кражи через JS. strip_tags() удаляет HTML. Всегда валидировать и экранировать пользовательский ввод. @json() для безопасной передачи в JavaScript."
+> "XSS é injetar JavaScript na página. Tipos: Reflected (pela URL), Stored (no banco), DOM-based (pelo JS). Proteção: Blade {{ }} escapa sozinho, {!! !!} não escapa. HTMLPurifier para rich text (Purifier::clean()). Content Security Policy bloqueia inline scripts. HTTPOnly cookies impedem roubo via JS. strip_tags() remove HTML. Sempre validar e escapar o input do usuário. @json() para passar dado pro JavaScript com segurança."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Исправь XSS уязвимость
+### Exercício 1: Corrija a vulnerabilidade XSS
 
-Что не так в этом коде? Исправь.
+O que está errado neste código? Corrija.
 
 ```php
 Route::get('/search', function (Request $request) {
@@ -342,25 +342,25 @@ Route::get('/search', function (Request $request) {
 });
 
 // search.blade.php
-<h1>Результаты поиска: {!! $query !!}</h1>
+<h1>Resultados da busca: {!! $query !!}</h1>
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Проблема: {!! !!} не экранирует HTML, возможна XSS атака через ?q=<script>alert('XSS')</script>
+// Problema: {!! !!} não escapa HTML. Dá XSS via ?q=<script>alert('XSS')</script>
 
-// Решение 1: Использовать {{ }} (автоматически экранирует)
+// Solução 1: Usar {{ }} (escapa automaticamente)
 Route::get('/search', function (Request $request) {
     $query = $request->input('q');
     return view('search', compact('query'));
 });
 
 // search.blade.php
-<h1>Результаты поиска: {{ $query }}</h1>
+<h1>Resultados da busca: {{ $query }}</h1>
 
-// Решение 2: Валидация и очистка
+// Solução 2: Validação e limpeza
 Route::get('/search', function (Request $request) {
     $validated = $request->validate([
         'q' => 'required|string|max:255',
@@ -371,22 +371,22 @@ Route::get('/search', function (Request $request) {
 });
 
 // search.blade.php
-<h1>Результаты поиска: {{ $query }}</h1>
+<h1>Resultados da busca: {{ $query }}</h1>
 ```
 </details>
 
-### Задание 2: Реализуй безопасный rich text редактор
+### Exercício 2: Implemente um editor rich text seguro
 
-Создай контроллер для сохранения HTML контента из WYSIWYG редактора с защитой от XSS.
+Crie um controller para salvar HTML de um editor WYSIWYG com proteção contra XSS.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Установить HTMLPurifier
+// 1. Instalar HTMLPurifier
 composer require mews/purifier
 
-// 2. Опубликовать конфиг
+// 2. Publicar o config
 php artisan vendor:publish --provider="Mews\Purifier\PurifierServiceProvider"
 
 // 3. PostController
@@ -401,7 +401,7 @@ class PostController extends Controller
             'body' => 'required|string',
         ]);
 
-        // Очистить HTML от опасных тегов
+        // Limpar HTML de tags perigosas
         $cleanBody = Purifier::clean($validated['body'], [
             'HTML.Allowed' => 'p,b,i,u,a[href],ul,ol,li,strong,em',
         ]);
@@ -416,12 +416,12 @@ class PostController extends Controller
     }
 }
 
-// 4. В Blade (безопасно, т.к. уже очищен)
+// 4. No Blade (seguro, já foi limpo)
 <div class="post-body">
     {!! $post->body !!}
 </div>
 
-// 5. config/purifier.php (настройка)
+// 5. config/purifier.php (configuração)
 return [
     'default' => [
         'HTML.Allowed' => 'p,b,i,u,a[href|title],ul,ol,li,strong,em,h2,h3',
@@ -431,12 +431,12 @@ return [
 ```
 </details>
 
-### Задание 3: Добавь Content Security Policy
+### Exercício 3: Adicione Content Security Policy
 
-Реализуй middleware для добавления CSP заголовков.
+Implemente um middleware para adicionar headers CSP.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/ContentSecurityPolicy.php
@@ -453,7 +453,7 @@ class ContentSecurityPolicy
     {
         $response = $next($request);
 
-        // CSP заголовок
+        // Header CSP
         $csp = [
             "default-src 'self'",
             "script-src 'self' https://cdn.jsdelivr.net",
@@ -466,7 +466,7 @@ class ContentSecurityPolicy
 
         $response->headers->set('Content-Security-Policy', implode('; ', $csp));
 
-        // Дополнительные security headers
+        // Headers de segurança extras
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('X-XSS-Protection', '1; mode=block');
@@ -475,13 +475,13 @@ class ContentSecurityPolicy
     }
 }
 
-// Регистрация в app/Http/Kernel.php
+// Registro em app/Http/Kernel.php
 protected $middleware = [
     // ...
     \App\Http\Middleware\ContentSecurityPolicy::class,
 ];
 
-// Альтернатива: использовать пакет
+// Alternativa: usar o pacote
 composer require spatie/laravel-csp
 
 // config/csp.php
@@ -499,4 +499,4 @@ return [
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

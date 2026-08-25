@@ -1,40 +1,40 @@
-# 8.5 Авторизация (Gates, Policies)
+# 8.5 Autorização (Gates, Policies)
 
-## Краткое резюме
+## Resumo
 
-> **Авторизация** — проверка прав доступа (что можешь делать?).
+> **Autorização** — checagem de permissão (o que você pode fazer?).
 >
-> **Инструменты:** Gates для простых проверок (closure), Policies для группировки логики вокруг модели (класс).
+> **Ferramentas:** Gates para checagem simples (closure), Policies para agrupar a lógica em volta do model (classe).
 >
-> **Важно:** `authorize()` в контроллере выбрасывает 403 при отсутствии прав. `@can` в Blade для условного отображения. Spatie Permission для ролей и прав.
+> **Importante:** `authorize()` no controller joga 403 se não tiver permissão. `@can` no Blade para mostrar/esconder. Spatie Permission para roles e permissões.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Авторизация — проверка прав доступа (что можешь делать?). Laravel предоставляет Gates и Policies.
-
-**Разница:**
-- **Gates** — простые проверки (closure)
-- **Policies** — группировка логики для модели (класс)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Gates (простые проверки):**
+**O que é:**
+Autorização — checagem de permissão (o que você pode fazer?). No Laravel você usa Gates e Policies.
+
+**A diferença:**
+- **Gates** — checagem simples (closure)
+- **Policies** — lógica agrupada por model (classe)
+
+---
+
+## Como funciona
+
+**Gates (checagem simples):**
 
 ```php
 // app/Providers/AuthServiceProvider.php
@@ -42,36 +42,36 @@ use Illuminate\Support\Facades\Gate;
 
 public function boot(): void
 {
-    // Простой gate
+    // Gate simples
     Gate::define('view-admin', function (User $user) {
         return $user->isAdmin();
     });
 
-    // С моделью
+    // Com model
     Gate::define('update-post', function (User $user, Post $post) {
         return $user->id === $post->user_id;
     });
 }
 
-// Использование в контроллере
+// Uso no controller
 if (Gate::allows('view-admin')) {
-    // Пользователь админ
+    // Usuário é admin
 }
 
 if (Gate::denies('update-post', $post)) {
     abort(403);
 }
 
-// Через middleware
+// Via middleware
 Route::middleware('can:view-admin')->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
 });
 
-// Через authorize()
-$this->authorize('update-post', $post);  // 403 если нет прав
+// Via authorize()
+$this->authorize('update-post', $post);  // 403 se não tiver permissão
 ```
 
-**Policies (для моделей):**
+**Policies (para models):**
 
 ```bash
 php artisan make:policy PostPolicy --model=Post
@@ -83,7 +83,7 @@ class PostPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;  // Все могут смотреть список
+        return true;  // Todo mundo pode ver a lista
     }
 
     public function view(User $user, Post $post): bool
@@ -107,17 +107,17 @@ class PostPolicy
     }
 }
 
-// Регистрация в AuthServiceProvider
+// Registro no AuthServiceProvider
 protected $policies = [
     Post::class => PostPolicy::class,
 ];
 
-// Использование
+// Uso
 class PostController extends Controller
 {
     public function update(Request $request, Post $post)
     {
-        $this->authorize('update', $post);  // 403 если нет прав
+        $this->authorize('update', $post);  // 403 se não tiver permissão
 
         $post->update($request->validated());
 
@@ -137,75 +137,75 @@ class PostController extends Controller
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Gates для:**
-- Простые проверки (isAdmin)
-- Не привязаны к модели
-- Глобальные права
+**Gates para:**
+- Checagem simples (isAdmin)
+- Sem amarrar a um model
+- Permissões globais
 
-**Policies для:**
-- Права на модели (CRUD)
-- Группировка логики
-- Автоматическое связывание
+**Policies para:**
+- Permissão no model (CRUD)
+- Agrupar a lógica
+- Binding automático
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Policy с разными ролями:**
+**Policy com roles diferentes:**
 
 ```php
 class PostPolicy
 {
-    // Выполняется перед всеми методами
+    // Roda antes de todos os métodos
     public function before(User $user): ?bool
     {
         if ($user->isAdmin()) {
-            return true;  // Админ может всё
+            return true;  // Admin pode tudo
         }
 
-        return null;  // Продолжить проверку
+        return null;  // Segue a checagem
     }
 
     public function update(User $user, Post $post): bool
     {
-        // Автор или модератор
+        // Autor ou moderador
         return $user->id === $post->user_id || $user->isModerator();
     }
 
     public function delete(User $user, Post $post): bool
     {
-        // Только автор
+        // Só o autor
         return $user->id === $post->user_id;
     }
 
     public function publish(User $user, Post $post): bool
     {
-        // Автор или модератор
+        // Autor ou moderador
         return $user->id === $post->user_id || $user->isModerator();
     }
 }
 ```
 
-**Проверка в Blade:**
+**Checagem no Blade:**
 
 ```blade
 @can('update', $post)
-    <a href="{{ route('posts.edit', $post) }}">Edit</a>
+    <a href="{{ route('posts.edit', $post) }}">Editar</a>
 @endcan
 
 @cannot('delete', $post)
-    <p>You cannot delete this post</p>
+    <p>Você não pode excluir este post</p>
 @endcannot
 
-{{-- Без модели --}}
+{{-- Sem model --}}
 @can('view-admin')
-    <a href="/admin">Admin Panel</a>
+    <a href="/admin">Painel admin</a>
 @endcan
 ```
 
-**API Resource с проверкой прав:**
+**API Resource com checagem de permissão:**
 
 ```php
 class PostResource extends JsonResource
@@ -217,7 +217,7 @@ class PostResource extends JsonResource
             'title' => $this->title,
             'body' => $this->body,
 
-            // Условные поля в зависимости от прав
+            // Campos condicionais conforme a permissão
             'can_edit' => $request->user()?->can('update', $this->resource),
             'can_delete' => $request->user()?->can('delete', $this->resource),
         ];
@@ -225,43 +225,43 @@ class PostResource extends JsonResource
 }
 ```
 
-**Authorization Middleware:**
+**Middleware de autorização:**
 
 ```php
-// В маршруте
+// Na rota
 Route::put('/posts/{post}', [PostController::class, 'update'])
-    ->middleware('can:update,post');  // post = Route parameter
+    ->middleware('can:update,post');  // post = parâmetro da rota
 
-// Или в контроллере
+// Ou no controller
 public function __construct()
 {
     $this->authorizeResource(Post::class, 'post');
 }
-// Автоматически проверяет права для всех CRUD методов
+// Checa permissão sozinho em todos os métodos CRUD
 ```
 
-**Guest проверки:**
+**Checagem de guest:**
 
 ```php
 class PostPolicy
 {
     public function view(?User $user, Post $post): bool
     {
-        // Гости могут видеть только опубликованные
+        // Guest só vê o que está publicado
         if (!$user) {
             return $post->published;
         }
 
-        // Авторизованные могут видеть свои черновики
+        // Autenticado vê os próprios rascunhos
         return $post->published || $user->id === $post->user_id;
     }
 }
 
-// Использование
-Gate::check('view', $post);  // Работает для гостей
+// Uso
+Gate::check('view', $post);  // Funciona para guest
 ```
 
-**Response (вместо 403):**
+**Response (no lugar de 403):**
 
 ```php
 class PostPolicy
@@ -271,30 +271,30 @@ class PostPolicy
     public function update(User $user, Post $post): Response
     {
         if ($user->id !== $post->user_id) {
-            return Response::deny('You do not own this post.');
+            return Response::deny('Você não é o dono deste post.');
         }
 
         return Response::allow();
     }
 }
 
-// В контроллере
+// No controller
 try {
     $this->authorize('update', $post);
 } catch (AuthorizationException $e) {
-    // $e->getMessage() = 'You do not own this post.'
+    // $e->getMessage() = 'Você não é o dono deste post.'
 }
 ```
 
-**Abilities (Sanctum для API):**
+**Abilities (Sanctum para API):**
 
 ```php
-// Создать токен с abilities
+// Criar token com abilities
 $token = $user->createToken('token-name', ['post:create', 'post:update'])->plainTextToken;
 
-// Проверить ability
+// Checar ability
 if ($user->tokenCan('post:create')) {
-    // Может создавать посты
+    // Pode criar posts
 }
 
 // Middleware
@@ -307,7 +307,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 ```
 
-**Role-based авторизация:**
+**Autorização por role:**
 
 ```php
 // User model
@@ -335,11 +335,11 @@ Gate::define('moderate-posts', fn(User $user) => $user->hasAnyRole(['admin', 'mo
 
 // Middleware
 Route::middleware('can:view-admin')->group(function () {
-    // Только для админов
+    // Só para admin
 });
 ```
 
-**Spatie Permission (популярный пакет):**
+**Spatie Permission (pacote popular):**
 
 ```bash
 composer require spatie/laravel-permission
@@ -349,20 +349,20 @@ composer require spatie/laravel-permission
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-// Создать роли и права
+// Criar roles e permissões
 $role = Role::create(['name' => 'admin']);
 $permission = Permission::create(['name' => 'edit posts']);
 
 $role->givePermissionTo($permission);
 $user->assignRole('admin');
 
-// Проверка
+// Checagem
 if ($user->can('edit posts')) {
-    // Может редактировать
+    // Pode editar
 }
 
 if ($user->hasRole('admin')) {
-    // Админ
+    // Admin
 }
 
 // Middleware
@@ -377,31 +377,31 @@ Route::middleware(['permission:edit posts'])->group(function () {
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Авторизация проверяет права доступа. Gates для простых проверок (Gate::define()), Policies для моделей (PostPolicy). authorize() в контроллере выбрасывает 403. @can в Blade. Middleware can:update,post. before() в Policy для админов (return true). Guest проверки через ?User. Spatie Permission для ролей и прав. Sanctum abilities для API токенов. authorizeResource() автоматически проверяет CRUD."
+> "Autorização checa o que você pode fazer. Gates para checagem simples (Gate::define()), Policies para models (PostPolicy). authorize() no controller joga 403. @can no Blade. Middleware can:update,post. before() na Policy para admin (return true). Checagem de guest com ?User. Spatie Permission para roles e permissões. Sanctum abilities para token de API. authorizeResource() checa o CRUD sozinho."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай Policy для комментариев
+### Exercício 1: Crie uma Policy de comentários
 
-Реализуй `CommentPolicy` с правилами: автор может редактировать/удалять свои комментарии, модераторы могут удалять любые, админы могут всё.
+**Enunciado:** Implemente `CommentPolicy` com as regras: autor edita/exclui os próprios comentários, moderador exclui qualquer um, admin pode tudo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Создать Policy
+// 1. Criar a Policy
 php artisan make:policy CommentPolicy --model=Comment
 
 // app/Policies/CommentPolicy.php
 class CommentPolicy
 {
     /**
-     * Выполняется перед всеми методами
-     * Админы могут всё
+     * Roda antes de todos os métodos
+     * Admin pode tudo
      */
     public function before(User $user): ?bool
     {
@@ -409,43 +409,43 @@ class CommentPolicy
             return true;
         }
 
-        return null; // Продолжить проверку
+        return null; // Segue a checagem
     }
 
     public function viewAny(User $user): bool
     {
-        return true; // Все могут видеть список
+        return true; // Todo mundo pode ver a lista
     }
 
     public function view(?User $user, Comment $comment): bool
     {
-        return true; // Комментарии публичные
+        return true; // Comentários são públicos
     }
 
     public function create(User $user): bool
     {
-        return $user->email_verified_at !== null; // Только верифицированные
+        return $user->email_verified_at !== null; // Só quem verificou o email
     }
 
     public function update(User $user, Comment $comment): bool
     {
-        // Только автор может редактировать
+        // Só o autor pode editar
         return $user->id === $comment->user_id;
     }
 
     public function delete(User $user, Comment $comment): bool
     {
-        // Автор или модератор могут удалять
+        // Autor ou moderador podem excluir
         return $user->id === $comment->user_id || $user->role === 'moderator';
     }
 }
 
-// 2. Регистрация в AuthServiceProvider
+// 2. Registro no AuthServiceProvider
 protected $policies = [
     Comment::class => CommentPolicy::class,
 ];
 
-// 3. Использование в контроллере
+// 3. Uso no controller
 class CommentController extends Controller
 {
     public function update(Request $request, Comment $comment)
@@ -458,7 +458,7 @@ class CommentController extends Controller
 
         $comment->update($validated);
 
-        return redirect()->back()->with('success', 'Комментарий обновлён');
+        return redirect()->back()->with('success', 'Comentário atualizado');
     }
 
     public function destroy(Comment $comment)
@@ -467,24 +467,24 @@ class CommentController extends Controller
 
         $comment->delete();
 
-        return redirect()->back()->with('success', 'Комментарий удалён');
+        return redirect()->back()->with('success', 'Comentário excluído');
     }
 }
 
-// 4. В Blade
+// 4. No Blade
 @can('update', $comment)
-    <a href="{{ route('comments.edit', $comment) }}">Редактировать</a>
+    <a href="{{ route('comments.edit', $comment) }}">Editar</a>
 @endcan
 
 @can('delete', $comment)
     <form method="POST" action="{{ route('comments.destroy', $comment) }}">
         @csrf
         @method('DELETE')
-        <button type="submit">Удалить</button>
+        <button type="submit">Excluir</button>
     </form>
 @endcan
 
-// 5. User Model (роли)
+// 5. User Model (roles)
 class User extends Authenticatable
 {
     public function isAdmin(): bool
@@ -500,15 +500,15 @@ class User extends Authenticatable
 ```
 </details>
 
-### Задание 2: Реализуй role-based авторизацию
+### Exercício 2: Implemente autorização por role
 
-Создай систему ролей (admin, editor, viewer) с разными правами доступа к постам.
+**Enunciado:** Crie um sistema de roles (admin, editor, viewer) com permissões diferentes nos posts.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Migration для ролей
+// 1. Migration das roles
 Schema::create('roles', function (Blueprint $table) {
     $table->id();
     $table->string('name')->unique();
@@ -559,7 +559,7 @@ class User extends Authenticatable
     }
 }
 
-// 3. Gates в AuthServiceProvider
+// 3. Gates no AuthServiceProvider
 public function boot(): void
 {
     Gate::define('manage-posts', function (User $user) {
@@ -579,12 +579,12 @@ public function boot(): void
     });
 }
 
-// 4. PostPolicy с ролями
+// 4. PostPolicy com roles
 class PostPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true; // Все могут видеть
+        return true; // Todo mundo pode ver
     }
 
     public function create(User $user): bool
@@ -594,36 +594,36 @@ class PostPolicy
 
     public function update(User $user, Post $post): bool
     {
-        // Автор или редактор
+        // Autor ou editor
         return $user->id === $post->user_id || $user->hasRole('editor');
     }
 
     public function delete(User $user, Post $post): bool
     {
-        // Только админ
+        // Só admin
         return $user->hasRole('admin');
     }
 }
 
-// 5. Middleware для ролей
+// 5. Middleware de roles
 class CheckRole
 {
     public function handle(Request $request, Closure $next, string ...$roles)
     {
         if (!$request->user() || !$request->user()->hasAnyRole($roles)) {
-            abort(403, 'Нет доступа');
+            abort(403, 'Sem acesso');
         }
 
         return $next($request);
     }
 }
 
-// Регистрация в Kernel.php
+// Registro no Kernel.php
 protected $middlewareAliases = [
     'role' => \App\Http\Middleware\CheckRole::class,
 ];
 
-// 6. Использование в маршрутах
+// 6. Uso nas rotas
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index']);
 });
@@ -632,16 +632,16 @@ Route::middleware(['auth', 'role:admin,editor'])->group(function () {
     Route::resource('posts', PostController::class);
 });
 
-// 7. Seeder для ролей
+// 7. Seeder das roles
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        Role::create(['name' => 'admin', 'display_name' => 'Administrator']);
+        Role::create(['name' => 'admin', 'display_name' => 'Administrador']);
         Role::create(['name' => 'editor', 'display_name' => 'Editor']);
-        Role::create(['name' => 'viewer', 'display_name' => 'Viewer']);
+        Role::create(['name' => 'viewer', 'display_name' => 'Visualizador']);
 
-        // Назначить роль первому пользователю
+        // Atribuir role ao primeiro usuário
         $admin = User::first();
         $admin->assignRole('admin');
     }
@@ -649,18 +649,18 @@ class RoleSeeder extends Seeder
 ```
 </details>
 
-### Задание 3: Используй Spatie Permission
+### Exercício 3: Use o Spatie Permission
 
-Настрой систему прав и ролей с помощью пакета Spatie Permission.
+**Enunciado:** Monte o sistema de permissões e roles com o pacote Spatie Permission.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Установка
+// 1. Instalação
 composer require spatie/laravel-permission
 
-// 2. Публикация миграций и конфига
+// 2. Publicar migrations e config
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
 php artisan migrate
 
@@ -671,10 +671,10 @@ class User extends Authenticatable
 {
     use HasRoles;
 
-    // Остальной код...
+    // Resto do código...
 }
 
-// 4. Создание ролей и прав (Seeder)
+// 4. Criar roles e permissões (Seeder)
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -682,10 +682,10 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Сбросить кеш
+        // Limpar o cache
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Создать права
+        // Criar permissões
         Permission::create(['name' => 'view posts']);
         Permission::create(['name' => 'create posts']);
         Permission::create(['name' => 'edit posts']);
@@ -696,7 +696,7 @@ class RolePermissionSeeder extends Seeder
         Permission::create(['name' => 'edit users']);
         Permission::create(['name' => 'delete users']);
 
-        // Создать роли и назначить права
+        // Criar roles e atribuir permissões
         $viewer = Role::create(['name' => 'viewer']);
         $viewer->givePermissionTo('view posts');
 
@@ -708,29 +708,29 @@ class RolePermissionSeeder extends Seeder
     }
 }
 
-// 5. Назначение ролей пользователям
+// 5. Atribuir roles aos usuários
 $user = User::find(1);
 $user->assignRole('admin');
 
-$user->assignRole(['editor', 'viewer']); // Несколько ролей
+$user->assignRole(['editor', 'viewer']); // Várias roles
 
-// Прямое назначение прав (без роли)
+// Permissão direta (sem role)
 $user->givePermissionTo('edit posts');
 
-// 6. Проверка прав
+// 6. Checar permissão
 if ($user->can('edit posts')) {
-    // Может редактировать
+    // Pode editar
 }
 
 if ($user->hasRole('admin')) {
-    // Админ
+    // Admin
 }
 
 if ($user->hasAnyRole(['admin', 'editor'])) {
-    // Админ или редактор
+    // Admin ou editor
 }
 
-// 7. Policy с Spatie
+// 7. Policy com Spatie
 class PostPolicy
 {
     public function update(User $user, Post $post): bool
@@ -759,25 +759,25 @@ Route::middleware(['permission:edit posts'])->group(function () {
     Route::resource('posts', PostController::class);
 });
 
-// Или несколько
+// Ou vários
 Route::middleware(['role_or_permission:admin|edit posts'])->group(function () {
     // ...
 });
 
-// 9. Blade директивы
+// 9. Diretivas Blade
 @role('admin')
-    <a href="/admin">Admin Panel</a>
+    <a href="/admin">Painel admin</a>
 @endrole
 
 @hasrole('editor')
-    <a href="/posts/create">Create Post</a>
+    <a href="/posts/create">Criar post</a>
 @endhasrole
 
 @can('edit posts')
-    <a href="{{ route('posts.edit', $post) }}">Edit</a>
+    <a href="{{ route('posts.edit', $post) }}">Editar</a>
 @endcan
 
-// 10. API Resource с правами
+// 10. API Resource com permissões
 class PostResource extends JsonResource
 {
     public function toArray($request): array
@@ -799,4 +799,4 @@ class PostResource extends JsonResource
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

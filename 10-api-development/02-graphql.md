@@ -1,50 +1,50 @@
 # 9.2 GraphQL
 
-## Краткое резюме
+## Resumo
 
-> **GraphQL** — язык запросов для API, где клиент указывает нужные поля.
+> **GraphQL** — linguagem de query para API. O cliente pede só os campos que precisa.
 >
-> **Основное:** Один endpoint, Query для чтения, Mutation для изменения. Type определяет структуру, Resolve загружает данные.
+> **O essencial:** Um endpoint. Query para ler, Mutation para alterar. Type define a estrutura, Resolve carrega os dados.
 >
-> **Laravel:** `rebing/graphql-laravel` или Lighthouse. Schema-first vs Code-first подход.
+> **Laravel:** `rebing/graphql-laravel` ou Lighthouse. Schema-first vs Code-first.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-GraphQL — язык запросов для API. Клиент указывает, какие данные нужны. Одна endpoint, гибкие запросы.
+**O que é:**
+GraphQL é uma linguagem de query para API. O cliente diz quais dados precisa. Um endpoint, queries flexíveis.
 
 **REST vs GraphQL:**
-- REST: много endpoints, фиксированная структура
-- GraphQL: один endpoint, гибкая структура
+- REST: vários endpoints, estrutura fixa
+- GraphQL: um endpoint, estrutura flexível
 
 ---
 
-## Как работает
+## Como funciona
 
-**Установка (Laravel):**
+**Instalação (Laravel):**
 
 ```bash
 composer require rebing/graphql-laravel
 php artisan vendor:publish --provider="Rebing\GraphQL\GraphQLServiceProvider"
 ```
 
-**Простой GraphQL запрос:**
+**Query GraphQL simples:**
 
 ```graphql
-# Запрос
+# Query
 query {
   user(id: 1) {
     id
@@ -57,23 +57,23 @@ query {
   }
 }
 
-# Ответ
+# Response
 {
   "data": {
     "user": {
       "id": 1,
-      "name": "John",
-      "email": "john@example.com",
+      "name": "João",
+      "email": "joao@email.com",
       "posts": [
-        {"id": 1, "title": "First Post"},
-        {"id": 2, "title": "Second Post"}
+        {"id": 1, "title": "Primeiro post"},
+        {"id": 2, "title": "Segundo post"}
       ]
     }
   }
 }
 ```
 
-**Определение Type:**
+**Definir o Type:**
 
 ```php
 // app/GraphQL/Types/UserType.php
@@ -84,7 +84,7 @@ class UserType extends GraphQLType
 {
     protected $attributes = [
         'name' => 'User',
-        'description' => 'A user',
+        'description' => 'Um usuário',
     ];
 
     public function fields(): array
@@ -108,7 +108,7 @@ class UserType extends GraphQLType
 }
 ```
 
-**Определение Query:**
+**Definir a Query:**
 
 ```php
 // app/GraphQL/Queries/UserQuery.php
@@ -144,23 +144,23 @@ class UserQuery extends Query
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**GraphQL для:**
-- ✅ Сложные вложенные данные
-- ✅ Мобильные приложения (меньше запросов)
-- ✅ Гибкость в выборе полей
+**GraphQL para:**
+- ✅ Dados aninhados complexos
+- ✅ Apps mobile (menos requests)
+- ✅ Flexibilidade na escolha dos campos
 
-**REST для:**
-- ✅ Простые CRUD
-- ✅ Кеширование (HTTP cache)
-- ✅ Стандартизация
+**REST para:**
+- ✅ CRUD simples
+- ✅ Cache (HTTP cache)
+- ✅ Padronização
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Mutation (создание/изменение):**
+**Mutation (criar/alterar):**
 
 ```php
 // app/GraphQL/Mutations/CreatePostMutation.php
@@ -200,11 +200,11 @@ class CreatePostMutation extends Mutation
 }
 ```
 
-**GraphQL запрос с mutation:**
+**Query GraphQL com mutation:**
 
 ```graphql
 mutation {
-  createPost(title: "New Post", body: "Content") {
+  createPost(title: "Novo post", body: "Conteúdo") {
     id
     title
     author {
@@ -214,7 +214,7 @@ mutation {
 }
 ```
 
-**Lighthouse (альтернатива):**
+**Lighthouse (alternativa):**
 
 ```bash
 composer require nuwave/lighthouse
@@ -253,20 +253,20 @@ type Post {
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "GraphQL — язык запросов, один endpoint. Клиент указывает нужные поля. Query для чтения, Mutation для изменения. Type определяет структуру. Resolve функция загружает данные. Плюсы: гибкость, меньше over-fetching. Минусы: сложнее кеширование, нет HTTP status codes. Laravel: rebing/graphql-laravel или Lighthouse. Schema-first (Lighthouse) vs Code-first (rebing)."
+> "GraphQL é linguagem de query, um endpoint. O cliente pede os campos que precisa. Query para ler, Mutation para alterar. Type define a estrutura. A função Resolve carrega os dados. Prós: flexibilidade, menos over-fetching. Contras: cache mais difícil, sem HTTP status codes. Laravel: rebing/graphql-laravel ou Lighthouse. Schema-first (Lighthouse) vs Code-first (rebing)."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай GraphQL Type и Query
+### Exercício 1: Crie um GraphQL Type e uma Query
 
-Создай GraphQL Type для модели Post с полями id, title, body. Добавь Query для получения поста по ID.
+**Enunciado:** Crie um GraphQL Type para o model Post com os campos id, title, body. Adicione uma Query para buscar o post por ID.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/GraphQL/Types/PostType.php
@@ -281,7 +281,7 @@ class PostType extends GraphQLType
 {
     protected $attributes = [
         'name' => 'Post',
-        'description' => 'A post',
+        'description' => 'Um post',
         'model' => Post::class,
     ];
 
@@ -290,26 +290,26 @@ class PostType extends GraphQLType
         return [
             'id' => [
                 'type' => Type::nonNull(Type::int()),
-                'description' => 'Post ID',
+                'description' => 'ID do post',
             ],
             'title' => [
                 'type' => Type::string(),
-                'description' => 'Post title',
+                'description' => 'Título do post',
             ],
             'body' => [
                 'type' => Type::string(),
-                'description' => 'Post content',
+                'description' => 'Conteúdo do post',
             ],
             'author' => [
                 'type' => GraphQL::type('User'),
-                'description' => 'Post author',
+                'description' => 'Autor do post',
                 'resolve' => function ($post) {
                     return $post->user;
                 },
             ],
             'created_at' => [
                 'type' => Type::string(),
-                'description' => 'Creation date',
+                'description' => 'Data de criação',
                 'resolve' => function ($post) {
                     return $post->created_at->toISOString();
                 },
@@ -330,7 +330,7 @@ class PostQuery extends Query
 {
     protected $attributes = [
         'name' => 'post',
-        'description' => 'Get a post by ID',
+        'description' => 'Busca um post pelo ID',
     ];
 
     public function type(): Type
@@ -343,7 +343,7 @@ class PostQuery extends Query
         return [
             'id' => [
                 'type' => Type::nonNull(Type::int()),
-                'description' => 'The ID of the post',
+                'description' => 'ID do post',
             ],
         ];
     }
@@ -368,7 +368,7 @@ class PostQuery extends Query
     'User' => \App\GraphQL\Types\UserType::class,
 ],
 
-// GraphQL запрос
+// Query GraphQL
 /*
 query {
   post(id: 1) {
@@ -387,12 +387,12 @@ query {
 
 </details>
 
-### Задание 2: Добавь Mutation с валидацией
+### Exercício 2: Adicione Mutation com validação
 
-Создай Mutation для создания поста с валидацией title (мин. 3 символа) и body (обязательное поле).
+**Enunciado:** Crie uma Mutation para criar post com validação de title (mín. 3 caracteres) e body (campo obrigatório).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/GraphQL/Mutations/CreatePostMutation.php
@@ -408,7 +408,7 @@ class CreatePostMutation extends Mutation
 {
     protected $attributes = [
         'name' => 'createPost',
-        'description' => 'Create a new post',
+        'description' => 'Cria um post novo',
     ];
 
     public function type(): Type
@@ -421,11 +421,11 @@ class CreatePostMutation extends Mutation
         return [
             'title' => [
                 'type' => Type::nonNull(Type::string()),
-                'description' => 'Post title (min 3 chars)',
+                'description' => 'Título do post (mín. 3 caracteres)',
             ],
             'body' => [
                 'type' => Type::nonNull(Type::string()),
-                'description' => 'Post content',
+                'description' => 'Conteúdo do post',
             ],
         ];
     }
@@ -443,7 +443,7 @@ class CreatePostMutation extends Mutation
         $user = auth()->user();
 
         if (!$user) {
-            throw new \GraphQL\Error\Error('Unauthenticated');
+            throw new \GraphQL\Error\Error('Não autenticado');
         }
 
         $post = Post::create([
@@ -465,12 +465,12 @@ class CreatePostMutation extends Mutation
     ],
 ],
 
-// GraphQL запрос
+// Query GraphQL
 /*
 mutation {
   createPost(
-    title: "My GraphQL Post"
-    body: "This is the content created via GraphQL mutation"
+    title: "Meu post GraphQL"
+    body: "Este é o conteúdo criado via mutation GraphQL"
   ) {
     id
     title
@@ -485,15 +485,15 @@ mutation {
 
 </details>
 
-### Задание 3: Настрой Lighthouse для быстрого старта
+### Exercício 3: Configure o Lighthouse para um start rápido
 
-Используй Lighthouse для создания GraphQL API без написания классов. Создай схему для User и Post.
+**Enunciado:** Use o Lighthouse para criar uma API GraphQL sem escrever classes. Crie o schema para User e Post.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Установка
+# Instalação
 composer require nuwave/lighthouse
 php artisan vendor:publish --tag=lighthouse-schema
 php artisan vendor:publish --tag=lighthouse-config
@@ -501,7 +501,7 @@ php artisan vendor:publish --tag=lighthouse-config
 
 ```graphql
 # graphql/schema.graphql
-"A datetime string with format `Y-m-d H:i:s`"
+"String datetime no formato `Y-m-d H:i:s`"
 scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
 
 type Query {
@@ -577,9 +577,9 @@ type PaginatorInfo {
 ```
 
 ```php
-// Примеры запросов
+// Exemplos de queries
 
-// Получить пользователей с их постами
+// Buscar usuários com os posts
 /*
 query {
   users(first: 5) {
@@ -602,7 +602,7 @@ query {
 }
 */
 
-// Получить пост с автором
+// Buscar post com o autor
 /*
 query {
   post(id: 1) {
@@ -619,12 +619,12 @@ query {
 }
 */
 
-// Создать пост (требуется авторизация)
+// Criar post (precisa de autenticação)
 /*
 mutation {
   createPost(
-    title: "New Post via Lighthouse"
-    body: "This is much easier than code-first approach!"
+    title: "Novo post via Lighthouse"
+    body: "Bem mais fácil que o code-first!"
   ) {
     id
     title
@@ -637,13 +637,13 @@ mutation {
 }
 */
 
-// Обновить пост
+// Atualizar post
 /*
 mutation {
   updatePost(
     id: 1
-    title: "Updated Title"
-    body: "Updated content"
+    title: "Título atualizado"
+    body: "Conteúdo atualizado"
   ) {
     id
     title
@@ -657,4 +657,4 @@ mutation {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

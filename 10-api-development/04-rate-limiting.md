@@ -1,61 +1,61 @@
 # 9.4 Rate Limiting
 
-## Краткое резюме
+## Resumo
 
-> **Rate Limiting** — ограничение количества запросов от пользователя/IP за промежуток времени для защиты от злоупотребления API.
+> **Rate Limiting** — limite de requests por usuário/IP num intervalo de tempo. Protege a API contra abuso.
 >
-> **Laravel:** `throttle` middleware (throttle:60,1 = 60 запросов в минуту), `RateLimiter::for()` для кастомных лимитов.
+> **Laravel:** middleware `throttle` (throttle:60,1 = 60 requests por minuto), `RateLimiter::for()` para limites customizados.
 >
-> **Важно:** Разные лимиты для чтения/записи, премиум пользователей. Redis для distributed systems.
+> **Importante:** Limites diferentes para leitura/escrita e usuário premium. Redis em sistema distribuído.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Базовое использование](#базовое-использование)
-- [Кастомные лимиты](#кастомные-лимиты)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Rate Limiting — ограничение количества запросов от пользователя/IP за промежуток времени. Защита от злоупотребления API.
-
-**Зачем:**
-- Защита от DDoS
-- Контроль нагрузки
-- Честное использование ресурсов
-- Монетизация (разные лимиты для тарифов)
+- [O que é](#o-que-é)
+- [Uso básico](#uso-básico)
+- [Limites customizados](#limites-customizados)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Базовое использование
+## O que é
 
-**Простой Rate Limiting:**
+**O que é:**
+Rate Limiting — limite de requests por usuário/IP num intervalo de tempo. Protege a API contra abuso.
+
+**Para quê:**
+- Proteção contra DDoS
+- Controle de carga
+- Uso justo dos recursos
+- Monetização (limites diferentes por plano)
+
+---
+
+## Uso básico
+
+**Rate Limiting simples:**
 
 ```php
 // routes/api.php
 Route::middleware('throttle:60,1')->group(function () {
     Route::apiResource('posts', PostController::class);
 });
-// 60 запросов в 1 минуту
+// 60 requests em 1 minuto
 ```
 
-**По пользователю:**
+**Por usuário:**
 
 ```php
 Route::middleware('throttle:100,1,user')->group(function () {
-    // 100 запросов в минуту ПО ПОЛЬЗОВАТЕЛЮ
+    // 100 requests por minuto POR USUÁRIO
 });
 ```
 
-**Headers в ответе:**
+**Headers na response:**
 
 ```
 X-RateLimit-Limit: 60
@@ -65,7 +65,7 @@ Retry-After: 45
 
 ---
 
-## Кастомные лимиты
+## Limites customizados
 
 **RouteServiceProvider:**
 
@@ -91,18 +91,18 @@ public function boot(): void
 }
 ```
 
-**Использование:**
+**Uso:**
 
 ```php
 Route::middleware('throttle:api')->group(function () {
-    // Кастомный лимит 'api'
+    // Limite customizado 'api'
 });
 
 Route::middleware('throttle:login')->post('/login', ...);
 Route::middleware('throttle:uploads')->post('/upload', ...);
 ```
 
-**Множественные лимиты:**
+**Vários limites:**
 
 ```php
 RateLimiter::for('strict', function (Request $request) {
@@ -115,21 +115,21 @@ RateLimiter::for('strict', function (Request $request) {
 
 ---
 
-## Когда использовать
+## Quando usar
 
-| Endpoint | Рекомендуемый лимит | Причина |
-|----------|-------------------|---------|
-| Login/Register | 5-10/минута | Защита от brute-force |
-| Read операции | 100-1000/минута | Частые запросы допустимы |
-| Write операции | 30-60/минута | Защита БД |
-| File Upload | 10-20/час | Дорогие операции |
-| Email/SMS | 5-10/час | Внешние сервисы |
+| Endpoint | Limite sugerido | Motivo |
+|----------|-----------------|--------|
+| Login/Register | 5-10/minuto | Proteção contra brute-force |
+| Read | 100-1000/minuto | Request frequente é ok |
+| Write | 30-60/minuto | Protege o banco |
+| File Upload | 10-20/hora | Operação cara |
+| Email/SMS | 5-10/hora | Serviço externo |
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-### Разные лимиты для разных операций
+### Limites diferentes por operação
 
 ```php
 RateLimiter::for('api-read', function (Request $request) {
@@ -147,7 +147,7 @@ Route::middleware('throttle:api-read')->get('/posts', [PostController::class, 'i
 Route::middleware('throttle:api-write')->post('/posts', [PostController::class, 'store']);
 ```
 
-### Response с информацией о лимитах
+### Response com info dos limites
 
 ```php
 class RateLimitMiddleware
@@ -169,56 +169,56 @@ class RateLimitMiddleware
 }
 ```
 
-### Redis для распределённых систем
+### Redis em sistemas distribuídos
 
 ```php
 // .env
 CACHE_DRIVER=redis
 
-// Rate limiting автоматически использует Redis
-// Работает корректно на нескольких серверах
+// Rate limiting usa Redis automaticamente
+// Funciona certo em vários servidores
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Rate Limiting ограничивает количество запросов за период времени
-- Защита от злоупотребления и DDoS
+**O que é:**
+- Rate Limiting limita quantas requests cabem num intervalo de tempo
+- Protege contra abuso e DDoS
 
-**Laravel использование:**
-- `throttle:60,1` middleware (60 запросов в минуту)
-- `RateLimiter::for()` для кастомных лимитов
+**No Laravel:**
+- `throttle:60,1` middleware (60 requests por minuto)
+- `RateLimiter::for()` para limites customizados
 - `Limit::perMinute()`, `Limit::perDay()`
-- `by()` для группировки (user_id или IP)
+- `by()` para agrupar (user_id ou IP)
 
 **Headers:**
-- `X-RateLimit-Limit` — максимум запросов
-- `X-RateLimit-Remaining` — осталось запросов
-- `Retry-After` — через сколько повторить
+- `X-RateLimit-Limit` — máximo de requests
+- `X-RateLimit-Remaining` — quanto ainda resta
+- `Retry-After` — em quantos segundos pode tentar de novo
 
-**Распределённые системы:**
-- Redis для shared state между серверами
-- Важно для load-balanced приложений
+**Sistemas distribuídos:**
+- Redis para estado compartilhado entre servidores
+- Importante em apps com load balancer
 
-**Best practices:**
-- Разные лимиты для чтения/записи
-- Stricter лимиты для login/register
-- Premium пользователи = выше лимиты
+**Boas práticas:**
+- Limites diferentes para leitura/escrita
+- Login/register com limite mais rígido
+- Usuário premium = limite maior
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой Rate Limiting с тарифами
+### Exercício 1: Rate Limiting com planos
 
-Создай систему с 3 тарифами: Free (100 req/min), Pro (500 req/min), Enterprise (unlimited).
+**Enunciado:** Crie um sistema com 3 planos: Free (100 req/min), Pro (500 req/min), Enterprise (ilimitado).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Providers/RouteServiceProvider.php
@@ -248,7 +248,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('posts', PostController::class);
 });
 
-// User Model
+// Model User
 class User extends Authenticatable
 {
     public function plan(): string
@@ -264,12 +264,12 @@ class User extends Authenticatable
 ```
 </details>
 
-### Задание 2: Кастомный response при превышении лимита
+### Exercício 2: Response customizado quando passa do limite
 
-Создай middleware который возвращает JSON с информацией когда можно повторить запрос.
+**Enunciado:** Crie um middleware que devolve JSON com a info de quando pode repetir o request.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/CustomThrottleResponse.php
@@ -290,7 +290,7 @@ class CustomThrottleResponse
 
             return response()->json([
                 'error' => 'Too Many Requests',
-                'message' => "Rate limit exceeded. Try again in {$seconds} seconds.",
+                'message' => "Limite de requests excedido. Tente de novo em {$seconds} segundos.",
                 'retry_after' => $seconds,
                 'limit' => $maxAttempts,
             ], 429)->header('Retry-After', $seconds);
@@ -328,39 +328,39 @@ Route::middleware('throttle.custom')->group(function () {
 ```
 </details>
 
-### Задание 3: Dynamic Rate Limiting по endpoint'ам
+### Exercício 3: Rate Limiting dinâmico por endpoint
 
-Разные лимиты для разных операций: чтение (100/min), создание (20/min), удаление (10/min).
+**Enunciado:** Limites diferentes por operação: leitura (100/min), criação (20/min), exclusão (10/min).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Providers/RouteServiceProvider.php
 public function boot(): void
 {
-    // Read operations
+    // Operações de leitura
     RateLimiter::for('api-read', function (Request $request) {
         return Limit::perMinute(100)->by(
             $request->user()?->id ?: $request->ip()
         );
     });
 
-    // Write operations
+    // Operações de escrita
     RateLimiter::for('api-create', function (Request $request) {
         return Limit::perMinute(20)->by(
             $request->user()?->id ?: $request->ip()
         );
     });
 
-    // Delete operations
+    // Operações de exclusão
     RateLimiter::for('api-delete', function (Request $request) {
         return Limit::perMinute(10)->by(
             $request->user()?->id ?: $request->ip()
         );
     });
 
-    // Login protection
+    // Proteção do login
     RateLimiter::for('login', function (Request $request) {
         return Limit::perMinute(5)->by($request->ip());
     });
@@ -388,7 +388,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Login
 Route::middleware('throttle:login')->post('/login', [AuthController::class, 'login']);
 
-// Monitoring в Controller
+// Monitorar no Controller
 class PostController extends Controller
 {
     public function store(Request $request)
@@ -402,7 +402,7 @@ class PostController extends Controller
             'user_id' => $request->user()?->id,
         ]);
 
-        // ... создание поста
+        // ... criar o post
     }
 }
 ```
@@ -410,4 +410,4 @@ class PostController extends Controller
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

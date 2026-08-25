@@ -1,42 +1,42 @@
-# 9.3 Swagger / API Documentation
+# 9.3 Swagger / Documentação de API
 
-## Краткое резюме
+## Resumo
 
-> **Swagger (OpenAPI)** — стандарт документирования API с интерактивной документацией.
+> **Swagger (OpenAPI)** — padrão de documentação de API com documentação interativa.
 >
-> **Laravel:** l5-swagger пакет, аннотации @OA\Get/@OA\Post в контроллерах, Schema для моделей.
+> **Laravel:** pacote l5-swagger, anotações `@OA\Get`/`@OA\Post` nos controllers, Schema para models.
 >
-> **Доступ:** /api/documentation для тестирования API в браузере.
+> **Acesso:** `/api/documentation` para testar a API no navegador.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Установка и настройка](#установка-и-настройка)
-- [Аннотации](#аннотации)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Swagger (OpenAPI) — стандарт документирования API. Интерактивная документация, автоматическая генерация.
-
-**Зачем нужна:**
-- Документация для разработчиков
-- Тестирование API
-- Генерация клиентов
+- [O que é](#o-que-é)
+- [Instalação e configuração](#instalação-e-configuração)
+- [Anotações](#anotações)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Установка и настройка
+## O que é
 
-**Установка:**
+**O que é:**
+Swagger (OpenAPI) é o padrão de documentação de API. Documentação interativa, geração automática.
+
+**Para que serve:**
+- Documentação para desenvolvedores
+- Testar a API
+- Gerar clientes
+
+---
+
+## Instalação e configuração
+
+**Instalação:**
 
 ```bash
 composer require darkaonline/l5-swagger
@@ -44,11 +44,11 @@ php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider"
 php artisan l5-swagger:generate
 ```
 
-**Конфигурация (config/l5-swagger.php):**
+**Configuração (config/l5-swagger.php):**
 
 ```php
 'api' => [
-    'title' => 'My API Documentation',
+    'title' => 'Documentação da Minha API',
 ],
 'routes' => [
     'api' => 'api/documentation',
@@ -62,38 +62,38 @@ php artisan l5-swagger:generate
 
 ---
 
-## Аннотации
+## Anotações
 
-### Базовая информация
+### Informações básicas
 
 ```php
 /**
  * @OA\Info(
- *     title="My API",
+ *     title="Minha API",
  *     version="1.0.0",
- *     description="API Documentation"
+ *     description="Documentação da API"
  * )
  */
 ```
 
-### GET запрос
+### Request GET
 
 ```php
 /**
  * @OA\Get(
  *     path="/api/posts",
- *     summary="Get all posts",
+ *     summary="Listar posts",
  *     tags={"Posts"},
  *     @OA\Parameter(
  *         name="page",
  *         in="query",
- *         description="Page number",
+ *         description="Número da página",
  *         required=false,
  *         @OA\Schema(type="integer")
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Success",
+ *         description="Sucesso",
  *         @OA\JsonContent(
  *             @OA\Property(property="data", type="array",
  *                 @OA\Items(ref="#/components/schemas/Post")
@@ -105,13 +105,13 @@ php artisan l5-swagger:generate
 public function index() {}
 ```
 
-### POST запрос
+### Request POST
 
 ```php
 /**
  * @OA\Post(
  *     path="/api/posts",
- *     summary="Create post",
+ *     summary="Criar post",
  *     tags={"Posts"},
  *     security={{"sanctum":{}}},
  *     @OA\RequestBody(
@@ -122,13 +122,13 @@ public function index() {}
  *             @OA\Property(property="body", type="string")
  *         )
  *     ),
- *     @OA\Response(response=201, description="Created")
+ *     @OA\Response(response=201, description="Criado")
  * )
  */
 public function store() {}
 ```
 
-### Schema определения
+### Definições de Schema
 
 ```php
 /**
@@ -158,19 +158,19 @@ public function store() {}
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй документацию для:**
-- Публичные API
-- API для фронтенда
-- API для партнёров
-- Микросервисная архитектура
+**Documentação serve para:**
+- API pública
+- API para o frontend
+- API para parceiros
+- Arquitetura de microsserviços
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-### Полная документация контроллера
+### Documentação completa do controller
 
 ```php
 /**
@@ -183,8 +183,8 @@ public function store() {}
  */
 
 /**
- * @OA\Tag(name="Posts", description="Posts management")
- * @OA\Tag(name="Auth", description="Authentication")
+ * @OA\Tag(name="Posts", description="Gerenciar posts")
+ * @OA\Tag(name="Auth", description="Autenticação")
  */
 class Controller {}
 
@@ -193,7 +193,7 @@ class PostController extends Controller
     /**
      * @OA\Get(
      *     path="/api/posts",
-     *     summary="List posts",
+     *     summary="Listar posts",
      *     tags={"Posts"},
      *     @OA\Parameter(
      *         name="filter[status]",
@@ -202,7 +202,7 @@ class PostController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Success",
+     *         description="Sucesso",
      *         @OA\JsonContent(
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Post")),
      *             @OA\Property(property="links", type="object"),
@@ -215,7 +215,7 @@ class PostController extends Controller
 }
 ```
 
-**Доступ к документации:**
+**Acesso à documentação:**
 
 ```
 http://localhost/api/documentation
@@ -223,40 +223,40 @@ http://localhost/api/documentation
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- Swagger (OpenAPI) — стандарт документирования API
-- Интерактивная документация с возможностью тестирования
+**O que é:**
+- Swagger (OpenAPI) — padrão de documentação de API
+- Documentação interativa, dá para testar no navegador
 
-**Laravel установка:**
+**Instalação no Laravel:**
 - `composer require darkaonline/l5-swagger`
 - `php artisan l5-swagger:generate`
 
-**Основные аннотации:**
-- `@OA\Info` — общая информация об API
-- `@OA\Get/@OA\Post` — эндпоинты
-- `@OA\Schema` — модели данных
-- `@OA\SecurityScheme` — аутентификация
+**Anotações principais:**
+- `@OA\Info` — informação geral da API
+- `@OA\Get`/`@OA\Post` — endpoints
+- `@OA\Schema` — models
+- `@OA\SecurityScheme` — autenticação
 
-**Преимущества:**
-- Живая документация
-- Тестирование API в браузере
-- Генерация клиентов
-- Всегда актуальная (генерируется из кода)
+**Vantagens:**
+- Documentação viva
+- Testar a API no navegador
+- Gerar clientes
+- Sempre atual (gera a partir do código)
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Документировать CRUD API
+### Exercício 1: Documentar API CRUD
 
-Создай Swagger документацию для Article API с полным CRUD.
+**Enunciado:** Crie a documentação Swagger da Article API com CRUD completo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 /**
@@ -265,8 +265,8 @@ http://localhost/api/documentation
  *     type="object",
  *     required={"title", "body"},
  *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="title", type="string", example="My Article"),
- *     @OA\Property(property="body", type="string", example="Article content..."),
+ *     @OA\Property(property="title", type="string", example="Meu artigo"),
+ *     @OA\Property(property="body", type="string", example="Conteúdo do artigo..."),
  *     @OA\Property(property="status", type="string", enum={"draft", "published"}),
  *     @OA\Property(property="published_at", type="string", format="date-time", nullable=true),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
@@ -279,13 +279,13 @@ class ArticleController extends Controller
     /**
      * @OA\Get(
      *     path="/api/articles",
-     *     summary="List articles",
+     *     summary="Listar artigos",
      *     tags={"Articles"},
      *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="filter[status]", in="query", @OA\Schema(type="string")),
      *     @OA\Response(
      *         response=200,
-     *         description="Success",
+     *         description="Sucesso",
      *         @OA\JsonContent(
      *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Article"))
      *         )
@@ -297,7 +297,7 @@ class ArticleController extends Controller
     /**
      * @OA\Post(
      *     path="/api/articles",
-     *     summary="Create article",
+     *     summary="Criar artigo",
      *     tags={"Articles"},
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -309,8 +309,8 @@ class ArticleController extends Controller
      *             @OA\Property(property="status", type="string", enum={"draft", "published"})
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/Article")),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(response=201, description="Criado", @OA\JsonContent(ref="#/components/schemas/Article")),
+     *     @OA\Response(response=422, description="Erro de validação")
      * )
      */
     public function store() {}
@@ -318,11 +318,11 @@ class ArticleController extends Controller
     /**
      * @OA\Get(
      *     path="/api/articles/{id}",
-     *     summary="Show article",
+     *     summary="Exibir artigo",
      *     tags={"Articles"},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Success", @OA\JsonContent(ref="#/components/schemas/Article")),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=200, description="Sucesso", @OA\JsonContent(ref="#/components/schemas/Article")),
+     *     @OA\Response(response=404, description="Não encontrado")
      * )
      */
     public function show() {}
@@ -330,7 +330,7 @@ class ArticleController extends Controller
     /**
      * @OA\Put(
      *     path="/api/articles/{id}",
-     *     summary="Update article",
+     *     summary="Atualizar artigo",
      *     tags={"Articles"},
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
@@ -340,8 +340,8 @@ class ArticleController extends Controller
      *             @OA\Property(property="body", type="string")
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Updated"),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=200, description="Atualizado"),
+     *     @OA\Response(response=404, description="Não encontrado")
      * )
      */
     public function update() {}
@@ -349,12 +349,12 @@ class ArticleController extends Controller
     /**
      * @OA\Delete(
      *     path="/api/articles/{id}",
-     *     summary="Delete article",
+     *     summary="Excluir artigo",
      *     tags={"Articles"},
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=204, description="Deleted"),
-     *     @OA\Response(response=404, description="Not found")
+     *     @OA\Response(response=204, description="Excluído"),
+     *     @OA\Response(response=404, description="Não encontrado")
      * )
      */
     public function destroy() {}
@@ -362,12 +362,12 @@ class ArticleController extends Controller
 ```
 </details>
 
-### Задание 2: Nested Resource документация
+### Exercício 2: Documentação de Nested Resource
 
-Документируй /articles/{article}/comments API.
+**Enunciado:** Documente a API `/articles/{article}/comments`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 /**
@@ -388,18 +388,18 @@ class CommentController extends Controller
     /**
      * @OA\Get(
      *     path="/api/articles/{article}/comments",
-     *     summary="List article comments",
+     *     summary="Listar comentários do artigo",
      *     tags={"Comments"},
      *     @OA\Parameter(
      *         name="article",
      *         in="path",
      *         required=true,
-     *         description="Article ID",
+     *         description="ID do artigo",
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Success",
+     *         description="Sucesso",
      *         @OA\JsonContent(
      *             @OA\Property(
      *                 property="data",
@@ -408,7 +408,7 @@ class CommentController extends Controller
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Article not found")
+     *     @OA\Response(response=404, description="Artigo não encontrado")
      * )
      */
     public function index(Article $article) {}
@@ -416,7 +416,7 @@ class CommentController extends Controller
     /**
      * @OA\Post(
      *     path="/api/articles/{article}/comments",
-     *     summary="Create comment",
+     *     summary="Criar comentário",
      *     tags={"Comments"},
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(name="article", in="path", required=true, @OA\Schema(type="integer")),
@@ -424,12 +424,12 @@ class CommentController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"body"},
-     *             @OA\Property(property="body", type="string", example="Great article!")
+     *             @OA\Property(property="body", type="string", example="Ótimo artigo!")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Created"),
-     *     @OA\Response(response=401, description="Unauthorized"),
-     *     @OA\Response(response=404, description="Article not found")
+     *     @OA\Response(response=201, description="Criado"),
+     *     @OA\Response(response=401, description="Não autorizado"),
+     *     @OA\Response(response=404, description="Artigo não encontrado")
      * )
      */
     public function store(Article $article) {}
@@ -437,12 +437,12 @@ class CommentController extends Controller
 ```
 </details>
 
-### Задание 3: Документация с Enum и Examples
+### Exercício 3: Documentação com Enum e examples
 
-Добавь документацию с enum значениями и examples.
+**Enunciado:** Adicione documentação com valores de enum e examples.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 /**
@@ -480,7 +480,7 @@ class OrderController extends Controller
     /**
      * @OA\Post(
      *     path="/api/orders",
-     *     summary="Create order",
+     *     summary="Criar pedido",
      *     tags={"Orders"},
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -509,19 +509,19 @@ class OrderController extends Controller
      *                 },
      *                 "payment_method": "credit_card",
      *                 "shipping_address": {
-     *                     "street": "123 Main St",
-     *                     "city": "Moscow",
-     *                     "country": "Russia"
+     *                     "street": "Av. Paulista, 1000",
+     *                     "city": "São Paulo",
+     *                     "country": "Brasil"
      *                 }
      *             }
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Order created",
+     *         description="Pedido criado",
      *         @OA\JsonContent(ref="#/components/schemas/Order")
      *     ),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(response=422, description="Erro de validação")
      * )
      */
     public function store() {}
@@ -531,4 +531,4 @@ class OrderController extends Controller
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

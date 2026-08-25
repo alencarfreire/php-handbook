@@ -1,52 +1,52 @@
 # 8.7 HTTPS / SSL
 
-## Краткое резюме
+## Resumo
 
-> **HTTPS (SSL/TLS)** — протокол защищённой передачи данных через интернет с шифрованием трафика между клиентом и сервером.
+> **HTTPS (SSL/TLS)** — protocolo de transferência segura pela internet. Criptografa o tráfego entre cliente e servidor.
 >
-> **Защита:** Предотвращает Man-in-the-Middle атаки, прослушивание трафика, кражу паролей и cookies.
+> **Proteção:** Bloqueia ataque Man-in-the-Middle, escuta de tráfego, roubo de senha e cookie.
 >
-> **Важно:** Let's Encrypt для бесплатных сертификатов, HSTS header для принудительного HTTPS, TrustProxies middleware для корректной работы за load balancer.
+> **Importante:** Let's Encrypt para certificado grátis, header HSTS para forçar HTTPS, middleware TrustProxies para funcionar certo atrás do load balancer.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-HTTPS — HTTP поверх SSL/TLS. Шифрует трафик между клиентом и сервером. Защищает от прослушивания и MITM атак.
-
-**Зачем нужен:**
-- Шифрование данных
-- Защита от Man-in-the-Middle
-- SEO boost (Google)
-- Доверие пользователей
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Получить SSL сертификат:**
+**O que é:**
+HTTPS — HTTP por cima de SSL/TLS. Criptografa o tráfego entre cliente e servidor. Protege contra escuta e ataque MITM.
+
+**Por que precisa:**
+- Criptografia dos dados
+- Proteção contra Man-in-the-Middle
+- Boost de SEO (Google)
+- Confiança do usuário
+
+---
+
+## Como funciona
+
+**Pegar o certificado SSL:**
 
 ```bash
-# Let's Encrypt (бесплатный)
+# Let's Encrypt (gratuito)
 sudo certbot --nginx -d example.com -d www.example.com
 
-# Автоматическое обновление
+# Renovação automática
 sudo certbot renew --dry-run
 ```
 
-**Настройка в Laravel:**
+**Configuração no Laravel:**
 
 ```php
 // .env
@@ -55,7 +55,7 @@ APP_URL=https://example.com
 // config/app.php
 'url' => env('APP_URL', 'https://example.com'),
 
-// Middleware для принудительного HTTPS
+// Middleware para forçar HTTPS
 // app/Http/Middleware/ForceHttps.php
 class ForceHttps
 {
@@ -69,19 +69,19 @@ class ForceHttps
     }
 }
 
-// Зарегистрировать в Kernel.php
+// Registrar no Kernel.php
 protected $middleware = [
     \App\Http\Middleware\ForceHttps::class,
 ];
 ```
 
-**Trust Proxies (для load balancers):**
+**Trust Proxies (para load balancers):**
 
 ```php
 // app/Http/Middleware/TrustProxies.php
 class TrustProxies extends Middleware
 {
-    protected $proxies = '*';  // Доверять всем прокси
+    protected $proxies = '*';  // Confiar em todos os proxies
 
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
@@ -94,18 +94,18 @@ class TrustProxies extends Middleware
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Всегда используй HTTPS:**
-- ✅ Production (обязательно)
-- ✅ Staging (рекомендуется)
-- ❌ Local dev (необязательно, но можно)
+**Use sempre HTTPS:**
+- ✅ Production (obrigatório)
+- ✅ Staging (recomendado)
+- ❌ Local dev (opcional, mas dá pra usar)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Nginx конфигурация:**
+**Configuração Nginx:**
 
 ```nginx
 server {
@@ -127,7 +127,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # SSL настройки
+    # Configuração SSL
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
     ssl_prefer_server_ciphers on;
@@ -157,7 +157,7 @@ class AddSecurityHeaders
     {
         $response = $next($request);
 
-        // Принудительный HTTPS на 1 год
+        // Força HTTPS por 1 ano
         $response->headers->set(
             'Strict-Transport-Security',
             'max-age=31536000; includeSubDomains; preload'
@@ -168,42 +168,42 @@ class AddSecurityHeaders
 }
 ```
 
-**Mixed Content (HTTP на HTTPS странице):**
+**Mixed Content (HTTP em página HTTPS):**
 
 ```blade
-{{-- ❌ ПЛОХО: HTTP на HTTPS странице --}}
+{{-- ❌ RUIM: HTTP em página HTTPS --}}
 <script src="http://example.com/script.js"></script>
 
-{{-- ✅ ХОРОШО: HTTPS --}}
+{{-- ✅ BOM: HTTPS --}}
 <script src="https://example.com/script.js"></script>
 
-{{-- ✅ ХОРОШО: Protocol-relative URL --}}
+{{-- ✅ BOM: URL protocol-relative --}}
 <script src="//example.com/script.js"></script>
 
-{{-- ✅ ХОРОШО: asset() автоматически использует правильный протокол --}}
+{{-- ✅ BOM: asset() usa o protocolo certo sozinho --}}
 <script src="{{ asset('js/app.js') }}"></script>
 ```
 
-**SSL для локальной разработки:**
+**SSL no ambiente local:**
 
 ```bash
 # Valet (macOS)
 valet secure example.test
 
-# Laravel Homestead (автоматически)
+# Laravel Homestead (automático)
 # https://homestead.test
 
-# mkcert (любая ОС)
+# mkcert (qualquer SO)
 brew install mkcert
 mkcert -install
 mkcert example.test "*.example.test"
 
-# Использовать в nginx
+# Usar no nginx
 ssl_certificate example.test.pem;
 ssl_certificate_key example.test-key.pem;
 ```
 
-**Проверка SSL конфигурации:**
+**Checar a configuração SSL:**
 
 ```bash
 # SSL Labs
@@ -215,11 +215,11 @@ openssl s_client -connect example.com:443
 # Curl
 curl -I https://example.com
 
-# Проверить сертификат
+# Inspecionar o certificado
 openssl x509 -in cert.pem -text -noout
 ```
 
-**Обработка ошибок SSL:**
+**Tratar erros de SSL:**
 
 ```php
 // app/Exceptions/Handler.php
@@ -227,8 +227,8 @@ public function render($request, Throwable $exception)
 {
     if ($exception instanceof \Illuminate\Http\Client\RequestException) {
         if (str_contains($exception->getMessage(), 'SSL')) {
-            Log::error('SSL Error', ['message' => $exception->getMessage()]);
-            return response()->json(['error' => 'SSL connection failed'], 500);
+            Log::error('Erro SSL', ['message' => $exception->getMessage()]);
+            return response()->json(['error' => 'Falha na conexão SSL'], 500);
         }
     }
 
@@ -236,18 +236,18 @@ public function render($request, Throwable $exception)
 }
 ```
 
-**CloudFlare (CDN с SSL):**
+**CloudFlare (CDN com SSL):**
 
 ```nginx
-# Получить реальный IP через CloudFlare
+# Pegar o IP real via CloudFlare
 set_real_ip_from 103.21.244.0/22;
 set_real_ip_from 103.22.200.0/22;
-# ... другие CloudFlare IP ranges
+# ... outros IP ranges do CloudFlare
 real_ip_header CF-Connecting-IP;
 ```
 
 ```php
-// TrustProxies для CloudFlare
+// TrustProxies para CloudFlare
 protected $proxies = [
     '103.21.244.0/22',
     '103.22.200.0/22',
@@ -255,40 +255,40 @@ protected $proxies = [
 ];
 ```
 
-**Cookies через HTTPS:**
+**Cookies via HTTPS:**
 
 ```php
 // config/session.php
-'secure' => env('SESSION_SECURE_COOKIE', true),  // Только HTTPS
+'secure' => env('SESSION_SECURE_COOKIE', true),  // Só HTTPS
 
-// Вручную
+// Na mão
 return response('Content')->cookie(
     'name',
     'value',
     $minutes = 60,
     $path = '/',
     $domain = null,
-    $secure = true,  // Только HTTPS
+    $secure = true,  // Só HTTPS
     $httpOnly = true
 );
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "HTTPS шифрует трафик через SSL/TLS. Let's Encrypt для бесплатных сертификатов. Force HTTPS через middleware (redirect()->secure()). HSTS header принудительно использует HTTPS (max-age). Trust Proxies для правильного определения протокола за load balancer. asset() автоматически генерирует правильный URL. Mixed Content — HTTP ресурсы на HTTPS странице (блокируются). SESSION_SECURE_COOKIE=true для cookies только через HTTPS. SSL Labs для проверки конфигурации."
+> "HTTPS criptografa o tráfego com SSL/TLS. Let's Encrypt para certificado grátis. Force HTTPS no middleware com redirect()->secure(). Header HSTS força HTTPS (max-age). Trust Proxies para o protocolo sair certo atrás do load balancer. asset() gera a URL certa sozinho. Mixed Content é recurso HTTP em página HTTPS — o browser bloqueia. SESSION_SECURE_COOKIE=true manda cookie só por HTTPS. SSL Labs para checar a configuração."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай middleware для принудительного HTTPS
+### Exercício 1: Crie um middleware para forçar HTTPS
 
-Реализуй middleware который редиректит все HTTP запросы на HTTPS в production.
+**Enunciado:** Implemente um middleware que redireciona toda request HTTP para HTTPS em production.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/ForceHttps.php
@@ -302,13 +302,13 @@ use Illuminate\Http\Request;
 class ForceHttps
 {
     /**
-     * Редирект на HTTPS в production
+     * Redirect para HTTPS em production
      */
     public function handle(Request $request, Closure $next)
     {
-        // Проверка только в production
+        // Checa só em production
         if (!app()->environment('local')) {
-            // Проверить, что запрос не через HTTPS
+            // Checa se a request não veio por HTTPS
             if (!$request->secure()) {
                 return redirect()->secure($request->getRequestUri(), 301);
             }
@@ -318,13 +318,13 @@ class ForceHttps
     }
 }
 
-// Альтернатива: проверка через заголовки (для load balancers)
+// Alternativa: checar pelos headers (para load balancers)
 class ForceHttps
 {
     public function handle(Request $request, Closure $next)
     {
         if (!app()->environment('local')) {
-            // Проверить X-Forwarded-Proto header (от load balancer)
+            // Checa o header X-Forwarded-Proto (do load balancer)
             $proto = $request->header('X-Forwarded-Proto');
 
             if ($proto !== 'https' && !$request->secure()) {
@@ -336,13 +336,13 @@ class ForceHttps
     }
 }
 
-// Регистрация в app/Http/Kernel.php
+// Registro no app/Http/Kernel.php
 protected $middleware = [
     // ...
     \App\Http\Middleware\ForceHttps::class,
 ];
 
-// Альтернатива 2: использовать встроенный метод
+// Alternativa 2: usar o método nativo
 class AppServiceProvider extends ServiceProvider
 {
     public function boot(): void
@@ -353,7 +353,7 @@ class AppServiceProvider extends ServiceProvider
     }
 }
 
-// Альтернатива 3: Nginx редирект
+// Alternativa 3: redirect no Nginx
 // nginx.conf
 server {
     listen 80;
@@ -361,7 +361,7 @@ server {
     return 301 https://$server_name$request_uri;
 }
 
-// Альтернатива 4: через .htaccess (Apache)
+// Alternativa 4: via .htaccess (Apache)
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteCond %{HTTPS} off
@@ -370,12 +370,12 @@ server {
 ```
 </details>
 
-### Задание 2: Настрой Security Headers
+### Exercício 2: Configure os Security Headers
 
-Создай middleware для добавления всех необходимых security заголовков включая HSTS.
+**Enunciado:** Crie um middleware que adiciona todos os security headers necessários, incluindo HSTS.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/SecurityHeaders.php
@@ -392,19 +392,19 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        // HSTS: Принудительный HTTPS на 1 год
+        // HSTS: força HTTPS por 1 ano
         $response->headers->set(
             'Strict-Transport-Security',
             'max-age=31536000; includeSubDomains; preload'
         );
 
-        // Предотвратить clickjacking
+        // Previne clickjacking
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
 
-        // Предотвратить MIME type sniffing
+        // Previne MIME type sniffing
         $response->headers->set('X-Content-Type-Options', 'nosniff');
 
-        // XSS Protection (устарело, но для старых браузеров)
+        // XSS Protection (legado, mas para browsers antigos)
         $response->headers->set('X-XSS-Protection', '1; mode=block');
 
         // Content Security Policy
@@ -424,7 +424,7 @@ class SecurityHeaders
         // Referrer Policy
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-        // Permissions Policy (замена Feature-Policy)
+        // Permissions Policy (substitui Feature-Policy)
         $permissions = implode(', ', [
             'geolocation=()',
             'microphone=()',
@@ -438,16 +438,16 @@ class SecurityHeaders
     }
 }
 
-// Регистрация
+// Registro
 protected $middleware = [
     // ...
     \App\Http\Middleware\SecurityHeaders::class,
 ];
 
-// Альтернатива: использовать пакет
+// Alternativa: usar um pacote
 composer require bepsvpt/secure-headers
 
-// config/secure-headers.php (после publish)
+// config/secure-headers.php (depois do publish)
 return [
     'hsts' => [
         'enable' => true,
@@ -472,7 +472,7 @@ return [
     ],
 ];
 
-// Тест заголовков
+// Teste dos headers
 class SecurityHeadersTest extends TestCase
 {
     public function test_security_headers_are_present(): void
@@ -488,12 +488,12 @@ class SecurityHeadersTest extends TestCase
 ```
 </details>
 
-### Задание 3: Настрой TrustProxies для AWS/CloudFlare
+### Exercício 3: Configure TrustProxies para AWS/CloudFlare
 
-Настрой корректную работу приложения за load balancer или CloudFlare.
+**Enunciado:** Configure o app para funcionar certo atrás de um load balancer ou CloudFlare.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/TrustProxies.php
@@ -507,14 +507,14 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * Доверенные прокси
+     * Proxies confiáveis
      *
-     * Вариант 1: Доверять всем прокси (для AWS ELB, GCP Load Balancer)
+     * Opção 1: confiar em todos os proxies (AWS ELB, GCP Load Balancer)
      */
     protected $proxies = '*';
 
     /**
-     * Вариант 2: Конкретные IP адреса (для CloudFlare)
+     * Opção 2: IPs específicos (CloudFlare)
      */
     // protected $proxies = [
     //     // CloudFlare IPv4
@@ -536,7 +536,7 @@ class TrustProxies extends Middleware
     // ];
 
     /**
-     * Заголовки которые должны быть доверены
+     * Headers que devem ser confiáveis
      */
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
@@ -546,12 +546,12 @@ class TrustProxies extends Middleware
         Request::HEADER_X_FORWARDED_AWS_ELB;
 }
 
-// .env настройки
+// Config no .env
 APP_URL=https://example.com
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 
-// Nginx конфигурация (за load balancer)
+// Configuração Nginx (atrás do load balancer)
 server {
     listen 80;
     server_name example.com;
@@ -567,10 +567,10 @@ server {
     }
 }
 
-// CloudFlare настройки
-// 1. В CloudFlare: SSL/TLS -> Full (Strict)
-// 2. Включить "Always Use HTTPS"
-// 3. Включить HSTS
+// Configuração CloudFlare
+// 1. No CloudFlare: SSL/TLS -> Full (Strict)
+// 2. Ligar "Always Use HTTPS"
+// 3. Ligar HSTS
 
 // app/Http/Middleware/CloudFlareProxies.php
 class CloudFlareProxies extends Middleware
@@ -579,13 +579,13 @@ class CloudFlareProxies extends Middleware
 
     public function __construct()
     {
-        // Динамически получить IP CloudFlare
+        // Busca os IPs do CloudFlare dinamicamente
         $this->proxies = $this->getCloudFlareIPs();
     }
 
     private function getCloudFlareIPs(): array
     {
-        // Кешировать на 1 день
+        // Cache de 1 dia
         return cache()->remember('cloudflare_ips', 86400, function () {
             try {
                 $ipv4 = file_get_contents('https://www.cloudflare.com/ips-v4');
@@ -596,7 +596,7 @@ class CloudFlareProxies extends Middleware
                     explode("\n", trim($ipv6))
                 );
             } catch (\Exception $e) {
-                // Fallback на все прокси если не удалось получить
+                // Fallback: confiar em todos os proxies se não conseguir buscar
                 return ['*'];
             }
         });
@@ -610,7 +610,7 @@ class CloudFlareProxies extends Middleware
         Request::HEADER_CF_CONNECTING_IP; // CloudFlare header
 }
 
-// Проверка правильности определения IP и протокола
+// Checa se IP e protocolo foram detectados certo
 Route::get('/debug-request', function (Request $request) {
     return response()->json([
         'ip' => $request->ip(),
@@ -644,4 +644,4 @@ class TrustProxiesTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

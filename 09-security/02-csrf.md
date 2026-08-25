@@ -1,42 +1,42 @@
 # 8.2 CSRF (Cross-Site Request Forgery)
 
-## Краткое резюме
+## Resumo
 
-> **CSRF (Cross-Site Request Forgery)** — атака, при которой злоумышленник заставляет авторизованного пользователя выполнить нежелательное действие на другом сайте.
+> **CSRF (Cross-Site Request Forgery)** — ataque em que o atacante faz um usuário autenticado executar uma ação indesejada em outro site.
 >
-> **Защита:** Laravel автоматически проверяет CSRF токен через middleware `VerifyCsrfToken`. Blade директива `@csrf` добавляет скрытое поле с токеном. Для AJAX используется заголовок `X-CSRF-TOKEN`.
+> **Proteção:** o Laravel valida o token CSRF sozinho pelo middleware `VerifyCsrfToken`. A diretiva Blade `@csrf` coloca um campo hidden com o token. No AJAX, use o header `X-CSRF-TOKEN`.
 >
-> **Важно:** SameSite cookies обеспечивают дополнительную защиту. API с токенами (Sanctum) не требуют CSRF защиты.
+> **Importante:** cookies SameSite dão uma camada extra. API com tokens (Sanctum) não precisa de CSRF.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-CSRF — подделка межсайтовых запросов. Атакующий заставляет пользователя выполнить нежелательное действие на сайте, где он авторизован.
-
-**Как работает атака:**
-1. Пользователь залогинен на site.com
-2. Открывает evil.com
-3. evil.com отправляет POST запрос на site.com
-4. Запрос выполняется от имени пользователя
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Пример CSRF атаки:**
+**O que é:**
+CSRF — falsificação de request entre sites. O atacante faz o usuário executar uma ação indesejada no site em que ele está autenticado.
+
+**Como funciona o ataque:**
+1. O usuário está logado em site.com
+2. Abre evil.com
+3. evil.com manda um POST para site.com
+4. A request roda no nome do usuário
+
+---
+
+## Como funciona
+
+**Exemplo de ataque CSRF:**
 
 ```html
 <!-- evil.com -->
@@ -45,53 +45,53 @@ CSRF — подделка межсайтовых запросов. Атакую�
     <input type="hidden" name="amount" value="10000">
 </form>
 <script>
-    document.forms[0].submit();  // Автоматически отправить
+    document.forms[0].submit();  // Envia sozinho
 </script>
 
-<!-- Если пользователь залогинен на bank.com,
-     перевод выполнится без его ведома -->
+<!-- Se o usuário estiver logado no bank.com,
+     a transferência roda sem ele perceber -->
 ```
 
-**Защита через CSRF токен:**
+**Proteção com token CSRF:**
 
 ```php
-// ❌ УЯЗВИМЫЙ код (без CSRF)
+// ❌ Código VULNERÁVEL (sem CSRF)
 Route::post('/transfer', function (Request $request) {
     $user = auth()->user();
     $user->balance -= $request->input('amount');
-    // Перевод выполнится
+    // A transferência roda
 });
 
-// ✅ ЗАЩИТА: CSRF токен (Laravel по умолчанию)
-// В форме
+// ✅ PROTEÇÃO: token CSRF (Laravel por padrão)
+// No form
 <form method="POST" action="/transfer">
-    @csrf  <!-- Генерирует скрытое поле с токеном -->
+    @csrf  <!-- Gera o campo hidden com o token -->
     <input type="number" name="amount">
-    <button type="submit">Перевести</button>
+    <button type="submit">Transferir</button>
 </form>
 
-// Laravel автоматически проверяет токен через middleware
+// O Laravel valida o token sozinho pelo middleware
 // app/Http/Kernel.php
 protected $middlewareGroups = [
     'web' => [
-        \App\Http\Middleware\VerifyCsrfToken::class,  // CSRF защита
+        \App\Http\Middleware\VerifyCsrfToken::class,  // Proteção CSRF
     ],
 ];
 ```
 
-**CSRF токен в JavaScript:**
+**Token CSRF no JavaScript:**
 
 ```javascript
-// Laravel автоматически добавляет токен в meta tag
+// O Laravel coloca o token no meta tag sozinho
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
-// Axios автоматически добавляет в заголовок
+// O Axios coloca no header sozinho
 // resources/js/bootstrap.js
 window.axios.defaults.headers.common['X-CSRF-TOKEN'] = document
     .querySelector('meta[name="csrf-token"]')
     .getAttribute('content');
 
-// Fetch вручную
+// Fetch na mão
 fetch('/api/endpoint', {
     method: 'POST',
     headers: {
@@ -104,40 +104,40 @@ fetch('/api/endpoint', {
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**CSRF защита нужна для:**
-- ✅ POST, PUT, DELETE запросов
-- ✅ Изменение данных (перевод, покупка, удаление)
-- ✅ Веб-формы
+**CSRF precisa para:**
+- ✅ Requests POST, PUT, DELETE
+- ✅ Mudança de dados (transferência, compra, exclusão)
+- ✅ Formulários web
 
-**CSRF НЕ нужна для:**
-- ❌ GET запросов (только чтение)
-- ❌ API с токенами (Sanctum, Passport)
-- ❌ Stateless API
+**CSRF NÃO precisa para:**
+- ❌ Requests GET (só leitura)
+- ❌ API com tokens (Sanctum, Passport)
+- ❌ API stateless
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Исключение из CSRF проверки:**
+**Exceção na checagem CSRF:**
 
 ```php
 // app/Http/Middleware/VerifyCsrfToken.php
 class VerifyCsrfToken extends Middleware
 {
-    // Исключить из CSRF проверки
+    // Fora da checagem CSRF
     protected $except = [
-        'webhook/*',  // Webhooks от внешних сервисов
-        'api/*',      // API endpoints (используют токены)
+        'webhook/*',  // Webhooks de serviços externos
+        'api/*',      // API endpoints (usam tokens)
     ];
 }
 ```
 
-**CSRF для AJAX:**
+**CSRF no AJAX:**
 
 ```javascript
-// Vue.js компонент
+// Componente Vue.js
 export default {
     methods: {
         async submitForm() {
@@ -146,10 +146,10 @@ export default {
                     title: this.title,
                     body: this.body,
                 });
-                // CSRF токен добавлен автоматически через Axios
+                // Token CSRF entra sozinho pelo Axios
             } catch (error) {
                 if (error.response.status === 419) {
-                    alert('CSRF token mismatch. Refresh the page.');
+                    alert('Token CSRF não bate. Recarregue a página.');
                 }
             }
         }
@@ -157,22 +157,22 @@ export default {
 }
 ```
 
-**SameSite cookies (дополнительная защита):**
+**Cookies SameSite (proteção extra):**
 
 ```php
 // config/session.php
-'same_site' => 'lax',  // Или 'strict'
+'same_site' => 'lax',  // Ou 'strict'
 
-// SameSite атрибуты:
-// - 'strict' — cookie не отправляется с внешних сайтов (сильная защита)
-// - 'lax' — cookie отправляется только для GET (баланс)
-// - 'none' — cookie отправляется всегда (нужен для iframe)
+// Atributos SameSite:
+// - 'strict' — cookie não vai em request de outro site (proteção forte)
+// - 'lax' — cookie só vai em GET (equilíbrio)
+// - 'none' — cookie vai sempre (precisa para iframe)
 ```
 
-**Double Submit Cookie (альтернатива):**
+**Double Submit Cookie (alternativa):**
 
 ```php
-// Альтернативный метод CSRF защиты
+// Método alternativo de proteção CSRF
 class DoubleSubmitCsrfMiddleware
 {
     public function handle($request, Closure $next)
@@ -182,7 +182,7 @@ class DoubleSubmitCsrfMiddleware
             $headerToken = $request->header('X-CSRF-TOKEN');
 
             if ($cookieToken !== $headerToken) {
-                abort(419, 'CSRF token mismatch');
+                abort(419, 'Token CSRF não bate');
             }
         }
 
@@ -191,27 +191,27 @@ class DoubleSubmitCsrfMiddleware
 }
 ```
 
-**Sanctum для API (без CSRF):**
+**Sanctum na API (sem CSRF):**
 
 ```php
-// API использует токены вместо сессий
+// API usa tokens no lugar de sessões
 Route::middleware('auth:sanctum')->post('/posts', function (Request $request) {
-    // CSRF не нужен (stateless)
+    // CSRF não precisa (stateless)
     return Post::create($request->all());
 });
 
-// Клиент отправляет Bearer token
+// O cliente manda Bearer token
 fetch('/api/posts', {
     method: 'POST',
     headers: {
-        'Authorization': 'Bearer ' + token,  // Вместо CSRF
+        'Authorization': 'Bearer ' + token,  // No lugar do CSRF
         'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
 });
 ```
 
-**Проверка referer (дополнительно):**
+**Checagem de referer (extra):**
 
 ```php
 class CheckRefererMiddleware
@@ -221,7 +221,7 @@ class CheckRefererMiddleware
         $referer = $request->headers->get('referer');
 
         if ($referer && !str_starts_with($referer, config('app.url'))) {
-            abort(403, 'Invalid referer');
+            abort(403, 'Referer inválido');
         }
 
         return $next($request);
@@ -229,7 +229,7 @@ class CheckRefererMiddleware
 }
 ```
 
-**Тестирование CSRF:**
+**Testando CSRF:**
 
 ```php
 // tests/Feature/CsrfTest.php
@@ -242,7 +242,7 @@ class CsrfTest extends TestCase
             'body' => 'Content',
         ]);
 
-        $response->assertStatus(419);  // CSRF token mismatch
+        $response->assertStatus(419);  // Token CSRF não bate
     }
 
     public function test_post_with_csrf_token_succeeds(): void
@@ -272,35 +272,35 @@ class CsrfTest extends TestCase
 }
 ```
 
-**CSRF в SPA (Single Page Application):**
+**CSRF no SPA (Single Page Application):**
 
 ```php
 // routes/web.php
 Route::get('/sanctum/csrf-cookie', function () {
-    // Инициализирует CSRF cookie для SPA
+    // Inicializa o cookie CSRF para o SPA
     return response()->noContent();
 });
 
-// JavaScript (первый запрос)
+// JavaScript (primeira request)
 await axios.get('/sanctum/csrf-cookie');
 
-// Теперь все запросы будут с CSRF
+// Agora toda request vai com CSRF
 await axios.post('/api/posts', data);
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "CSRF — подделка запросов с другого сайта. Laravel защищает через CSRF токен (@csrf в формах). VerifyCsrfToken middleware проверяет токен в POST/PUT/DELETE. X-CSRF-TOKEN header для AJAX (Axios добавляет автоматически). SameSite cookies дополнительная защита. API с токенами (Sanctum) не нужна CSRF защита (stateless). Исключения через $except в VerifyCsrfToken. Ошибка 419 при несовпадении токена. Токен регенерируется при логине."
+> "CSRF é falsificação de request de outro site. O Laravel protege com token CSRF (@csrf no form). O middleware VerifyCsrfToken checa o token em POST/PUT/DELETE. Header X-CSRF-TOKEN no AJAX (Axios coloca sozinho). Cookie SameSite é proteção extra. API com token (Sanctum) não precisa de CSRF (stateless). Exceção pelo $except no VerifyCsrfToken. Erro 419 se o token não bater. O token regenera no login."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Исправь CSRF ошибку в AJAX
+### Exercício 1: Corrija o erro CSRF no AJAX
 
-У тебя есть Vue компонент который отправляет POST запрос, но получает 419 ошибку. Исправь.
+**Enunciado:** Você tem um componente Vue que manda POST e recebe 419. Corrija.
 
 ```javascript
 // PostForm.vue
@@ -326,10 +326,10 @@ export default {
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```javascript
-// Решение 1: Добавить CSRF токен в заголовок
+// Solução 1: Colocar o token CSRF no header
 export default {
     data() {
         return {
@@ -356,19 +356,19 @@ export default {
     }
 }
 
-// В layout.blade.php (добавить meta tag)
+// No layout.blade.php (adicionar o meta tag)
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-// Решение 2: Использовать Axios (автоматически добавляет токен)
+// Solução 2: Usar Axios (coloca o token sozinho)
 // resources/js/bootstrap.js
 import axios from 'axios';
 window.axios = axios;
 window.axios.defaults.headers.common['X-CSRF-TOKEN'] =
     document.querySelector('meta[name="csrf-token"]').content;
 
-// В компоненте
+// No componente
 export default {
     methods: {
         async submit() {
@@ -382,12 +382,12 @@ export default {
 ```
 </details>
 
-### Задание 2: Настрой CSRF исключения для webhook
+### Exercício 2: Configure exceções CSRF para webhook
 
-У тебя есть webhook endpoint от Stripe который не проходит CSRF проверку. Настрой исключение.
+**Enunciado:** Você tem um endpoint de webhook do Stripe que não passa na checagem CSRF. Configure a exceção.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/VerifyCsrfToken.php
@@ -400,12 +400,12 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
 class VerifyCsrfToken extends Middleware
 {
     /**
-     * URIs которые исключены из CSRF проверки
+     * URIs fora da checagem CSRF
      */
     protected $except = [
-        'webhooks/stripe',         // Конкретный endpoint
-        'webhooks/*',              // Все webhooks
-        'api/*',                   // Все API routes (если используют токены)
+        'webhooks/stripe',         // Endpoint específico
+        'webhooks/*',              // Todos os webhooks
+        'api/*',                   // Todas as rotas de API (se usam tokens)
     ];
 }
 
@@ -418,7 +418,7 @@ class StripeWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        // Проверка подписи Stripe вместо CSRF
+        // Valida a assinatura do Stripe no lugar do CSRF
         $signature = $request->header('Stripe-Signature');
         $webhookSecret = config('services.stripe.webhook_secret');
 
@@ -429,7 +429,7 @@ class StripeWebhookController extends Controller
                 $webhookSecret
             );
 
-            // Обработка webhook
+            // Processa o webhook
             match ($event->type) {
                 'payment_intent.succeeded' => $this->handlePaymentSucceeded($event),
                 'customer.subscription.deleted' => $this->handleSubscriptionDeleted($event),
@@ -445,15 +445,15 @@ class StripeWebhookController extends Controller
 ```
 </details>
 
-### Задание 3: Реализуй CSRF для SPA
+### Exercício 3: Implemente CSRF no SPA
 
-Настрой CSRF защиту для Single Page Application с Laravel Sanctum.
+**Enunciado:** Configure proteção CSRF para Single Page Application com Laravel Sanctum.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. Настройка Sanctum
+// 1. Config do Sanctum
 // config/sanctum.php
 return [
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
@@ -468,22 +468,22 @@ return [
     ],
 ];
 
-// 2. Route для инициализации CSRF cookie
+// 2. Rota para inicializar o cookie CSRF
 // routes/web.php
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
 });
 
-// 3. Axios setup в SPA
+// 3. Setup do Axios no SPA
 // src/api/client.js
 import axios from 'axios';
 
 const api = axios.create({
     baseURL: 'http://localhost:8000',
-    withCredentials: true, // Важно! Отправлять cookies
+    withCredentials: true, // Importante! Mandar cookies
 });
 
-// Инициализация CSRF перед первым запросом
+// Inicializa CSRF antes da primeira request
 let csrfInitialized = false;
 
 api.interceptors.request.use(async (config) => {
@@ -498,7 +498,7 @@ api.interceptors.request.use(async (config) => {
 
 export default api;
 
-// 4. Использование в компоненте
+// 4. Uso no componente
 // src/components/LoginForm.vue
 import api from '@/api/client';
 
@@ -506,15 +506,15 @@ export default {
     methods: {
         async login() {
             try {
-                // CSRF cookie будет добавлен автоматически
+                // Cookie CSRF entra sozinho
                 const response = await api.post('/api/login', {
                     email: this.email,
                     password: this.password,
                 });
 
-                console.log('Logged in:', response.data);
+                console.log('Logado:', response.data);
             } catch (error) {
-                console.error('Login failed:', error);
+                console.error('Login falhou:', error);
             }
         }
     }
@@ -528,11 +528,11 @@ return [
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
-    'supports_credentials' => true, // Важно!
+    'supports_credentials' => true, // Importante!
 ];
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

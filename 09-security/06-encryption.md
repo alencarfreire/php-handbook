@@ -1,57 +1,57 @@
-# 8.6 Шифрование
+# 8.6 Criptografia
 
-## Краткое резюме
+## Resumo
 
-> **Шифрование** — преобразование данных в нечитаемый вид для защиты конфиденциальности.
+> **Criptografia** — transformar dados em forma ilegível para proteger a confidencialidade.
 >
-> **Типы:** Симметричное (AES-256-CBC через Crypt::encrypt()), Хеширование (bcrypt через Hash::make()), Signing (URL::signedRoute()).
+> **Tipos:** Simétrica (AES-256-CBC via Crypt::encrypt()), Hash (bcrypt via Hash::make()), Signing (URL::signedRoute()).
 >
-> **Важно:** APP_KEY — ключ шифрования (php artisan key:generate). Шифрование для обратимых данных (кредитные карты), хеширование для необратимых (пароли).
+> **Importante:** APP_KEY — chave de criptografia (php artisan key:generate). Criptografia para dado reversível (cartão de crédito), hash para irreversível (senha).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Шифрование — преобразование данных в нечитаемый вид. Laravel использует AES-256-CBC для симметричного шифрования.
-
-**Типы:**
-- **Симметричное** — один ключ (AES)
-- **Асимметричное** — пара ключей (RSA)
-- **Хеширование** — одностороннее (bcrypt, argon2)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Симметричное шифрование (Laravel Crypt):**
+**O que é:**
+Criptografia — transformar dados em forma ilegível. O Laravel usa AES-256-CBC para criptografia simétrica.
+
+**Tipos:**
+- **Simétrica** — uma chave (AES)
+- **Assimétrica** — par de chaves (RSA)
+- **Hash** — só de ida (bcrypt, argon2)
+
+---
+
+## Como funciona
+
+**Criptografia simétrica (Laravel Crypt):**
 
 ```php
 use Illuminate\Support\Facades\Crypt;
 
-// Шифрование
-$encrypted = Crypt::encryptString('secret data');
+// Criptografar
+$encrypted = Crypt::encryptString('dados secretos');
 
-// Расшифровка
+// Descriptografar
 $decrypted = Crypt::decryptString($encrypted);
 
-// Шифрование массива/объекта
+// Criptografar array/objeto
 $encrypted = Crypt::encrypt(['card' => '1234-5678-9012-3456']);
 $decrypted = Crypt::decrypt($encrypted);
 ```
 
-**Автоматическое шифрование в модели:**
+**Criptografia automática no model:**
 
 ```php
 // Model
@@ -68,59 +68,59 @@ class User extends Model
     }
 }
 
-// Использование
-$user->credit_card = '1234-5678-9012-3456';  // Автоматически шифруется
+// Uso
+$user->credit_card = '1234-5678-9012-3456';  // Criptografa sozinho
 $user->save();
 
-$card = $user->credit_card;  // Автоматически расшифровывается
+$card = $user->credit_card;  // Descriptografa sozinho
 ```
 
-**Хеширование (одностороннее):**
+**Hash (só de ida):**
 
 ```php
 use Illuminate\Support\Facades\Hash;
 
-// Хеш пароля
-$hashed = Hash::make('password');
+// Hash da senha
+$hashed = Hash::make('senha');
 
-// Проверка
-if (Hash::check('password', $hashed)) {
-    // Верный пароль
+// Checagem
+if (Hash::check('senha', $hashed)) {
+    // Senha correta
 }
 
-// Проверка необходимости rehash (алгоритм изменился)
+// Checar se precisa de rehash (o algoritmo mudou)
 if (Hash::needsRehash($hashed)) {
-    $hashed = Hash::make('password');
+    $hashed = Hash::make('senha');
 }
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Шифрование для:**
-- Кредитные карты
-- Персональные данные (паспорт, адрес)
-- API ключи
-- Нужна расшифровка
+**Criptografia para:**
+- Cartão de crédito
+- Dados pessoais (CPF, endereço)
+- Chaves de API
+- Quando precisa descriptografar
 
-**Хеширование для:**
-- Пароли
-- Токены
-- Не нужна расшифровка
+**Hash para:**
+- Senhas
+- Tokens
+- Quando não precisa descriptografar
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Шифрование чувствительных данных:**
+**Criptografar dados sensíveis:**
 
 ```php
 // Migration
 Schema::create('users', function (Blueprint $table) {
     $table->id();
     $table->string('email');
-    $table->text('encrypted_ssn')->nullable();  // Social Security Number
+    $table->text('encrypted_ssn')->nullable();  // CPF
     $table->text('encrypted_credit_card')->nullable();
     $table->timestamps();
 });
@@ -145,115 +145,115 @@ class User extends Model
     }
 }
 
-// Использование
+// Uso
 $user = User::create([
-    'email' => 'john@example.com',
-    'ssn' => '123-45-6789',  // Зашифровано в БД
-    'credit_card' => '1234-5678-9012-3456',  // Зашифровано в БД
+    'email' => 'joao@email.com',
+    'ssn' => '123-45-6789',  // Criptografado no banco
+    'credit_card' => '1234-5678-9012-3456',  // Criptografado no banco
 ]);
 
-echo $user->ssn;  // 123-45-6789 (расшифровано)
+echo $user->ssn;  // 123-45-6789 (descriptografado)
 ```
 
-**APP_KEY (ключ шифрования):**
+**APP_KEY (chave de criptografia):**
 
 ```bash
-# Генерация ключа
+# Gerar a chave
 php artisan key:generate
 
 # .env
 APP_KEY=base64:...
 
-# ВАЖНО: Не коммитить в git, хранить в безопасности
-# При потере ключа данные не расшифровать
+# IMPORTANTE: Não commitar no git, guardar em segurança
+# Se perder a chave, não dá para descriptografar
 ```
 
-**Encryption для config:**
+**Criptografia no config:**
 
 ```php
-// Шифрование в config
+// Criptografar no config
 'api_key' => env('API_KEY'),
 
-// .env (НЕ шифрованный)
-API_KEY=secret-key-here
+// .env (NÃO criptografado)
+API_KEY=chave-secreta-aqui
 
-// Использование
+// Uso
 $apiKey = config('services.api_key');
 
-// Альтернатива: Laravel Secrets
+// Alternativa: Laravel Secrets
 php artisan env:encrypt
-// Создаёт .env.encrypted
+// Cria .env.encrypted
 
 php artisan env:decrypt
 ```
 
-**Signing (подпись данных):**
+**Signing (assinatura de dados):**
 
 ```php
 use Illuminate\Support\Facades\URL;
 
-// Создать подписанный URL
+// Criar URL assinado
 $url = URL::temporarySignedRoute(
     'unsubscribe',
     now()->addMinutes(30),
     ['user' => $user->id]
 );
 
-// Проверка подписи (middleware)
+// Checar a assinatura (middleware)
 Route::get('/unsubscribe/{user}', [UnsubscribeController::class, 'handle'])
     ->name('unsubscribe')
     ->middleware('signed');
 
-// Вручную проверить
+// Checar na mão
 if ($request->hasValidSignature()) {
-    // Подпись валидна
+    // Assinatura válida
 }
 ```
 
-**Hashing для токенов:**
+**Hash de tokens:**
 
 ```php
-// Создать токен
+// Criar o token
 $token = Str::random(60);
 $hashedToken = hash('sha256', $token);
 
-// Сохранить в БД
+// Salvar no banco
 PasswordReset::create([
     'email' => $user->email,
     'token' => $hashedToken,
     'created_at' => now(),
 ]);
 
-// Отправить plain token пользователю
+// Enviar o token em texto puro para o usuário
 Mail::to($user)->send(new ResetPassword($token));
 
-// Проверка
+// Checagem
 $hashedToken = hash('sha256', $request->input('token'));
 $reset = PasswordReset::where('token', $hashedToken)->first();
 ```
 
-**Database Encryption (на уровне БД):**
+**Database Encryption (no banco):**
 
 ```sql
 -- MySQL (AES_ENCRYPT/AES_DECRYPT)
 INSERT INTO users (email, encrypted_data)
-VALUES ('john@example.com', AES_ENCRYPT('secret', 'key'));
+VALUES ('joao@email.com', AES_ENCRYPT('segredo', 'chave'));
 
-SELECT AES_DECRYPT(encrypted_data, 'key') FROM users;
+SELECT AES_DECRYPT(encrypted_data, 'chave') FROM users;
 
 -- PostgreSQL (pgcrypto)
 CREATE EXTENSION pgcrypto;
 
 INSERT INTO users (email, encrypted_data)
-VALUES ('john@example.com', pgp_sym_encrypt('secret', 'key'));
+VALUES ('joao@email.com', pgp_sym_encrypt('segredo', 'chave'));
 
-SELECT pgp_sym_decrypt(encrypted_data, 'key') FROM users;
+SELECT pgp_sym_decrypt(encrypted_data, 'chave') FROM users;
 ```
 
-**Searchable Encryption (для поиска):**
+**Searchable Encryption (para busca):**
 
 ```php
-// Hash для поиска
+// Hash para busca
 class User extends Model
 {
     protected function email(): Attribute
@@ -269,76 +269,76 @@ class User extends Model
 
 // Migration
 Schema::create('users', function (Blueprint $table) {
-    $table->text('email');  // Зашифрован
-    $table->string('email_hash')->index();  // Для поиска
+    $table->text('email');  // Criptografado
+    $table->string('email_hash')->index();  // Para busca
 });
 
-// Поиск
+// Busca
 $user = User::where('email_hash', hash('sha256', strtolower($searchEmail)))->first();
 ```
 
-**Ротация ключей:**
+**Rotação de chaves:**
 
 ```php
-// При смене APP_KEY нужно перешифровать данные
+// Ao trocar o APP_KEY, precisa criptografar de novo
 php artisan tinker
 
-// Старый ключ
+// Chave antiga
 $oldKey = config('app.previous_key');
 config(['app.key' => $oldKey]);
 
-// Расшифровать
+// Descriptografar
 $decrypted = Crypt::decryptString($user->credit_card);
 
-// Новый ключ
+// Chave nova
 $newKey = config('app.key');
 config(['app.key' => $newKey]);
 
-// Зашифровать заново
+// Criptografar de novo
 $user->credit_card = $decrypted;
 $user->save();
 ```
 
-**Secure Random (для токенов):**
+**Secure Random (para tokens):**
 
 ```php
 use Illuminate\Support\Str;
 
-// Случайная строка (криптографически стойкая)
+// String aleatória (criptograficamente segura)
 $token = Str::random(40);
 
 // UUID
 $uuid = Str::uuid();
 
-// Ordered UUID (для primary keys)
+// Ordered UUID (para primary keys)
 $uuid = Str::orderedUuid();
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Шифрование преобразует данные в нечитаемый вид. Laravel использует AES-256-CBC (Crypt::encryptString()). APP_KEY — ключ шифрования (php artisan key:generate). Автоматическое шифрование через Attribute в модели. Hash::make() для паролей (bcrypt, необратимо). Signing для URL (URL::temporarySignedRoute()). Шифрование для кредиток, персональных данных. Хеширование для паролей, токенов. Database encryption на уровне БД (AES_ENCRYPT). Searchable encryption через hash для поиска."
+> "Criptografia transforma o dado em forma ilegível. O Laravel usa AES-256-CBC (Crypt::encryptString()). APP_KEY é a chave (php artisan key:generate). Criptografia automática via Attribute no model. Hash::make() para senha (bcrypt, irreversível). Signing para URL (URL::temporarySignedRoute()). Criptografia para cartão, dado pessoal. Hash para senha, token. Database encryption no banco (AES_ENCRYPT). Searchable encryption via hash para buscar."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй автоматическое шифрование для модели
+### Exercício 1: Implemente criptografia automática no model
 
-Создай модель `PaymentMethod` с автоматическим шифрованием номера карты.
+Crie o model `PaymentMethod` com criptografia automática do número do cartão.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Migration
 Schema::create('payment_methods', function (Blueprint $table) {
     $table->id();
     $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->text('card_number'); // Зашифрованный номер карты
+    $table->text('card_number'); // Número do cartão criptografado
     $table->string('card_holder');
-    $table->string('card_last_four'); // Для отображения (****1234)
+    $table->string('card_last_four'); // Para exibir (****1234)
     $table->string('card_type'); // visa, mastercard
     $table->string('expiry_month');
     $table->string('expiry_year');
@@ -362,17 +362,17 @@ class PaymentMethod extends Model
     ];
 
     /**
-     * Автоматическое шифрование/расшифровка номера карты
+     * Criptografa/descriptografa o número do cartão sozinho
      */
     protected function cardNumber(): Attribute
     {
         return Attribute::make(
             get: fn($value) => $value ? Crypt::decryptString($value) : null,
             set: function ($value) {
-                // Сохранить последние 4 цифры
+                // Guardar os últimos 4 dígitos
                 $this->attributes['card_last_four'] = substr($value, -4);
 
-                // Определить тип карты
+                // Detectar o tipo do cartão
                 $this->attributes['card_type'] = $this->detectCardType($value);
 
                 return Crypt::encryptString($value);
@@ -381,7 +381,7 @@ class PaymentMethod extends Model
     }
 
     /**
-     * Определить тип карты по номеру
+     * Detectar o tipo pelo número
      */
     private function detectCardType(string $number): string
     {
@@ -401,7 +401,7 @@ class PaymentMethod extends Model
     }
 
     /**
-     * Замаскированный номер карты
+     * Número do cartão mascarado
      */
     public function getMaskedCardNumberAttribute(): string
     {
@@ -427,7 +427,7 @@ class PaymentMethodController extends Controller
         ]);
 
         $paymentMethod = $request->user()->paymentMethods()->create([
-            'card_number' => $validated['card_number'], // Автоматически шифруется
+            'card_number' => $validated['card_number'], // Criptografa sozinho
             'card_holder' => $validated['card_holder'],
             'expiry_month' => $validated['expiry_month'],
             'expiry_year' => $validated['expiry_year'],
@@ -451,7 +451,7 @@ class PaymentMethodController extends Controller
             'card_type' => $paymentMethod->card_type,
             'expiry_month' => $paymentMethod->expiry_month,
             'expiry_year' => $paymentMethod->expiry_year,
-            // Полный номер НЕ отправляем в API
+            // NÃO envia o número completo na API
         ]);
     }
 }
@@ -472,12 +472,12 @@ class PaymentMethodPolicy
 ```
 </details>
 
-### Задание 2: Создай signed URL для скачивания файла
+### Exercício 2: Crie signed URL para download de arquivo
 
-Реализуй безопасное скачивание файла через временный подписанный URL.
+Implemente o download seguro via URL assinado temporário.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. FileController
@@ -487,13 +487,13 @@ use Illuminate\Support\Facades\URL;
 class FileController extends Controller
 {
     /**
-     * Создать подписанный URL для скачивания
+     * Criar URL assinado para download
      */
     public function createDownloadLink(File $file)
     {
         $this->authorize('download', $file);
 
-        // Временный подписанный URL (действителен 30 минут)
+        // URL assinado temporário (vale 30 minutos)
         $url = URL::temporarySignedRoute(
             'files.download',
             now()->addMinutes(30),
@@ -507,27 +507,27 @@ class FileController extends Controller
     }
 
     /**
-     * Скачать файл по подписанному URL
+     * Download pelo URL assinado
      */
     public function download(Request $request, File $file)
     {
-        // Проверка подписи (автоматически через middleware)
+        // Checagem da assinatura (automática via middleware)
         if (!$request->hasValidSignature()) {
-            abort(403, 'Недействительная или истёкшая ссылка');
+            abort(403, 'Link inválido ou expirado');
         }
 
-        // Проверить, что файл существует
+        // Checar se o arquivo existe
         if (!Storage::disk('private')->exists($file->path)) {
-            abort(404, 'Файл не найден');
+            abort(404, 'Arquivo não encontrado');
         }
 
-        // Логирование скачивания
+        // Log do download
         activity()
             ->causedBy($request->user())
             ->performedOn($file)
             ->log('downloaded');
 
-        // Отдать файл
+        // Entregar o arquivo
         return Storage::disk('private')->download(
             $file->path,
             $file->original_name
@@ -543,7 +543,7 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/files/{file}/download', [FileController::class, 'download'])
     ->name('files.download')
-    ->middleware('signed'); // Проверка подписи
+    ->middleware('signed'); // Checagem da assinatura
 
 // 3. File Model
 class File extends Model
@@ -567,12 +567,12 @@ class FilePolicy
 {
     public function download(User $user, File $file): bool
     {
-        // Владелец или файл публичный
+        // Dono ou arquivo público
         return $user->id === $file->user_id || $file->is_public;
     }
 }
 
-// 5. Альтернатива: постоянный подписанный URL
+// 5. Alternativa: URL assinado permanente
 public function createPermanentLink(File $file)
 {
     $this->authorize('download', $file);
@@ -582,7 +582,7 @@ public function createPermanentLink(File $file)
     return response()->json(['download_url' => $url]);
 }
 
-// 6. Вручную создать подпись
+// 6. Criar a assinatura na mão
 use Illuminate\Support\Facades\Hash;
 
 public function createCustomSignedUrl(File $file): string
@@ -600,7 +600,7 @@ public function downloadWithCustomSignature(Request $request, File $file)
     $signature = $request->query('signature');
 
     if (!Hash::check($file->id . config('app.key'), $signature)) {
-        abort(403, 'Недействительная подпись');
+        abort(403, 'Assinatura inválida');
     }
 
     return Storage::disk('private')->download($file->path);
@@ -608,20 +608,20 @@ public function downloadWithCustomSignature(Request $request, File $file)
 ```
 </details>
 
-### Задание 3: Реализуй searchable encryption
+### Exercício 3: Implemente searchable encryption
 
-Создай систему хранения email с возможностью поиска при шифровании.
+Crie um sistema de armazenamento de email com busca mesmo criptografado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Migration
 Schema::create('user_emails', function (Blueprint $table) {
     $table->id();
     $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->text('email'); // Зашифрованный email
-    $table->string('email_hash')->index(); // Хеш для поиска
+    $table->text('email'); // Email criptografado
+    $table->string('email_hash')->index(); // Hash para busca
     $table->boolean('is_primary')->default(false);
     $table->timestamp('verified_at')->nullable();
     $table->timestamps();
@@ -648,7 +648,7 @@ class UserEmail extends Model
     ];
 
     /**
-     * Шифрование email + создание хеша для поиска
+     * Criptografa o email + cria hash para busca
      */
     protected function email(): Attribute
     {
@@ -657,7 +657,7 @@ class UserEmail extends Model
             set: function ($value) {
                 $normalized = strtolower(trim($value));
 
-                // Создать хеш для поиска
+                // Criar hash para busca
                 $this->attributes['email_hash'] = hash('sha256', $normalized);
 
                 return Crypt::encryptString($value);
@@ -666,7 +666,7 @@ class UserEmail extends Model
     }
 
     /**
-     * Найти по email (используя хеш)
+     * Buscar por email (via hash)
      */
     public static function findByEmail(string $email): ?self
     {
@@ -676,7 +676,7 @@ class UserEmail extends Model
     }
 
     /**
-     * Scope для поиска по хешу
+     * Scope para busca pelo hash
      */
     public function scopeWhereEmail($query, string $email)
     {
@@ -700,21 +700,21 @@ class UserEmailController extends Controller
             'email' => 'required|email|max:255',
         ]);
 
-        // Проверить, что email не используется
+        // Checar se o email já está em uso
         if (UserEmail::findByEmail($validated['email'])) {
             return back()->withErrors([
-                'email' => 'Этот email уже используется',
+                'email' => 'Este email já está em uso',
             ]);
         }
 
         $userEmail = $request->user()->emails()->create([
-            'email' => $validated['email'], // Автоматически шифруется
+            'email' => $validated['email'], // Criptografa sozinho
         ]);
 
-        // Отправить verification email
+        // Enviar email de verificação
         $userEmail->sendVerificationNotification();
 
-        return redirect()->back()->with('success', 'Email добавлен');
+        return redirect()->back()->with('success', 'Email adicionado');
     }
 
     public function search(Request $request)
@@ -723,11 +723,11 @@ class UserEmailController extends Controller
             'email' => 'required|email',
         ]);
 
-        // Поиск по зашифрованному email (через хеш)
+        // Busca no email criptografado (via hash)
         $userEmail = UserEmail::whereEmail($validated['email'])->first();
 
         if (!$userEmail) {
-            return response()->json(['message' => 'Email не найден'], 404);
+            return response()->json(['message' => 'Email não encontrado'], 404);
         }
 
         return response()->json([
@@ -738,11 +738,11 @@ class UserEmailController extends Controller
     }
 }
 
-// 4. Trait для переиспользования
+// 4. Trait para reutilizar
 trait HasSearchableEncryption
 {
     /**
-     * Создать хеш для searchable поля
+     * Criar hash para campo searchable
      */
     protected static function makeSearchableHash(string $value): string
     {
@@ -750,7 +750,7 @@ trait HasSearchableEncryption
     }
 
     /**
-     * Найти по зашифрованному полю
+     * Buscar por campo criptografado
      */
     public static function findByEncryptedField(string $field, string $value): ?self
     {
@@ -761,7 +761,7 @@ trait HasSearchableEncryption
     }
 }
 
-// Использование
+// Uso
 class UserEmail extends Model
 {
     use HasSearchableEncryption;
@@ -769,10 +769,10 @@ class UserEmail extends Model
     // ...
 }
 
-$userEmail = UserEmail::findByEncryptedField('email', 'john@example.com');
+$userEmail = UserEmail::findByEncryptedField('email', 'joao@email.com');
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

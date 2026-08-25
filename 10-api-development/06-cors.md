@@ -1,51 +1,51 @@
 # 9.6 CORS (Cross-Origin Resource Sharing)
 
-## Краткое резюме
+## Resumo
 
-> **CORS** — механизм, позволяющий браузерам делать запросы к API на другом домене.
+> **CORS** — mecanismo que deixa o navegador fazer request para uma API em outro domínio.
 >
-> **Laravel:** config/cors.php с настройками allowed_origins, allowed_methods, supports_credentials.
+> **Laravel:** config/cors.php com allowed_origins, allowed_methods, supports_credentials.
 >
-> **Важно:** Preflight запросы (OPTIONS), wildcard (*) только для публичных API.
+> **Importante:** Request preflight (OPTIONS), wildcard (*) só em API pública.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Конфигурация](#конфигурация)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Configuração](#configuração)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-CORS (Cross-Origin Resource Sharing) — механизм, позволяющий запросы с других доменов. По умолчанию браузеры блокируют cross-origin запросы из соображений безопасности.
+**O que é:**
+CORS (Cross-Origin Resource Sharing) — mecanismo que libera requests de outros domínios. Por padrão o navegador bloqueia request cross-origin por segurança.
 
-**Проблема без CORS:**
+**Problema sem CORS:**
 ```javascript
-// Frontend на example.com
+// Frontend em example.com
 fetch('https://api.another-domain.com/posts')
-// ❌ CORS error: Access-Control-Allow-Origin missing
+// ❌ Erro de CORS: Access-Control-Allow-Origin missing
 ```
 
-**Почему нужен:**
-- Same-Origin Policy браузеров блокирует запросы
-- Защита от CSRF и других атак
-- Контролируемый доступ к API
+**Por que precisa:**
+- Same-Origin Policy (política de mesma origem) do navegador bloqueia as requests
+- Proteção contra CSRF e outros ataques
+- Acesso controlado à API
 
 ---
 
-## Как работает
+## Como funciona
 
 ### Preflight Request
 
-Для "сложных" запросов браузер сначала отправляет OPTIONS:
+Para requests "complexas", o navegador manda OPTIONS primeiro:
 
 ```
 OPTIONS /api/posts HTTP/1.1
@@ -62,28 +62,28 @@ Access-Control-Max-Age: 86400
 
 ### Simple vs Preflight Requests
 
-**Simple Request (без preflight):**
+**Simple Request (sem preflight):**
 - GET, HEAD, POST
 - Content-Type: text/plain, multipart/form-data, application/x-www-form-urlencoded
-- Только простые headers
+- Só headers simples
 
-**Preflight Request (требуется OPTIONS):**
+**Preflight Request (precisa de OPTIONS):**
 - PUT, DELETE, PATCH
 - Content-Type: application/json
 - Custom headers (Authorization, X-Custom-Header)
 
 ---
 
-## Конфигурация
+## Configuração
 
-### Laravel (встроенный)
+### Laravel (nativo)
 
 ```php
 // config/cors.php
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['*'],  // или ['GET', 'POST', 'PUT', 'DELETE']
+    'allowed_methods' => ['*'],  // ou ['GET', 'POST', 'PUT', 'DELETE']
 
     'allowed_origins' => [
         'https://example.com',
@@ -91,48 +91,48 @@ return [
     ],
 
     'allowed_origins_patterns' => [
-        '/^https:\/\/.*\.example\.com$/',  // Все поддомены
+        '/^https:\/\/.*\.example\.com$/',  // Todos os subdomínios
     ],
 
-    'allowed_headers' => ['*'],  // или ['Content-Type', 'Authorization']
+    'allowed_headers' => ['*'],  // ou ['Content-Type', 'Authorization']
 
-    'exposed_headers' => ['X-Total-Count'],  // Headers доступные клиенту
+    'exposed_headers' => ['X-Total-Count'],  // Headers visíveis para o cliente
 
-    'max_age' => 86400,  // Кэш preflight в секундах
+    'max_age' => 86400,  // Cache do preflight em segundos
 
     'supports_credentials' => true,  // Cookies/Authorization
 ];
 
-// Middleware автоматически применяется (HandleCors в global middleware)
+// Middleware aplicado automaticamente (HandleCors no middleware global)
 ```
 
-### Wildcard (разрешить всем)
+### Wildcard (liberar para todos)
 
 ```php
-'allowed_origins' => ['*'],  // ⚠️ Только для публичных API!
+'allowed_origins' => ['*'],  // ⚠️ Só para API pública!
 
-// При использовании '*' нельзя:
-'supports_credentials' => false,  // Credentials не работают с wildcard
+// Com '*' você não pode:
+'supports_credentials' => false,  // Credentials não funcionam com wildcard
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-| Сценарий | CORS нужен? |
+| Cenário | Precisa de CORS? |
 |----------|------------|
-| SPA на другом домене | ✅ Да |
-| Мобильное приложение (WebView) | ✅ Да |
-| Публичный API | ✅ Да |
-| Same-origin (API и фронтенд на одном домене) | ❌ Нет |
-| Server-to-server запросы | ❌ Нет |
-| Postman/curl | ❌ Нет (CORS только в браузере) |
+| SPA em outro domínio | ✅ Sim |
+| App mobile (WebView) | ✅ Sim |
+| API pública | ✅ Sim |
+| Same-origin (API e frontend no mesmo domínio) | ❌ Não |
+| Requests server-to-server | ❌ Não |
+| Postman/curl | ❌ Não (CORS só no navegador) |
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-### Production конфигурация
+### Configuração de production
 
 ```php
 // config/cors.php
@@ -167,7 +167,7 @@ FRONTEND_URL=https://app.example.com
 ADMIN_URL=https://admin.example.com
 ```
 
-### Multiple Origins через Environment
+### Multiple Origins via Environment
 
 ```php
 'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', ''))),
@@ -176,36 +176,36 @@ ADMIN_URL=https://admin.example.com
 CORS_ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com,https://staging.example.com
 ```
 
-### Frontend запрос с credentials
+### Request do frontend com credentials
 
 ```javascript
-// Правильный fetch с credentials
+// Fetch correto com credentials
 fetch('https://api.example.com/posts', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + token,
     },
-    credentials: 'include',  // Отправляет cookies
+    credentials: 'include',  // Envia cookies
     body: JSON.stringify(data),
 })
 .then(response => response.json())
 .catch(error => {
     if (error.message.includes('CORS')) {
-        console.error('CORS error - check allowed_origins');
+        console.error('Erro de CORS — confira allowed_origins');
     }
 });
 ```
 
-### Debug CORS проблем
+### Debug de problemas de CORS
 
 ```php
-// Временный debug middleware
+// Middleware temporário de debug
 class DebugCors
 {
     public function handle(Request $request, Closure $next)
     {
-        \Log::info('CORS Debug', [
+        \Log::info('Debug CORS', [
             'origin' => $request->header('Origin'),
             'method' => $request->method(),
             'path' => $request->path(),
@@ -214,7 +214,7 @@ class DebugCors
 
         $response = $next($request);
 
-        \Log::info('CORS Response Headers', [
+        \Log::info('Headers da response CORS', [
             'allow_origin' => $response->headers->get('Access-Control-Allow-Origin'),
             'allow_methods' => $response->headers->get('Access-Control-Allow-Methods'),
         ]);
@@ -226,47 +226,47 @@ class DebugCors
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- CORS позволяет браузерам делать cross-origin запросы
-- Без CORS браузер блокирует запросы к другому домену
-- Защита Same-Origin Policy
+**O que é:**
+- CORS deixa o navegador fazer request cross-origin
+- Sem CORS o navegador bloqueia request para outro domínio
+- Proteção da Same-Origin Policy
 
-**Laravel конфигурация:**
-- `config/cors.php` — настройки CORS
-- `allowed_origins` — разрешённые домены
-- `allowed_methods` — HTTP методы (GET, POST, PUT, DELETE)
-- `supports_credentials` — для cookies/auth headers
+**Configuração no Laravel:**
+- `config/cors.php` — config do CORS
+- `allowed_origins` — domínios liberados
+- `allowed_methods` — métodos HTTP (GET, POST, PUT, DELETE)
+- `supports_credentials` — para cookies/auth headers
 
 **Preflight:**
-- OPTIONS запрос перед "сложным" запросом
-- Браузер проверяет разрешения
-- Кэшируется на `max_age` секунд
+- Request OPTIONS antes da request "complexa"
+- O navegador checa as permissões
+- Fica em cache por `max_age` segundos
 
 **Headers:**
-- `Access-Control-Allow-Origin` — разрешённый origin
-- `Access-Control-Allow-Methods` — разрешённые методы
-- `Access-Control-Allow-Credentials` — для cookies
+- `Access-Control-Allow-Origin` — origin liberado
+- `Access-Control-Allow-Methods` — métodos liberados
+- `Access-Control-Allow-Credentials` — para cookies
 
-**Best practices:**
-- Wildcard (*) только для публичных API
-- Explicit origins для production
-- `supports_credentials: true` для auth
-- HandleCors middleware автоматический в Laravel
+**Boas práticas:**
+- Wildcard (*) só em API pública
+- Origins explícitos em production
+- `supports_credentials: true` para auth
+- HandleCors middleware já vem automático no Laravel
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Настрой CORS для multi-tenant SPA
+### Exercício 1: Configure CORS para SPA multi-tenant
 
-У тебя SPA на поддоменах: app.client1.com, app.client2.com. API на api.example.com. Настрой CORS.
+Você tem SPA em subdomínios: app.client1.com, app.client2.com. A API fica em api.example.com. Configure o CORS.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/cors.php
@@ -275,7 +275,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // Паттерн для всех поддоменов app.*.com
+    // Pattern para todos os subdomínios app.*.com
     'allowed_origins_patterns' => [
         '/^https:\/\/app\.[a-z0-9-]+\.com$/',
     ],
@@ -283,7 +283,7 @@ return [
     'allowed_headers' => [
         'Content-Type',
         'Authorization',
-        'X-Tenant-Id',  // Кастомный header для tenant
+        'X-Tenant-Id',  // Header customizado para o tenant
     ],
 
     'exposed_headers' => [
@@ -294,7 +294,7 @@ return [
     'max_age' => 86400,
 ];
 
-// Альтернатива: Dynamic allowed_origins
+// Alternativa: allowed_origins dinâmico
 // app/Http/Middleware/DynamicCors.php
 namespace App\Http\Middleware;
 
@@ -307,7 +307,7 @@ class DynamicCors
     {
         $origin = $request->header('Origin');
 
-        // Проверка origin
+        // Checa o origin
         if ($this->isAllowedOrigin($origin)) {
             return $next($request)
                 ->header('Access-Control-Allow-Origin', $origin)
@@ -326,19 +326,19 @@ class DynamicCors
             return false;
         }
 
-        // Проверка паттерна
+        // Checa o pattern
         return preg_match('/^https:\/\/app\.[a-z0-9-]+\.com$/', $origin) === 1;
     }
 }
 ```
 </details>
 
-### Задание 2: Обработка CORS preflight для custom headers
+### Exercício 2: Trate o preflight CORS para custom headers
 
-API требует custom header `X-Api-Key`. Настрой CORS для preflight.
+A API exige o custom header `X-Api-Key`. Configure o CORS para o preflight.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // config/cors.php
@@ -351,7 +351,7 @@ return [
         env('FRONTEND_URL'),
     ],
 
-    // ВАЖНО: Добавить X-Api-Key в allowed_headers
+    // IMPORTANTE: incluir X-Api-Key em allowed_headers
     'allowed_headers' => [
         'Content-Type',
         'Authorization',
@@ -368,19 +368,19 @@ fetch('https://api.example.com/posts', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': 'your-api-key',  // Триггерит preflight
+        'X-Api-Key': 'your-api-key',  // Dispara o preflight
     },
     body: JSON.stringify(data),
 });
 
-// API Middleware для проверки ключа
+// Middleware da API para validar a chave
 namespace App\Http\Middleware;
 
 class ValidateApiKey
 {
     public function handle(Request $request, Closure $next)
     {
-        // Пропускаем preflight
+        // Deixa o preflight passar
         if ($request->isMethod('OPTIONS')) {
             return $next($request);
         }
@@ -389,7 +389,7 @@ class ValidateApiKey
 
         if (!$apiKey || !$this->isValidKey($apiKey)) {
             return response()->json([
-                'error' => 'Invalid or missing API key'
+                'error' => 'API key inválida ou ausente'
             ], 401);
         }
 
@@ -407,15 +407,15 @@ class ValidateApiKey
 ```
 </details>
 
-### Задание 3: CORS error debugging
+### Exercício 3: Debug de erro de CORS
 
-Клиент получает CORS error. Создай debug endpoint и middleware для диагностики.
+O cliente recebe um erro de CORS. Crie um endpoint de debug e um middleware para diagnosticar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// routes/api.php (debug endpoint)
+// routes/api.php (endpoint de debug)
 Route::get('/debug/cors', function (Request $request) {
     $origin = $request->header('Origin');
     $allowedOrigins = config('cors.allowed_origins');
@@ -452,9 +452,9 @@ class CorsDebugger
     {
         $origin = $request->header('Origin');
 
-        // Log preflight requests
+        // Log das requests preflight
         if ($request->isMethod('OPTIONS')) {
-            Log::debug('CORS Preflight Request', [
+            Log::debug('Request preflight CORS', [
                 'origin' => $origin,
                 'method' => $request->header('Access-Control-Request-Method'),
                 'headers' => $request->header('Access-Control-Request-Headers'),
@@ -464,8 +464,8 @@ class CorsDebugger
 
         $response = $next($request);
 
-        // Log response headers
-        Log::debug('CORS Response', [
+        // Log dos headers da response
+        Log::debug('Response CORS', [
             'origin' => $origin,
             'allow_origin' => $response->headers->get('Access-Control-Allow-Origin'),
             'allow_methods' => $response->headers->get('Access-Control-Allow-Methods'),
@@ -473,7 +473,7 @@ class CorsDebugger
             'allow_credentials' => $response->headers->get('Access-Control-Allow-Credentials'),
         ]);
 
-        // Добавляем debug info в dev окружении
+        // Inclui info de debug no ambiente de dev
         if (config('app.debug')) {
             $response->headers->set('X-CORS-Debug', json_encode([
                 'origin_received' => $origin,
@@ -486,20 +486,20 @@ class CorsDebugger
     }
 }
 
-// Добавить в Kernel для debug
+// Registrar no Kernel para debug
 protected $middlewareGroups = [
     'api' => [
         // ...
-        \App\Http\Middleware\CorsDebugger::class, // Только для dev
+        \App\Http\Middleware\CorsDebugger::class, // Só em dev
     ],
 ];
 
-// Frontend debug helper
-// Добавить в dev tools console
+// Helper de debug no frontend
+// Colar no console do DevTools
 function debugCors(url) {
     fetch(url, { method: 'OPTIONS' })
         .then(response => {
-            console.log('Preflight Response:');
+            console.log('Response do preflight:');
             console.log('Allow-Origin:', response.headers.get('Access-Control-Allow-Origin'));
             console.log('Allow-Methods:', response.headers.get('Access-Control-Allow-Methods'));
             console.log('Allow-Headers:', response.headers.get('Access-Control-Allow-Headers'));
@@ -513,4 +513,4 @@ function debugCors(url) {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

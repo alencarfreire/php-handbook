@@ -1,44 +1,44 @@
-# 8.4 Аутентификация
+# 8.4 Autenticação
 
-## Краткое резюме
+## Resumo
 
-> **Аутентификация** — проверка личности пользователя (кто ты?).
+> **Autenticação** — checagem de quem é o usuário (quem é você?).
 >
-> **Методы:** Session-based (cookies) для веб-приложений, Token-based (Bearer) для API, OAuth для внешних провайдеров.
+> **Métodos:** Session-based (cookies) no web, Token-based (Bearer) na API, OAuth para provedores externos.
 >
-> **Важно:** Rate limiting против brute force, Email verification для подтверждения, 2FA для дополнительной защиты, Hash::make() для безопасного хранения паролей.
+> **Importante:** Rate limiting contra brute force, Email verification para confirmar, 2FA para proteção extra, Hash::make() para guardar senha com segurança.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Аутентификация — проверка личности пользователя (кто ты?). Laravel предоставляет встроенные механизмы: сессии, токены (Sanctum, Passport).
-
-**Методы:**
-- Session-based — cookie с session ID
-- Token-based — Bearer токен (API)
-- OAuth — через внешние провайдеры
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Session-based (веб):**
+**O que é:**
+Autenticação é checar quem é o usuário (quem é você?). O Laravel já traz os mecanismos: sessão, token (Sanctum, Passport).
+
+**Métodos:**
+- Session-based — cookie com session ID
+- Token-based — token Bearer (API)
+- OAuth — via provedores externos
+
+---
+
+## Como funciona
+
+**Session-based (web):**
 
 ```php
-// Логин
+// Login
 Route::post('/login', function (Request $request) {
     $credentials = $request->validate([
         'email' => 'required|email',
@@ -46,17 +46,17 @@ Route::post('/login', function (Request $request) {
     ]);
 
     if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();  // Защита от session fixation
+        $request->session()->regenerate();  // Proteção contra session fixation
 
         return redirect()->intended('/dashboard');
     }
 
     return back()->withErrors([
-        'email' => 'Invalid credentials',
+        'email' => 'Credenciais inválidas',
     ]);
 });
 
-// Логаут
+// Logout
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
@@ -65,7 +65,7 @@ Route::post('/logout', function (Request $request) {
     return redirect('/');
 });
 
-// Проверка авторизации
+// Checagem de autenticação
 Route::middleware('auth')->group(function () {
     Route::get('/profile', function () {
         $user = auth()->user();
@@ -74,10 +74,10 @@ Route::middleware('auth')->group(function () {
 });
 ```
 
-**Token-based (Sanctum для API):**
+**Token-based (Sanctum na API):**
 
 ```php
-// Логин и выдача токена
+// Login e emissão do token
 Route::post('/login', function (Request $request) {
     $request->validate([
         'email' => 'required|email',
@@ -87,7 +87,7 @@ Route::post('/login', function (Request $request) {
     $user = User::where('email', $request->email)->first();
 
     if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Invalid credentials'], 401);
+        return response()->json(['message' => 'Credenciais inválidas'], 401);
     }
 
     $token = $user->createToken('api-token')->plainTextToken;
@@ -95,44 +95,44 @@ Route::post('/login', function (Request $request) {
     return response()->json(['token' => $token]);
 });
 
-// Защищённый endpoint
+// Endpoint protegido
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Логаут (удалить токен)
+// Logout (apagar o token)
 Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
     $request->user()->currentAccessToken()->delete();
 
-    return response()->json(['message' => 'Logged out']);
+    return response()->json(['message' => 'Logout feito']);
 });
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Session-based для:**
-- Веб-приложения
-- Традиционные формы
+**Session-based para:**
+- Apps web
+- Formulários tradicionais
 - Server-side rendering
 
-**Token-based для:**
+**Token-based para:**
 - API
-- Mobile приложения
+- Apps mobile
 - SPA (Single Page Apps)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
 **Multi-factor Authentication (2FA):**
 
 ```php
-// Установить пакет
+// Instalar o pacote
 composer require pragmarx/google2fa-laravel
 
-// Включить 2FA
+// Ativar 2FA
 class TwoFactorController extends Controller
 {
     public function enable(Request $request)
@@ -168,11 +168,11 @@ class TwoFactorController extends Controller
             return redirect('/dashboard');
         }
 
-        return back()->withErrors(['code' => 'Invalid code']);
+        return back()->withErrors(['code' => 'Código inválido']);
     }
 }
 
-// Middleware для проверки 2FA
+// Middleware para checar 2FA
 class Ensure2FA
 {
     public function handle($request, Closure $next)
@@ -191,18 +191,18 @@ class Ensure2FA
 **Remember Me:**
 
 ```php
-// Логин с Remember Me
+// Login com Remember Me
 if (Auth::attempt($credentials, $remember = true)) {
-    // Cookie на 5 лет
+    // Cookie por 5 anos
 }
 
-// Проверка Remember token
+// Checagem do Remember token
 if (Auth::viaRemember()) {
-    // Пользователь залогинен через Remember Me
+    // Usuário logado via Remember Me
 }
 ```
 
-**Rate Limiting (защита от brute force):**
+**Rate Limiting (proteção contra brute force):**
 
 ```php
 use Illuminate\Support\Facades\RateLimiter;
@@ -214,18 +214,18 @@ Route::post('/login', function (Request $request) {
         $seconds = RateLimiter::availableIn($key);
 
         return back()->withErrors([
-            'email' => "Too many attempts. Try again in {$seconds} seconds.",
+            'email' => "Muitas tentativas. Tente de novo em {$seconds} segundos.",
         ]);
     }
 
     if (Auth::attempt($request->only('email', 'password'))) {
-        RateLimiter::clear($key);  // Сбросить после успеха
+        RateLimiter::clear($key);  // Zerar depois do sucesso
         return redirect('/dashboard');
     }
 
-    RateLimiter::hit($key, 60);  // +1 попытка, TTL 60 секунд
+    RateLimiter::hit($key, 60);  // +1 tentativa, TTL 60 segundos
 
-    return back()->withErrors(['email' => 'Invalid credentials']);
+    return back()->withErrors(['email' => 'Credenciais inválidas']);
 });
 ```
 
@@ -241,16 +241,16 @@ class User extends Authenticatable implements MustVerifyEmail
 // routes/web.php
 Auth::routes(['verify' => true]);
 
-// Защита маршрута
+// Proteção da rota
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
 
-// Отправить verification email заново
+// Reenviar o email de verificação
 Route::post('/email/resend', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
 
-    return back()->with('message', 'Verification link sent!');
+    return back()->with('message', 'Link de verificação enviado!');
 });
 ```
 
@@ -259,7 +259,7 @@ Route::post('/email/resend', function (Request $request) {
 ```php
 use Illuminate\Support\Facades\Password;
 
-// Отправить ссылку сброса
+// Enviar o link de reset
 Route::post('/forgot-password', function (Request $request) {
     $request->validate(['email' => 'required|email']);
 
@@ -272,7 +272,7 @@ Route::post('/forgot-password', function (Request $request) {
         : back()->withErrors(['email' => __($status)]);
 });
 
-// Сбросить пароль
+// Resetar a senha
 Route::post('/reset-password', function (Request $request) {
     $request->validate([
         'token' => 'required',
@@ -338,37 +338,37 @@ Route::get('/auth/github/callback', function () {
 ```php
 use Illuminate\Support\Facades\Hash;
 
-// Хеширование
-$hashed = Hash::make('password');
+// Hash
+$hashed = Hash::make('senha');
 
-// Проверка
-if (Hash::check('password', $user->password)) {
-    // Верный пароль
+// Checagem
+if (Hash::check('senha', $user->password)) {
+    // Senha correta
 }
 
-// Проверка необходимости rehash
+// Checar se precisa de rehash
 if (Hash::needsRehash($user->password)) {
-    $user->password = Hash::make('new-password');
+    $user->password = Hash::make('nova-senha');
     $user->save();
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Аутентификация — проверка личности. Session-based для веба (Auth::attempt(), auth()->user()). Token-based для API (Sanctum, createToken()). Auth middleware защищает маршруты. Rate limiting против brute force (RateLimiter::tooManyAttempts()). Email verification через MustVerifyEmail. Password reset через Password::sendResetLink(). 2FA через google2fa. Remember Me через второй параметр attempt(). Socialite для OAuth. Hash::make() для хеширования паролей, Hash::check() для проверки."
+> "Autenticação é checar quem você é. Session-based no web (Auth::attempt(), auth()->user()). Token-based na API (Sanctum, createToken()). Auth middleware protege as rotas. Rate limiting contra brute force (RateLimiter::tooManyAttempts()). Email verification com MustVerifyEmail. Password reset com Password::sendResetLink(). 2FA com google2fa. Remember Me no segundo parâmetro do attempt(). Socialite para OAuth. Hash::make() para hash da senha, Hash::check() para conferir."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Реализуй Rate Limiting для логина
+### Exercício 1: Implemente Rate Limiting no login
 
-Защити endpoint логина от brute force атак с использованием rate limiting.
+**Enunciado:** Proteja o endpoint de login contra brute force com rate limiting.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // LoginController
@@ -384,23 +384,23 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        // Ключ для rate limiting (по email + IP)
+        // Chave do rate limiting (email + IP)
         $key = 'login:' . $request->email . ':' . $request->ip();
 
-        // Проверка лимита (5 попыток в минуту)
+        // Checagem do limite (5 tentativas por minuto)
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
 
             throw ValidationException::withMessages([
                 'email' => [
-                    "Слишком много попыток входа. Попробуйте через {$seconds} секунд."
+                    "Muitas tentativas de login. Tente de novo em {$seconds} segundos."
                 ],
             ]);
         }
 
-        // Попытка аутентификации
+        // Tentativa de autenticação
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            // Сбросить счётчик при успешном входе
+            // Zerar o contador no login com sucesso
             RateLimiter::clear($key);
 
             $request->session()->regenerate();
@@ -408,43 +408,43 @@ class LoginController extends Controller
             return redirect()->intended('/dashboard');
         }
 
-        // Увеличить счётчик попыток (TTL 60 секунд)
+        // Incrementar o contador (TTL 60 segundos)
         RateLimiter::hit($key, 60);
 
         throw ValidationException::withMessages([
-            'email' => ['Неверные учётные данные.'],
+            'email' => ['Credenciais inválidas.'],
         ]);
     }
 }
 
-// Альтернатива: Использовать middleware throttle
+// Alternativa: usar o middleware throttle
 Route::post('/login', [LoginController::class, 'login'])
-    ->middleware('throttle:5,1'); // 5 запросов в 1 минуту
+    ->middleware('throttle:5,1'); // 5 requests por 1 minuto
 
-// Или кастомный rate limiter в RouteServiceProvider
+// Ou um rate limiter customizado no RouteServiceProvider
 use Illuminate\Cache\RateLimiting\Limit;
 
 RateLimiter::for('login', function (Request $request) {
     return Limit::perMinute(5)->by($request->input('email') . $request->ip())
         ->response(function () {
             return response()->json([
-                'message' => 'Слишком много попыток входа.'
+                'message' => 'Muitas tentativas de login.'
             ], 429);
         });
 });
 
-// В маршруте
+// Na rota
 Route::post('/login', [LoginController::class, 'login'])
     ->middleware('throttle:login');
 ```
 </details>
 
-### Задание 2: Настрой Email Verification
+### Exercício 2: Configure Email Verification
 
-Реализуй систему подтверждения email для новых пользователей.
+**Enunciado:** Implemente confirmação de email para usuários novos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. User Model
@@ -465,12 +465,12 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 }
 
-// 2. Migration (уже есть в Laravel)
+// 2. Migration (já vem no Laravel)
 Schema::create('users', function (Blueprint $table) {
     $table->id();
     $table->string('name');
     $table->string('email')->unique();
-    $table->timestamp('email_verified_at')->nullable(); // Важно!
+    $table->timestamp('email_verified_at')->nullable(); // Importante!
     $table->string('password');
     $table->rememberToken();
     $table->timestamps();
@@ -491,16 +491,16 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
 
-    return back()->with('message', 'Письмо отправлено!');
+    return back()->with('message', 'Email enviado!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
-// 4. Защита маршрутов
+// 4. Proteção das rotas
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/profile', [ProfileController::class, 'show']);
 });
 
-// 5. Кастомизация уведомления
+// 5. Customizar a notificação
 class User extends Authenticatable implements MustVerifyEmail
 {
     public function sendEmailVerificationNotification()
@@ -519,37 +519,37 @@ class CustomVerifyEmail extends VerifyEmail
         $verificationUrl = $this->verificationUrl($notifiable);
 
         return (new MailMessage)
-            ->subject('Подтвердите email')
-            ->line('Нажмите кнопку ниже для подтверждения.')
-            ->action('Подтвердить Email', $verificationUrl)
-            ->line('Если вы не создавали аккаунт, проигнорируйте письмо.');
+            ->subject('Confirme o email')
+            ->line('Clique no botão abaixo para confirmar.')
+            ->action('Confirmar email', $verificationUrl)
+            ->line('Se você não criou a conta, ignore este email.');
     }
 }
 
 // 6. View (resources/views/auth/verify-email.blade.php)
 <div>
-    <h2>Подтвердите email</h2>
+    <h2>Confirme o email</h2>
 
     @if (session('message'))
         <div>{{ session('message') }}</div>
     @endif
 
-    <p>Мы отправили письмо на ваш email. Проверьте почту.</p>
+    <p>Enviamos um email para você. Confira a caixa de entrada.</p>
 
     <form method="POST" action="{{ route('verification.send') }}">
         @csrf
-        <button type="submit">Отправить письмо повторно</button>
+        <button type="submit">Reenviar o email</button>
     </form>
 </div>
 ```
 </details>
 
-### Задание 3: Реализуй простую 2FA
+### Exercício 3: Implemente um 2FA simples
 
-Добавь двухфакторную аутентификацию через email код.
+**Enunciado:** Adicione autenticação de dois fatores com código por email.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // 1. Migration
@@ -572,11 +572,11 @@ class LoginController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Неверные учётные данные.'],
+                'email' => ['Credenciais inválidas.'],
             ]);
         }
 
-        // Генерировать 2FA код
+        // Gerar o código 2FA
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $user->update([
@@ -584,10 +584,10 @@ class LoginController extends Controller
             'two_factor_expires_at' => now()->addMinutes(10),
         ]);
 
-        // Отправить код на email
+        // Enviar o código por email
         $user->notify(new TwoFactorCode($code));
 
-        // Сохранить user_id в сессии
+        // Guardar o user_id na sessão
         session(['2fa_user_id' => $user->id]);
 
         return redirect()->route('two-factor.verify');
@@ -615,27 +615,27 @@ class LoginController extends Controller
             return redirect()->route('login');
         }
 
-        // Проверка срока действия
+        // Checagem de validade
         if (now()->isAfter($user->two_factor_expires_at)) {
             throw ValidationException::withMessages([
-                'code' => ['Код истёк. Войдите заново.'],
+                'code' => ['Código expirado. Faça login de novo.'],
             ]);
         }
 
-        // Проверка кода
+        // Checagem do código
         if (!Hash::check($request->code, $user->two_factor_code)) {
             throw ValidationException::withMessages([
-                'code' => ['Неверный код.'],
+                'code' => ['Código inválido.'],
             ]);
         }
 
-        // Очистить 2FA данные
+        // Limpar os dados do 2FA
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
         ]);
 
-        // Авторизовать
+        // Fazer login
         Auth::login($user);
         $request->session()->forget('2fa_user_id');
         $request->session()->regenerate();
@@ -659,9 +659,9 @@ class TwoFactorCode extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Код подтверждения')
-            ->line("Ваш код: {$this->code}")
-            ->line('Код действителен 10 минут.');
+            ->subject('Código de verificação')
+            ->line("Seu código: {$this->code}")
+            ->line('O código vale por 10 minutos.');
     }
 }
 
@@ -675,18 +675,18 @@ Route::post('/two-factor', [LoginController::class, 'verify']);
     @csrf
 
     <div>
-        <label>Введите код из email</label>
+        <label>Digite o código do email</label>
         <input type="text" name="code" maxlength="6" required>
         @error('code')
             <span>{{ $message }}</span>
         @enderror
     </div>
 
-    <button type="submit">Подтвердить</button>
+    <button type="submit">Confirmar</button>
 </form>
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

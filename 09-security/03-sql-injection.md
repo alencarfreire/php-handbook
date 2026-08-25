@@ -1,72 +1,72 @@
 # 8.3 SQL Injection
 
-## Краткое резюме
+## Resumo
 
-> **SQL Injection** — внедрение SQL кода через пользовательский ввод для чтения, изменения или удаления данных в базе данных.
+> **SQL Injection** — injetar SQL pelo input do usuário para ler, alterar ou apagar dados no banco.
 >
-> **Защита:** Laravel Query Builder и Eloquent автоматически параметризуют запросы. Всегда использовать prepared statements с placeholders (?, :name).
+> **Proteção:** Laravel Query Builder e Eloquent parametrizam as queries sozinhos. Sempre use prepared statements com placeholders (?, :name).
 >
-> **Важно:** НИКОГДА не конкатенировать SQL строки. DB::raw() использовать только с whitelist или параметрами.
+> **Importante:** NUNCA concatene strings SQL. DB::raw() só com whitelist ou parâmetros.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать защиту](#когда-использовать-защиту)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
-**Что это:**
-SQL Injection — внедрение SQL кода через пользовательский ввод. Атакующий может читать/изменять/удалять данные в БД.
+**O que é:**
+SQL Injection — injetar SQL pelo input do usuário. O atacante consegue ler, alterar ou apagar dados no banco.
 
-**Пример атаки:**
+**Exemplo de ataque:**
 ```sql
--- Запрос с инъекцией
+-- Query com injeção
 SELECT * FROM users WHERE email = 'user@example.com' OR '1'='1'
 
--- Всегда true → вернёт всех пользователей
+-- Sempre true → devolve todos os usuários
 ```
 
 ---
 
-## Как работает
+## Como funciona
 
-**Уязвимый код:**
+**Código vulnerável:**
 
 ```php
-// ❌ ОПАСНО: конкатенация SQL
+// ❌ PERIGOSO: concatenação de SQL
 Route::get('/users', function (Request $request) {
     $email = $request->input('email');
 
     $users = DB::select("SELECT * FROM users WHERE email = '{$email}'");
-    // Атака: ?email=' OR '1'='1
-    // Вернёт всех пользователей
+    // Ataque: ?email=' OR '1'='1
+    // Devolve todos os usuários
 
     return $users;
 });
 
-// ❌ ОПАСНО: raw query без параметров
+// ❌ PERIGOSO: raw query sem parâmetros
 $userId = $request->input('id');
 DB::statement("DELETE FROM users WHERE id = {$userId}");
-// Атака: ?id=1 OR 1=1
-// Удалит всех пользователей
+// Ataque: ?id=1 OR 1=1
+// Apaga todos os usuários
 ```
 
-**Безопасный код (Parameter Binding):**
+**Código seguro (Parameter Binding):**
 
 ```php
-// ✅ БЕЗОПАСНО: prepared statements
+// ✅ SEGURO: prepared statements
 Route::get('/users', function (Request $request) {
     $email = $request->input('email');
 
-    // Query Builder (автоматически параметризует)
+    // Query Builder (parametriza automaticamente)
     $users = DB::table('users')
         ->where('email', $email)
         ->get();
@@ -74,10 +74,10 @@ Route::get('/users', function (Request $request) {
     return $users;
 });
 
-// ✅ БЕЗОПАСНО: параметры в raw query
+// ✅ SEGURO: parâmetros no raw query
 $users = DB::select('SELECT * FROM users WHERE email = ?', [$email]);
 
-// ✅ БЕЗОПАСНО: именованные параметры
+// ✅ SEGURO: parâmetros nomeados
 $users = DB::select('SELECT * FROM users WHERE email = :email', [
     'email' => $email
 ]);
@@ -85,45 +85,45 @@ $users = DB::select('SELECT * FROM users WHERE email = :email', [
 
 ---
 
-## Когда использовать защиту
+## Quando usar
 
-**Всегда используй Parameter Binding:**
-- ✅ Query Builder (автоматически)
-- ✅ Eloquent (автоматически)
-- ✅ Prepared statements для raw SQL
+**Sempre use Parameter Binding:**
+- ✅ Query Builder (automático)
+- ✅ Eloquent (automático)
+- ✅ Prepared statements no raw SQL
 
-**НИКОГДА не делай:**
-- ❌ Конкатенация SQL
-- ❌ Raw query без параметров
-- ❌ DB::raw() с пользовательским вводом
+**NUNCA faça:**
+- ❌ Concatenação de SQL
+- ❌ Raw query sem parâmetros
+- ❌ DB::raw() com input do usuário
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Eloquent защищает автоматически:**
+**Eloquent protege automaticamente:**
 
 ```php
-// ✅ БЕЗОПАСНО
+// ✅ SEGURO
 $user = User::where('email', $request->input('email'))->first();
 
-// ✅ БЕЗОПАСНО: массовая вставка
+// ✅ SEGURO: insert em massa
 User::create($request->validated());
 
-// ✅ БЕЗОПАСНО: where in
+// ✅ SEGURO: where in
 User::whereIn('id', $request->input('ids'))->get();
 ```
 
-**Query Builder защищает автоматически:**
+**Query Builder protege automaticamente:**
 
 ```php
-// ✅ БЕЗОПАСНО
+// ✅ SEGURO
 DB::table('users')
     ->where('email', $email)
     ->where('active', true)
     ->get();
 
-// ✅ БЕЗОПАСНО: сложные условия
+// ✅ SEGURO: condições complexas
 DB::table('orders')
     ->where('status', $status)
     ->whereBetween('created_at', [$from, $to])
@@ -131,15 +131,15 @@ DB::table('orders')
     ->get();
 ```
 
-**DB::raw() с осторожностью:**
+**DB::raw() com cuidado:**
 
 ```php
-// ❌ ОПАСНО: пользовательский ввод в raw()
+// ❌ PERIGOSO: input do usuário em raw()
 $column = $request->input('sort_by');
 DB::table('users')->orderByRaw($column)->get();
-// Атака: ?sort_by=id; DELETE FROM users; --
+// Ataque: ?sort_by=id; DELETE FROM users; --
 
-// ✅ БЕЗОПАСНО: whitelist
+// ✅ SEGURO: whitelist
 $allowedColumns = ['id', 'name', 'created_at'];
 $column = $request->input('sort_by', 'id');
 
@@ -149,34 +149,34 @@ if (!in_array($column, $allowedColumns)) {
 
 DB::table('users')->orderBy($column)->get();
 
-// ✅ БЕЗОПАСНО: параметры в raw()
+// ✅ SEGURO: parâmetros no raw()
 DB::table('orders')
     ->selectRaw('COUNT(*) as count, status')
-    ->where('user_id', $userId)  // Параметризовано
+    ->where('user_id', $userId)  // Parametrizado
     ->groupBy('status')
     ->get();
 ```
 
-**Безопасный поиск:**
+**Busca segura:**
 
 ```php
-// ❌ ОПАСНО
+// ❌ PERIGOSO
 $query = $request->input('q');
 $users = DB::select("SELECT * FROM users WHERE name LIKE '%{$query}%'");
 
-// ✅ БЕЗОПАСНО: параметры
+// ✅ SEGURO: parâmetros
 $query = $request->input('q');
 $users = DB::table('users')
     ->where('name', 'like', "%{$query}%")
     ->get();
 
-// ✅ БЕЗОПАСНО: fulltext search
+// ✅ SEGURO: fulltext search
 $users = DB::table('users')
     ->whereRaw('MATCH(name, email) AGAINST(? IN BOOLEAN MODE)', [$query])
     ->get();
 ```
 
-**Безопасная динамическая сортировка:**
+**Ordenação dinâmica segura:**
 
 ```php
 class UserController extends Controller
@@ -200,14 +200,14 @@ class UserController extends Controller
 }
 ```
 
-**Безопасное использование IN clause:**
+**Uso seguro do IN:**
 
 ```php
-// ✅ БЕЗОПАСНО: whereIn автоматически параметризует
+// ✅ SEGURO: whereIn parametriza automaticamente
 $ids = $request->input('ids');  // [1, 2, 3]
 $users = User::whereIn('id', $ids)->get();
 
-// ✅ БЕЗОПАСНО: subquery
+// ✅ SEGURO: subquery
 $activeUserIds = User::where('active', true)->pluck('id');
 $orders = Order::whereIn('user_id', $activeUserIds)->get();
 ```
@@ -215,22 +215,22 @@ $orders = Order::whereIn('user_id', $activeUserIds)->get();
 **Second-order SQL Injection:**
 
 ```php
-// Атака в два этапа
-// 1. Сохранить вредоносный payload
+// Ataque em duas etapas
+// 1. Salvar payload malicioso
 User::create([
-    'name' => "'; DROP TABLE users; --",  // Сохранено в БД
+    'name' => "'; DROP TABLE users; --",  // Salvo no banco
 ]);
 
-// 2. Использовать в raw query
+// 2. Usar em raw query
 $user = User::find(1);
 DB::statement("INSERT INTO logs (message) VALUES ('{$user->name}')");
-// ❌ ОПАСНО
+// ❌ PERIGOSO
 
-// ✅ БЕЗОПАСНО: всегда параметризуй
+// ✅ SEGURO: sempre parametrize
 DB::statement('INSERT INTO logs (message) VALUES (?)', [$user->name]);
 ```
 
-**Тестирование на SQL Injection:**
+**Teste de SQL Injection:**
 
 ```php
 // tests/Feature/SqlInjectionTest.php
@@ -242,7 +242,7 @@ class SqlInjectionTest extends TestCase
 
         $response = $this->get('/users?email=' . urlencode($sqlPayload));
 
-        // Не должно вернуть всех пользователей
+        // Não deve devolver todos os usuários
         $response->assertStatus(200);
         $this->assertCount(0, $response->json('data'));
     }
@@ -251,7 +251,7 @@ class SqlInjectionTest extends TestCase
     {
         $response = $this->get('/users?sort_by=id; DROP TABLE users');
 
-        // Должно вернуть ошибку валидации
+        // Deve devolver erro de validação
         $response->assertStatus(422);
     }
 }
@@ -260,7 +260,7 @@ class SqlInjectionTest extends TestCase
 **WAF (Web Application Firewall):**
 
 ```php
-// Middleware для базовой защиты
+// Middleware para proteção básica
 class SqlInjectionDetection
 {
     private array $patterns = [
@@ -275,7 +275,7 @@ class SqlInjectionDetection
 
         foreach ($this->patterns as $pattern) {
             if (preg_match($pattern, $input)) {
-                Log::warning('SQL Injection attempt detected', [
+                Log::warning('Tentativa de SQL Injection detectada', [
                     'ip' => $request->ip(),
                     'input' => $input,
                 ]);
@@ -291,17 +291,17 @@ class SqlInjectionDetection
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "SQL Injection — внедрение SQL через пользовательский ввод. Laravel защищает через Query Builder и Eloquent (автоматическая параметризация). Prepared statements с placeholders (?, :name). НИКОГДА не конкатенировать SQL. DB::raw() только с whitelist или параметрами. Валидация для динамических колонок (sort_by in:id,name). whereIn() безопасен. Second-order injection — когда данные из БД используются в raw query. WAF middleware для дополнительной защиты."
+> "SQL Injection é injetar SQL pelo input do usuário. O Laravel protege com Query Builder e Eloquent — parametrizam sozinhos. Prepared statements com placeholders (?, :name). NUNCA concatene SQL. DB::raw() só com whitelist ou parâmetros. Validação para coluna dinâmica (sort_by in:id,name). whereIn() é seguro. Second-order injection: dado que já está no banco e vai para raw query. WAF middleware como camada extra."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Найди и исправь SQL Injection
+### Exercício 1: Encontre e corrija o SQL Injection
 
-Что не так в этом коде? Исправь уязвимости.
+**Enunciado:** O que está errado neste código? Corrija as vulnerabilidades.
 
 ```php
 class ProductController extends Controller
@@ -325,40 +325,40 @@ class ProductController extends Controller
 ```
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// Проблемы:
-// 1. Конкатенация $query — SQL Injection через LIKE
-// 2. Конкатенация $category — SQL Injection
-// 3. Конкатенация $sortBy — возможность инъекции через ORDER BY
+// Problemas:
+// 1. Concatenação de $query — SQL Injection via LIKE
+// 2. Concatenação de $category — SQL Injection
+// 3. Concatenação de $sortBy — dá para injetar via ORDER BY
 
-// Решение
+// Solução
 class ProductController extends Controller
 {
     public function search(Request $request)
     {
-        // 1. Валидация входных данных
+        // 1. Validar o input
         $validated = $request->validate([
             'q' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:50',
             'sort' => 'nullable|in:name,price,created_at',
         ]);
 
-        // 2. Использовать Query Builder (автоматически параметризует)
+        // 2. Usar Query Builder (parametriza automaticamente)
         $query = DB::table('products');
 
-        // Безопасный LIKE
+        // LIKE seguro
         if (!empty($validated['q'])) {
             $query->where('name', 'like', '%' . $validated['q'] . '%');
         }
 
-        // Безопасный WHERE
+        // WHERE seguro
         if (!empty($validated['category'])) {
             $query->where('category', $validated['category']);
         }
 
-        // Безопасный ORDER BY (whitelist через валидацию)
+        // ORDER BY seguro (whitelist via validação)
         $sortBy = $validated['sort'] ?? 'name';
         $query->orderBy($sortBy);
 
@@ -368,7 +368,7 @@ class ProductController extends Controller
     }
 }
 
-// Альтернатива: Eloquent
+// Alternativa: Eloquent
 class ProductController extends Controller
 {
     public function search(Request $request)
@@ -395,12 +395,12 @@ class ProductController extends Controller
 ```
 </details>
 
-### Задание 2: Безопасная динамическая сортировка
+### Exercício 2: Ordenação dinâmica segura
 
-Реализуй endpoint для получения пользователей с возможностью сортировки по разным полям.
+**Enunciado:** Implemente um endpoint para listar usuários com ordenação por campos diferentes.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // UserController
@@ -428,7 +428,7 @@ class UserController extends Controller
         $direction = $validated['direction'] ?? 'desc';
         $perPage = $validated['per_page'] ?? 15;
 
-        // Whitelist гарантирует безопасность
+        // Whitelist garante a segurança
         if (!in_array($sortBy, self::SORTABLE_COLUMNS)) {
             $sortBy = 'created_at';
         }
@@ -444,7 +444,7 @@ class UserController extends Controller
     }
 }
 
-// Альтернатива: Использовать пакет spatie/laravel-query-builder
+// Alternativa: usar o pacote spatie/laravel-query-builder
 composer require spatie/laravel-query-builder
 
 use Spatie\QueryBuilder\QueryBuilder;
@@ -471,39 +471,39 @@ class UserController extends Controller
     }
 }
 
-// Использование:
+// Uso:
 // GET /users?sort=name
 // GET /users?sort=-created_at (desc)
-// GET /users?filter[name]=John&sort=email
+// GET /users?filter[name]=João&sort=email
 ```
 </details>
 
-### Задание 3: Защити от Second-Order SQL Injection
+### Exercício 3: Proteja contra Second-Order SQL Injection
 
-Реализуй безопасное логирование пользовательских действий.
+**Enunciado:** Implemente log seguro das ações do usuário.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ❌ УЯЗВИМЫЙ код
+// ❌ código VULNERÁVEL
 class ActivityLogger
 {
     public function log(User $user, string $action, array $data)
     {
-        // Second-order injection: $user->name из БД может содержать SQL
-        $message = "User {$user->name} performed {$action}";
+        // Second-order injection: $user->name do banco pode conter SQL
+        $message = "Usuário {$user->name} executou {$action}";
 
         DB::statement("INSERT INTO activity_log (message, data) VALUES ('{$message}', '{$data}')");
     }
 }
 
-// ✅ БЕЗОПАСНЫЙ код
+// ✅ código SEGURO
 class ActivityLogger
 {
     public function log(User $user, string $action, array $data)
     {
-        // Решение 1: Использовать Query Builder
+        // Solução 1: usar Query Builder
         DB::table('activity_log')->insert([
             'user_id' => $user->id,
             'action' => $action,
@@ -513,7 +513,7 @@ class ActivityLogger
     }
 }
 
-// Решение 2: Eloquent Model
+// Solução 2: Eloquent Model
 class ActivityLog extends Model
 {
     protected $fillable = [
@@ -544,12 +544,12 @@ class ActivityLogger
     }
 }
 
-// Решение 3: Prepared statements для raw SQL
+// Solução 3: prepared statements para raw SQL
 class ActivityLogger
 {
     public function log(User $user, string $action, array $data): void
     {
-        $message = "User {$user->name} performed {$action}";
+        $message = "Usuário {$user->name} executou {$action}";
 
         DB::statement(
             'INSERT INTO activity_log (message, data, created_at) VALUES (?, ?, ?)',
@@ -558,16 +558,16 @@ class ActivityLogger
     }
 }
 
-// Использование
+// Uso
 $logger = new ActivityLogger();
 $logger->log(
     auth()->user(),
     'updated_profile',
-    ['field' => 'email', 'old' => 'old@example.com', 'new' => 'new@example.com']
+    ['field' => 'email', 'old' => 'antigo@email.com', 'new' => 'novo@email.com']
 );
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

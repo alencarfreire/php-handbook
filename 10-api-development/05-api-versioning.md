@@ -1,41 +1,41 @@
 # 9.5 API Versioning
 
-## Краткое резюме
+## Resumo
 
-> **API Versioning** — управление версиями API для изменений без поломки старых клиентов.
+> **API Versioning (versionamento de API)** — controle de versões da API para mudar sem quebrar clientes antigos.
 >
-> **Методы:** URI (/api/v1), Header (Accept: application/vnd.api.v1+json), Query (?version=1).
+> **Métodos:** URI (/api/v1), Header (Accept: application/vnd.api.v1+json), Query (?version=1).
 >
-> **Новая версия при:** breaking changes, изменение структуры, удаление полей.
+> **Nova versão quando:** breaking changes, mudança de estrutura, remoção de campos.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Методы версионирования](#методы-версионирования)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-API Versioning — управление версиями API. Позволяет изменять API без поломки старых клиентов.
-
-**Зачем:**
-- Обратная совместимость
-- Поэтапная миграция клиентов
-- Безопасные изменения API
+- [O que é](#o-que-é)
+- [Métodos de versionamento](#métodos-de-versionamento)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Методы версионирования
+## O que é
 
-### 1. URI Versioning (популярный)
+**O que é:**
+API Versioning — controle de versões da API. Você muda a API sem quebrar clientes antigos.
+
+**O essencial:**
+- Compatibilidade com clientes antigos
+- Migração gradual dos clientes
+- Mudanças seguras na API
+
+---
+
+## Métodos de versionamento
+
+### 1. URI Versioning (o mais usado)
 
 ```php
 // routes/api.php
@@ -47,21 +47,21 @@ Route::prefix('v2')->namespace('Api\V2')->group(function () {
     Route::apiResource('posts', PostController::class);
 });
 
-// Структура
+// Estrutura
 // app/Http/Controllers/Api/V1/PostController.php
 // app/Http/Controllers/Api/V2/PostController.php
 // app/Http/Resources/V1/PostResource.php
 // app/Http/Resources/V2/PostResource.php
 ```
 
-**Плюсы:**
-- Просто и понятно
-- Видно в URL
-- Легко тестировать
+**Prós:**
+- Simples e claro
+- Aparece na URL
+- Fácil de testar
 
-**Минусы:**
-- Дублирование кода
-- URL загрязняется
+**Contras:**
+- Duplicação de código
+- A URL fica suja
 
 ### 2. Header Versioning
 
@@ -92,13 +92,13 @@ class PostController extends Controller
 }
 ```
 
-**Плюсы:**
-- Чистые URL
+**Prós:**
+- URLs limpas
 - RESTful
 
-**Минусы:**
-- Сложнее тестировать
-- Клиенты должны знать о header
+**Contras:**
+- Mais difícil de testar
+- Clientes precisam saber do header
 
 ### 3. Query Parameter
 
@@ -113,37 +113,37 @@ Route::get('/posts', function (Request $request) {
 });
 ```
 
-**Плюсы:**
-- Легко тестировать
+**Prós:**
+- Fácil de testar
 
-**Минусы:**
-- Не RESTful
-- Query параметры для других целей
+**Contras:**
+- Não é RESTful
+- Query params servem para outro fim
 
 ---
 
-## Когда использовать
+## Quando usar
 
-### Новая версия нужна при:
+### Nova versão quando:
 
-| Изменение | Новая версия? | Пример |
+| Mudança | Nova versão? | Exemplo |
 |-----------|--------------|--------|
-| Breaking changes | ✅ Да | Переименование поля `content` → `body` |
-| Изменение структуры | ✅ Да | Вложенный объект → плоская структура |
-| Удаление полей | ✅ Да | Убрали поле `deprecated_field` |
-| Изменение типов | ✅ Да | `string` → `integer` |
-| Добавление полей | ❌ Нет | Добавили `author` (backwards compatible) |
-| Новые endpoints | ❌ Нет | POST /posts/{id}/publish |
-| Bug fixes | ❌ Нет | Исправление логики |
+| Breaking changes | ✅ Sim | Renomear campo `content` → `body` |
+| Mudança de estrutura | ✅ Sim | Objeto aninhado → estrutura plana |
+| Remoção de campos | ✅ Sim | Tiraram o campo `deprecated_field` |
+| Mudança de tipos | ✅ Sim | `string` → `integer` |
+| Adição de campos | ❌ Não | Adicionaram `author` (backwards compatible) |
+| Novos endpoints | ❌ Não | POST /posts/{id}/publish |
+| Bug fixes | ❌ Não | Correção da lógica |
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-### Разные Resources для версий
+### Resources diferentes por versão
 
 ```php
-// V1: старая структура
+// V1: estrutura antiga
 namespace App\Http\Resources\V1;
 
 class PostResource extends JsonResource
@@ -153,13 +153,13 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'content' => $this->body,  // Старое название поля
+            'content' => $this->body,  // Nome antigo do campo
             'created' => $this->created_at->toDateTimeString(),
         ];
     }
 }
 
-// V2: новая структура
+// V2: estrutura nova
 namespace App\Http\Resources\V2;
 
 class PostResource extends JsonResource
@@ -169,7 +169,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'body' => $this->body,  // Новое название
+            'body' => $this->body,  // Nome novo
             'author' => new UserResource($this->whenLoaded('user')),
             'created_at' => $this->created_at->toISOString(),
         ];
@@ -177,7 +177,7 @@ class PostResource extends JsonResource
 }
 ```
 
-### Deprecation Warnings
+### Avisos de deprecation
 
 ```php
 // V1 Controller (deprecated)
@@ -189,14 +189,14 @@ class PostController extends Controller
     {
         return V1\PostResource::collection(Post::all())
             ->response()
-            ->header('X-API-Warn', 'V1 is deprecated. Migrate to V2 by 2024-12-31.')
+            ->header('X-API-Warn', 'V1 está deprecated. Migre para V2 até 2024-12-31.')
             ->header('X-API-Deprecation-Date', '2024-12-31')
             ->header('X-API-Sunset-Date', '2025-03-31');
     }
 }
 ```
 
-### Shared Code между версиями
+### Código compartilhado entre versões
 
 ```php
 // app/Services/PostService.php
@@ -235,49 +235,49 @@ class PostController extends Controller
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-**Структурированный ответ:**
+**Resposta estruturada:**
 
-**Что это:**
-- API Versioning предотвращает breaking changes для старых клиентов
-- Позволяет эволюционировать API без поломок
+**O que é:**
+- API Versioning evita breaking changes para clientes antigos
+- Permite evoluir a API sem quebrar ninguém
 
-**Методы:**
-- URI versioning (/api/v1, /api/v2) — самый популярный
+**Métodos:**
+- URI versioning (/api/v1, /api/v2) — o mais usado
 - Header versioning (Accept: application/vnd.api.v1+json)
 - Query parameter (?version=1)
 
-**Когда новая версия:**
-- Breaking changes (переименование, удаление полей)
-- Изменение структуры ответа
-- Изменение типов данных
+**Quando nova versão:**
+- Breaking changes (renomear, remover campos)
+- Mudança na estrutura da response
+- Mudança de tipos
 
-**Backwards compatible изменения (без новой версии):**
-- Добавление новых полей
-- Новые endpoints
+**Mudanças backwards compatible (sem nova versão):**
+- Campos novos
+- Endpoints novos
 - Bug fixes
 
-**Best practices:**
-- Разные Controllers/Resources для версий
-- Deprecation warnings через headers
+**Boas práticas:**
+- Controllers/Resources diferentes por versão
+- Avisos de deprecation via headers
 - Semantic versioning (v1, v2, v3)
-- Поддержка старых версий ограниченное время
-- Shared Services для бизнес-логики
+- Suporte às versões antigas por tempo limitado
+- Shared Services para a lógica de negócio
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай v2 с breaking change
+### Exercício 1: Crie a v2 com breaking change
 
-У тебя есть V1 API с полем `user_name`. В V2 нужно разделить на `first_name` и `last_name`.
+Você tem uma API V1 com o campo `user_name`. Na V2 precisa separar em `first_name` e `last_name`.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// V1 Resource (старая структура)
+// V1 Resource (estrutura antiga)
 namespace App\Http\Resources\V1;
 
 class UserResource extends JsonResource
@@ -286,20 +286,20 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_name' => $this->name,  // Одно поле
+            'user_name' => $this->name,  // Um campo só
             'email' => $this->email,
         ];
     }
 }
 
-// V2 Resource (новая структура)
+// V2 Resource (estrutura nova)
 namespace App\Http\Resources\V2;
 
 class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // Парсим name на first_name и last_name
+        // Separa name em first_name e last_name
         [$firstName, $lastName] = $this->parseFullName($this->name);
 
         return [
@@ -320,13 +320,13 @@ class UserResource extends JsonResource
     }
 }
 
-// Migration для БД (если нужно сохранить в БД)
+// Migration no banco (se precisar persistir)
 Schema::table('users', function (Blueprint $table) {
     $table->string('first_name')->nullable();
     $table->string('last_name')->nullable();
 });
 
-// После миграции данных
+// Depois de migrar os dados
 DB::table('users')->get()->each(function ($user) {
     [$firstName, $lastName] = explode(' ', $user->name, 2);
     DB::table('users')->where('id', $user->id)->update([
@@ -346,12 +346,12 @@ Route::prefix('v2')->group(function () {
 ```
 </details>
 
-### Задание 2: Deprecation Strategy
+### Exercício 2: Estratégia de deprecation
 
-Создай систему предупреждений о deprecation для V1 API.
+Crie um sistema de avisos de deprecation para a API V1.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/ApiDeprecationWarning.php
@@ -363,12 +363,12 @@ use Carbon\Carbon;
 
 class ApiDeprecationWarning
 {
-    // Конфигурация версий
+    // Configuração das versões
     private array $deprecations = [
         'v1' => [
             'deprecated_at' => '2024-01-01',
             'sunset_at' => '2024-06-01',
-            'message' => 'API v1 is deprecated. Please migrate to v2.',
+            'message' => 'API v1 está deprecated. Migre para a v2.',
             'migration_url' => 'https://docs.example.com/api/v2-migration',
         ],
     ];
@@ -389,8 +389,8 @@ class ApiDeprecationWarning
                 sprintf('299 - "%s"', $deprecation['message'])
             );
 
-            // Логирование использования deprecated API
-            \Log::warning('Deprecated API usage', [
+            // Log de uso da API deprecated
+            \Log::warning('Uso de API deprecated', [
                 'version' => $version,
                 'endpoint' => $request->path(),
                 'user_id' => $request->user()?->id,
@@ -418,7 +418,7 @@ Route::prefix('v2')->group(function () {
     Route::apiResource('posts', V2\PostController::class);
 });
 
-// Scheduled Command для отслеживания
+// Command agendado para acompanhar
 namespace App\Console\Commands;
 
 class CheckDeprecatedApiUsage extends Command
@@ -427,7 +427,7 @@ class CheckDeprecatedApiUsage extends Command
 
     public function handle()
     {
-        // Анализ логов за последнюю неделю
+        // Análise dos logs da última semana
         $usage = DB::table('api_logs')
             ->where('version', 'v1')
             ->where('created_at', '>=', now()->subWeek())
@@ -435,7 +435,7 @@ class CheckDeprecatedApiUsage extends Command
             ->selectRaw('user_id, count(*) as requests_count')
             ->get();
 
-        // Уведомление пользователей
+        // Aviso aos usuários
         foreach ($usage as $record) {
             $user = User::find($record->user_id);
             if ($user) {
@@ -445,18 +445,18 @@ class CheckDeprecatedApiUsage extends Command
             }
         }
 
-        $this->info("Sent deprecation notices to {$usage->count()} users");
+        $this->info("Avisos de deprecation enviados para {$usage->count()} usuários");
     }
 }
 ```
 </details>
 
-### Задание 3: Версионирование через Header
+### Exercício 3: Versionamento via Header
 
-Реализуй Header-based versioning с fallback на v1.
+Implemente versionamento via Header com fallback para v1.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Middleware/ApiVersionResolver.php
@@ -476,7 +476,7 @@ class ApiVersionResolver
 
         if (!in_array($version, self::SUPPORTED_VERSIONS)) {
             return response()->json([
-                'error' => 'Unsupported API version',
+                'error' => 'Versão de API não suportada',
                 'supported_versions' => self::SUPPORTED_VERSIONS,
             ], 400);
         }
@@ -489,23 +489,23 @@ class ApiVersionResolver
 
     private function resolveVersion(Request $request): string
     {
-        // 1. Проверяем Accept header
+        // 1. Checa o Accept header
         $accept = $request->header('Accept');
         if (preg_match('/application\/vnd\.api\.(v\d+)\+json/', $accept, $matches)) {
             return $matches[1];
         }
 
-        // 2. Проверяем custom header
+        // 2. Checa o header customizado
         if ($version = $request->header('Api-Version')) {
             return $version;
         }
 
-        // 3. Fallback на default
+        // 3. Fallback para o default
         return self::DEFAULT_VERSION;
     }
 }
 
-// Base Controller
+// Controller base
 namespace App\Http\Controllers\Api;
 
 abstract class ApiController extends Controller
@@ -526,7 +526,7 @@ abstract class ApiController extends Controller
     }
 }
 
-// Unified Controller
+// Controller unificado
 namespace App\Http\Controllers\Api;
 
 use App\Models\Post;
@@ -557,7 +557,7 @@ Route::middleware('api.version')->group(function () {
     Route::apiResource('posts', PostController::class);
 });
 
-// Тестирование
+// Teste
 // curl -H "Accept: application/vnd.api.v1+json" http://api.example.com/posts
 // curl -H "Api-Version: v2" http://api.example.com/posts
 ```
@@ -565,4 +565,4 @@ Route::middleware('api.version')->group(function () {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

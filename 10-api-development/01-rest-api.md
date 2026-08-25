@@ -1,53 +1,53 @@
 # 9.1 REST API
 
-## Краткое резюме
+## Resumo
 
-> **REST API** — архитектурный стиль для создания веб-сервисов через HTTP.
+> **REST API** — estilo de arquitetura para criar web services via HTTP.
 >
-> **Основное:** GET (чтение), POST (создание), PUT/PATCH (обновление), DELETE (удаление). Stateless, ресурсы через URI.
+> **O essencial:** GET (leitura), POST (criação), PUT/PATCH (atualização), DELETE (exclusão). Stateless, recursos via URI.
 >
-> **Laravel:** `Route::apiResource()`, API Resources для трансформации, HTTP status codes (200, 201, 204, 404, 422).
+> **Laravel:** `Route::apiResource()`, API Resources para transformação, HTTP status codes (200, 201, 204, 404, 422).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании скажешь](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-REST (Representational State Transfer) — архитектурный стиль для создания API. Использует HTTP методы для операций над ресурсами.
-
-**Принципы REST:**
-- Stateless (без состояния)
-- Единообразие интерфейса
-- Ресурсы через URI
-- HTTP методы (GET, POST, PUT, DELETE)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**HTTP методы:**
+**O que é:**
+REST (Representational State Transfer) — estilo de arquitetura para criar API. Usa métodos HTTP para operar sobre recursos.
+
+**Princípios REST:**
+- Stateless (sem estado)
+- Interface uniforme
+- Recursos via URI
+- Métodos HTTP (GET, POST, PUT, DELETE)
+
+---
+
+## Como funciona
+
+**Métodos HTTP:**
 
 ```
-GET     /api/posts           # Список постов
-GET     /api/posts/1         # Один пост
-POST    /api/posts           # Создать пост
-PUT     /api/posts/1         # Обновить пост (полностью)
-PATCH   /api/posts/1         # Обновить пост (частично)
-DELETE  /api/posts/1         # Удалить пост
+GET     /api/posts           # Lista de posts
+GET     /api/posts/1         # Um post
+POST    /api/posts           # Criar post
+PUT     /api/posts/1         # Atualizar post (completo)
+PATCH   /api/posts/1         # Atualizar post (parcial)
+DELETE  /api/posts/1         # Apagar post
 ```
 
-**Laravel API Routes:**
+**Rotas de API no Laravel:**
 
 ```php
 // routes/api.php
@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // RESTful resource
     Route::apiResource('posts', PostController::class);
 
-    // Эквивалентно:
+    // Equivalente a:
     // Route::get('/posts', [PostController::class, 'index']);
     // Route::post('/posts', [PostController::class, 'store']);
     // Route::get('/posts/{post}', [PostController::class, 'show']);
@@ -121,60 +121,60 @@ class PostController extends Controller
 **HTTP Status Codes:**
 
 ```php
-200 OK                  // Успешный GET, PUT, PATCH
-201 Created             // Успешный POST
-204 No Content          // Успешный DELETE
-400 Bad Request         // Неверный запрос
-401 Unauthorized        // Не авторизован
-403 Forbidden           // Нет прав
-404 Not Found           // Не найдено
-422 Unprocessable       // Ошибка валидации
-500 Internal Error      // Ошибка сервера
+200 OK                  // GET, PUT, PATCH com sucesso
+201 Created             // POST com sucesso
+204 No Content          // DELETE com sucesso
+400 Bad Request         // Request inválido
+401 Unauthorized        // Não autenticado
+403 Forbidden           // Sem permissão
+404 Not Found           // Não encontrado
+422 Unprocessable       // Erro de validação
+500 Internal Error      // Erro do servidor
 
-// Примеры
+// Exemplos
 return response()->json($data, 200);
 return response()->json($post, 201);
 return response()->noContent();  // 204
-return response()->json(['error' => 'Not found'], 404);
+return response()->json(['error' => 'Não encontrado'], 404);
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**REST для:**
-- CRUD операции
-- Публичные API
-- Стандартные веб-сервисы
+**REST para:**
+- Operações CRUD
+- APIs públicas
+- Web services padrão
 
-**Не REST (GraphQL) для:**
-- Сложные запросы данных
-- Много вложенных ресурсов
-- Гибкость в выборе полей
+**Não REST (GraphQL) para:**
+- Queries complexas de dados
+- Muitos recursos aninhados
+- Flexibilidade na escolha dos campos
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Полноценный REST API:**
+**REST API completa:**
 
 ```php
 // routes/api.php
 Route::prefix('v1')->group(function () {
-    // Публичные endpoints
+    // Endpoints públicos
     Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/{post}', [PostController::class, 'show']);
 
-    // Аутентификация
+    // Autenticação
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
-    // Защищённые endpoints
+    // Endpoints protegidos
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
 
-        // CRUD для постов
+        // CRUD de posts
         Route::apiResource('posts', PostController::class)
             ->except(['index', 'show']);
 
@@ -185,7 +185,7 @@ Route::prefix('v1')->group(function () {
 });
 ```
 
-**API Resource (трансформация ответа):**
+**API Resource (transformação da response):**
 
 ```php
 // app/Http/Resources/PostResource.php
@@ -205,7 +205,7 @@ class PostResource extends JsonResource
             'author' => new UserResource($this->whenLoaded('user')),
             'comments' => CommentResource::collection($this->whenLoaded('comments')),
 
-            // Computed
+            // Calculado
             'comments_count' => $this->when(
                 $this->comments_count !== null,
                 $this->comments_count
@@ -220,7 +220,7 @@ class PostResource extends JsonResource
 }
 ```
 
-**Фильтрация и сортировка:**
+**Filtro e ordenação:**
 
 ```php
 class PostController extends Controller
@@ -229,7 +229,7 @@ class PostController extends Controller
     {
         $query = Post::query();
 
-        // Фильтрация
+        // Filtro
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
@@ -242,7 +242,7 @@ class PostController extends Controller
             $query->where('published', $request->boolean('published'));
         }
 
-        // Сортировка
+        // Ordenação
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
@@ -251,7 +251,7 @@ class PostController extends Controller
             $query->orderBy($sortBy, $sortOrder);
         }
 
-        // Пагинация
+        // Paginação
         $perPage = $request->input('per_page', 20);
         $posts = $query->paginate($perPage);
 
@@ -259,17 +259,17 @@ class PostController extends Controller
     }
 }
 
-// Примеры запросов:
+// Exemplos de request:
 // GET /api/posts?category=1&search=laravel&sort_by=title&sort_order=asc&per_page=50
 ```
 
-**Вложенные ресурсы (nested):**
+**Recursos aninhados (nested):**
 
 ```php
 // routes/api.php
 Route::apiResource('posts.comments', CommentController::class);
 
-// Генерирует:
+// Gera:
 // GET    /posts/{post}/comments
 // POST   /posts/{post}/comments
 // GET    /posts/{post}/comments/{comment}
@@ -298,7 +298,7 @@ class CommentController extends Controller
 }
 ```
 
-**Error Handling:**
+**Tratamento de erros:**
 
 ```php
 // app/Exceptions/Handler.php
@@ -307,25 +307,25 @@ public function render($request, Throwable $exception)
     if ($request->is('api/*')) {
         if ($exception instanceof ModelNotFoundException) {
             return response()->json([
-                'message' => 'Resource not found'
+                'message' => 'Recurso não encontrado'
             ], 404);
         }
 
         if ($exception instanceof ValidationException) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Falha na validação',
                 'errors' => $exception->errors(),
             ], 422);
         }
 
         if ($exception instanceof AuthorizationException) {
             return response()->json([
-                'message' => 'Forbidden'
+                'message' => 'Acesso negado'
             ], 403);
         }
 
         return response()->json([
-            'message' => 'Internal server error',
+            'message' => 'Erro interno do servidor',
             'error' => app()->environment('local') ? $exception->getMessage() : null,
         ], 500);
     }
@@ -366,7 +366,7 @@ class PostResource extends JsonResource
 }
 ```
 
-**Versioning:**
+**Versionamento:**
 
 ```php
 // routes/api.php
@@ -378,27 +378,27 @@ Route::prefix('v2')->namespace('Api\V2')->group(function () {
     Route::apiResource('posts', PostController::class);
 });
 
-// Controllers в разных namespace
+// Controllers em namespaces diferentes
 // App\Http\Controllers\Api\V1\PostController
 // App\Http\Controllers\Api\V2\PostController
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "REST использует HTTP методы: GET (чтение), POST (создание), PUT/PATCH (обновление), DELETE (удаление). Stateless — каждый запрос независим. Status codes: 200 OK, 201 Created, 204 No Content, 404 Not Found, 422 Validation. Laravel: apiResource для CRUD, Route Model Binding, API Resources для трансформации. Фильтрация через query params. Nested resources для связей (posts/{post}/comments). HATEOAS — ссылки в ответе. Versioning через /v1, /v2."
+> "REST usa métodos HTTP: GET (leitura), POST (criação), PUT/PATCH (atualização), DELETE (exclusão). Stateless — cada request é independente. Status codes: 200 OK, 201 Created, 204 No Content, 404 Not Found, 422 Validation. Laravel: apiResource para CRUD, Route Model Binding, API Resources para transformar a response. Filtro por query params. Nested resources para relações (posts/{post}/comments). HATEOAS — links na response. Versionamento por /v1, /v2."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Создай RESTful API для блога
+### Exercício 1: Crie uma REST API para blog
 
-Создай API endpoints для работы с постами: получение списка, создание, обновление, удаление. Добавь пагинацию и фильтрацию по категориям.
+**Enunciado:** Crie os endpoints da API para posts: listar, criar, atualizar, apagar. Adicione paginação e filtro por categoria.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // routes/api.php
@@ -407,7 +407,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('posts', PostController::class);
     });
 
-    // Публичные endpoints
+    // Endpoints públicos
     Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/{post}', [PostController::class, 'show']);
 });
@@ -427,23 +427,23 @@ class PostController extends Controller
     {
         $query = Post::query()->with('user', 'category');
 
-        // Фильтрация по категории
+        // Filtro por categoria
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Поиск
+        // Busca
         if ($request->filled('search')) {
             $query->where('title', 'like', "%{$request->search}%");
         }
 
-        // Сортировка
+        // Ordenação
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
         $query->orderBy($sortBy, $sortOrder);
 
-        // Пагинация
+        // Paginação
         $posts = $query->paginate($request->input('per_page', 15));
 
         return PostResource::collection($posts);
@@ -509,12 +509,12 @@ class PostResource extends JsonResource
 
 </details>
 
-### Задание 2: Добавь вложенные комментарии
+### Exercício 2: Adicione comentários aninhados
 
-Создай endpoints для работы с комментариями к постам: `/api/posts/{post}/comments`. Реализуй создание, получение списка и удаление комментариев.
+**Enunciado:** Crie endpoints para comentários de posts: `/api/posts/{post}/comments`. Implemente criar, listar e apagar comentários.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // routes/api.php
@@ -523,7 +523,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         ->except(['update', 'show']);
 });
 
-// Публичный endpoint для просмотра
+// Endpoint público para listar
 Route::get('/v1/posts/{post}/comments', [CommentController::class, 'index']);
 
 // app/Http/Controllers/Api/CommentController.php
@@ -560,9 +560,9 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        // Проверка что комментарий принадлежит посту
+        // Checa se o comentário pertence ao post
         if ($comment->post_id !== $post->id) {
-            return response()->json(['message' => 'Comment not found'], 404);
+            return response()->json(['message' => 'Comentário não encontrado'], 404);
         }
 
         $comment->delete();
@@ -591,12 +591,12 @@ class CommentResource extends JsonResource
 
 </details>
 
-### Задание 3: Реализуй обработку ошибок
+### Exercício 3: Implemente o tratamento de erros
 
-Создай единую обработку ошибок для всех API endpoints. Верни правильные status codes и структурированные ошибки.
+**Enunciado:** Crie um tratamento único de erros para todos os endpoints da API. Devolva os status codes certos e erros estruturados.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Exceptions/Handler.php
@@ -625,38 +625,38 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof ValidationException) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Falha na validação',
                 'errors' => $exception->errors(),
             ], 422);
         }
 
         if ($exception instanceof ModelNotFoundException) {
             return response()->json([
-                'message' => 'Resource not found',
+                'message' => 'Recurso não encontrado',
             ], 404);
         }
 
         if ($exception instanceof NotFoundHttpException) {
             return response()->json([
-                'message' => 'Endpoint not found',
+                'message' => 'Endpoint não encontrado',
             ], 404);
         }
 
         if ($exception instanceof AuthenticationException) {
             return response()->json([
-                'message' => 'Unauthenticated',
+                'message' => 'Não autenticado',
             ], 401);
         }
 
         if ($exception instanceof AuthorizationException) {
             return response()->json([
-                'message' => 'Forbidden',
+                'message' => 'Acesso negado',
             ], 403);
         }
 
-        // Общая ошибка сервера
+        // Erro genérico do servidor
         return response()->json([
-            'message' => 'Internal server error',
+            'message' => 'Erro interno do servidor',
             'error' => app()->environment('local') ? $exception->getMessage() : null,
             'trace' => app()->environment('local') ? $exception->getTraceAsString() : null,
         ], 500);
@@ -678,7 +678,7 @@ class ForceJsonResponse
     }
 }
 
-// Зарегистрировать middleware в app/Http/Kernel.php
+// Registrar o middleware em app/Http/Kernel.php
 protected $middlewareGroups = [
     'api' => [
         \App\Http\Middleware\ForceJsonResponse::class,
@@ -691,4 +691,4 @@ protected $middlewareGroups = [
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
