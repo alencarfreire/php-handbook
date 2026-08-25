@@ -3,6 +3,7 @@ name: Deploy VitePress
 on:
   push:
     branches:
+      - translate-pt-br
       - main
 
 permissions:
