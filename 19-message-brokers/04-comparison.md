@@ -1,18 +1,18 @@
-# 17.4 Сравнение Message Brokers
+# 17.4 Comparação de Message Brokers
 
-## Краткое резюме
+## Resumo
 
-> **RabbitMQ** — message broker для task queues с гибкой маршрутизацией. **Kafka** — event streaming platform для high throughput. **Redis Pub/Sub** — fire-and-forget для real-time.
+> **RabbitMQ** — message broker para task queues com roteamento flexível. **Kafka** — event streaming platform para high throughput. **Redis Pub/Sub** — fire-and-forget para real-time.
 >
-> **Выбор:** RabbitMQ для background jobs, Kafka для event sourcing и logs, Redis для WebSockets и notifications.
+> **Escolha:** RabbitMQ para background jobs, Kafka para event sourcing e logs, Redis para WebSockets e notifications.
 >
 > **Delivery:** Redis at-most-once, RabbitMQ/Kafka at-least-once, Kafka exactly-once.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Краткое сравнение](#краткое-сравнение)
+- [Comparação rápida](#comparação-rápida)
 - [RabbitMQ](#rabbitmq)
 - [Kafka](#kafka)
 - [Redis Pub/Sub](#redis-pubsub)
@@ -21,37 +21,37 @@
 - [Message Ordering](#message-ordering)
 - [Scaling](#scaling)
 - [Use Cases](#use-cases)
-- [Комбинирование](#комбинирование)
+- [Combinando](#combinando)
 - [Migration Path](#migration-path)
 - [Decision Tree](#decision-tree)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Краткое сравнение
+## Comparação rápida
 
-| Критерий | RabbitMQ | Kafka | Redis Pub/Sub |
+| Critério | RabbitMQ | Kafka | Redis Pub/Sub |
 |----------|----------|-------|---------------|
-| **Тип** | Message Broker | Event Streaming | Pub/Sub |
-| **Гарантии доставки** | At-least-once, Exactly-once | At-least-once | At-most-once (fire-and-forget) |
-| **Хранение** | В очереди до ACK | На диске (retention) | Не хранит |
-| **Скорость** | ~20k msg/s | ~1M msg/s | ~1M msg/s |
-| **Consumers** | Competing | Consumer Groups | Все subscribers |
-| **Сложность** | Средняя | Высокая | Низкая |
+| **Tipo** | Message Broker | Event Streaming | Pub/Sub |
+| **Garantias de entrega** | At-least-once, Exactly-once | At-least-once | At-most-once (fire-and-forget) |
+| **Armazenamento** | Na queue até o ACK | No disco (retention) | Não guarda |
+| **Velocidade** | ~20k msg/s | ~1M msg/s | ~1M msg/s |
+| **Consumers** | Competing | Consumer Groups | Todos os subscribers |
+| **Complexidade** | Média | Alta | Baixa |
 | **Use case** | Task queues, RPC | Event streaming, logs | Real-time, notifications |
 
 ---
 
 ## RabbitMQ
 
-**Архитектура: Message Broker**
+**Arquitetura: Message Broker**
 
 ```
 Producer → Exchange → Queue → Consumer(s)
 ```
 
-**Strengths:**
+**Prós:**
 - ✅ Flexible routing (direct, topic, fanout, headers)
 - ✅ Dead Letter Exchange (DLX)
 - ✅ Priority queues
@@ -59,15 +59,15 @@ Producer → Exchange → Queue → Consumer(s)
 - ✅ Message TTL
 - ✅ At-least-once, Exactly-once delivery
 
-**Weaknesses:**
-- ❌ Не для high-throughput (slower than Kafka)
-- ❌ Не для event streaming
-- ❌ Сложнее масштабировать
+**Contras:**
+- ❌ Não serve para high-throughput (mais lento que Kafka)
+- ❌ Não serve para event streaming
+- ❌ Mais difícil de escalar
 
-**Когда использовать:**
-- Task queues (email, image processing)
+**Quando usar:**
+- Task queues (email, processamento de imagem)
 - RPC (request-reply)
-- Сложная маршрутизация
+- Roteamento complexo
 - Background jobs
 
 **Laravel:**
@@ -88,29 +88,29 @@ SendEmailJob::dispatch($user)->onQueue('emails');
 
 ## Kafka
 
-**Архитектура: Event Streaming Platform**
+**Arquitetura: Event Streaming Platform**
 
 ```
 Producer → Topic (Partitions) → Consumer Group → Consumer(s)
 ```
 
-**Strengths:**
-- ✅ High throughput (millions msg/s)
-- ✅ Хранение на диске (retention 7 days+)
-- ✅ Replay events (offset control)
+**Prós:**
+- ✅ High throughput (milhões de msg/s)
+- ✅ Guarda no disco (retention de 7 days+)
+- ✅ Replay de events (controle de offset)
 - ✅ Event sourcing
 - ✅ Horizontal scaling (partitions)
 - ✅ Exactly-once semantics
 
-**Weaknesses:**
-- ❌ Сложная настройка
-- ❌ Overkill для simple tasks
-- ❌ Нет routing (только topics)
-- ❌ Больше ресурсов (JVM)
+**Contras:**
+- ❌ Setup complexo
+- ❌ Overkill para tarefas simples
+- ❌ Sem routing (só topics)
+- ❌ Consome mais recurso (JVM)
 
-**Когда использовать:**
+**Quando usar:**
 - Event streaming
-- Logs aggregation
+- Agregação de logs
 - CDC (Change Data Capture)
 - Real-time analytics
 - Event sourcing
@@ -118,15 +118,15 @@ Producer → Topic (Partitions) → Consumer Group → Consumer(s)
 **Laravel:**
 
 ```php
-// Publish event
+// Publicar o event
 event(new OrderCreated($order));
 
-// Consume event
+// Consumir o event
 class OrderCreatedListener
 {
     public function handle(OrderCreated $event)
     {
-        // Process event
+        // Processar o event
     }
 }
 ```
@@ -135,30 +135,30 @@ class OrderCreatedListener
 
 ## Redis Pub/Sub
 
-**Архитектура: Fire-and-Forget Pub/Sub**
+**Arquitetura: Fire-and-Forget Pub/Sub**
 
 ```
 Publisher → Channel → All Subscribers
 ```
 
-**Strengths:**
-- ✅ Очень быстрый (in-memory)
-- ✅ Простой API
-- ✅ Real-time (low latency)
-- ✅ Встроен в Redis (уже используется для кэша)
+**Prós:**
+- ✅ Muito rápido (in-memory)
+- ✅ API simples
+- ✅ Real-time (baixa latência)
+- ✅ Já vem no Redis (você já usa para cache)
 
-**Weaknesses:**
-- ❌ Fire-and-forget (нет гарантий)
-- ❌ Не хранит messages
-- ❌ Нет retry
-- ❌ Все subscribers получают все messages
+**Contras:**
+- ❌ Fire-and-forget (sem garantia)
+- ❌ Não guarda messages
+- ❌ Sem retry
+- ❌ Todo subscriber recebe todas as messages
 
-**Когда использовать:**
-- Real-time notifications
-- WebSockets broadcasting
+**Quando usar:**
+- Notifications em real-time
+- Broadcasting via WebSockets
 - Chat
 - Live updates
-- Cache invalidation
+- Invalidação de cache
 
 **Laravel:**
 
@@ -169,7 +169,7 @@ Publisher → Channel → All Subscribers
     'connection' => 'default',
 ],
 
-// Broadcast event
+// Broadcast do event
 event(new MessageSent($message));
 
 // Frontend (Laravel Echo)
@@ -188,16 +188,16 @@ Echo.channel('chat')
 ```
 Publisher → Redis → Subscriber
                  ↓
-            может потеряться
+            pode se perder
 ```
 
-**Пример:**
+**Exemplo:**
 
 ```php
 // Redis Pub/Sub
 Redis::publish('notifications', json_encode($notification));
 
-// Если subscriber offline → message потерян
+// Se o subscriber estiver offline → a message se perde
 ```
 
 ---
@@ -207,7 +207,7 @@ Redis::publish('notifications', json_encode($notification));
 ```
 Publisher → Broker → Consumer
                     ↓
-              ACK после обработки
+              ACK depois do processamento
 ```
 
 **RabbitMQ:**
@@ -218,9 +218,9 @@ public function handle()
 {
     try {
         $this->process($message);
-        $this->ack();  // ACK после успешной обработки
+        $this->ack();  // ACK depois do processamento com sucesso
     } catch (Exception $e) {
-        $this->nack();  // Не ACK → RabbitMQ переотправит
+        $this->nack();  // Sem ACK → RabbitMQ reenvia
     }
 }
 ```
@@ -232,7 +232,7 @@ public function handle()
 public function handle()
 {
     $this->process($message);
-    $this->commit();  // Commit offset после обработки
+    $this->commit();  // Commit do offset depois do processamento
 }
 ```
 
@@ -260,7 +260,7 @@ class ProcessOrderJob implements ShouldQueue
         $idempotencyKey = "order:{$this->orderId}";
 
         if (Cache::has($idempotencyKey)) {
-            return;  // Уже обработано
+            return;  // Já processado
         }
 
         $this->process($this->orderId);
@@ -295,92 +295,92 @@ Kafka:           ~10-50ms
 ## Message Ordering
 
 **RabbitMQ:**
-- Гарантия: в пределах одной queue
-- Для параллельных consumers: нет гарантий
+- Garantia: dentro de uma queue
+- Com consumers em paralelo: sem garantia
 
 **Kafka:**
-- Гарантия: в пределах partition
-- Key-based partitioning для ordering
+- Garantia: dentro da partition
+- Key-based partitioning para ordering
 
 **Redis Pub/Sub:**
-- Нет гарантий ordering
+- Sem garantia de ordering
 
 ---
 
 ## Scaling
 
 **RabbitMQ:**
-- Vertical scaling (более мощный сервер)
-- Clustering (limited horizontal scaling)
-- Sharding вручную
+- Vertical scaling (servidor mais potente)
+- Clustering (horizontal scaling limitado)
+- Sharding na mão
 
 **Kafka:**
 - Horizontal scaling (add partitions)
-- Consumer groups (parallel consumption)
+- Consumer groups (consumo em paralelo)
 - Distributed by design
 
 **Redis Pub/Sub:**
 - Vertical scaling
-- Redis Cluster (но Pub/Sub не distributed)
+- Redis Cluster (mas Pub/Sub não é distributed)
 
 ---
 
 ## Use Cases
 
-### 1. Email Sending (RabbitMQ)
+### 1. Envio de email (RabbitMQ)
 
 ```php
-// RabbitMQ идеален для task queues
+// RabbitMQ é o ideal para task queues
 SendEmailJob::dispatch($user, $email)->onQueue('emails');
 
 // Retry, DLX, Priority
 ```
 
-**Почему не Kafka:**
+**Por que não Kafka:**
 - Overkill
-- Email не нужен в истории
+- Email não precisa ficar no histórico
 
-**Почему не Redis:**
-- Email критичен (нужна гарантия доставки)
+**Por que não Redis:**
+- Email é crítico (precisa de garantia de entrega)
 
 ---
 
 ### 2. Event Sourcing (Kafka)
 
 ```php
-// Kafka идеален для event streaming
+// Kafka é o ideal para event streaming
 event(new OrderCreated($order));
 event(new PaymentProcessed($payment));
 event(new OrderShipped($order));
 
-// Можно replay events, audit log
+// Dá para fazer replay dos events, audit log
 ```
 
-**Почему не RabbitMQ:**
-- Не хранит историю
-- Нет replay
+**Por que não RabbitMQ:**
+- Não guarda histórico
+- Sem replay
 
-**Почему не Redis:**
-- Fire-and-forget (нет истории)
+**Por que não Redis:**
+- Fire-and-forget (sem histórico)
 
 ---
 
-### 3. Real-time Chat (Redis Pub/Sub)
+### 3. Chat em real-time (Redis Pub/Sub)
 
 ```php
-// Redis идеален для real-time
+// Redis é o ideal para real-time
 Redis::publish('chat.room.1', json_encode($message));
 
-// WebSocket broadcasting
+// Broadcasting via WebSocket
 ```
 
-**Почему не RabbitMQ:**
-- Медленнее
+**Por que não RabbitMQ:**
+- Mais lento
 - Overkill
 
-**Почему не Kafka:**
+**Por que não Kafka:**
 - Overkill
-- Сложнее
+- Mais complexo
 
 ---
 
@@ -388,41 +388,41 @@ Redis::publish('chat.room.1', json_encode($message));
 
 ```php
 // Kafka Connect + Debezium
-// Слушать изменения в БД и реплицировать в другие сервисы
+// Escutar mudanças no banco e replicar para outros serviços
 ```
 
-**Почему Kafka:**
+**Por que Kafka:**
 - Event streaming
-- Retention (можно replay)
+- Retention (dá para fazer replay)
 
 ---
 
-### 5. Background Jobs (RabbitMQ или Laravel Queues)
+### 5. Background Jobs (RabbitMQ ou Laravel Queues)
 
 ```php
 ProcessVideoJob::dispatch($video)->onQueue('video');
 ```
 
 **RabbitMQ:**
-- Если нужны Retry, DLX, Priority
+- Se você precisa de Retry, DLX, Priority
 
 **Laravel Database Queue:**
-- Для простых случаев
+- Para casos simples
 
 ---
 
-## Комбинирование
+## Combinando
 
-**Часто используют несколько:**
+**Na prática você usa mais de um:**
 
 ```php
-// RabbitMQ для background jobs
+// RabbitMQ para background jobs
 SendEmailJob::dispatch($user);
 
-// Kafka для event streaming
+// Kafka para event streaming
 event(new OrderCreated($order));
 
-// Redis Pub/Sub для real-time
+// Redis Pub/Sub para real-time
 Redis::publish('notifications', $notification);
 ```
 
@@ -430,13 +430,13 @@ Redis::publish('notifications', $notification);
 
 ## Migration Path
 
-**Стартап (простое):**
+**Startup (simples):**
 
 ```
 Laravel Database Queue → Redis Queue
 ```
 
-**Рост (средняя нагрузка):**
+**Crescimento (carga média):**
 
 ```
 Redis Queue → RabbitMQ
@@ -445,8 +445,8 @@ Redis Queue → RabbitMQ
 **Large scale (high throughput):**
 
 ```
-RabbitMQ → Kafka (для event streaming)
-RabbitMQ + Kafka (разные use cases)
+RabbitMQ → Kafka (para event streaming)
+RabbitMQ + Kafka (use cases diferentes)
 ```
 
 ---
@@ -454,51 +454,51 @@ RabbitMQ + Kafka (разные use cases)
 ## Decision Tree
 
 ```
-Нужна гарантия доставки?
-├─ Да
-│  ├─ High throughput (millions msg/s)?
-│  │  ├─ Да → Kafka
-│  │  └─ Нет → RabbitMQ
-│  └─ Event streaming / History?
-│     ├─ Да → Kafka
-│     └─ Нет → RabbitMQ
-└─ Нет
-   └─ Real-time / Low latency?
-      ├─ Да → Redis Pub/Sub
-      └─ Нет → RabbitMQ (safer)
+Precisa de garantia de entrega?
+├─ Sim
+│  ├─ High throughput (milhões msg/s)?
+│  │  ├─ Sim → Kafka
+│  │  └─ Não → RabbitMQ
+│  └─ Event streaming / histórico?
+│     ├─ Sim → Kafka
+│     └─ Não → RabbitMQ
+└─ Não
+   └─ Real-time / baixa latência?
+      ├─ Sim → Redis Pub/Sub
+      └─ Não → RabbitMQ (mais seguro)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "RabbitMQ — message broker для task queues, flexible routing, retry, DLX, at-least-once delivery. Kafka — event streaming platform для high throughput (millions msg/s), retention на диске, replay events, event sourcing. Redis Pub/Sub — fire-and-forget для real-time (WebSockets, chat), in-memory, очень быстрый. RabbitMQ для background jobs, Kafka для event streaming и CDC, Redis для real-time notifications. Delivery guarantees: Redis at-most-once, RabbitMQ/Kafka at-least-once, Kafka exactly-once. Ordering: RabbitMQ в queue, Kafka в partition. Laravel: RabbitMQ для queues, Redis для broadcasting."
+> "RabbitMQ é message broker para task queues: routing flexível, retry, DLX, at-least-once. Kafka é event streaming platform para high throughput (milhões de msg/s), retention no disco, replay de events, event sourcing. Redis Pub/Sub é fire-and-forget para real-time (WebSockets, chat): in-memory, muito rápido. RabbitMQ para background jobs, Kafka para event streaming e CDC, Redis para notifications em real-time. Delivery: Redis at-most-once, RabbitMQ/Kafka at-least-once, Kafka exactly-once. Ordering: RabbitMQ na queue, Kafka na partition. No Laravel: RabbitMQ para queues, Redis para broadcasting."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Выбери правильный Message Broker
+### Exercício 1: Escolha o Message Broker certo
 
-Для каждого сценария выбери подходящий message broker (RabbitMQ, Kafka или Redis Pub/Sub) и объясни почему.
+Para cada cenário escolha o message broker certo (RabbitMQ, Kafka ou Redis Pub/Sub) e explique o porquê.
 
-**Сценарии:**
-1. Отправка email уведомлений после оформления заказа
-2. Синхронизация данных между микросервисами (CDC)
-3. Real-time чат для веб-приложения
-4. Обработка миллионов логов в секунду
-5. Уведомление пользователей онлайн о новых сообщениях
+**Cenários:**
+1. Enviar emails de notificação depois do pedido
+2. Sincronizar dados entre microsserviços (CDC)
+3. Chat em real-time no app web
+4. Processar milhões de logs por segundo
+5. Notificar usuários online sobre mensagens novas
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
-**1. Email уведомления — RabbitMQ**
+**1. Emails de notificação — RabbitMQ**
 
-**Почему:**
-- Нужна гарантия доставки (at-least-once)
-- Retry логика при ошибках
-- Dead Letter Exchange для failed jobs
-- Не критична высокая пропускная способность
+**Por que:**
+- Precisa de garantia de entrega (at-least-once)
+- Retry quando der erro
+- Dead Letter Exchange para failed jobs
+- High throughput não é crítico
 - Background job processing
 
 ```php
@@ -523,15 +523,15 @@ class SendOrderConfirmationEmail implements ShouldQueue
 
 **2. CDC (Change Data Capture) — Kafka**
 
-**Почему:**
-- Нужна история изменений (retention)
-- Replay для восстановления состояния
-- Высокая пропускная способность
+**Por que:**
+- Precisa do histórico de mudanças (retention)
+- Replay para reconstruir o estado
+- High throughput
 - Event sourcing pattern
-- Ordering гарантирован в partition
+- Ordering garantido na partition
 
 ```php
-// Kafka для CDC
+// Kafka para CDC
 class UserObserver
 {
     public function created(User $user)
@@ -547,14 +547,14 @@ class UserObserver
 }
 ```
 
-**3. Real-time чат — Redis Pub/Sub**
+**3. Chat em real-time — Redis Pub/Sub**
 
-**Почему:**
-- Очень низкая latency (< 1ms)
-- Fire-and-forget подходит для чата
-- Простая интеграция с Laravel Broadcasting
-- WebSocket backend
-- Не критична потеря сообщений (можно загрузить из БД)
+**Por que:**
+- Latência muito baixa (< 1ms)
+- Fire-and-forget serve para chat
+- Integração simples com Laravel Broadcasting
+- Backend de WebSocket
+- Perder message não é crítico (dá para recarregar do banco)
 
 ```php
 // Laravel Broadcasting + Redis
@@ -567,17 +567,17 @@ class MessageSent implements ShouldBroadcast
 }
 ```
 
-**4. Обработка логов — Kafka**
+**4. Processar logs — Kafka**
 
-**Почему:**
-- High throughput (millions msg/s)
-- Retention для анализа
-- Consumer groups для параллельной обработки
-- Horizontal scaling через partitions
+**Por que:**
+- High throughput (milhões de msg/s)
+- Retention para análise
+- Consumer groups para processar em paralelo
+- Horizontal scaling via partitions
 - Stream processing
 
 ```php
-// Kafka для логов
+// Kafka para logs
 Kafka::publishOn('application-logs')
     ->withMessage([
         'level' => 'error',
@@ -587,17 +587,17 @@ Kafka::publishOn('application-logs')
     ->send();
 ```
 
-**5. Online уведомления — Redis Pub/Sub**
+**5. Notifications online — Redis Pub/Sub**
 
-**Почему:**
-- Real-time delivery
-- Только online пользователи получают
-- Low latency
-- Простота
-- Offline пользователи получат из БД при входе
+**Por que:**
+- Entrega em real-time
+- Só quem está online recebe
+- Baixa latência
+- Simples
+- Quem está offline pega do banco no login
 
 ```php
-// Redis Pub/Sub для notifications
+// Redis Pub/Sub para notifications
 event(new NewNotification($notification));
 
 // Frontend
@@ -607,32 +607,32 @@ Echo.private(`user.${userId}`)
     });
 ```
 
-**Комбинированный подход (best practice):**
+**Abordagem combinada (best practice):**
 
 ```php
-// Email отправка: RabbitMQ
+// Envio de email: RabbitMQ
 SendEmailJob::dispatch($user)->onQueue('emails');
 
-// Логи и события: Kafka
+// Logs e events: Kafka
 event(new OrderCreated($order)); // → Kafka
 
-// Real-time notifications: Redis
+// Notifications em real-time: Redis
 broadcast(new NewMessage($message)); // → Redis Pub/Sub
 
-// Offline notification: сохранить в БД
+// Notification offline: gravar no banco
 $user->notifications()->create([...]);
 ```
 </details>
 
-### Задание 2: Реализуй Idempotency для разных brokers
+### Exercício 2: Implemente Idempotency para brokers diferentes
 
-Создай idempotent обработчики для RabbitMQ, Kafka и Redis чтобы избежать duplicate processing.
+Crie handlers idempotentes para RabbitMQ, Kafka e Redis para evitar duplicate processing.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// 1. RabbitMQ с Idempotency Key
+// 1. RabbitMQ com Idempotency Key
 namespace App\Jobs;
 
 use Illuminate\Support\Facades\Cache;
@@ -652,29 +652,29 @@ class ProcessPaymentJob implements ShouldQueue
     {
         $lockKey = "payment:{$this->orderId}:{$this->idempotencyKey}";
 
-        // Atomic lock для предотвращения duplicate processing
+        // Lock atômico para evitar duplicate processing
         $lock = Cache::lock($lockKey, 10);
 
         if (!$lock->get()) {
-            // Уже обрабатывается или обработано
+            // Já está processando ou já processou
             return;
         }
 
         try {
-            // Проверить что не обработано
+            // Checar se ainda não processou
             if (Cache::has("payment:processed:{$this->idempotencyKey}")) {
                 return;
             }
 
-            // Обработка
+            // Processar
             DB::transaction(function () {
                 $order = Order::lockForUpdate()->find($this->orderId);
 
                 if ($order->status !== 'pending') {
-                    return; // Уже обработан
+                    return; // Já processado
                 }
 
-                // Процессинг платежа
+                // Processar o pagamento
                 $payment = PaymentGateway::charge($order->total);
 
                 $order->update([
@@ -683,7 +683,7 @@ class ProcessPaymentJob implements ShouldQueue
                 ]);
             });
 
-            // Пометить как обработанное
+            // Marcar como processado
             Cache::put(
                 "payment:processed:{$this->idempotencyKey}",
                 true,
@@ -696,13 +696,13 @@ class ProcessPaymentJob implements ShouldQueue
     }
 }
 
-// Использование
+// Uso
 ProcessPaymentJob::dispatch(
     $order->id,
-    Str::uuid() // Unique idempotency key
+    Str::uuid() // Idempotency key único
 );
 
-// 2. Kafka с Offset Tracking
+// 2. Kafka com Offset Tracking
 namespace App\Console\Commands;
 
 use Illuminate\Support\Facades\DB;
@@ -719,7 +719,7 @@ class ConsumeKafkaOrders extends Command
                 $partition = $message->getPartition();
                 $data = $message->getBody();
 
-                // Проверить что offset не обработан
+                // Checar se o offset ainda não foi processado
                 $processed = DB::table('kafka_offsets')
                     ->where('topic', 'orders')
                     ->where('partition', $partition)
@@ -727,16 +727,16 @@ class ConsumeKafkaOrders extends Command
                     ->exists();
 
                 if ($processed) {
-                    // Уже обработан
+                    // Já processado
                     $message->getConsumer()->commit($message);
                     return;
                 }
 
                 DB::transaction(function () use ($data, $partition, $offset, $message) {
-                    // Обработка
+                    // Processar
                     Order::create($data);
 
-                    // Сохранить offset
+                    // Guardar o offset
                     DB::table('kafka_offsets')->insert([
                         'topic' => 'orders',
                         'partition' => $partition,
@@ -754,7 +754,7 @@ class ConsumeKafkaOrders extends Command
     }
 }
 
-// 3. Redis Pub/Sub с Message Deduplication
+// 3. Redis Pub/Sub com Message Deduplication
 namespace App\Services;
 
 use Illuminate\Support\Facades\Redis;
@@ -766,7 +766,7 @@ class IdempotentRedisPublisher
     {
         $messageId = $messageId ?? Str::uuid();
 
-        // Проверить что не опубликовано недавно
+        // Checar se não publicou recentemente
         $cacheKey = "redis:published:{$channel}:{$messageId}";
 
         if (Cache::has($cacheKey)) {
@@ -781,7 +781,7 @@ class IdempotentRedisPublisher
 
         Redis::publish($channel, json_encode($payload));
 
-        // Пометить как опубликованное (TTL 5 минут)
+        // Marcar como publicado (TTL de 5 minutos)
         Cache::put($cacheKey, true, 300);
 
         return true;
@@ -799,29 +799,29 @@ class IdempotentRedisSubscriber
             $messageId = $data['message_id'] ?? null;
 
             if (!$messageId) {
-                return; // Нет message_id
+                return; // Sem message_id
             }
 
-            // Проверить дубликат в памяти (для текущей сессии)
+            // Checar duplicata na memória (sessão atual)
             if (isset($this->processedMessages[$messageId])) {
                 return;
             }
 
-            // Проверить в кэше
+            // Checar no cache
             $cacheKey = "redis:processed:{$channel}:{$messageId}";
 
             if (Cache::has($cacheKey)) {
-                return; // Уже обработано
+                return; // Já processado
             }
 
-            // Обработка
+            // Processar
             $callback($data);
 
-            // Пометить как обработанное
+            // Marcar como processado
             $this->processedMessages[$messageId] = true;
             Cache::put($cacheKey, true, 300);
 
-            // Очистить старые из памяти
+            // Limpar os antigos da memória
             if (count($this->processedMessages) > 1000) {
                 $this->processedMessages = array_slice(
                     $this->processedMessages,
@@ -834,30 +834,30 @@ class IdempotentRedisSubscriber
     }
 }
 
-// Использование
+// Uso
 $publisher = new IdempotentRedisPublisher();
 
 $messageId = Str::uuid();
 $publisher->publish('notifications', [
     'user_id' => 123,
-    'message' => 'Hello',
+    'message' => 'Olá',
 ], $messageId);
 
-// При повторной отправке с тем же messageId - не отправится
+// Se enviar de novo com o mesmo messageId, não publica
 $publisher->publish('notifications', [
     'user_id' => 123,
-    'message' => 'Hello',
+    'message' => 'Olá',
 ], $messageId); // false
 
 // Subscriber
 $subscriber = new IdempotentRedisSubscriber();
 $subscriber->subscribe('notifications', function ($data) {
-    // Обработка (гарантированно один раз)
+    // Processar (uma vez, com garantia)
     Log::info('Notification', $data);
 });
 ```
 
-**Migration для Kafka offsets:**
+**Migration dos offsets do Kafka:**
 
 ```php
 Schema::create('kafka_offsets', function (Blueprint $table) {
@@ -873,12 +873,12 @@ Schema::create('kafka_offsets', function (Blueprint $table) {
 ```
 </details>
 
-### Задание 3: Построй гибридную систему
+### Exercício 3: Monte um sistema híbrido
 
-Создай систему обработки заказов которая использует все три broker для разных задач.
+Crie um sistema de processamento de pedidos que usa os três brokers, cada um para uma tarefa.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/OrderProcessingService.php
@@ -896,7 +896,7 @@ class OrderProcessingService
     public function createOrder(User $user, array $data): Order
     {
         return DB::transaction(function () use ($user, $data) {
-            // 1. Создать заказ
+            // 1. Criar o pedido
             $order = Order::create([
                 'user_id' => $user->id,
                 'total' => $this->calculateTotal($data['items']),
@@ -907,16 +907,16 @@ class OrderProcessingService
                 $order->items()->create($item);
             }
 
-            // 2. Event Sourcing через Kafka
-            // Сохранить событие для history и audit
+            // 2. Event Sourcing via Kafka
+            // Guardar o event para history e audit
             $this->publishToKafka('order.created', $order, $data);
 
-            // 3. Background Jobs через RabbitMQ
-            // Асинхронные задачи с гарантией доставки
+            // 3. Background Jobs via RabbitMQ
+            // Tarefas assíncronas com garantia de entrega
             $this->dispatchBackgroundJobs($order);
 
-            // 4. Real-time Notification через Redis Pub/Sub
-            // Уведомить пользователя онлайн
+            // 4. Notification em real-time via Redis Pub/Sub
+            // Notificar o usuário online
             $this->notifyUserRealtime($order);
 
             return $order;
@@ -945,7 +945,7 @@ class OrderProcessingService
 
     private function dispatchBackgroundJobs(Order $order): void
     {
-        // RabbitMQ: Background Jobs с retry
+        // RabbitMQ: Background Jobs com retry
         SendOrderEmailJob::dispatch($order)
             ->onQueue('emails')
             ->onConnection('rabbitmq');
@@ -966,10 +966,10 @@ class OrderProcessingService
 
     private function notifyUserRealtime(Order $order): void
     {
-        // Redis Pub/Sub: Real-time notifications
+        // Redis Pub/Sub: notifications em real-time
         broadcast(new OrderCreatedEvent($order));
 
-        // Также отправить админам
+        // Também enviar para os admins
         Redis::publish('admin-notifications', json_encode([
             'type' => 'new_order',
             'order_id' => $order->id,
@@ -981,7 +981,7 @@ class OrderProcessingService
     public function payOrder(Order $order, array $paymentData): void
     {
         DB::transaction(function () use ($order, $paymentData) {
-            // Обработать платёж
+            // Processar o pagamento
             $payment = PaymentGateway::charge($order->total, $paymentData);
 
             $order->update([
@@ -990,7 +990,7 @@ class OrderProcessingService
                 'payment_id' => $payment->id,
             ]);
 
-            // Kafka: Event для истории
+            // Kafka: Event para o histórico
             Kafka::publishOn('order-events')
                 ->withBodyKey('order_id', $order->id)
                 ->withMessage([
@@ -1008,14 +1008,14 @@ class OrderProcessingService
             StartFulfillmentJob::dispatch($order)
                 ->onConnection('rabbitmq');
 
-            // Redis: Real-time notification
+            // Redis: notification em real-time
             broadcast(new OrderPaidEvent($order));
         });
     }
 }
 
 // app/Console/Commands/ConsumeOrderEvents.php
-// Kafka Consumer для аналитики и синхронизации
+// Kafka Consumer para analytics e sincronização
 class ConsumeOrderEvents extends Command
 {
     protected $signature = 'kafka:consume-orders';
@@ -1028,7 +1028,7 @@ class ConsumeOrderEvents extends Command
             ->withHandler(function ($message) {
                 $event = $message->getBody();
 
-                // Обработка для аналитики
+                // Processar para analytics
                 match ($event['event_type']) {
                     'order.created' => $this->trackOrderCreated($event),
                     'order.paid' => $this->trackOrderPaid($event),
@@ -1036,7 +1036,7 @@ class ConsumeOrderEvents extends Command
                     default => null,
                 };
 
-                // Синхронизация с внешними системами
+                // Sincronizar com sistemas externos
                 $this->syncToExternalService($event);
 
                 $message->getConsumer()->commit($message);
@@ -1048,7 +1048,7 @@ class ConsumeOrderEvents extends Command
 
     private function trackOrderCreated(array $event): void
     {
-        // Отправить в аналитику
+        // Enviar para analytics
         Analytics::track('order_created', [
             'order_id' => $event['order_id'],
             'total' => $event['total'],
@@ -1057,14 +1057,14 @@ class ConsumeOrderEvents extends Command
 
     private function syncToExternalService(array $event): void
     {
-        // Синхронизация с CRM, ERP, etc.
+        // Sincronizar com CRM, ERP, etc.
         Http::post('https://crm.example.com/orders/sync', $event);
     }
 }
 
 // config/queue.php
 'connections' => [
-    // RabbitMQ для background jobs
+    // RabbitMQ para background jobs
     'rabbitmq' => [
         'driver' => 'rabbitmq',
         'queue' => 'default',
@@ -1079,7 +1079,7 @@ class ConsumeOrderEvents extends Command
 
 // config/broadcasting.php
 'connections' => [
-    // Redis для real-time
+    // Redis para real-time
     'redis' => [
         'driver' => 'redis',
         'connection' => 'default',
@@ -1088,17 +1088,17 @@ class ConsumeOrderEvents extends Command
 
 // config/kafka.php
 return [
-    // Kafka для event sourcing
+    // Kafka para event sourcing
     'brokers' => env('KAFKA_BROKERS', 'localhost:9092'),
 ];
 
-// Итого архитектура:
-// - RabbitMQ: Email, PDF generation, inventory updates (background jobs)
-// - Kafka: Event sourcing, CDC, analytics, audit log
-// - Redis Pub/Sub: Real-time notifications, WebSockets, live updates
+// Arquitetura final:
+// - RabbitMQ: email, geração de PDF, update de estoque (background jobs)
+// - Kafka: event sourcing, CDC, analytics, audit log
+// - Redis Pub/Sub: notifications em real-time, WebSockets, live updates
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

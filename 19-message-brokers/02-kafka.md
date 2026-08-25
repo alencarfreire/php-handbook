@@ -1,88 +1,88 @@
 # 17.2 Apache Kafka
 
-## Краткое резюме
+## Resumo
 
-> **Apache Kafka** — distributed streaming platform для обработки миллионов событий в секунду с хранением на диске.
+> **Apache Kafka** — distributed streaming platform para processar milhões de eventos por segundo, com persistência em disco.
 >
-> **Архитектура:** Topics разделены на Partitions, Consumer Groups читают параллельно. Offset управляет позицией чтения.
+> **Arquitetura:** Topics quebrados em Partitions. Consumer Groups leem em paralelo. Offset controla a posição da leitura.
 >
-> **Use cases:** Event streaming, event sourcing, CDC, real-time analytics, logs aggregation.
+> **Use cases:** Event streaming, event sourcing, CDC, analytics em real-time, agregação de logs.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Архитектура](#архитектура)
-- [Topics и Partitions](#topics-и-partitions)
+- [O que é](#o-que-é)
+- [Arquitetura](#arquitetura)
+- [Topics e Partitions](#topics-e-partitions)
 - [Producer](#producer)
 - [Consumer](#consumer)
 - [Laravel + Kafka](#laravel--kafka)
 - [Offset Management](#offset-management)
-- [Retention (хранение)](#retention-хранение)
+- [Retention (armazenamento)](#retention-armazenamento)
 - [Replication](#replication)
 - [Use Cases](#use-cases)
 - [Kafka vs RabbitMQ](#kafka-vs-rabbitmq)
 - [Monitoring](#monitoring)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Kafka:**
-Distributed streaming platform для обработки потоков событий в реальном времени. Высокая пропускная способность (millions events/sec).
+Distributed streaming platform para processar streams de eventos em tempo real. Alta vazão (millions events/sec).
 
-**Зачем:**
-- Event streaming (real-time data pipelines)
-- Высокая пропускная способность
-- Хранение событий (event log)
-- Микросервисы коммуникация
+**Para quê:**
+- Event streaming (pipelines de dados em real-time)
+- Alta vazão
+- Guardar eventos (event log)
+- Comunicação entre microsserviços
 
-**Отличие от RabbitMQ:**
+**Diferença do RabbitMQ:**
 
 ```
 RabbitMQ:
-- Message broker (задачи удаляются после обработки)
+- Message broker (tarefas somem depois do processamento)
 - Low latency
 - Complex routing
 
 Kafka:
-- Event log (события хранятся)
+- Event log (eventos ficam guardados)
 - High throughput
 - Simple pub/sub
 ```
 
 ---
 
-## Архитектура
+## Arquitetura
 
-**Компоненты:**
+**Componentes:**
 
 ```
 Producer → Topic (partitions) → Consumer Group
                 ↓
-            (хранится на диске)
+            (fica no disco)
 ```
 
 **Topic:**
-- Категория событий (как таблица)
-- Разделён на partitions для масштабирования
+- Categoria de eventos (como uma tabela)
+- Dividido em partitions para scaling
 
 **Partition:**
-- Упорядоченная последовательность сообщений
-- Каждое сообщение имеет offset (позицию)
+- Sequência ordenada de mensagens
+- Cada mensagem tem um offset (posição)
 
 **Consumer Group:**
-- Группа consumers для параллельной обработки
-- Каждый partition читается только одним consumer в группе
+- Grupo de consumers para processar em paralelo
+- Cada partition é lida por um consumer só no group
 
 ---
 
-## Topics и Partitions
+## Topics e Partitions
 
-**Пример:**
+**Exemplo:**
 
 ```
 Topic: user-events
@@ -92,16 +92,16 @@ Partition 1: [msg3, msg6, msg8]        ← Consumer 2
 Partition 2: [msg4, msg9]              ← Consumer 3
 ```
 
-**Количество partitions:**
-- Больше partitions = больше параллелизма
-- Рекомендуется: 3-6 partitions на topic
-- Max consumers в группе = количество partitions
+**Quantidade de partitions:**
+- Mais partitions = mais paralelismo
+- Recomendado: 3-6 partitions por topic
+- Máximo de consumers no group = número de partitions
 
 ---
 
 ## Producer
 
-**PHP пример:**
+**Exemplo em PHP:**
 
 ```bash
 composer require enqueue/rdkafka
@@ -118,11 +118,11 @@ $factory = new RdKafkaConnectionFactory([
 
 $context = $factory->createContext();
 
-// Создать producer
+// Criar o producer
 $topic = $context->createTopic('user-events');
 $producer = $context->createProducer();
 
-// Отправить сообщение
+// Enviar a mensagem
 $message = $context->createMessage(json_encode([
     'event' => 'user_created',
     'user_id' => 123,
@@ -132,13 +132,13 @@ $message = $context->createMessage(json_encode([
 $producer->send($topic, $message);
 ```
 
-**С ключом (для partitioning):**
+**Com chave (para partitioning):**
 
 ```php
 $message = $context->createMessage($body);
 
-// Все сообщения с одним ключом попадут в одну partition
-$message->setKey((string)$userId);  // Partition по user_id
+// Mensagens com a mesma chave caem na mesma partition
+$message->setKey((string)$userId);  // Partition por user_id
 
 $producer->send($topic, $message);
 ```
@@ -156,14 +156,14 @@ $consumer = $context->createConsumer(
 );
 
 while (true) {
-    $message = $consumer->receive(1000);  // Timeout 1 секунда
+    $message = $consumer->receive(1000);  // Timeout de 1 segundo
 
     if ($message) {
         $data = json_decode($message->getBody(), true);
 
-        echo "Processing: {$data['event']}\n";
+        echo "Processando: {$data['event']}\n";
 
-        // Обработка...
+        // Processar...
 
         // Acknowledge
         $consumer->acknowledge($message);
@@ -185,7 +185,7 @@ $consumer = $context->createConsumer(
     $context->createQueue('user-events')
 );
 
-// Kafka автоматически распределит partitions между consumers в группе
+// O Kafka distribui as partitions entre os consumers do group
 ```
 
 ---
@@ -198,7 +198,7 @@ $consumer = $context->createConsumer(
 composer require junges/laravel-kafka
 ```
 
-**Конфигурация:**
+**Configuração:**
 
 ```php
 // config/kafka.php
@@ -212,7 +212,7 @@ return [
 ```php
 use Junges\Kafka\Facades\Kafka;
 
-// Простая отправка
+// Envio simples
 Kafka::publishOn('user-events')
     ->withMessage([
         'event' => 'user_created',
@@ -220,7 +220,7 @@ Kafka::publishOn('user-events')
     ])
     ->send();
 
-// С ключом и headers
+// Com chave e headers
 Kafka::publishOn('user-events')
     ->withHeaders(['version' => '1.0'])
     ->withBodyKey('user_id', 123)
@@ -243,7 +243,7 @@ $consumer = Kafka::createConsumer(['user-events'])
 
         Log::info('Kafka message', $data);
 
-        // Обработка...
+        // Processar...
     })
     ->build();
 
@@ -263,7 +263,7 @@ class ConsumeKafka extends Command
         $consumer = Kafka::createConsumer(['user-events'])
             ->withConsumerGroupId('laravel-consumer')
             ->withHandler(function ($message) {
-                $this->info('Processing: ' . json_encode($message->getBody()));
+                $this->info('Processando: ' . json_encode($message->getBody()));
             })
             ->build();
 
@@ -280,15 +280,15 @@ php artisan kafka:consume
 
 ## Offset Management
 
-**Что такое offset:**
-- Позиция сообщения в partition
-- Consumer сохраняет offset для resume
+**O que é offset:**
+- Posição da mensagem na partition
+- O consumer grava o offset para retomar (resume)
 
 **Auto commit:**
 
 ```php
-'enable.auto.commit' => 'true',  // Автоматически commit offset
-'auto.commit.interval.ms' => 5000,  // Каждые 5 секунд
+'enable.auto.commit' => 'true',  // Commit automático do offset
+'auto.commit.interval.ms' => 5000,  // A cada 5 segundos
 ```
 
 **Manual commit:**
@@ -301,10 +301,10 @@ $consumer = Kafka::createConsumer(['user-events'])
         try {
             processMessage($message);
 
-            // Успех: commit offset
+            // Sucesso: commit do offset
             $consumer->commit();
         } catch (Exception $e) {
-            // Ошибка: не commit (повтор при следующем запуске)
+            // Erro: sem commit (reprocessa na próxima)
             Log::error('Failed to process', ['error' => $e]);
         }
     })
@@ -314,14 +314,14 @@ $consumer = Kafka::createConsumer(['user-events'])
 **Reset offset:**
 
 ```bash
-# Читать с начала
+# Ler do começo
 kafka-consumer-groups --bootstrap-server localhost:9092 \
     --group my-group \
     --reset-offsets --to-earliest \
     --topic user-events \
     --execute
 
-# Читать с конкретного offset
+# Ler a partir de um offset específico
 kafka-consumer-groups --bootstrap-server localhost:9092 \
     --group my-group \
     --reset-offsets --to-offset 100 \
@@ -331,30 +331,30 @@ kafka-consumer-groups --bootstrap-server localhost:9092 \
 
 ---
 
-## Retention (хранение)
+## Retention (armazenamento)
 
-**По умолчанию:** 7 дней
+**Por padrão:** 7 dias
 
 ```bash
-# Настроить retention
+# Configurar retention
 kafka-configs --bootstrap-server localhost:9092 \
     --entity-type topics \
     --entity-name user-events \
     --alter \
-    --add-config retention.ms=604800000  # 7 дней
+    --add-config retention.ms=604800000  # 7 dias
 ```
 
 **Infinite retention:**
 
 ```bash
-# Хранить навсегда (event sourcing)
+# Guardar para sempre (event sourcing)
 --add-config retention.ms=-1
 ```
 
 **Compaction:**
 
 ```bash
-# Хранить только последнее значение для каждого ключа
+# Guardar só o último valor de cada chave
 --add-config cleanup.policy=compact
 ```
 
@@ -362,30 +362,30 @@ kafka-configs --bootstrap-server localhost:9092 \
 
 ## Replication
 
-**Зачем:** Отказоустойчивость
+**Para quê:** Tolerância a falhas
 
 ```
 Broker 1 (leader for partition 0)    ← Producer writes here
 Broker 2 (replica for partition 0)
 Broker 3 (replica for partition 0)
 
-Если Broker 1 упал → Broker 2 становится leader
+Se o Broker 1 cair → Broker 2 vira leader
 ```
 
-**Создать topic с репликацией:**
+**Criar topic com replicação:**
 
 ```bash
 kafka-topics --create \
     --bootstrap-server localhost:9092 \
     --topic user-events \
     --partitions 3 \
-    --replication-factor 3  # 3 копии
+    --replication-factor 3  # 3 cópias
 ```
 
 **min.insync.replicas:**
 
 ```bash
-# Минимум 2 реплики должны подтвердить запись
+# No mínimo 2 réplicas precisam confirmar o write
 --add-config min.insync.replicas=2
 ```
 
@@ -396,7 +396,7 @@ kafka-topics --create \
 ### 1. Event Sourcing
 
 ```php
-// Сохранить все события пользователя
+// Persistir todos os eventos do usuário
 Kafka::publishOn('user-events')
     ->withBodyKey('user_id', $userId)
     ->withMessage([
@@ -414,7 +414,7 @@ Kafka::publishOn('user-events')
     ])
     ->send();
 
-// Consumer восстанавливает состояние из событий
+// Consumer reconstrói o estado a partir dos eventos
 ```
 
 ---
@@ -422,7 +422,7 @@ Kafka::publishOn('user-events')
 ### 2. CDC (Change Data Capture)
 
 ```php
-// Каждое изменение в БД → Kafka
+// Toda mudança no banco → Kafka
 class UserObserver
 {
     public function created(User $user)
@@ -449,7 +449,7 @@ class UserObserver
     }
 }
 
-// Другие сервисы синхронизируют свои БД
+// Outros serviços sincronizam o banco deles
 ```
 
 ---
@@ -457,7 +457,7 @@ class UserObserver
 ### 3. Metrics & Logging
 
 ```php
-// Real-time метрики
+// Métricas em real-time
 Kafka::publishOn('app-metrics')
     ->withMessage([
         'metric' => 'api.response_time',
@@ -466,35 +466,35 @@ Kafka::publishOn('app-metrics')
     ])
     ->send();
 
-// Consumer агрегирует и шлёт в InfluxDB/Prometheus
+// Consumer agrega e manda para InfluxDB/Prometheus
 ```
 
 ---
 
 ## Kafka vs RabbitMQ
 
-**Выбирай Kafka когда:**
+**Escolha Kafka quando:**
 ```
-✓ Высокая пропускная способность (millions/sec)
+✓ Alta vazão (millions/sec)
 ✓ Event log / Event sourcing
-✓ Replay событий
-✓ Долгое хранение событий
+✓ Replay de eventos
+✓ Guardar eventos por muito tempo
 ✓ Stream processing (Kafka Streams)
 ```
 
-**Выбирай RabbitMQ когда:**
+**Escolha RabbitMQ quando:**
 ```
 ✓ Low latency
 ✓ Complex routing (topic exchange, headers)
 ✓ Priority queues
-✓ Задачи удаляются после обработки
-✓ Проще в настройке и поддержке
+✓ Tarefas somem depois do processamento
+✓ Mais simples de configurar e manter
 ```
 
-**Комбинация:**
+**Combinando:**
 ```
-RabbitMQ: задачи (emails, notifications)
-Kafka: события (user_created, order_placed)
+RabbitMQ: tarefas (emails, notifications)
+Kafka: eventos (user_created, order_placed)
 ```
 
 ---
@@ -504,39 +504,39 @@ Kafka: события (user_created, order_placed)
 **CLI:**
 
 ```bash
-# Список topics
+# Listar topics
 kafka-topics --list --bootstrap-server localhost:9092
 
-# Информация о topic
+# Info do topic
 kafka-topics --describe --topic user-events --bootstrap-server localhost:9092
 
 # Consumer groups
 kafka-consumer-groups --list --bootstrap-server localhost:9092
 
-# Lag (отставание consumer)
+# Lag (atraso do consumer)
 kafka-consumer-groups --describe --group my-group --bootstrap-server localhost:9092
 ```
 
 **Kafka Manager / Kafka UI:**
-- GUI для управления
+- GUI para gerenciar
 - http://localhost:9000
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Kafka — distributed streaming platform для event log. Topics разделены на partitions для параллелизма. Producer отправляет с ключом (для partitioning). Consumer group: каждый partition читается одним consumer. Offset — позиция в partition, manual/auto commit. Retention: по умолчанию 7 дней, может быть infinite (event sourcing). Replication для отказоустойчивости (min.insync.replicas). Laravel: junges/laravel-kafka. Use cases: event sourcing, CDC, real-time metrics. Kafka vs RabbitMQ: Kafka для high throughput и event log, RabbitMQ для задач и complex routing."
+> "Kafka é uma distributed streaming platform para event log. Topics quebrados em partitions para paralelismo. Producer manda com chave (para partitioning). Consumer group: cada partition é lida por um consumer só. Offset é a posição na partition, commit manual ou auto. Retention: 7 dias por padrão, pode ser infinite (event sourcing). Replication para tolerância a falhas (min.insync.replicas). No Laravel: junges/laravel-kafka. Use cases: event sourcing, CDC, métricas em real-time. Kafka vs RabbitMQ: Kafka para high throughput e event log, RabbitMQ para tarefas e complex routing."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Event Sourcing с Kafka
+### Exercício 1: Event Sourcing com Kafka
 
-Реализуй систему event sourcing для заказов используя Kafka. Все события (created, paid, shipped) должны храниться и позволять восстановление состояния.
+Implemente event sourcing de pedidos com Kafka. Todo evento (created, paid, shipped) fica guardado e dá para reconstruir o estado.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/OrderEventSourcing.php
@@ -559,7 +559,7 @@ class OrderEventSourcing
         ];
 
         Kafka::publishOn(self::TOPIC)
-            ->withBodyKey('order_id', $order->id)  // Все события заказа в одну partition
+            ->withBodyKey('order_id', $order->id)  // Todos os eventos do pedido na mesma partition
             ->withHeaders([
                 'event_type' => $eventType,
                 'version' => '1.0',
@@ -600,8 +600,8 @@ class OrderEventSourcing
 
     public function rebuildOrderState(int $orderId): array
     {
-        // Читаем все события заказа из Kafka
-        // В реальности нужно использовать Consumer API для чтения с начала
+        // Lê todos os eventos do pedido no Kafka
+        // Na prática, use a Consumer API para ler do começo
 
         $state = [
             'order_id' => $orderId,
@@ -609,7 +609,7 @@ class OrderEventSourcing
             'events' => [],
         ];
 
-        // Псевдокод для восстановления состояния
+        // Pseudocódigo para reconstruir o estado
         // foreach ($events as $event) {
         //     switch ($event['event_type']) {
         //         case 'order.created':
@@ -656,7 +656,7 @@ class ConsumeOrderEvents extends Command
                     'order_id' => $data['order_id'],
                 ]);
 
-                // Обработка событий (обновление read models, аналитика и т.д.)
+                // Processar eventos (atualizar read models, analytics etc.)
                 match ($data['event_type']) {
                     'order.created' => $this->handleOrderCreated($data),
                     'order.paid' => $this->handleOrderPaid($data),
@@ -671,27 +671,27 @@ class ConsumeOrderEvents extends Command
 
     private function handleOrderCreated(array $data): void
     {
-        // Отправить welcome email
-        // Обновить аналитику
+        // Enviar welcome email
+        // Atualizar analytics
         $this->info("Order created: {$data['order_id']}");
     }
 
     private function handleOrderPaid(array $data): void
     {
-        // Начать сборку заказа
-        // Обновить статистику продаж
+        // Começar a montar o pedido
+        // Atualizar estatística de vendas
         $this->info("Order paid: {$data['order_id']}");
     }
 
     private function handleOrderShipped(array $data): void
     {
-        // Отправить tracking info
-        // Обновить inventory
+        // Enviar tracking info
+        // Atualizar inventory
         $this->info("Order shipped: {$data['order_id']}");
     }
 }
 
-// Использование
+// Uso
 $service = new OrderEventSourcing();
 
 $order = $service->createOrder([
@@ -705,12 +705,12 @@ $service->shipOrder($order, 'TRACK123');
 ```
 </details>
 
-### Задание 2: Consumer Group для параллельной обработки
+### Exercício 2: Consumer Group para processamento paralelo
 
-Создай систему с несколькими consumers в группе для параллельной обработки логов.
+Crie vários consumers no mesmo group para processar logs em paralelo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Console/Commands/KafkaLogConsumer.php
@@ -724,14 +724,14 @@ use Illuminate\Support\Facades\DB;
 class KafkaLogConsumer extends Command
 {
     protected $signature = 'kafka:consume-logs {consumer-id}';
-    protected $description = 'Consume logs from Kafka';
+    protected $description = 'Consome logs do Kafka';
 
     public function handle()
     {
         $consumerId = $this->argument('consumer-id');
         $groupId = 'log-processors';
 
-        $this->info("Starting consumer {$consumerId} in group {$groupId}");
+        $this->info("Subindo consumer {$consumerId} no group {$groupId}");
 
         $consumer = Kafka::createConsumer(['application-logs'])
             ->withConsumerGroupId($groupId)
@@ -740,7 +740,7 @@ class KafkaLogConsumer extends Command
                 $logData = $message->getBody();
 
                 try {
-                    // Обработка лога
+                    // Processar o log
                     DB::table('application_logs')->insert([
                         'level' => $logData['level'],
                         'message' => $logData['message'],
@@ -749,14 +749,14 @@ class KafkaLogConsumer extends Command
                         'created_at' => now(),
                     ]);
 
-                    $this->info("[{$consumerId}] Processed log: {$logData['message']}");
+                    $this->info("[{$consumerId}] Log processado: {$logData['message']}");
 
-                    // Manual commit после успешной обработки
+                    // Manual commit depois do processamento ok
                     $message->getConsumer()->commit($message);
 
                 } catch (\Exception $e) {
-                    $this->error("[{$consumerId}] Failed: {$e->getMessage()}");
-                    // Не commit - сообщение будет обработано повторно
+                    $this->error("[{$consumerId}] Falhou: {$e->getMessage()}");
+                    // Sem commit — a mensagem volta a ser processada
                 }
             })
             ->build();
@@ -765,14 +765,14 @@ class KafkaLogConsumer extends Command
     }
 }
 
-// Запуск нескольких consumers
+// Subir vários consumers
 // Terminal 1: php artisan kafka:consume-logs consumer-1
 // Terminal 2: php artisan kafka:consume-logs consumer-2
 // Terminal 3: php artisan kafka:consume-logs consumer-3
 
-// Kafka автоматически распределит partitions между consumers
+// O Kafka distribui as partitions entre os consumers
 
-// Producer для логов
+// Producer de logs
 namespace App\Services;
 
 use Junges\Kafka\Facades\Kafka;
@@ -808,19 +808,19 @@ class KafkaLogger
     }
 }
 
-// Использование
+// Uso
 $logger = new KafkaLogger();
-$logger->info('User logged in', ['user_id' => 123]);
-$logger->error('Database connection failed', ['host' => 'db.example.com']);
+$logger->info('Usuário fez login', ['user_id' => 123]);
+$logger->error('Falha na conexão com o banco', ['host' => 'db.example.com']);
 ```
 </details>
 
-### Задание 3: CDC (Change Data Capture) с Kafka
+### Exercício 3: CDC (Change Data Capture) com Kafka
 
-Реализуй систему для отслеживания изменений в БД и синхронизации с другими сервисами через Kafka.
+Implemente CDC: toda mudança no banco vai para o Kafka e outros serviços sincronizam.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Observers/UserObserver.php
@@ -869,7 +869,7 @@ class UserObserver
     }
 }
 
-// Регистрация Observer в AppServiceProvider
+// Registrar o Observer no AppServiceProvider
 use App\Models\User;
 use App\Observers\UserObserver;
 
@@ -878,7 +878,7 @@ public function boot(): void
     User::observe(UserObserver::class);
 }
 
-// Consumer для синхронизации в другой сервис
+// Consumer para sincronizar outro serviço
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -898,19 +898,19 @@ class SyncUserChanges extends Command
                 $change = $message->getBody();
 
                 try {
-                    // Синхронизация с внешним сервисом
+                    // Sincronizar com o serviço externo
                     match ($change['operation']) {
                         'INSERT' => $this->syncUserCreated($change['after']),
                         'UPDATE' => $this->syncUserUpdated($change['before'], $change['after']),
                         'DELETE' => $this->syncUserDeleted($change['after']),
                     };
 
-                    $this->info("Synced {$change['operation']} for user {$change['after']['id']}");
+                    $this->info("Sincronizado {$change['operation']} do user {$change['after']['id']}");
 
                     $message->getConsumer()->commit($message);
 
                 } catch (\Exception $e) {
-                    $this->error("Sync failed: {$e->getMessage()}");
+                    $this->error("Sync falhou: {$e->getMessage()}");
                 }
             })
             ->build();
@@ -920,7 +920,7 @@ class SyncUserChanges extends Command
 
     private function syncUserCreated(array $user): void
     {
-        // Отправить в аналитический сервис
+        // Enviar para o serviço de analytics
         Http::post('https://analytics.example.com/users', [
             'id' => $user['id'],
             'email' => $user['email'],
@@ -930,7 +930,7 @@ class SyncUserChanges extends Command
 
     private function syncUserUpdated(array $before, array $after): void
     {
-        // Обновить в аналитическом сервисе
+        // Atualizar no serviço de analytics
         Http::put("https://analytics.example.com/users/{$after['id']}", [
             'email' => $after['email'],
             'name' => $after['name'],
@@ -939,12 +939,12 @@ class SyncUserChanges extends Command
 
     private function syncUserDeleted(array $user): void
     {
-        // Удалить из аналитического сервиса
+        // Remover do serviço de analytics
         Http::delete("https://analytics.example.com/users/{$user['id']}");
     }
 }
 
-// Создание topic с правильными настройками для CDC
+// Criar o topic com as configs certas para CDC
 // bash
 // kafka-topics --create \
 //   --bootstrap-server localhost:9092 \
@@ -958,5 +958,4 @@ class SyncUserChanges extends Command
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

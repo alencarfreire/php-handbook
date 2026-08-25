@@ -1,62 +1,62 @@
 # 17.3 Redis Pub/Sub
 
-## Краткое резюме
+## Resumo
 
-> **Redis Pub/Sub** — fire-and-forget система для real-time сообщений. Publisher отправляет в channel, все online subscribers получают мгновенно.
+> **Redis Pub/Sub** — sistema fire-and-forget para mensagens em real-time. O publisher manda no channel, todos os subscribers online recebem na hora.
 >
-> **Особенность:** Нет гарантий доставки и persistence. Если subscriber offline — сообщение теряется.
+> **O pulo do gato:** Sem garantia de entrega e sem persistência. Se o subscriber está offline — a mensagem some.
 >
-> **Use cases:** Real-time notifications, WebSockets, chat, live updates, cache invalidation.
+> **Casos de uso:** Notificações em real-time, WebSockets, chat, live updates, cache invalidation.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Основы](#основы)
-- [PHP пример](#php-пример)
+- [O que é](#o-que-é)
+- [O básico](#o-básico)
+- [Exemplo em PHP](#exemplo-em-php)
 - [Laravel Broadcasting](#laravel-broadcasting)
 - [Private Channels](#private-channels)
 - [Presence Channels](#presence-channels)
-- [Laravel Reverb](#laravel-reverb-новое-в-laravel-11)
-- [Практические примеры](#практические-примеры)
-- [Ограничения Redis Pub/Sub](#ограничения-redis-pubsub)
+- [Laravel Reverb](#laravel-reverb-novo-no-laravel-11)
+- [Exemplos práticos](#exemplos-práticos)
+- [Limitações do Redis Pub/Sub](#limitações-do-redis-pubsub)
 - [Redis Pub/Sub vs Streams](#redis-pubsub-vs-streams)
 - [Monitoring](#monitoring)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Что это
+## O que é
 
 **Redis Pub/Sub:**
-Простая система publish/subscribe для real-time сообщений через Redis.
+Sistema simples de publish/subscribe para mensagens em real-time via Redis.
 
-**Зачем:**
-- Real-time уведомления
-- Broadcasting событий
-- WebSocket backend
-- Простая альтернатива RabbitMQ/Kafka для simple cases
+**Para quê:**
+- Notificações em real-time
+- Broadcasting de events
+- Backend de WebSocket
+- Alternativa simples ao RabbitMQ/Kafka nos casos simples
 
-**Отличие от Queue:**
+**Diferença da Queue:**
 ```
 Queue (Redis List):
-- Сообщение удаляется после получения
-- Гарантия доставки
-- Persistence
+- A mensagem some depois de recebida
+- Garantia de entrega
+- Persistência
 
 Pub/Sub:
-- Fire and forget (нет гарантии доставки)
-- Subscribers получают только если online
-- Нет persistence
+- Fire and forget (sem garantia de entrega)
+- Subscribers só recebem se estiverem online
+- Sem persistência
 ```
 
 ---
 
-## Основы
+## O básico
 
-**Компоненты:**
+**Componentes:**
 
 ```
 Publisher → Channel → Subscriber 1
@@ -64,7 +64,7 @@ Publisher → Channel → Subscriber 1
                     → Subscriber 3
 ```
 
-**Команды:**
+**Comandos:**
 
 ```bash
 # Publisher
@@ -74,12 +74,12 @@ PUBLISH channel "message"
 SUBSCRIBE channel
 
 # Pattern subscription
-PSUBSCRIBE news.*  # Подписка на news.sport, news.tech, etc.
+PSUBSCRIBE news.*  # Subscribe em news.sport, news.tech, etc.
 ```
 
 ---
 
-## PHP пример
+## Exemplo em PHP
 
 **Publisher:**
 
@@ -87,14 +87,14 @@ PSUBSCRIBE news.*  # Подписка на news.sport, news.tech, etc.
 $redis = new Redis();
 $redis->connect('127.0.0.1', 6379);
 
-// Publish сообщение в channel
+// Publish da mensagem no channel
 $redis->publish('notifications', json_encode([
     'type' => 'new_message',
     'user_id' => 123,
-    'message' => 'Hello!'
+    'message' => 'Olá!'
 ]));
 
-// Возвращает количество подписчиков которые получили
+// Devolve quantos subscribers receberam
 ```
 
 **Subscriber:**
@@ -103,24 +103,24 @@ $redis->publish('notifications', json_encode([
 $redis = new Redis();
 $redis->connect('127.0.0.1', 6379);
 
-// Подписаться на channel
+// Subscribe no channel
 $redis->subscribe(['notifications'], function ($redis, $channel, $message) {
     echo "Channel: $channel\n";
     echo "Message: $message\n";
 
     $data = json_decode($message, true);
 
-    // Обработка...
+    // Processar...
 });
 
-// Блокирует выполнение и слушает
+// Bloqueia a execução e fica escutando
 ```
 
 **Pattern Subscribe:**
 
 ```php
 $redis->psubscribe(['user.*'], function ($redis, $pattern, $channel, $message) {
-    // Получит сообщения из:
+    // Recebe mensagens de:
     // user.123, user.456, user.created, etc.
 
     echo "Pattern: $pattern\n";
@@ -182,7 +182,7 @@ class NewMessage implements ShouldBroadcast
 }
 
 // Trigger
-event(new NewMessage('Hello!', 123));
+event(new NewMessage('Olá!', 123));
 ```
 
 **Frontend (Laravel Echo):**
@@ -196,10 +196,10 @@ window.Echo = new Echo({
     host: window.location.hostname + ':6001'
 });
 
-// Подписаться на channel
+// Subscribe no channel
 Echo.channel('notifications')
     .listen('.new.message', (e) => {
-        console.log('New message:', e);
+        console.log('Nova mensagem:', e);
     });
 ```
 
@@ -214,7 +214,7 @@ class NewMessage implements ShouldBroadcast
 {
     public function broadcastOn()
     {
-        // Private channel для конкретного пользователя
+        // Private channel de um user específico
         return new PrivateChannel('user.' . $this->userId);
     }
 }
@@ -223,7 +223,7 @@ class NewMessage implements ShouldBroadcast
 **routes/channels.php:**
 
 ```php
-// Авторизация для private channels
+// Autorização dos private channels
 Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
@@ -232,7 +232,7 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
 **Frontend:**
 
 ```javascript
-// Private channel требует auth
+// Private channel exige auth
 Echo.private('user.123')
     .listen('.new.message', (e) => {
         console.log(e);
@@ -243,7 +243,7 @@ Echo.private('user.123')
 
 ## Presence Channels
 
-**Для "who's online":**
+**Para "who's online":**
 
 **Event:**
 
@@ -262,42 +262,42 @@ class UserTyping implements ShouldBroadcast
 ```javascript
 Echo.join('chat.1')
     .here((users) => {
-        // Список users online сейчас
+        // Lista de users online agora
         console.log('Online:', users);
     })
     .joining((user) => {
-        // User зашёл
-        console.log('Joining:', user);
+        // User entrou
+        console.log('Entrou:', user);
     })
     .leaving((user) => {
-        // User вышел
-        console.log('Leaving:', user);
+        // User saiu
+        console.log('Saiu:', user);
     })
     .listen('.user.typing', (e) => {
-        console.log('User typing:', e.user);
+        console.log('User digitando:', e.user);
     });
 ```
 
 ---
 
-## Laravel Reverb (новое в Laravel 11)
+## Laravel Reverb (novo no Laravel 11)
 
-**Что это:**
-Официальный WebSocket server для Laravel (альтернатива Pusher, Socket.io).
+**O que é:**
+WebSocket server oficial do Laravel (alternativa a Pusher, Socket.io).
 
-**Установка:**
+**Instalação:**
 
 ```bash
 php artisan install:broadcasting
 ```
 
-**Запуск:**
+**Rodar:**
 
 ```bash
 php artisan reverb:start
 ```
 
-**Конфигурация:**
+**Configuração:**
 
 ```env
 BROADCAST_CONNECTION=reverb
@@ -322,14 +322,14 @@ window.Echo = new Echo({
 
 ---
 
-## Практические примеры
+## Exemplos práticos
 
-### 1. Real-time Notifications
+### 1. Notificações em real-time
 
 **Backend:**
 
 ```php
-// Когда user получает notification
+// Quando o user recebe a notification
 class NotificationSent
 {
     public function handle(DatabaseNotification $notification)
@@ -356,17 +356,17 @@ class NewNotification implements ShouldBroadcast
 ```javascript
 Echo.private(`user.${userId}`)
     .notification((notification) => {
-        // Показать toast
+        // Mostrar toast
         toastr.success(notification.message);
 
-        // Обновить badge
+        // Atualizar o badge
         updateNotificationBadge();
     });
 ```
 
 ---
 
-### 2. Chat Application
+### 2. Chat
 
 **Backend:**
 
@@ -393,7 +393,7 @@ class MessageSent implements ShouldBroadcast
     }
 }
 
-// Отправка сообщения
+// Enviar mensagem
 public function sendMessage(Request $request, Chat $chat)
 {
     $message = $chat->messages()->create([
@@ -401,7 +401,7 @@ public function sendMessage(Request $request, Chat $chat)
         'text' => $request->text,
     ]);
 
-    broadcast(new MessageSent($message))->toOthers();  // Не отправлять себе
+    broadcast(new MessageSent($message))->toOthers();  // Não envia para você mesmo
 
     return response()->json($message);
 }
@@ -410,7 +410,7 @@ public function sendMessage(Request $request, Chat $chat)
 **Frontend:**
 
 ```javascript
-// Join chat
+// Entrar no chat
 Echo.join(`chat.${chatId}`)
     .here((users) => {
         renderOnlineUsers(users);
@@ -425,11 +425,11 @@ Echo.join(`chat.${chatId}`)
         appendMessage(e.message);
     });
 
-// Отправить сообщение
+// Enviar mensagem
 function sendMessage(text) {
     axios.post(`/chats/${chatId}/messages`, { text })
         .then(response => {
-            // Добавить своё сообщение локально
+            // Adicionar a própria mensagem localmente
             appendMessage(response.data);
         });
 }
@@ -437,12 +437,12 @@ function sendMessage(text) {
 
 ---
 
-### 3. Live Dashboard Updates
+### 3. Live updates no dashboard
 
 **Backend:**
 
 ```php
-// Каждую минуту
+// A cada minuto
 class UpdateDashboardMetrics
 {
     public function handle()
@@ -471,66 +471,66 @@ Echo.channel('dashboard')
 
 ---
 
-## Ограничения Redis Pub/Sub
+## Limitações do Redis Pub/Sub
 
-**❌ Что НЕ может:**
+**❌ O que NÃO faz:**
 
 ```
-1. Нет гарантии доставки
-   - Если subscriber offline → сообщение потеряно
+1. Sem garantia de entrega
+   - Se o subscriber está offline → a mensagem some
 
-2. Нет persistence
-   - Сообщения не сохраняются
+2. Sem persistência
+   - As mensagens não são salvas
 
-3. Нет replay
-   - Нельзя прочитать старые сообщения
+3. Sem replay
+   - Não dá para ler mensagens antigas
 
 4. At-most-once delivery
-   - Сообщение может быть потеряно, но не дублировано
+   - A mensagem pode sumir, mas não duplica
 ```
 
-**✅ Когда использовать:**
+**✅ Quando usar:**
 
 ```
-- Real-time notifications (можно потерять)
+- Notificações em real-time (pode perder)
 - Live updates (dashboard, chat)
-- Pub/Sub внутри одного приложения
-- Простые use cases без strict guarantees
+- Pub/Sub dentro de um app só
+- Casos simples, sem garantia rígida
 ```
 
-**❌ Когда НЕ использовать:**
+**❌ Quando NÃO usar:**
 
 ```
-- Критичные сообщения (billing, orders)
-- Нужна гарантия доставки
-- Нужен replay событий
-- Высокая нагрузка (> 10k msg/sec)
+- Mensagens críticas (billing, pedidos)
+- Precisa de garantia de entrega
+- Precisa de replay dos events
+- Carga alta (> 10k msg/sec)
 ```
 
 ---
 
 ## Redis Pub/Sub vs Streams
 
-**Redis Streams (альтернатива):**
+**Redis Streams (alternativa):**
 
 ```redis
-# Streams = persistent pub/sub
+# Streams = pub/sub com persistência
 XADD mystream * field1 value1 field2 value2
 
 # Consumer groups
 XREADGROUP GROUP mygroup consumer1 STREAMS mystream >
 ```
 
-**Преимущества Streams:**
-- ✅ Persistence (сообщения сохраняются)
+**Vantagens do Streams:**
+- ✅ Persistência (as mensagens ficam salvas)
 - ✅ Consumer groups
 - ✅ Acknowledgments
-- ✅ Replay старых сообщений
+- ✅ Replay de mensagens antigas
 
-**Используй Streams когда:**
-- Нужна гарантия доставки
-- Consumer может быть offline
-- Нужен replay
+**Use Streams quando:**
+- Precisa de garantia de entrega
+- O consumer pode ficar offline
+- Precisa de replay
 
 ---
 
@@ -539,13 +539,13 @@ XREADGROUP GROUP mygroup consumer1 STREAMS mystream >
 **Redis CLI:**
 
 ```bash
-# Список channels
+# Lista de channels
 PUBSUB CHANNELS
 
-# Количество subscribers на channel
+# Quantos subscribers no channel
 PUBSUB NUMSUB channel_name
 
-# Количество pattern subscriptions
+# Quantas pattern subscriptions
 PUBSUB NUMPAT
 ```
 
@@ -555,25 +555,25 @@ composer require laravel/horizon
 php artisan horizon:install
 
 # http://localhost/horizon
-# Показывает broadcasting events
+# Mostra os broadcasting events
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Redis Pub/Sub — простая система real-time сообщений. Publisher отправляет в channel, subscribers получают если online. Fire-and-forget: нет гарантии доставки, нет persistence. Laravel Broadcasting: events с ShouldBroadcast, private/presence channels. Laravel Echo на frontend. Laravel Reverb — официальный WebSocket server. Use cases: notifications, chat, live dashboard. Ограничения: at-most-once, нет replay. Redis Streams для persistence и guarantees. Мониторинг через PUBSUB команды и Horizon."
+> "Redis Pub/Sub é um sistema simples de mensagens em real-time. O publisher manda no channel, os subscribers recebem se estiverem online. Fire-and-forget: sem garantia de entrega, sem persistência. No Laravel Broadcasting: events com ShouldBroadcast, private e presence channels. Laravel Echo no frontend. Laravel Reverb é o WebSocket server oficial. Casos de uso: notifications, chat, live dashboard. Limitações: at-most-once, sem replay. Redis Streams quando precisa de persistência e guarantees. Monitoramento com os comandos PUBSUB e o Horizon."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Real-time уведомления с Broadcasting
+### Exercício 1: Notificações em real-time com Broadcasting
 
-Создай систему real-time уведомлений для пользователей через Laravel Broadcasting и Redis.
+Crie um sistema de notificações em real-time para os users via Laravel Broadcasting e Redis.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/NewNotification.php
@@ -652,7 +652,7 @@ class NotificationController extends Controller
             'message' => $data['message'],
         ]);
 
-        // Broadcast в real-time
+        // Broadcast em real-time
         broadcast(new NewNotification($notification));
 
         return response()->json($notification);
@@ -668,16 +668,16 @@ window.Echo = new Echo({
     host: window.location.hostname + ':6001'
 });
 
-// Подписаться на private channel
+// Subscribe no private channel
 Echo.private(`user.${userId}`)
     .listen('.notification.new', (e) => {
-        // Показать toast notification
+        // Mostrar toast
         showToast(e.message, e.type);
 
-        // Обновить счётчик
+        // Atualizar o contador
         updateNotificationBadge();
 
-        // Добавить в список
+        // Adicionar na lista
         addNotificationToList(e);
     });
 
@@ -699,12 +699,12 @@ function updateNotificationBadge() {
 ```
 </details>
 
-### Задание 2: Live Chat с Presence Channel
+### Exercício 2: Live Chat com Presence Channel
 
-Реализуй систему чата с отображением онлайн пользователей и индикатором печати.
+Implemente um chat com users online e indicador de digitação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/MessageSent.php
@@ -771,7 +771,7 @@ class UserTyping implements ShouldBroadcast
 
 // routes/channels.php
 Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
-    // Проверить что пользователь участник чата
+    // Checar se o user é participante do chat
     return [
         'id' => $user->id,
         'name' => $user->name,
@@ -801,7 +801,7 @@ class ChatController extends Controller
             'text' => $request->text,
         ]);
 
-        // Broadcast только другим пользователям
+        // Broadcast só para os outros users
         broadcast(new MessageSent($message))->toOthers();
 
         return response()->json($message);
@@ -823,43 +823,43 @@ class ChatController extends Controller
 const chatId = 1;
 const currentUserId = window.userId;
 
-// Подключиться к Presence Channel
+// Conectar no Presence Channel
 Echo.join(`chat.${chatId}`)
     .here((users) => {
-        // Пользователи онлайн сейчас
+        // Users online agora
         renderOnlineUsers(users);
     })
     .joining((user) => {
-        // Пользователь зашёл
+        // User entrou
         addOnlineUser(user);
-        showSystemMessage(`${user.name} joined the chat`);
+        showSystemMessage(`${user.name} entrou no chat`);
     })
     .leaving((user) => {
-        // Пользователь вышел
+        // User saiu
         removeOnlineUser(user);
-        showSystemMessage(`${user.name} left the chat`);
+        showSystemMessage(`${user.name} saiu do chat`);
     })
     .listen('MessageSent', (e) => {
-        // Новое сообщение
+        // Nova mensagem
         appendMessage(e);
     })
     .listenForWhisper('typing', (e) => {
-        // Кто-то печатает
+        // Alguém está digitando
         showTypingIndicator(e.user_name);
     });
 
-// Отправка сообщения
+// Enviar mensagem
 document.getElementById('send-btn').addEventListener('click', () => {
     const text = document.getElementById('message-input').value;
 
     axios.post(`/chats/${chatId}/messages`, { text })
         .then(response => {
-            // Добавить своё сообщение
+            // Adicionar a própria mensagem
             appendMessage({
                 ...response.data,
                 user: {
                     id: currentUserId,
-                    name: 'You',
+                    name: 'Você',
                 }
             });
 
@@ -867,12 +867,12 @@ document.getElementById('send-btn').addEventListener('click', () => {
         });
 });
 
-// Индикатор печати
+// Indicador de digitação
 let typingTimeout;
 document.getElementById('message-input').addEventListener('input', () => {
     clearTimeout(typingTimeout);
 
-    // Whisper событие (client-to-client через Redis)
+    // Evento whisper (client-to-client via Redis)
     Echo.join(`chat.${chatId}`)
         .whisper('typing', {
             user_name: window.userName,
@@ -896,7 +896,7 @@ function renderOnlineUsers(users) {
 
 function showTypingIndicator(userName) {
     const indicator = document.getElementById('typing-indicator');
-    indicator.textContent = `${userName} is typing...`;
+    indicator.textContent = `${userName} está digitando...`;
     indicator.style.display = 'block';
 }
 
@@ -924,12 +924,12 @@ function appendMessage(message) {
 ```
 </details>
 
-### Задание 3: Live Dashboard с метриками
+### Exercício 3: Live Dashboard com métricas
 
-Создай live dashboard который обновляет метрики в реальном времени через Broadcasting.
+Crie um live dashboard que atualiza as métricas em tempo real via Broadcasting.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Events/MetricsUpdated.php
@@ -985,10 +985,10 @@ class UpdateDashboardMetrics extends Command
             'conversion_rate' => $this->getConversionRate(),
         ];
 
-        // Broadcast метрики
+        // Broadcast das métricas
         broadcast(new MetricsUpdated($metrics));
 
-        $this->info('Metrics updated and broadcasted');
+        $this->info('Métricas atualizadas e enviadas no broadcast');
     }
 
     private function getUsersOnline(): int
@@ -1037,13 +1037,13 @@ class UpdateDashboardMetrics extends Command
 // app/Console/Kernel.php
 protected function schedule(Schedule $schedule)
 {
-    // Обновлять метрики каждую минуту
+    // Atualizar métricas a cada minuto
     $schedule->command('dashboard:update-metrics')->everyMinute();
 }
 
 // routes/channels.php
 Broadcast::channel('dashboard', function ($user) {
-    // Только админы могут подписаться
+    // Só admin pode se inscrever
     return $user->isAdmin();
 });
 
@@ -1051,43 +1051,43 @@ Broadcast::channel('dashboard', function ($user) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Dashboard</title>
+    <title>Dashboard ao vivo</title>
     <script src="{{ mix('js/app.js') }}"></script>
 </head>
 <body>
     <div class="dashboard">
         <div class="metric-card">
-            <h3>Users Online</h3>
+            <h3>Usuários online</h3>
             <div class="value" id="users-online">0</div>
         </div>
 
         <div class="metric-card">
-            <h3>Revenue Today</h3>
-            <div class="value" id="revenue-today">$0</div>
+            <h3>Receita de hoje</h3>
+            <div class="value" id="revenue-today">R$ 0</div>
         </div>
 
         <div class="metric-card">
-            <h3>Revenue This Month</h3>
-            <div class="value" id="revenue-month">$0</div>
+            <h3>Receita do mês</h3>
+            <div class="value" id="revenue-month">R$ 0</div>
         </div>
 
         <div class="metric-card">
-            <h3>Orders Today</h3>
+            <h3>Pedidos de hoje</h3>
             <div class="value" id="orders-today">0</div>
         </div>
 
         <div class="metric-card">
-            <h3>Pending Orders</h3>
+            <h3>Pedidos pendentes</h3>
             <div class="value" id="orders-pending">0</div>
         </div>
 
         <div class="metric-card">
-            <h3>New Users Today</h3>
+            <h3>Novos users hoje</h3>
             <div class="value" id="new-users">0</div>
         </div>
 
         <div class="metric-card">
-            <h3>Conversion Rate</h3>
+            <h3>Taxa de conversão</h3>
             <div class="value" id="conversion-rate">0%</div>
         </div>
     </div>
@@ -1100,8 +1100,8 @@ Broadcast::channel('dashboard', function ($user) {
 
         function updateMetrics(metrics) {
             animateValue('users-online', metrics.users_online);
-            animateValue('revenue-today', '$' + formatNumber(metrics.revenue_today));
-            animateValue('revenue-month', '$' + formatNumber(metrics.revenue_this_month));
+            animateValue('revenue-today', 'R$ ' + formatNumber(metrics.revenue_today));
+            animateValue('revenue-month', 'R$ ' + formatNumber(metrics.revenue_this_month));
             animateValue('orders-today', metrics.orders_today);
             animateValue('orders-pending', metrics.orders_pending);
             animateValue('new-users', metrics.new_users_today);
@@ -1119,13 +1119,13 @@ Broadcast::channel('dashboard', function ($user) {
         }
 
         function formatNumber(num) {
-            return num.toLocaleString('en-US', {
+            return num.toLocaleString('pt-BR', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
         }
 
-        // Загрузить начальные метрики
+        // Carregar métricas iniciais
         axios.get('/api/dashboard/metrics')
             .then(response => updateMetrics(response.data));
     </script>
@@ -1136,5 +1136,4 @@ Broadcast::channel('dashboard', function ($user) {
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
-
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
