@@ -1,42 +1,42 @@
 # 7.5 PHPUnit
 
-## Краткое резюме
+## Resumo
 
-> **PHPUnit** — стандартный testing framework для PHP. Laravel использует PHPUnit с обёрткой TestCase.
+> **PHPUnit** — framework de testes padrão do PHP. O Laravel usa PHPUnit com um wrapper TestCase.
 >
-> **Запуск:** `php artisan test`, `--filter`, `--testsuite=Unit`, `--parallel`. Assertions: `assertEquals()`, `assertTrue()`, `expectException()`.
+> **Rodar:** `php artisan test`, `--filter`, `--testsuite=Unit`, `--parallel`. Assertions: `assertEquals()`, `assertTrue()`, `expectException()`.
 >
-> **Важно:** Data providers для параметризации. `setUp()`/`tearDown()` для подготовки. Mock через `createMock()`, `expects()`, `willReturn()`. Annotations: `@test`, `@dataProvider`, `@group`.
+> **Importante:** Data providers para parametrizar. `setUp()`/`tearDown()` para preparar. Mock com `createMock()`, `expects()`, `willReturn()`. Annotations: `@test`, `@dataProvider`, `@group`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-PHPUnit — стандартный framework для тестирования PHP. Laravel использует PHPUnit по умолчанию.
-
-**Основное:**
-- `php artisan test` — запуск тестов
-- Assertions — проверки
-- Data Providers — параметризованные тесты
-- setUp/tearDown — подготовка/очистка
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Структура теста:**
+**O que é:**
+PHPUnit é o framework de testes padrão do PHP. O Laravel usa PHPUnit por padrão.
+
+**O essencial:**
+- `php artisan test` — roda os testes
+- Assertions — as checagens
+- Data Providers — testes parametrizados
+- setUp/tearDown — preparar/limpar
+
+---
+
+## Como funciona
+
+**Estrutura do teste:**
 
 ```php
 namespace Tests\Unit;
@@ -45,21 +45,21 @@ use PHPUnit\Framework\TestCase;
 
 class ExampleTest extends TestCase
 {
-    // Выполняется перед каждым тестом
+    // Roda antes de cada teste
     protected function setUp(): void
     {
         parent::setUp();
-        // Подготовка
+        // Preparação
     }
 
-    // Выполняется после каждого теста
+    // Roda depois de cada teste
     protected function tearDown(): void
     {
-        // Очистка
+        // Limpeza
         parent::tearDown();
     }
 
-    // Тест (должен начинаться с test_ или иметь @test)
+    // Teste (começa com test_ ou tem @test)
     public function test_example(): void
     {
         $this->assertTrue(true);
@@ -75,37 +75,37 @@ class ExampleTest extends TestCase
 }
 ```
 
-**Запуск тестов:**
+**Como rodar os testes:**
 
 ```bash
-# Все тесты
+# Todos os testes
 php artisan test
 
-# Конкретный файл
+# Um arquivo
 php artisan test tests/Unit/ExampleTest.php
 
-# Конкретный метод
+# Um método
 php artisan test --filter test_example
 
 # Testsuite
 php artisan test --testsuite=Unit
 php artisan test --testsuite=Feature
 
-# Parallel (быстрее)
+# Parallel (mais rápido)
 php artisan test --parallel
 
 # Coverage
 php artisan test --coverage
 php artisan test --coverage-html coverage/
 
-# С выводом
+# Com verbose
 php artisan test --verbose
 ```
 
-**Основные Assertions:**
+**Assertions principais:**
 
 ```php
-// Равенство
+// Igualdade
 $this->assertEquals(expected, actual);
 $this->assertSame(expected, actual);  // ===
 $this->assertNotEquals(expected, actual);
@@ -126,7 +126,7 @@ $this->assertNotEmpty($array);
 $this->assertContains('item', $array);
 $this->assertCount(3, $array);
 $this->assertArrayHasKey('key', $array);
-$this->assertStringContainsString('hello', 'hello world');
+$this->assertStringContainsString('olá', 'olá mundo');
 
 // Numeric
 $this->assertGreaterThan(5, 10);
@@ -144,27 +144,27 @@ $this->expectException(InvalidArgumentException::class);
 $this->expectExceptionMessage('Invalid');
 someFunction();
 
-// File
+// Arquivo
 $this->assertFileExists('/path/to/file');
 $this->assertFileIsReadable('/path/to/file');
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **PHPUnit vs Pest:**
-- PHPUnit — стандарт, классы, больше boilerplate
-- Pest — современный, функции, меньше кода
+- PHPUnit — o padrão, classes, mais boilerplate
+- Pest — moderno, funções, menos código
 
-**Используй PHPUnit когда:**
-- Стандартный подход
-- Большая команда (все знают PHPUnit)
-- Legacy проект
+**Use PHPUnit quando:**
+- Abordagem padrão
+- Time grande (todo mundo conhece PHPUnit)
+- Projeto legacy
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
 **Data Providers:**
 
@@ -185,9 +185,9 @@ class CalculatorTest extends TestCase
     public static function additionProvider(): array
     {
         return [
-            'positive numbers' => [2, 3, 5],
-            'negative numbers' => [-2, -3, -5],
-            'mixed' => [10, -5, 5],
+            'números positivos' => [2, 3, 5],
+            'números negativos' => [-2, -3, -5],
+            'mistos' => [10, -5, 5],
             'zeros' => [0, 0, 0],
         ];
     }
@@ -205,14 +205,14 @@ class DatabaseTest extends TestCase
     {
         parent::setUp();
 
-        // Создать соединение
+        // Abre a conexão
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->exec('CREATE TABLE users (id INTEGER, name TEXT)');
     }
 
     protected function tearDown(): void
     {
-        // Закрыть соединение
+        // Fecha a conexão
         $this->pdo = null;
 
         parent::tearDown();
@@ -220,10 +220,10 @@ class DatabaseTest extends TestCase
 
     public function test_inserts_user(): void
     {
-        $this->pdo->exec("INSERT INTO users VALUES (1, 'John')");
+        $this->pdo->exec("INSERT INTO users VALUES (1, 'João')");
         $result = $this->pdo->query("SELECT * FROM users")->fetch();
 
-        $this->assertEquals('John', $result['name']);
+        $this->assertEquals('João', $result['name']);
     }
 }
 ```
@@ -233,19 +233,19 @@ class DatabaseTest extends TestCase
 ```php
 // Mock
 $mock = $this->createMock(PaymentGateway::class);
-$mock->expects($this->once())  // Ожидаем 1 вызов
+$mock->expects($this->once())  // Espera 1 chamada
     ->method('charge')
     ->with($this->equalTo(100))
     ->willReturn(true);
 
-// Stub (без проверки вызовов)
+// Stub (sem checar as chamadas)
 $stub = $this->createStub(PaymentGateway::class);
 $stub->method('charge')
     ->willReturn(true);
 
 // Partial Mock
 $mock = $this->getMockBuilder(PaymentGateway::class)
-    ->onlyMethods(['charge'])  // Mock только charge()
+    ->onlyMethods(['charge'])  // Mock só do charge()
     ->getMock();
 ```
 
@@ -271,8 +271,8 @@ class ExampleTest extends TestCase
      */
     public function test_user_can_be_updated(User $user): User
     {
-        // Получить $user из предыдущего теста
-        $user->update(['name' => 'Updated']);
+        // Pega o $user do teste anterior
+        $user->update(['name' => 'Atualizado']);
         return $user;
     }
 
@@ -296,7 +296,7 @@ class ExampleTest extends TestCase
 }
 ```
 
-**phpunit.xml конфигурация:**
+**Configuração do phpunit.xml:**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -331,20 +331,20 @@ class ExampleTest extends TestCase
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "PHPUnit — стандартный testing framework для PHP. Структура: setUp() для подготовки, test методы, tearDown() для очистки. Assertions: assertEquals, assertTrue, assertInstanceOf, expectException. Data providers для параметризованных тестов. Mock через createMock(), expects(), willReturn(). Annotations: @test, @dataProvider, @group. Запуск: php artisan test, --filter, --testsuite, --parallel. Laravel использует PHPUnit с TestCase обёрткой."
+> "PHPUnit é o framework de testes padrão do PHP. Estrutura: setUp() para preparar, métodos test, tearDown() para limpar. Assertions: assertEquals, assertTrue, assertInstanceOf, expectException. Data providers para testes parametrizados. Mock com createMock(), expects(), willReturn(). Annotations: @test, @dataProvider, @group. Rodar: php artisan test, --filter, --testsuite, --parallel. O Laravel usa PHPUnit com um wrapper TestCase."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Data Provider с именованными тестами
+### Exercício 1: Data Provider com testes nomeados
 
-Создай тест для `StringHelper::slugify()` с Data Provider. Проверь различные входные строки (пробелы, спецсимволы, unicode).
+Crie um teste para `StringHelper::slugify()` com Data Provider. Cubra strings diferentes (espaços, caracteres especiais, unicode).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Helpers/StringHelper.php
@@ -354,13 +354,13 @@ class StringHelper
 {
     public static function slugify(string $text): string
     {
-        // Заменить всё кроме букв, цифр и дефисов
+        // Troca tudo que não for letra, número ou hífen
         $text = preg_replace('/[^A-Za-z0-9-]+/', '-', $text);
 
-        // Убрать множественные дефисы
+        // Tira hífens repetidos
         $text = preg_replace('/-+/', '-', $text);
 
-        // Убрать дефисы в начале и конце
+        // Tira hífens no começo e no fim
         $text = trim($text, '-');
 
         return strtolower($text);
@@ -398,14 +398,14 @@ class StringHelperTest extends TestCase
     public static function slugifyProvider(): array
     {
         return [
-            'простой текст' => ['Hello World', 'hello-world'],
-            'с пробелами' => ['  Multiple   Spaces  ', 'multiple-spaces'],
-            'спецсимволы' => ['Hello @ World!', 'hello-world'],
-            'дефисы' => ['Already-Has-Dashes', 'already-has-dashes'],
-            'смешанный регистр' => ['MiXeD CaSe', 'mixed-case'],
-            'только спецсимволы' => ['@#$%^&*()', ''],
-            'числа' => ['Test 123', 'test-123'],
-            'множественные дефисы' => ['Too---Many---Dashes', 'too-many-dashes'],
+            'texto simples' => ['Hello World', 'hello-world'],
+            'com espaços' => ['  Multiple   Spaces  ', 'multiple-spaces'],
+            'caracteres especiais' => ['Hello @ World!', 'hello-world'],
+            'hífens' => ['Already-Has-Dashes', 'already-has-dashes'],
+            'maiúsculas e minúsculas' => ['MiXeD CaSe', 'mixed-case'],
+            'só caracteres especiais' => ['@#$%^&*()', ''],
+            'números' => ['Test 123', 'test-123'],
+            'hífens repetidos' => ['Too---Many---Dashes', 'too-many-dashes'],
         ];
     }
 
@@ -427,23 +427,23 @@ class StringHelperTest extends TestCase
     public static function truncateProvider(): array
     {
         return [
-            'короткий текст' => ['Hello', 10, '...', 'Hello'],
-            'длинный текст' => ['Hello World', 5, '...', 'Hello...'],
-            'точный размер' => ['Hello', 5, '...', 'Hello'],
-            'кастомный суффикс' => ['Long text here', 8, '…', 'Long tex…'],
-            'без суффикса' => ['Very long text', 8, '', 'Very lon'],
+            'texto curto' => ['Hello', 10, '...', 'Hello'],
+            'texto longo' => ['Hello World', 5, '...', 'Hello...'],
+            'tamanho exato' => ['Hello', 5, '...', 'Hello'],
+            'sufixo customizado' => ['Long text here', 8, '…', 'Long tex…'],
+            'sem sufixo' => ['Very long text', 8, '', 'Very lon'],
         ];
     }
 }
 ```
 </details>
 
-### Задание 2: setUp и tearDown для Database тестов
+### Exercício 2: setUp e tearDown para testes de Database
 
-Создай тест для работы с temporary SQLite database. Используй setUp для создания схемы, tearDown для очистки.
+Crie um teste com um SQLite temporário. Use setUp para criar o schema e tearDown para limpar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Unit/DatabaseRepositoryTest.php
@@ -499,11 +499,11 @@ class DatabaseRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        // Создать in-memory SQLite database
+        // Cria o SQLite in-memory
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Создать таблицу
+        // Cria a tabela
         $this->pdo->exec('
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -518,7 +518,7 @@ class DatabaseRepositoryTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Закрыть соединение
+        // Fecha a conexão
         $this->pdo = null;
         $this->repository = null;
 
@@ -527,24 +527,24 @@ class DatabaseRepositoryTest extends TestCase
 
     public function test_creates_user(): void
     {
-        $id = $this->repository->create('John Doe', 'john@example.com');
+        $id = $this->repository->create('João Silva', 'joao@email.com');
 
         $this->assertGreaterThan(0, $id);
 
         $user = $this->repository->find($id);
-        $this->assertEquals('John Doe', $user['name']);
-        $this->assertEquals('john@example.com', $user['email']);
+        $this->assertEquals('João Silva', $user['name']);
+        $this->assertEquals('joao@email.com', $user['email']);
     }
 
     public function test_finds_user_by_id(): void
     {
-        $id = $this->repository->create('Jane Doe', 'jane@example.com');
+        $id = $this->repository->create('Maria Silva', 'maria@email.com');
 
         $user = $this->repository->find($id);
 
         $this->assertIsArray($user);
         $this->assertEquals($id, $user['id']);
-        $this->assertEquals('Jane Doe', $user['name']);
+        $this->assertEquals('Maria Silva', $user['name']);
     }
 
     public function test_returns_null_for_nonexistent_user(): void
@@ -556,20 +556,20 @@ class DatabaseRepositoryTest extends TestCase
 
     public function test_gets_all_users(): void
     {
-        $this->repository->create('User 1', 'user1@example.com');
-        $this->repository->create('User 2', 'user2@example.com');
-        $this->repository->create('User 3', 'user3@example.com');
+        $this->repository->create('Usuário 1', 'usuario1@email.com');
+        $this->repository->create('Usuário 2', 'usuario2@email.com');
+        $this->repository->create('Usuário 3', 'usuario3@email.com');
 
         $users = $this->repository->all();
 
         $this->assertCount(3, $users);
-        $this->assertEquals('User 1', $users[0]['name']);
-        $this->assertEquals('User 3', $users[2]['name']);
+        $this->assertEquals('Usuário 1', $users[0]['name']);
+        $this->assertEquals('Usuário 3', $users[2]['name']);
     }
 
     public function test_deletes_user(): void
     {
-        $id = $this->repository->create('To Delete', 'delete@example.com');
+        $id = $this->repository->create('Para excluir', 'excluir@email.com');
 
         $result = $this->repository->delete($id);
 
@@ -580,12 +580,12 @@ class DatabaseRepositoryTest extends TestCase
 ```
 </details>
 
-### Задание 3: Annotations и Groups
+### Exercício 3: Annotations e Groups
 
-Создай набор тестов с разными группами (@group slow, @group api, @group unit). Добавь @depends для зависимых тестов.
+Crie um conjunto de testes com grupos diferentes (`@group slow`, `@group api`, `@group unit`). Use `@depends` nos testes que dependem de outro.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Feature/UserManagementTest.php
@@ -632,7 +632,7 @@ class UserManagementTest extends TestCase
      * @test
      * @group api
      * @group slow
-     * Этот тест медленный из-за пагинации большого dataset
+     * Este teste é lento por causa da paginação de um dataset grande
      */
     public function api_paginates_large_user_list(): void
     {
@@ -655,13 +655,13 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->postJson('/api/posts', [
-            'title' => 'Test Post',
-            'content' => 'Content',
+            'title' => 'Post de teste',
+            'content' => 'Conteúdo',
         ]);
 
         $response->assertStatus(201);
 
-        return $user;  // Вернуть для зависимого теста
+        return $user;  // Retorna para o teste dependente
     }
 
     /**
@@ -693,15 +693,15 @@ class UserManagementTest extends TestCase
     public static function invalidUserDataProvider(): array
     {
         return [
-            'empty name' => [
-                ['name' => '', 'email' => 'test@example.com'],
+            'nome vazio' => [
+                ['name' => '', 'email' => 'teste@email.com'],
                 ['name'],
             ],
-            'invalid email' => [
-                ['name' => 'John', 'email' => 'not-an-email'],
+            'email inválido' => [
+                ['name' => 'João', 'email' => 'not-an-email'],
                 ['email'],
             ],
-            'missing fields' => [
+            'campos faltando' => [
                 [],
                 ['name', 'email'],
             ],
@@ -721,16 +721,16 @@ class UserManagementTest extends TestCase
             'query' => $maliciousInput,
         ]);
 
-        // Должен вернуть пустой результат, а не ошибку
+        // Tem que devolver resultado vazio, não erro
         $response->assertStatus(200);
         $response->assertJsonCount(0, 'data');
 
-        // Проверить, что таблица существует
+        // Confere que a tabela ainda existe
         $this->assertDatabaseCount('users', 0);
     }
 }
 
-// Запуск конкретных групп:
+// Rodar grupos específicos:
 // php artisan test --group=fast
 // php artisan test --group=api
 // php artisan test --exclude-group=slow
@@ -739,4 +739,4 @@ class UserManagementTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

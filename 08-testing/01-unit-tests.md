@@ -1,50 +1,50 @@
-# 7.1 Unit тесты
+# 7.1 Testes unitários
 
-## Краткое резюме
+## Resumo
 
-> **Unit тесты** — тестирование отдельных компонентов (функций, методов, классов) в изоляции. Быстрые, без БД/HTTP. Структура AAA: Arrange-Act-Assert.
+> **Testes unitários** — testam uma peça isolada (função, método, classe). Rápidos, sem banco/HTTP. Estrutura AAA: Arrange-Act-Assert.
 >
-> **Создание:** `php artisan make:test UserTest --unit`. Assertions: `assertEquals()`, `assertTrue()`, `expectException()`.
+> **Criar:** `php artisan make:test UserTest --unit`. Assertions: `assertEquals()`, `assertTrue()`, `expectException()`.
 >
-> **Важно:** Mock зависимостей через Mockery. Data providers для параметризованных тестов. `setUp()`/`tearDown()` для подготовки/очистки.
+> **Importante:** Mock de dependências com Mockery. Data providers para testes parametrizados. `setUp()`/`tearDown()` para preparar e limpar.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Unit тесты — тестирование отдельных компонентов (функций, методов, классов) в изоляции от остальной системы.
-
-**Основное:**
-- Тестируют одну "единицу" кода
-- Быстрые (без БД, HTTP, файлов)
-- Изолированные (mock зависимостей)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Создание теста:**
+**O que é:**
+Testes unitários testam uma peça isolada (função, método, classe), sem o resto do sistema.
+
+**O essencial:**
+- Testam uma "unidade" de código
+- Rápidos (sem banco, HTTP, arquivo)
+- Isolados (mock das dependências)
+
+---
+
+## Como funciona
+
+**Criar o teste:**
 
 ```bash
-# Unit тест (без БД)
+# Unit test (sem banco)
 php artisan make:test UserTest --unit
 
-# Или вручную создать в tests/Unit/
+# Ou criar na mão em tests/Unit/
 ```
 
-**Структура теста:**
+**Estrutura do teste:**
 
 ```php
 namespace Tests\Unit;
@@ -56,13 +56,13 @@ class CalculatorTest extends TestCase
 {
     public function test_adds_two_numbers(): void
     {
-        // Arrange (подготовка)
+        // Arrange (preparação)
         $calculator = new Calculator();
 
-        // Act (действие)
+        // Act (ação)
         $result = $calculator->add(2, 3);
 
-        // Assert (проверка)
+        // Assert (checagem)
         $this->assertEquals(5, $result);
     }
 
@@ -76,12 +76,12 @@ class CalculatorTest extends TestCase
 }
 ```
 
-**Assertions (проверки):**
+**Assertions (checagens):**
 
 ```php
-// Равенство
+// Igualdade
 $this->assertEquals(expected, actual);
-$this->assertSame(expected, actual);  // Строгое (===)
+$this->assertSame(expected, actual);  // Estrito (===)
 
 // Boolean
 $this->assertTrue($value);
@@ -91,18 +91,18 @@ $this->assertFalse($value);
 $this->assertNull($value);
 $this->assertNotNull($value);
 
-// Массивы
-$this->assertContains('apple', ['apple', 'banana']);
+// Arrays
+$this->assertContains('maçã', ['maçã', 'banana']);
 $this->assertCount(3, $array);
 $this->assertEmpty($array);
 
-// Строки
-$this->assertStringContainsString('hello', 'hello world');
-$this->assertStringStartsWith('hello', 'hello world');
+// Strings
+$this->assertStringContainsString('olá', 'olá mundo');
+$this->assertStringStartsWith('olá', 'olá mundo');
 
 // Exceptions
 $this->expectException(InvalidArgumentException::class);
-$this->expectExceptionMessage('Invalid value');
+$this->expectExceptionMessage('Valor inválido');
 someFunction();
 
 // Instance
@@ -111,24 +111,24 @@ $this->assertInstanceOf(User::class, $user);
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Unit тесты для:**
-- Бизнес-логика (Services, Actions)
-- Вычисления (Calculator, Formatter)
-- Валидация (Custom Rules)
-- Utility функции
+**Testes unitários para:**
+- Lógica de negócio (Services, Actions)
+- Cálculos (Calculator, Formatter)
+- Validação (Custom Rules)
+- Funções utility
 
-**НЕ для:**
-- Контроллеры (Feature тесты)
-- Работа с БД (Feature тесты)
-- HTTP запросы (Feature тесты)
+**NÃO use para:**
+- Controllers (Feature tests)
+- Acesso a banco (Feature tests)
+- Requests HTTP (Feature tests)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Тестирование Service:**
+**Testando um Service:**
 
 ```php
 // app/Services/PriceCalculator.php
@@ -198,7 +198,7 @@ class PriceCalculatorTest extends TestCase
         $product = new Product(['price' => 100]);
         $result = $this->calculator->calculate($product, 1, 'INVALID');
 
-        $this->assertEquals(100, $result);  // Без скидки
+        $this->assertEquals(100, $result);  // Sem desconto
     }
 
     public function test_rounds_to_two_decimals(): void
@@ -211,7 +211,7 @@ class PriceCalculatorTest extends TestCase
 }
 ```
 
-**Data Providers (параметризованные тесты):**
+**Data Providers (testes parametrizados):**
 
 ```php
 class PriceCalculatorTest extends TestCase
@@ -235,20 +235,20 @@ class PriceCalculatorTest extends TestCase
     public static function priceDataProvider(): array
     {
         return [
-            'без промокода' => [100, 2, null, 200],
+            'sem cupom' => [100, 2, null, 200],
             'SAVE10' => [100, 2, 'SAVE10', 180],
             'SAVE20' => [100, 1, 'SAVE20', 80],
             'SAVE50' => [100, 1, 'SAVE50', 50],
-            'невалидный промокод' => [100, 1, 'INVALID', 100],
+            'cupom inválido' => [100, 1, 'INVALID', 100],
         ];
     }
 }
 ```
 
-**Тестирование с Mock:**
+**Testando com Mock:**
 
 ```php
-// Service с зависимостью
+// Service com dependência
 class OrderService
 {
     public function __construct(
@@ -260,17 +260,17 @@ class OrderService
     {
         $total = $this->calculateTotal($items);
 
-        // Списать деньги
+        // Cobrar o pagamento
         $this->paymentGateway->charge($user, $total);
 
-        // Создать заказ
+        // Criar o pedido
         $order = Order::create([
             'user_id' => $user->id,
             'total' => $total,
         ]);
 
-        // Отправить уведомление
-        $this->notificationService->send($user, "Order #{$order->id} created");
+        // Enviar notificação
+        $this->notificationService->send($user, "Pedido #{$order->id} criado");
 
         return $order;
     }
@@ -281,7 +281,7 @@ class OrderService
     }
 }
 
-// Unit тест с mock
+// Unit test com mock
 class OrderServiceTest extends TestCase
 {
     public function test_creates_order_and_charges_payment(): void
@@ -296,12 +296,12 @@ class OrderServiceTest extends TestCase
             ['price' => 200],
         ];
 
-        // Ожидаем вызов charge с total = 300
+        // Esperamos charge com total = 300
         $paymentGateway->shouldReceive('charge')
             ->once()
             ->with($user, 300);
 
-        // Ожидаем вызов send
+        // Esperamos send
         $notificationService->shouldReceive('send')
             ->once()
             ->with($user, Mockery::type('string'));
@@ -317,7 +317,7 @@ class OrderServiceTest extends TestCase
 }
 ```
 
-**Тестирование Validation Rule:**
+**Testando Validation Rule:**
 
 ```php
 // app/Rules/ValidPromoCode.php
@@ -332,7 +332,7 @@ class ValidPromoCode implements Rule
 
     public function message(): string
     {
-        return 'Промокод недействителен или истёк';
+        return 'O cupom é inválido ou expirou';
     }
 }
 
@@ -367,43 +367,43 @@ class ValidPromoCodeTest extends TestCase
         $rule = new ValidPromoCode();
         $message = $rule->message();
 
-        $this->assertEquals('Промокод недействителен или истёк', $message);
+        $this->assertEquals('O cupom é inválido ou expirou', $message);
     }
 }
 ```
 
-**Запуск тестов:**
+**Rodar os testes:**
 
 ```bash
-# Все unit тесты
+# Todos os unit tests
 php artisan test --testsuite=Unit
 
-# Конкретный файл
+# Arquivo específico
 php artisan test tests/Unit/PriceCalculatorTest.php
 
-# Конкретный метод
+# Método específico
 php artisan test --filter test_calculates_price
 
-# С coverage
+# Com coverage
 php artisan test --coverage
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Unit тесты проверяют отдельные компоненты в изоляции. Структура AAA: Arrange (подготовка), Act (действие), Assert (проверка). Assertions: assertEquals, assertTrue, assertInstanceOf, expectException. Mock зависимостей через Mockery (shouldReceive, once, with). Data providers для параметризованных тестов. setUp() для подготовки, tearDown() для очистки. Unit тесты быстрые (без БД, HTTP). Тестирую Services, Rules, Helpers."
+> "Unit tests testam uma peça isolada. Estrutura AAA: Arrange (preparação), Act (ação), Assert (checagem). Assertions: assertEquals, assertTrue, assertInstanceOf, expectException. Mock de dependência com Mockery (shouldReceive, once, with). Data providers para teste parametrizado. setUp() prepara, tearDown() limpa. Unit test é rápido — sem banco, sem HTTP. Eu testo Service, Rule, Helper."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Тест для Calculator с Data Provider
+### Exercício 1: Teste do Calculator com Data Provider
 
-Создай класс `Calculator` с методами `add()`, `subtract()`, `multiply()`, `divide()`. Напиши unit тест с Data Provider для проверки всех операций.
+**Enunciado:** Crie a classe `Calculator` com os métodos `add()`, `subtract()`, `multiply()`, `divide()`. Escreva um unit test com Data Provider cobrindo todas as operações.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/Calculator.php
@@ -487,12 +487,12 @@ class CalculatorTest extends TestCase
 ```
 </details>
 
-### Задание 2: Mock внешнего сервиса
+### Exercício 2: Mock de serviço externo
 
-Создай `WeatherService` который использует `HttpClient` для получения погоды. Напиши unit тест с mock'ом HTTP клиента.
+**Enunciado:** Crie um `WeatherService` que usa `HttpClient` para buscar o clima. Escreva um unit test com mock do cliente HTTP.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/WeatherService.php
@@ -559,7 +559,7 @@ class WeatherServiceTest extends TestCase
     {
         $http = Mockery::mock(HttpClient::class);
         $http->shouldReceive('get')
-            ->andReturn([]);  // Невалидный ответ
+            ->andReturn([]);  // Resposta inválida
 
         $service = new WeatherService($http);
 
@@ -595,12 +595,12 @@ class WeatherServiceTest extends TestCase
 ```
 </details>
 
-### Задание 3: Тест для Validation Rule
+### Exercício 3: Teste de Validation Rule
 
-Создай custom validation rule `StrongPassword` (минимум 8 символов, 1 буква, 1 цифра, 1 спецсимвол). Напиши unit тесты для всех случаев.
+**Enunciado:** Crie a validation rule customizada `StrongPassword` (mínimo 8 caracteres, 1 letra, 1 número, 1 caractere especial). Escreva unit tests para todos os casos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Rules/StrongPassword.php
@@ -612,22 +612,22 @@ class StrongPassword implements Rule
 {
     public function passes($attribute, $value): bool
     {
-        // Минимум 8 символов
+        // Mínimo 8 caracteres
         if (strlen($value) < 8) {
             return false;
         }
 
-        // Должна быть хотя бы одна буква
+        // Precisa ter pelo menos uma letra
         if (!preg_match('/[a-zA-Z]/', $value)) {
             return false;
         }
 
-        // Должна быть хотя бы одна цифра
+        // Precisa ter pelo menos um número
         if (!preg_match('/[0-9]/', $value)) {
             return false;
         }
 
-        // Должен быть хотя бы один спецсимвол
+        // Precisa ter pelo menos um caractere especial
         if (!preg_match('/[^a-zA-Z0-9]/', $value)) {
             return false;
         }
@@ -637,7 +637,7 @@ class StrongPassword implements Rule
 
     public function message(): string
     {
-        return 'Пароль должен содержать минимум 8 символов, включая буквы, цифры и спецсимволы.';
+        return 'A senha deve ter no mínimo 8 caracteres, incluindo letras, números e caracteres especiais.';
     }
 }
 
@@ -716,10 +716,10 @@ class StrongPasswordTest extends TestCase
     {
         $message = $this->rule->message();
 
-        $this->assertStringContainsString('минимум 8 символов', $message);
-        $this->assertStringContainsString('буквы', $message);
-        $this->assertStringContainsString('цифры', $message);
-        $this->assertStringContainsString('спецсимволы', $message);
+        $this->assertStringContainsString('mínimo 8 caracteres', $message);
+        $this->assertStringContainsString('letras', $message);
+        $this->assertStringContainsString('números', $message);
+        $this->assertStringContainsString('caracteres especiais', $message);
     }
 }
 ```
@@ -727,4 +727,4 @@ class StrongPasswordTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,50 +1,50 @@
-# 7.2 Feature тесты
+# 7.2 Feature tests
 
-## Краткое резюме
+## Resumo
 
-> **Feature тесты** — тестирование полных сценариев через HTTP. Проверяют реальный user flow от запроса до ответа с БД.
+> **Feature tests** — testam o cenário inteiro via HTTP. Você cobre o user flow de verdade: request, banco, response.
 >
-> **Создание:** `php artisan make:test UserControllerTest`. RefreshDatabase откатывает транзакции после теста.
+> **Criar:** `php artisan make:test UserControllerTest`. RefreshDatabase desfaz as transações depois do teste.
 >
-> **Важно:** `actingAs($user)` для авторизации. Assertions: `assertStatus()`, `assertJson()`, `assertDatabaseHas()`. Fakes: `Storage::fake()`, `Queue::fake()`, `Mail::fake()`.
+> **Importante:** `actingAs($user)` para autenticar. Assertions: `assertStatus()`, `assertJson()`, `assertDatabaseHas()`. Fakes: `Storage::fake()`, `Queue::fake()`, `Mail::fake()`.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Feature тесты — тестирование функциональности приложения целиком (HTTP запросы, БД, аутентификация). Тестируют реальные сценарии пользователя.
-
-**Основное:**
-- Тестируют HTTP endpoints
-- Используют БД (transactions)
-- Проверяют весь flow
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Создание теста:**
+**O que é:**
+Feature tests testam a funcionalidade da app inteira (request HTTP, banco, autenticação). Você testa o cenário real do usuário.
+
+**O essencial:**
+- Testam HTTP endpoints
+- Usam o banco (transactions)
+- Checam o flow inteiro
+
+---
+
+## Como funciona
+
+**Criar o teste:**
 
 ```bash
-# Feature тест (с БД)
+# Feature test (com banco)
 php artisan make:test UserControllerTest
 
-# Создаётся в tests/Feature/
+# Cria em tests/Feature/
 ```
 
-**Базовый Feature тест:**
+**Feature test básico:**
 
 ```php
 namespace Tests\Feature;
@@ -55,17 +55,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserControllerTest extends TestCase
 {
-    use RefreshDatabase;  // Откатывает транзакции после теста
+    use RefreshDatabase;  // Desfaz as transações depois do teste
 
     public function test_user_can_view_profile(): void
     {
-        // Arrange: создать пользователя
+        // Arrange: criar o usuário
         $user = User::factory()->create();
 
-        // Act: отправить GET запрос
+        // Act: enviar GET
         $response = $this->actingAs($user)->get('/profile');
 
-        // Assert: проверить ответ
+        // Assert: checar a response
         $response->assertStatus(200);
         $response->assertSee($user->name);
     }
@@ -83,7 +83,7 @@ class UserControllerTest extends TestCase
 **HTTP Assertions:**
 
 ```php
-// Статус код
+// Status code
 $response->assertStatus(200);
 $response->assertOk();  // 200
 $response->assertCreated();  // 201
@@ -103,9 +103,9 @@ $response->assertViewHas('users');
 // JSON
 $response->assertJson(['success' => true]);
 $response->assertJsonStructure(['data' => ['id', 'name']]);
-$response->assertJsonPath('data.name', 'John');
+$response->assertJsonPath('data.name', 'João');
 
-// Заголовки
+// Headers
 $response->assertHeader('Content-Type', 'application/json');
 
 // Cookies
@@ -119,16 +119,16 @@ $response->assertSessionHasErrors(['email']);
 **Database Assertions:**
 
 ```php
-// Проверить запись в БД
+// Checar o registro no banco
 $this->assertDatabaseHas('users', [
-    'email' => 'test@example.com',
+    'email' => 'joao@email.com',
 ]);
 
 $this->assertDatabaseMissing('users', [
-    'email' => 'deleted@example.com',
+    'email' => 'excluido@email.com',
 ]);
 
-// Количество записей
+// Quantidade de registros
 $this->assertDatabaseCount('users', 10);
 
 // Soft deletes
@@ -137,25 +137,25 @@ $this->assertSoftDeleted('users', ['id' => 1]);
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Feature тесты для:**
+**Feature tests para:**
 - API endpoints
-- CRUD операции
-- Аутентификация/авторизация
-- Form validation
-- Полные user flows
+- Operações CRUD
+- Autenticação/autorização
+- Validação de form
+- User flows completos
 
-**Unit тесты для:**
-- Бизнес-логика (Services)
-- Вычисления
-- Изолированные компоненты
+**Unit tests para:**
+- Lógica de negócio (Services)
+- Cálculos
+- Componentes isolados
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**CRUD тестирование:**
+**Testar CRUD:**
 
 ```php
 class PostControllerTest extends TestCase
@@ -178,15 +178,15 @@ class PostControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/posts', [
-            'title' => 'Test Post',
-            'body' => 'Test content',
+            'title' => 'Post de teste',
+            'body' => 'Conteúdo de teste',
         ]);
 
         $response->assertStatus(302);
         $response->assertRedirect('/posts');
 
         $this->assertDatabaseHas('posts', [
-            'title' => 'Test Post',
+            'title' => 'Post de teste',
             'user_id' => $user->id,
         ]);
     }
@@ -194,8 +194,8 @@ class PostControllerTest extends TestCase
     public function test_guest_cannot_create_post(): void
     {
         $response = $this->post('/posts', [
-            'title' => 'Test Post',
-            'body' => 'Test content',
+            'title' => 'Post de teste',
+            'body' => 'Conteúdo de teste',
         ]);
 
         $response->assertStatus(302);
@@ -209,7 +209,7 @@ class PostControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/posts', [
-            'title' => '',  // Empty
+            'title' => '',  // Vazio
         ]);
 
         $response->assertSessionHasErrors(['title', 'body']);
@@ -221,15 +221,15 @@ class PostControllerTest extends TestCase
         $post = Post::factory()->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->put("/posts/{$post->id}", [
-            'title' => 'Updated Title',
-            'body' => 'Updated content',
+            'title' => 'Título atualizado',
+            'body' => 'Conteúdo atualizado',
         ]);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,
-            'title' => 'Updated Title',
+            'title' => 'Título atualizado',
         ]);
     }
 
@@ -240,7 +240,7 @@ class PostControllerTest extends TestCase
         $post = Post::factory()->create(['user_id' => $otherUser->id]);
 
         $response = $this->actingAs($user)->put("/posts/{$post->id}", [
-            'title' => 'Hacked',
+            'title' => 'Hackeado',
         ]);
 
         $response->assertStatus(403);  // Forbidden
@@ -260,7 +260,7 @@ class PostControllerTest extends TestCase
 }
 ```
 
-**API тестирование:**
+**Testar API:**
 
 ```php
 class ApiPostControllerTest extends TestCase
@@ -280,7 +280,7 @@ class ApiPostControllerTest extends TestCase
             ],
             'meta' => ['current_page', 'total'],
         ]);
-        $response->assertJsonCount(20, 'data');  // Default pagination
+        $response->assertJsonCount(20, 'data');  // Paginação padrão
     }
 
     public function test_creates_post_with_valid_token(): void
@@ -290,19 +290,19 @@ class ApiPostControllerTest extends TestCase
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->postJson('/api/posts', [
-                'title' => 'API Post',
-                'body' => 'Created via API',
+                'title' => 'Post da API',
+                'body' => 'Criado via API',
             ]);
 
         $response->assertStatus(201);
         $response->assertJson([
             'data' => [
-                'title' => 'API Post',
+                'title' => 'Post da API',
             ],
         ]);
 
         $this->assertDatabaseHas('posts', [
-            'title' => 'API Post',
+            'title' => 'Post da API',
             'user_id' => $user->id,
         ]);
     }
@@ -312,7 +312,7 @@ class ApiPostControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->postJson('/api/posts', [
-            'title' => '',  // Invalid
+            'title' => '',  // Inválido
         ]);
 
         $response->assertStatus(422);
@@ -332,7 +332,7 @@ class ApiPostControllerTest extends TestCase
 }
 ```
 
-**Authentication тестирование:**
+**Testar autenticação:**
 
 ```php
 class AuthenticationTest extends TestCase
@@ -384,7 +384,7 @@ class AuthenticationTest extends TestCase
 }
 ```
 
-**File Upload тестирование:**
+**Testar File Upload:**
 
 ```php
 use Illuminate\Http\UploadedFile;
@@ -407,10 +407,10 @@ class FileUploadTest extends TestCase
 
         $response->assertStatus(302);
 
-        // Проверить, что файл сохранён
+        // Checar se o arquivo foi salvo
         Storage::disk('public')->assertExists('avatars/' . $file->hashName());
 
-        // Проверить запись в БД
+        // Checar o registro no banco
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'avatar_path' => 'avatars/' . $file->hashName(),
@@ -431,7 +431,7 @@ class FileUploadTest extends TestCase
 }
 ```
 
-**Queue/Job тестирование:**
+**Testar Queue/Job:**
 
 ```php
 use Illuminate\Support\Facades\Queue;
@@ -458,7 +458,7 @@ class OrderTest extends TestCase
 }
 ```
 
-**Notification тестирование:**
+**Testar Notification:**
 
 ```php
 use Illuminate\Support\Facades\Notification;
@@ -482,20 +482,20 @@ class NotificationTest extends TestCase
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Feature тесты проверяют полные сценарии через HTTP. RefreshDatabase откатывает транзакции после теста. actingAs($user) для авторизованных запросов. Assertions: assertStatus, assertJson, assertDatabaseHas. Тестирую CRUD, authentication, validation, file upload. Storage::fake() для файлов, Queue::fake() для jobs, Notification::fake() для уведомлений. Factory для создания тестовых данных. API тесты через getJson/postJson."
+> "Feature tests checam o cenário inteiro via HTTP. RefreshDatabase desfaz as transações depois do teste. actingAs($user) para request autenticado. Assertions: assertStatus, assertJson, assertDatabaseHas. Eu testo CRUD, autenticação, validation, file upload. Storage::fake() para arquivo, Queue::fake() para job, Notification::fake() para notificação. Factory para dado de teste. API eu testo com getJson/postJson."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: CRUD тесты для Article
+### Exercício 1: CRUD tests para Article
 
-Напиши полный набор Feature тестов для ArticleController: index, create, update, delete. Проверь авторизацию и валидацию.
+**Enunciado:** Escreva o conjunto completo de Feature tests para ArticleController: index, create, update, delete. Cheque autorização e validação.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Feature/ArticleControllerTest.php
@@ -525,8 +525,8 @@ class ArticleControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/articles', [
-            'title' => 'Test Article',
-            'content' => 'This is test content',
+            'title' => 'Artigo de teste',
+            'content' => 'Este é um conteúdo de teste',
             'published' => true,
         ]);
 
@@ -534,7 +534,7 @@ class ArticleControllerTest extends TestCase
         $response->assertRedirect('/articles');
 
         $this->assertDatabaseHas('articles', [
-            'title' => 'Test Article',
+            'title' => 'Artigo de teste',
             'user_id' => $user->id,
         ]);
     }
@@ -542,8 +542,8 @@ class ArticleControllerTest extends TestCase
     public function test_guest_cannot_create_article(): void
     {
         $response = $this->post('/articles', [
-            'title' => 'Test Article',
-            'content' => 'Content',
+            'title' => 'Artigo de teste',
+            'content' => 'Conteúdo',
         ]);
 
         $response->assertStatus(302);
@@ -556,7 +556,7 @@ class ArticleControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/articles', [
-            'title' => '',  // Empty
+            'title' => '',  // Vazio
             'content' => '',
         ]);
 
@@ -569,8 +569,8 @@ class ArticleControllerTest extends TestCase
         $article = Article::factory()->create(['user_id' => $user->id]);
 
         $response = $this->actingAs($user)->put("/articles/{$article->id}", [
-            'title' => 'Updated Title',
-            'content' => 'Updated content',
+            'title' => 'Título atualizado',
+            'content' => 'Conteúdo atualizado',
             'published' => true,
         ]);
 
@@ -578,7 +578,7 @@ class ArticleControllerTest extends TestCase
 
         $this->assertDatabaseHas('articles', [
             'id' => $article->id,
-            'title' => 'Updated Title',
+            'title' => 'Título atualizado',
         ]);
     }
 
@@ -589,14 +589,14 @@ class ArticleControllerTest extends TestCase
         $article = Article::factory()->create(['user_id' => $otherUser->id]);
 
         $response = $this->actingAs($user)->put("/articles/{$article->id}", [
-            'title' => 'Hacked Title',
+            'title' => 'Título hackeado',
         ]);
 
         $response->assertStatus(403);
 
         $this->assertDatabaseMissing('articles', [
             'id' => $article->id,
-            'title' => 'Hacked Title',
+            'title' => 'Título hackeado',
         ]);
     }
 
@@ -614,12 +614,12 @@ class ArticleControllerTest extends TestCase
 ```
 </details>
 
-### Задание 2: API тесты с Pagination и Filtering
+### Exercício 2: API tests com Pagination e Filtering
 
-Создай API endpoint `/api/products` с пагинацией и фильтрацией по категории. Напиши тесты для всех сценариев.
+**Enunciado:** Crie o API endpoint `/api/products` com paginação e filtro por categoria. Escreva testes para todos os cenários.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Feature/Api/ProductControllerTest.php
@@ -652,13 +652,13 @@ class ProductControllerTest extends TestCase
             'links',
         ]);
 
-        $response->assertJsonCount(15, 'data');  // Default 15 per page
+        $response->assertJsonCount(15, 'data');  // Padrão: 15 por página
     }
 
     public function test_filters_products_by_category(): void
     {
-        $category1 = Category::factory()->create(['name' => 'Electronics']);
-        $category2 = Category::factory()->create(['name' => 'Books']);
+        $category1 = Category::factory()->create(['name' => 'Eletrônicos']);
+        $category2 = Category::factory()->create(['name' => 'Livros']);
 
         Product::factory()->count(5)->create(['category_id' => $category1->id]);
         Product::factory()->count(3)->create(['category_id' => $category2->id]);
@@ -689,28 +689,28 @@ class ProductControllerTest extends TestCase
 
         $response = $this->withHeader('Authorization', "Bearer {$token}")
             ->postJson('/api/products', [
-                'name' => 'New Product',
+                'name' => 'Produto novo',
                 'price' => 99.99,
-                'description' => 'Test description',
+                'description' => 'Descrição de teste',
             ]);
 
         $response->assertStatus(201);
         $response->assertJson([
             'data' => [
-                'name' => 'New Product',
+                'name' => 'Produto novo',
                 'price' => 99.99,
             ],
         ]);
 
         $this->assertDatabaseHas('products', [
-            'name' => 'New Product',
+            'name' => 'Produto novo',
         ]);
     }
 
     public function test_returns_401_without_token(): void
     {
         $response = $this->postJson('/api/products', [
-            'name' => 'Product',
+            'name' => 'Produto',
             'price' => 50,
         ]);
 
@@ -722,8 +722,8 @@ class ProductControllerTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->postJson('/api/products', [
-            'name' => '',  // Required
-            'price' => 'invalid',  // Should be numeric
+            'name' => '',  // Obrigatório
+            'price' => 'invalid',  // Tem que ser numérico
         ]);
 
         $response->assertStatus(422);
@@ -733,7 +733,7 @@ class ProductControllerTest extends TestCase
     public function test_shows_single_product(): void
     {
         $product = Product::factory()->create([
-            'name' => 'Test Product',
+            'name' => 'Produto de teste',
             'price' => 123.45,
         ]);
 
@@ -743,7 +743,7 @@ class ProductControllerTest extends TestCase
         $response->assertJson([
             'data' => [
                 'id' => $product->id,
-                'name' => 'Test Product',
+                'name' => 'Produto de teste',
                 'price' => 123.45,
             ],
         ]);
@@ -759,12 +759,12 @@ class ProductControllerTest extends TestCase
 ```
 </details>
 
-### Задание 3: File Upload с фейковым Storage
+### Exercício 3: File Upload com Storage fake
 
-Напиши тест для загрузки аватара пользователя. Проверь валидацию типов файлов и размера.
+**Enunciado:** Escreva o teste de upload de avatar do usuário. Cheque validação de tipo e tamanho do arquivo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Feature/AvatarUploadTest.php
@@ -798,11 +798,11 @@ class AvatarUploadTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHas('success');
 
-        // Проверить, что файл сохранён
+        // Checar se o arquivo foi salvo
         $avatarPath = 'avatars/' . $file->hashName();
         Storage::disk('public')->assertExists($avatarPath);
 
-        // Проверить запись в БД
+        // Checar o registro no banco
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'avatar_path' => $avatarPath,
@@ -825,7 +825,7 @@ class AvatarUploadTest extends TestCase
     public function test_validates_file_size(): void
     {
         $user = User::factory()->create();
-        // 5MB (максимум 2MB)
+        // 5MB (máximo 2MB)
         $file = UploadedFile::fake()->image('large.jpg')->size(5000);
 
         $response = $this->actingAs($user)->post('/profile/avatar', [
@@ -838,7 +838,7 @@ class AvatarUploadTest extends TestCase
     public function test_validates_image_dimensions(): void
     {
         $user = User::factory()->create();
-        // Слишком маленькое изображение
+        // Imagem pequena demais
         $file = UploadedFile::fake()->image('tiny.jpg', 50, 50);
 
         $response = $this->actingAs($user)->post('/profile/avatar', [
@@ -852,19 +852,19 @@ class AvatarUploadTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Загрузить первый аватар
+        // Upload do primeiro avatar
         $oldFile = UploadedFile::fake()->image('old.jpg');
         $this->actingAs($user)->post('/profile/avatar', ['avatar' => $oldFile]);
         $oldPath = 'avatars/' . $oldFile->hashName();
 
-        // Загрузить новый аватар
+        // Upload do novo avatar
         $newFile = UploadedFile::fake()->image('new.jpg');
         $this->actingAs($user)->post('/profile/avatar', ['avatar' => $newFile]);
         $newPath = 'avatars/' . $newFile->hashName();
 
-        // Старый файл удалён
+        // Arquivo antigo removido
         Storage::disk('public')->assertMissing($oldPath);
-        // Новый файл существует
+        // Arquivo novo existe
         Storage::disk('public')->assertExists($newPath);
     }
 
@@ -883,4 +883,4 @@ class AvatarUploadTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

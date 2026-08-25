@@ -1,48 +1,48 @@
 # 7.6 Pest
 
-## Краткое резюме
+## Resumo
 
-> **Pest** — современный testing framework поверх PHPUnit. Функциональный стиль без классов, элегантный синтаксис.
+> **Pest** — testing framework moderno em cima do PHPUnit. Estilo funcional, sem classes, sintaxe elegante.
 >
-> **Синтаксис:** `it()` для тестов, `expect()->toBe()` вместо assertions. Datasets вместо Data Providers. `beforeEach()`/`afterEach()` для setup.
+> **Sintaxe:** `it()` para testes, `expect()->toBe()` no lugar de assertions. Datasets no lugar de Data Providers. `beforeEach()`/`afterEach()` para setup.
 >
-> **Важно:** Higher Order Tests для коротких проверок. Архитектурные тесты для зависимостей. Parallel execution из коробки. Меньше boilerplate, лучше читаемость.
+> **Importante:** Higher Order Tests para checagens curtas. Testes de arquitetura para dependências. Parallel execution de fábrica. Menos boilerplate, mais legível.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Pest — современный testing framework для PHP с элегантным синтаксисом. Построен поверх PHPUnit.
-
-**Основное:**
-- Функциональный стиль (без классов)
-- Меньше boilerplate
-- Лучшая читаемость
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Установка:**
+**O que é:**
+Pest é um testing framework moderno para PHP, com sintaxe elegante. Roda em cima do PHPUnit.
+
+**O essencial:**
+- Estilo funcional (sem classes)
+- Menos boilerplate
+- Mais legível
+
+---
+
+## Como funciona
+
+**Instalação:**
 
 ```bash
 composer require pestphp/pest --dev --with-all-dependencies
 php artisan pest:install
 ```
 
-**Базовый тест:**
+**Teste básico:**
 
 ```php
 // PHPUnit
@@ -55,17 +55,17 @@ class ExampleTest extends TestCase
     }
 }
 
-// Pest (короче)
+// Pest (mais curto)
 test('example', function () {
     $result = 2 + 2;
     expect($result)->toBe(4);
 });
 ```
 
-**Expectations (аналог assertions):**
+**Expectations (equivalente às assertions):**
 
 ```php
-// Равенство
+// Igualdade
 expect($value)->toBe(5);  // ===
 expect($value)->toEqual(5);  // ==
 expect($value)->not->toBe(3);
@@ -97,27 +97,27 @@ expect(fn() => throw new Exception())->toThrow(Exception::class);
 
 ---
 
-## Когда использовать
+## Quando usar
 
 **Pest vs PHPUnit:**
 
 | PHPUnit | Pest |
 |---------|------|
-| Классы | Функции |
-| Больше кода | Меньше кода |
-| Стандарт | Современный |
+| Classes | Funções |
+| Mais código | Menos código |
+| Padrão | Moderno |
 | $this->assert | expect()->to |
 
-**Используй Pest когда:**
-- Новый проект
-- Хочешь чище синтаксис
-- Команда согласна
+**Use Pest quando:**
+- Projeto novo
+- Quer sintaxe mais limpa
+- O time topa
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Feature тесты:**
+**Feature tests:**
 
 ```php
 // tests/Feature/PostTest.php
@@ -153,7 +153,7 @@ it('validates required fields', function () {
 });
 ```
 
-**Datasets (аналог Data Providers):**
+**Datasets (equivalente aos Data Providers):**
 
 ```php
 it('adds numbers', function (int $a, int $b, int $expected) {
@@ -167,7 +167,7 @@ it('adds numbers', function (int $a, int $b, int $expected) {
     [-5, 5, 0],
 ]);
 
-// Именованные datasets
+// Datasets nomeados
 dataset('users', [
     'admin' => [User::factory()->admin()->create()],
     'regular' => [User::factory()->create()],
@@ -182,27 +182,27 @@ it('can view dashboard', function (User $user) {
 **Hooks (setup/teardown):**
 
 ```php
-// Перед каждым тестом
+// Antes de cada teste
 beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-// После каждого теста
+// Depois de cada teste
 afterEach(function () {
     // Cleanup
 });
 
-// Один раз перед всеми тестами
+// Uma vez antes de todos os testes
 beforeAll(function () {
     // Setup
 });
 
-// Один раз после всех тестов
+// Uma vez depois de todos os testes
 afterAll(function () {
     // Cleanup
 });
 
-// Использование
+// Uso
 it('can login', function () {
     $response = $this->actingAs($this->user)->get('/profile');
     $response->assertStatus(200);
@@ -212,7 +212,7 @@ it('can login', function () {
 **Higher Order Tests:**
 
 ```php
-// Архивация
+// Arquivar
 it('archives post')
     ->actingAs(User::factory()->create())
     ->post('/posts/1/archive')
@@ -228,73 +228,73 @@ it('returns user')
 **Custom Expectations:**
 
 ```php
-// Создать кастомный expect
+// Criar um expect customizado
 expect()->extend('toBeWithinRange', function (int $min, int $max) {
     return $this->toBeGreaterThanOrEqual($min)
         ->toBeLessThanOrEqual($max);
 });
 
-// Использование
+// Uso
 test('age is valid', function () {
     $user = User::factory()->create(['age' => 25]);
     expect($user->age)->toBeWithinRange(18, 65);
 });
 ```
 
-**Группы:**
+**Grupos:**
 
 ```php
-// Пометить группой
+// Marcar com grupo
 it('slow test')->group('slow');
 
 it('api test')->group('api', 'slow');
 
-// Запустить группу
+// Rodar o grupo
 pest --group=api
 
-// Исключить группу
+// Excluir o grupo
 pest --exclude-group=slow
 ```
 
-**Параллельное выполнение:**
+**Execução em paralelo:**
 
 ```bash
-# Быстрее на мультиядерных системах
+# Mais rápido em máquinas com vários núcleos
 pest --parallel
 
-# Указать количество процессов
+# Definir o número de processos
 pest --parallel --processes=4
 ```
 
-**Pest.php (глобальная конфигурация):**
+**Pest.php (configuração global):**
 
 ```php
 // tests/Pest.php
 uses(TestCase::class)->in('Feature');
 uses(TestCase::class)->in('Unit');
 
-// Глобальные хуки
+// Hooks globais
 beforeEach(function () {
-    // Выполнится перед каждым тестом
+    // Roda antes de cada teste
 });
 
-// Кастомные функции
+// Funções customizadas
 function createUser(array $attributes = []): User
 {
     return User::factory()->create($attributes);
 }
 
-// Использование в тестах
+// Uso nos testes
 it('creates user', function () {
-    $user = createUser(['name' => 'John']);
-    expect($user->name)->toBe('John');
+    $user = createUser(['name' => 'João']);
+    expect($user->name)->toBe('João');
 });
 ```
 
 **Plugins:**
 
 ```bash
-# Laravel plugin (включён по умолчанию)
+# Plugin Laravel (já vem ligado)
 composer require pestphp/pest-plugin-laravel --dev
 
 # Faker plugin
@@ -304,23 +304,23 @@ composer require pestphp/pest-plugin-faker --dev
 composer require pestphp/pest-plugin-livewire --dev
 ```
 
-**Snapshots (тестирование вывода):**
+**Snapshots (testar o output):**
 
 ```php
 it('generates correct output', function () {
-    $output = view('emails.welcome', ['name' => 'John'])->render();
+    $output = view('emails.welcome', ['name' => 'João'])->render();
 
     expect($output)->toMatchSnapshot();
 });
 
-// При первом запуске создаст snapshot
-// При следующих запусках будет сравнивать
+// Na primeira execução cria o snapshot
+// Nas próximas, compara
 ```
 
-**Архитектурные тесты:**
+**Testes de arquitetura:**
 
 ```php
-// Проверить зависимости
+// Checar dependências
 arch('controllers')
     ->expect('App\Http\Controllers')
     ->toOnlyUse([
@@ -329,13 +329,13 @@ arch('controllers')
         'App\Services',
     ]);
 
-// Проверить naming
+// Checar naming
 arch('models')
     ->expect('App\Models')
     ->toExtend('Illuminate\Database\Eloquent\Model')
     ->toHaveSuffix('Model');
 
-// Проверить не использование
+// Checar o que não pode usar
 arch('services')
     ->expect('App\Services')
     ->not->toUse('Illuminate\Support\Facades');
@@ -343,23 +343,23 @@ arch('services')
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Pest — современный testing framework поверх PHPUnit. Функциональный стиль без классов. expect()->toBe() вместо $this->assertEquals(). it() для тестов, beforeEach()/afterEach() для setup. Datasets вместо Data Providers. Higher Order Tests для коротких проверок. Архитектурные тесты для проверки зависимостей. Parallel execution из коробки. Plugins для Laravel, Livewire, Faker. Меньше boilerplate, лучше читаемость."
+> "Pest é um testing framework moderno em cima do PHPUnit. Estilo funcional, sem classes. expect()->toBe() no lugar de $this->assertEquals(). it() para os testes, beforeEach()/afterEach() para o setup. Datasets no lugar de Data Providers. Higher Order Tests para checagens curtas. Testes de arquitetura para checar dependências. Parallel execution de fábrica. Plugins para Laravel, Livewire, Faker. Menos boilerplate, mais legível."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Конвертация PHPUnit теста в Pest
+### Exercício 1: Converter teste PHPUnit para Pest
 
-Конвертируй PHPUnit тест для `Calculator` в Pest синтаксис. Используй datasets для параметризации.
+Converta o teste PHPUnit do `Calculator` para a sintaxe do Pest. Use datasets para parametrizar.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// PHPUnit версия (старый стиль)
+// Versão PHPUnit (estilo antigo)
 namespace Tests\Unit;
 
 use Tests\TestCase;
@@ -400,7 +400,7 @@ class CalculatorTest extends TestCase
     }
 }
 
-// Pest версия (новый стиль)
+// Versão Pest (estilo novo)
 // tests/Unit/CalculatorPestTest.php
 use App\Services\Calculator;
 
@@ -441,7 +441,7 @@ it('throws exception on division by zero', function () {
     $this->calculator->divide(10, 0);
 })->throws(DivisionByZeroError::class);
 
-// Именованные datasets
+// Datasets nomeados
 dataset('math operations', [
     'positive numbers' => [10, 5, 50],
     'negative numbers' => [-3, -2, 6],
@@ -453,7 +453,7 @@ it('handles various multiplication scenarios', function ($a, $b, $expected) {
     expect($this->calculator->multiply($a, $b))->toBe($expected);
 })->with('math operations');
 
-// Цепочка expectations
+// Cadeia de expectations
 it('performs complex calculation', function () {
     $result = $this->calculator->add(10, 5);
 
@@ -466,12 +466,12 @@ it('performs complex calculation', function () {
 ```
 </details>
 
-### Задание 2: Higher Order Tests для API
+### Exercício 2: Higher Order Tests para API
 
-Создай набор API тестов используя Higher Order Tests и expectations цепочки.
+Crie um conjunto de testes de API com Higher Order Tests e cadeias de expectations.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Feature/Api/PostApiTest.php
@@ -482,7 +482,7 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-// Higher Order Test (короткий синтаксис)
+// Higher Order Test (sintaxe curta)
 it('shows posts list')
     ->get('/api/posts')
     ->assertStatus(200)
@@ -492,7 +492,7 @@ it('shows posts list')
         ],
     ]);
 
-// Обычный тест с expectations
+// Teste comum com expectations
 it('creates post', function () {
     $response = $this->postJson('/api/posts', [
         'title' => 'Test Post',
@@ -510,7 +510,7 @@ it('creates post', function () {
         ->user_id->toBe($this->user->id);
 });
 
-// Dataset для валидации
+// Dataset para validação
 it('validates required fields', function ($field, $value) {
     $data = [
         'title' => 'Valid Title',
@@ -530,7 +530,7 @@ it('validates required fields', function ($field, $value) {
     ['content', null],
 ]);
 
-// Группировка тестов
+// Agrupar testes
 describe('Post filtering', function () {
     beforeEach(function () {
         Post::factory()->count(3)->create(['published' => true]);
@@ -576,7 +576,7 @@ it('returns valid post structure', function () {
     expect($response->json('data'))->toBeValidPost();
 });
 
-// Тесты с tags (группы)
+// Testes com tags (grupos)
 it('handles pagination', function () {
     Post::factory()->count(30)->create();
 
@@ -602,23 +602,23 @@ it('searches posts by title', function () {
 ```
 </details>
 
-### Задание 3: Архитектурные тесты
+### Exercício 3: Testes de arquitetura
 
-Создай архитектурные тесты для проверки структуры проекта (зависимости, naming conventions).
+Crie testes de arquitetura para checar a estrutura do projeto (dependências, naming conventions).
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Architecture/ControllersTest.php
 
-// Все контроллеры должны быть в namespace App\Http\Controllers
+// Todo controller fica no namespace App\Http\Controllers
 arch('controllers are in correct namespace')
     ->expect('App\Http\Controllers')
     ->toBeClasses()
     ->toHaveSuffix('Controller');
 
-// Контроллеры могут использовать только определённые классы
+// Controllers só podem usar certas classes
 arch('controllers follow dependency rules')
     ->expect('App\Http\Controllers')
     ->toOnlyUse([
@@ -630,7 +630,7 @@ arch('controllers follow dependency rules')
         'App\Models',
     ]);
 
-// Контроллеры НЕ должны использовать DB напрямую
+// Controllers NÃO usam DB direto
 arch('controllers do not use DB directly')
     ->expect('App\Http\Controllers')
     ->not->toUse([
@@ -640,12 +640,12 @@ arch('controllers do not use DB directly')
 
 // tests/Architecture/ModelsTest.php
 
-// Все модели должны расширять Eloquent Model
+// Todo model estende Eloquent Model
 arch('models extend eloquent')
     ->expect('App\Models')
     ->toExtend('Illuminate\Database\Eloquent\Model');
 
-// Модели могут использовать traits
+// Models podem usar traits
 arch('models can use specific traits')
     ->expect('App\Models')
     ->toOnlyUse([
@@ -656,13 +656,13 @@ arch('models can use specific traits')
 
 // tests/Architecture/ServicesTest.php
 
-// Сервисы должны быть в правильном namespace
+// Services ficam no namespace certo
 arch('services are in correct namespace')
     ->expect('App\Services')
     ->toBeClasses()
     ->toHaveSuffix('Service');
 
-// Сервисы НЕ должны использовать Request напрямую
+// Services NÃO usam a camada HTTP
 arch('services do not use HTTP layer')
     ->expect('App\Services')
     ->not->toUse([
@@ -672,12 +672,12 @@ arch('services do not use HTTP layer')
 
 // tests/Architecture/GeneralTest.php
 
-// Никакие классы не должны использовать dd() или dump() в production
+// Nenhum código de production usa dd() ou dump()
 arch('no debugging functions in production code')
     ->expect(['dd', 'dump', 'var_dump', 'print_r'])
     ->not->toBeUsed();
 
-// Глобальные хелперы Laravel разрешены
+// Helpers globais do Laravel são permitidos
 arch('can use laravel helpers')
     ->expect('App')
     ->toUse([
@@ -689,36 +689,36 @@ arch('can use laravel helpers')
 
 // tests/Architecture/NamingTest.php
 
-// Request классы должны иметь суффикс Request
+// Classes Request têm o sufixo Request
 arch('request classes have Request suffix')
     ->expect('App\Http\Requests')
     ->toHaveSuffix('Request');
 
-// Resource классы должны иметь суффикс Resource
+// Classes Resource têm o sufixo Resource
 arch('resource classes have Resource suffix')
     ->expect('App\Http\Resources')
     ->toHaveSuffix('Resource');
 
-// Job классы должны иметь суффикс Job
+// Classes Job têm o sufixo Job
 arch('job classes have Job suffix')
     ->expect('App\Jobs')
     ->toHaveSuffix('Job')
     ->toImplement('Illuminate\Contracts\Queue\ShouldQueue');
 
-// Event классы в правильном namespace
+// Events ficam no namespace certo
 arch('events are in correct namespace')
     ->expect('App\Events')
     ->toBeClasses()
     ->not->toBeAbstract();
 
-// Listener классы обрабатывают события
+// Listeners tratam eventos
 arch('listeners have handle method')
     ->expect('App\Listeners')
     ->toHaveMethod('handle');
 
 // tests/Architecture/LayersTest.php
 
-// Модели не должны знать о HTTP слое
+// Models não conhecem a camada HTTP
 arch('models are independent of HTTP')
     ->expect('App\Models')
     ->not->toUse([
@@ -727,11 +727,11 @@ arch('models are independent of HTTP')
         'App\Http\Resources',
     ]);
 
-// Запуск архитектурных тестов:
+// Rodar os testes de arquitetura:
 // pest --filter=Architecture
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,42 +1,42 @@
 # 7.7 Test Coverage
 
-## Краткое резюме
+## Resumo
 
-> **Test Coverage** — процент кода, покрытого тестами. Метрики: line, function, class, branch coverage.
+> **Test Coverage** — percentual do código coberto por testes. Métricas: line, function, class, branch coverage.
 >
-> **Запуск:** `php artisan test --coverage`. Требует Xdebug или PCOV. HTML отчёт: `--coverage-html coverage/`.
+> **Como rodar:** `php artisan test --coverage`. Precisa de Xdebug ou PCOV. Relatório HTML: `--coverage-html coverage/`.
 >
-> **Важно:** Целевые значения: критичная логика 90%+, общий проект 70-80%. 100% coverage НЕ гарантирует отсутствие багов. Mutation testing (Infection) проверяет качество тестов.
+> **Importante:** Meta: lógica crítica 90%+, projeto inteiro 70-80%. 100% de coverage NÃO garante zero bugs. Mutation testing (Infection) checa a qualidade dos testes.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Test Coverage — процент кода, покрытого тестами. Показывает, какие строки/функции/классы протестированы.
-
-**Метрики:**
-- Line Coverage — покрытие строк
-- Function Coverage — покрытие функций
-- Class Coverage — покрытие классов
-- Branch Coverage — покрытие веток (if/else)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Включить Xdebug:**
+**O que é:**
+Test Coverage é o percentual do código coberto por testes. Mostra quais linhas, funções e classes foram testadas.
+
+**Métricas:**
+- Line Coverage — cobertura de linhas
+- Function Coverage — cobertura de funções
+- Class Coverage — cobertura de classes
+- Branch Coverage — cobertura de branches (if/else)
+
+---
+
+## Como funciona
+
+**Ligar o Xdebug:**
 
 ```bash
 # macOS (Homebrew)
@@ -45,28 +45,28 @@ pecl install xdebug
 # Ubuntu
 apt-get install php-xdebug
 
-# Проверить
+# Conferir
 php -v | grep Xdebug
 ```
 
-**Запустить coverage:**
+**Rodar o coverage:**
 
 ```bash
 # PHPUnit
 php artisan test --coverage
 
-# HTML отчёт
+# Relatório HTML
 php artisan test --coverage-html coverage/
 
-# Минимальный порог
-php artisan test --min=80  # Минимум 80%
+# Limite mínimo
+php artisan test --min=80  # Mínimo 80%
 
 # Pest
 pest --coverage
 pest --coverage --min=80
 ```
 
-**Пример отчёта:**
+**Exemplo de relatório:**
 
 ```
 Tests:  10 passed
@@ -79,46 +79,46 @@ Coverage:
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы высокого coverage:**
-- ✅ Меньше багов
-- ✅ Уверенность при рефакторинге
-- ✅ Документация
+**Prós de coverage alto:**
+- ✅ Menos bugs
+- ✅ Confiança na hora de refatorar
+- ✅ Documentação
 
-**Минусы погони за 100%:**
-- ❌ Медленная разработка
-- ❌ Тесты ради тестов
-- ❌ Ложное чувство безопасности
+**Contras de perseguir 100%:**
+- ❌ Desenvolvimento lento
+- ❌ Teste só para bater número
+- ❌ Falsa segurança
 
-**Целевые значения:**
-- Критичные модули: 90%+
-- Бизнес-логика: 80%+
-- Контроллеры: 70%+
-- Общий проект: 70-80%
+**Metas:**
+- Módulos críticos: 90%+
+- Lógica de negócio: 80%+
+- Controllers: 70%+
+- Projeto inteiro: 70-80%
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Анализ coverage:**
+**Analisando o coverage:**
 
 ```php
-// Класс с 50% coverage
+// Classe com 50% de coverage
 class PaymentService
 {
     public function charge(User $user, float $amount): bool
     {
         if ($user->balance < $amount) {
-            throw new InsufficientFundsException();  // ❌ Не покрыт
+            throw new InsufficientFundsException();  // ❌ Não coberto
         }
 
-        $user->decrement('balance', $amount);  // ✅ Покрыт
-        return true;  // ✅ Покрыт
+        $user->decrement('balance', $amount);  // ✅ Coberto
+        return true;  // ✅ Coberto
     }
 }
 
-// Единственный тест (успешный случай)
+// Único teste (caso de sucesso)
 public function test_charges_user(): void
 {
     $user = User::factory()->create(['balance' => 1000]);
@@ -130,7 +130,7 @@ public function test_charges_user(): void
     $this->assertEquals(900, $user->fresh()->balance);
 }
 
-// Добавить тест для недостаточного баланса → 100% coverage
+// Adicionar teste para saldo insuficiente → 100% coverage
 public function test_throws_exception_for_insufficient_balance(): void
 {
     $user = User::factory()->create(['balance' => 50]);
@@ -141,7 +141,7 @@ public function test_throws_exception_for_insufficient_balance(): void
 }
 ```
 
-**phpunit.xml конфигурация:**
+**Configuração do phpunit.xml:**
 
 ```xml
 <coverage processUncoveredFiles="true">
@@ -159,7 +159,7 @@ public function test_throws_exception_for_insufficient_balance(): void
 </coverage>
 ```
 
-**CI/CD с coverage:**
+**CI/CD com coverage:**
 
 ```yaml
 # .github/workflows/tests.yml
@@ -185,7 +185,7 @@ jobs:
           files: ./coverage.xml
 ```
 
-**Игнорирование кода:**
+**Ignorando código:**
 
 ```php
 class Logger
@@ -194,7 +194,7 @@ class Logger
     {
         // @codeCoverageIgnoreStart
         if (app()->environment('testing')) {
-            return;  // Не считать в coverage
+            return;  // Não contar no coverage
         }
         // @codeCoverageIgnoreEnd
 
@@ -203,115 +203,115 @@ class Logger
 }
 ```
 
-**Mutation Testing (продвинутый уровень):**
+**Mutation Testing (nível avançado):**
 
 ```bash
-# Установить Infection
+# Instalar Infection
 composer require --dev infection/infection
 
-# Запустить
+# Rodar
 vendor/bin/infection
 
-# Infection изменяет код (мутации) и проверяет, ловят ли тесты ошибки
-# Если тесты проходят с мутацией → тест плохой
+# Infection altera o código (mutações) e checa se os testes pegam o erro
+# Se os testes passam com a mutação → o teste é fraco
 ```
 
-**Пример мутации:**
+**Exemplo de mutação:**
 
 ```php
-// Оригинальный код
+// Código original
 if ($user->balance >= $amount) {
     // ...
 }
 
-// Мутация 1: >= → >
-if ($user->balance > $amount) {  // Изменено
+// Mutação 1: >= → >
+if ($user->balance > $amount) {  // Alterado
     // ...
 }
 
-// Мутация 2: >= → <=
-if ($user->balance <= $amount) {  // Изменено
+// Mutação 2: >= → <=
+if ($user->balance <= $amount) {  // Alterado
     // ...
 }
 
-// Если тесты не ловят мутацию → тест неполный
+// Se os testes não pegam a mutação → o teste está incompleto
 ```
 
-**Coverage Badge (для README):**
+**Coverage Badge (para o README):**
 
 ```markdown
-# My Project
+# Meu Projeto
 
 ![Tests](https://github.com/user/repo/workflows/tests/badge.svg)
 ![Coverage](https://codecov.io/gh/user/repo/branch/main/graph/badge.svg)
 ```
 
-**Что НЕ покрывать тестами:**
+**O que NÃO cobrir com testes:**
 
 ```php
-// ❌ Не тестировать фреймворк
+// ❌ Não testar o framework
 Route::get('/users', [UserController::class, 'index']);
 
-// ❌ Не тестировать конфиг
+// ❌ Não testar config
 config(['app.name' => 'MyApp']);
 
-// ❌ Не тестировать геттеры/сеттеры
+// ❌ Não testar getters/setters
 class User {
     private string $name;
     public function getName(): string { return $this->name; }
     public function setName(string $name): void { $this->name = $name; }
 }
 
-// ✅ Тестировать бизнес-логику
+// ✅ Testar lógica de negócio
 class OrderService {
     public function calculateTotal(array $items): float {
-        // Логика вычисления
+        // Lógica de cálculo
     }
 }
 ```
 
-**Balance между coverage и pragmatism:**
+**Equilíbrio entre coverage e pragmatismo:**
 
 ```php
-// 100% coverage НЕ значит нет багов
+// 100% de coverage NÃO significa zero bugs
 
-// Плохой тест (100% coverage, но бесполезный)
+// Teste ruim (100% coverage, mas inútil)
 public function test_user_has_name(): void
 {
     $user = new User();
-    $user->name = 'John';
+    $user->name = 'João';
 
-    $this->assertEquals('John', $user->name);  // Очевидно
+    $this->assertEquals('João', $user->name);  // Óbvio
 }
 
-// Хороший тест (проверяет реальное поведение)
+// Teste bom (checa o comportamento de verdade)
 public function test_user_cannot_be_created_with_invalid_email(): void
 {
     $this->expectException(ValidationException::class);
 
     User::create([
-        'name' => 'John',
-        'email' => 'invalid-email',  // Проверяет валидацию
+        'name' => 'João',
+        'email' => 'invalid-email',  // Checa a validação
     ]);
 }
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Test Coverage показывает процент покрытого кода. Включается через Xdebug. Запуск: php artisan test --coverage. Метрики: line, function, class, branch coverage. Целевые значения: критичные модули 90%+, бизнес-логика 80%+, общий 70-80%. 100% coverage не гарантирует отсутствие багов. Mutation testing (Infection) проверяет качество тестов. Не тестировать фреймворк, конфиг, геттеры/сеттеры. CI/CD с минимальным порогом (--min=80)."
+> "Test Coverage é o percentual de código coberto por testes. Liga com Xdebug. Roda com php artisan test --coverage. Métricas: line, function, class, branch coverage. Meta: módulos críticos 90%+, lógica de negócio 80%+, projeto 70-80%. 100% de coverage não garante zero bugs. Mutation testing com Infection checa se o teste é bom de verdade. Não testo framework, config, getter/setter. No CI/CD eu coloco um mínimo (--min=80)."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Анализ и улучшение Coverage
+### Exercício 1: Análise e melhoria do coverage
 
-Дан класс с 50% coverage. Проанализируй отчёт и напиши недостающие тесты для 100% покрытия.
+Dada uma classe com 50% de coverage. Analise o relatório e escreva os testes que faltam para 100% de cobertura.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/OrderCalculator.php
@@ -327,13 +327,13 @@ class OrderCalculator
             $subtotal += $item['price'] * $item['quantity'];
         }
 
-        // Применить купон (НЕ ПОКРЫТО)
+        // Aplicar cupom (NÃO COBERTO)
         if ($couponCode) {
             $discount = $this->getDiscount($couponCode);
             $subtotal -= $subtotal * ($discount / 100);
         }
 
-        // Доставка (НЕ ПОКРЫТО)
+        // Frete (NÃO COBERTO)
         $shipping = $this->calculateShipping($subtotal);
 
         return round($subtotal + $shipping, 2);
@@ -341,7 +341,7 @@ class OrderCalculator
 
     private function getDiscount(string $couponCode): int
     {
-        // НЕ ПОКРЫТО
+        // NÃO COBERTO
         $coupons = [
             'SAVE10' => 10,
             'SAVE20' => 20,
@@ -353,16 +353,16 @@ class OrderCalculator
 
     private function calculateShipping(float $subtotal): float
     {
-        // НЕ ПОКРЫТО
+        // NÃO COBERTO
         if ($subtotal >= 100) {
-            return 0;  // Бесплатная доставка
+            return 0;  // Frete grátis
         }
 
-        return 10;  // Фиксированная стоимость
+        return 10;  // Custo fixo
     }
 }
 
-// tests/Unit/OrderCalculatorTest.php - НАЧАЛЬНОЕ СОСТОЯНИЕ (50% coverage)
+// tests/Unit/OrderCalculatorTest.php - ESTADO INICIAL (50% coverage)
 namespace Tests\Unit;
 
 use Tests\TestCase;
@@ -378,7 +378,7 @@ class OrderCalculatorTest extends TestCase
         $this->calculator = new OrderCalculator();
     }
 
-    // ЕДИНСТВЕННЫЙ тест (покрывает только базовый сценарий)
+    // ÚNICO teste (cobre só o cenário básico)
     public function test_calculates_total_without_coupon(): void
     {
         $items = [
@@ -388,20 +388,20 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items);
 
-        // subtotal: 130, shipping: 10 (130 < 100)
+        // subtotal: 130, frete: 10 (130 < 100)
         $this->assertEquals(140, $total);
     }
 }
 
-// Запустить coverage:
+// Rodar o coverage:
 // php artisan test --coverage
 // Output:
 // OrderCalculator.php ........ 50%
-//   - Line 14-16: NOT COVERED (купон)
+//   - Line 14-16: NOT COVERED (cupom)
 //   - Line 23-31: NOT COVERED (getDiscount)
-//   - Line 33-40: NOT COVERED (calculateShipping для >= 100)
+//   - Line 33-40: NOT COVERED (calculateShipping para >= 100)
 
-// УЛУЧШЕННАЯ версия (100% coverage)
+// VERSÃO MELHORADA (100% coverage)
 class OrderCalculatorTest extends TestCase
 {
     private OrderCalculator $calculator;
@@ -421,10 +421,10 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items);
 
-        $this->assertEquals(140, $total);  // 130 + 10 shipping
+        $this->assertEquals(140, $total);  // 130 + 10 de frete
     }
 
-    // НОВЫЙ: Покрыть купон
+    // NOVO: cobrir o cupom
     public function test_applies_valid_coupon(): void
     {
         $items = [
@@ -433,11 +433,11 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items, 'SAVE20');
 
-        // subtotal: 100, discount: 20%, result: 80, shipping: 0
+        // subtotal: 100, desconto: 20%, resultado: 80, frete: 0
         $this->assertEquals(80, $total);
     }
 
-    // НОВЫЙ: Покрыть невалидный купон
+    // NOVO: cobrir cupom inválido
     public function test_ignores_invalid_coupon(): void
     {
         $items = [
@@ -446,11 +446,11 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items, 'INVALID');
 
-        // subtotal: 100, no discount, shipping: 0
+        // subtotal: 100, sem desconto, frete: 0
         $this->assertEquals(100, $total);
     }
 
-    // НОВЫЙ: Покрыть бесплатную доставку
+    // NOVO: cobrir frete grátis
     public function test_free_shipping_over_100(): void
     {
         $items = [
@@ -459,11 +459,11 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items);
 
-        // subtotal: 120, shipping: 0 (>= 100)
+        // subtotal: 120, frete: 0 (>= 100)
         $this->assertEquals(120, $total);
     }
 
-    // НОВЫЙ: Покрыть платную доставку
+    // NOVO: cobrir frete pago
     public function test_charges_shipping_under_100(): void
     {
         $items = [
@@ -472,11 +472,11 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items);
 
-        // subtotal: 80, shipping: 10 (< 100)
+        // subtotal: 80, frete: 10 (< 100)
         $this->assertEquals(90, $total);
     }
 
-    // НОВЫЙ: Комплексный сценарий
+    // NOVO: cenário complexo
     public function test_complex_calculation(): void
     {
         $items = [
@@ -486,24 +486,24 @@ class OrderCalculatorTest extends TestCase
 
         $total = $this->calculator->calculateTotal($items, 'SAVE10');
 
-        // subtotal: 130, discount: 13, result: 117, shipping: 0
+        // subtotal: 130, desconto: 13, resultado: 117, frete: 0
         $this->assertEquals(117, $total);
     }
 }
 
-// Запустить повторно:
+// Rodar de novo:
 // php artisan test --coverage
 // Output:
 // OrderCalculator.php ........ 100% ✅
 ```
 </details>
 
-### Задание 2: Coverage в CI/CD с минимальным порогом
+### Exercício 2: Coverage no CI/CD com limite mínimo
 
-Настрой GitHub Actions для автоматической проверки coverage с минимальным порогом 80%. При падении ниже - провалить CI.
+Configure o GitHub Actions para checar coverage automaticamente com mínimo de 80%. Se cair abaixo, o CI falha.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```yaml
 # .github/workflows/tests.yml
@@ -586,7 +586,7 @@ jobs:
           name: coverage-report
           path: coverage/
 
-# phpunit.xml - конфигурация coverage
+# phpunit.xml - configuração do coverage
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
@@ -630,7 +630,7 @@ jobs:
     </php>
 </phpunit>
 
-# composer.json - добавить скрипт
+# composer.json - adicionar script
 {
     "scripts": {
         "test": "php artisan test",
@@ -641,23 +641,23 @@ jobs:
     }
 }
 
-# Теперь можно запускать:
+# Agora dá para rodar:
 # composer test:coverage
 ```
 </details>
 
-### Задание 3: Mutation Testing с Infection
+### Exercício 3: Mutation Testing com Infection
 
-Установи и настрой Infection для проверки качества тестов. Найди "слабые" тесты, которые не ловят мутации.
+Instale e configure o Infection para checar a qualidade dos testes. Encontre os testes fracos que não pegam mutações.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```bash
-# Установка Infection
+# Instalar Infection
 composer require --dev infection/infection
 
-# Инициализация
+# Inicializar
 vendor/bin/infection --configure
 ```
 
@@ -684,47 +684,47 @@ vendor/bin/infection --configure
 ```
 
 ```php
-// Пример: ПЛОХОЙ тест (не ловит мутации)
+// Exemplo: TESTE RUIM (não pega mutações)
 // app/Services/PriceCalculator.php
 class PriceCalculator
 {
     public function calculateDiscount(float $price, int $percent): float
     {
-        return $price - ($price * $percent / 100);  // Оригинальный код
+        return $price - ($price * $percent / 100);  // Código original
     }
 }
 
-// tests/Unit/PriceCalculatorTest.php - ПЛОХОЙ тест
+// tests/Unit/PriceCalculatorTest.php - TESTE RUIM
 public function test_calculates_discount(): void
 {
     $calculator = new PriceCalculator();
     $result = $calculator->calculateDiscount(100, 10);
 
-    // Слабая проверка - пропустит многие мутации
+    // Checagem fraca — deixa passar várias mutações
     $this->assertGreaterThan(0, $result);
 }
 
-// Infection создаёт мутации:
-// Мутация 1: - → +
-return $price + ($price * $percent / 100);  // Тест ПРОХОДИТ ❌
+// Infection cria mutações:
+// Mutação 1: - → +
+return $price + ($price * $percent / 100);  // O teste PASSA ❌
 
-// Мутация 2: * → /
-return $price - ($price / $percent / 100);  // Тест ПРОХОДИТ ❌
+// Mutação 2: * → /
+return $price - ($price / $percent / 100);  // O teste PASSA ❌
 
-// Мутация 3: / 100 → / 101
-return $price - ($price * $percent / 101);  // Тест ПРОХОДИТ ❌
+// Mutação 3: / 100 → / 101
+return $price - ($price * $percent / 101);  // O teste PASSA ❌
 
-// Отчёт Infection:
+// Relatório do Infection:
 // Mutations: 10 total, 7 escaped, 3 killed
-// MSI (Mutation Score Indicator): 30%  ❌ ПЛОХО
+// MSI (Mutation Score Indicator): 30%  ❌ RUIM
 
-// ХОРОШИЙ тест (ловит все мутации)
+// TESTE BOM (pega todas as mutações)
 public function test_calculates_discount(): void
 {
     $calculator = new PriceCalculator();
     $result = $calculator->calculateDiscount(100, 10);
 
-    // Точная проверка
+    // Checagem exata
     $this->assertEquals(90, $result);
 }
 
@@ -738,14 +738,14 @@ public function test_calculates_various_discounts(): void
     $this->assertEquals(100, $calculator->calculateDiscount(100, 0));
 }
 
-// Теперь Infection:
+// Agora o Infection:
 // Mutations: 10 total, 1 escaped, 9 killed
-// MSI: 90%  ✅ ОТЛИЧНО
+// MSI: 90%  ✅ ÓTIMO
 
-// Запуск Infection
+// Rodar o Infection
 vendor/bin/infection --threads=4 --min-msi=70
 
-// Добавить в CI/CD
+// Adicionar no CI/CD
 // .github/workflows/mutation-tests.yml
 name: Mutation Tests
 
@@ -780,15 +780,15 @@ jobs:
 ```
 
 ```bash
-# Полезные команды Infection
-vendor/bin/infection                     # Базовый запуск
-vendor/bin/infection --min-msi=80        # С минимальным порогом
-vendor/bin/infection --filter=OrderService  # Конкретный класс
-vendor/bin/infection --show-mutations    # Показать все мутации
-vendor/bin/infection --only-covered      # Только покрытый код
+# Comandos úteis do Infection
+vendor/bin/infection                     # Rodada básica
+vendor/bin/infection --min-msi=80        # Com limite mínimo
+vendor/bin/infection --filter=OrderService  # Classe específica
+vendor/bin/infection --show-mutations    # Mostrar todas as mutações
+vendor/bin/infection --only-covered      # Só código coberto
 ```
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

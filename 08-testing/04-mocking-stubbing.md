@@ -1,93 +1,93 @@
-# 7.4 Mocking и Stubbing
+# 7.4 Mocking e Stubbing
 
-## Краткое резюме
+## Resumo
 
-> **Mock** — поддельный объект для изоляции в тестах. Проверяет вызовы методов. **Stub** — просто возвращает данные без проверки.
+> **Mock** — objeto falso para isolar o teste. Verifica as chamadas dos métodos. **Stub** — só devolve dados, sem verificar.
 >
-> **Mockery:** `shouldReceive()` ожидает вызов, `with()` аргументы, `andReturn()` возврат, `once()`/`never()` количество.
+> **Mockery:** `shouldReceive()` espera a chamada, `with()` os argumentos, `andReturn()` o retorno, `once()`/`never()` a quantidade.
 >
-> **Важно:** Laravel Fakes для фасадов: `Mail::fake()`, `Queue::fake()`, `Storage::fake()`. Не мокать Eloquent — использовать Factory. Spy проверяет вызовы постфактум.
+> **Importante:** Laravel Fakes para facades: `Mail::fake()`, `Queue::fake()`, `Storage::fake()`. Não mocke Eloquent — use Factory. Spy verifica as chamadas depois.
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-Mock — поддельный объект для тестирования в изоляции. Stub — упрощённая реализация зависимости.
-
-**Разница:**
-- **Mock** — проверяет вызовы методов (shouldReceive, once)
-- **Stub** — просто возвращает данные (willReturn)
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Mockery (Laravel по умолчанию):**
+**O que é:**
+Mock — objeto falso para testar em isolamento. Stub — implementação simplificada da dependência.
+
+**A diferença:**
+- **Mock** — verifica as chamadas dos métodos (shouldReceive, once)
+- **Stub** — só devolve dados (willReturn)
+
+---
+
+## Como funciona
+
+**Mockery (padrão no Laravel):**
 
 ```php
 use Mockery;
 
-// Создать mock
+// Criar o mock
 $mock = Mockery::mock(PaymentGateway::class);
 
-// Ожидать вызов
+// Esperar a chamada
 $mock->shouldReceive('charge')
-    ->once()  // Ровно 1 раз
-    ->with(100)  // С аргументом 100
-    ->andReturn(true);  // Вернуть true
+    ->once()  // Exatamente 1 vez
+    ->with(100)  // Com o argumento 100
+    ->andReturn(true);  // Devolver true
 
-// Использовать
+// Usar
 $result = $mock->charge(100);  // true
 ```
 
 **PHPUnit Mock:**
 
 ```php
-// Создать mock
+// Criar o mock
 $mock = $this->createMock(PaymentGateway::class);
 
-// Настроить возврат
+// Configurar o retorno
 $mock->method('charge')
     ->with(100)
     ->willReturn(true);
 
-// Использовать
+// Usar
 $result = $mock->charge(100);  // true
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Используй Mock когда:**
-- Тестируешь в изоляции (Unit тесты)
-- Зависимость дорогая (API, БД)
-- Нужна проверка вызовов
+**Use Mock quando:**
+- Testa em isolamento (unit tests)
+- A dependência é cara (API, banco)
+- Precisa verificar as chamadas
 
-**Не используй когда:**
-- Feature тесты (реальные зависимости)
-- Простые объекты (DTO, Value Objects)
+**Não use quando:**
+- Feature tests (dependências reais)
+- Objetos simples (DTO, Value Objects)
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**Mock внешнего API:**
+**Mock de API externa:**
 
 ```php
-// Service с API зависимостью
+// Service com dependência de API
 class WeatherService
 {
     public function __construct(
@@ -102,27 +102,27 @@ class WeatherService
     }
 }
 
-// Unit тест с mock
+// Unit test com mock
 class WeatherServiceTest extends TestCase
 {
     public function test_returns_temperature(): void
     {
-        // Mock HTTP client
+        // Mock do HTTP client
         $http = Mockery::mock(HttpClient::class);
         $http->shouldReceive('get')
             ->once()
-            ->with('https://api.weather.com/Moscow')
+            ->with('https://api.weather.com/SaoPaulo')
             ->andReturn(['temperature' => 15.5]);
 
         $service = new WeatherService($http);
-        $result = $service->getTemperature('Moscow');
+        $result = $service->getTemperature('SaoPaulo');
 
         $this->assertEquals(15.5, $result);
     }
 }
 ```
 
-**Mock с разными возвратами:**
+**Mock com retornos diferentes:**
 
 ```php
 class NotificationService
@@ -142,27 +142,27 @@ class NotificationService
     }
 }
 
-// Тест для email
+// Teste de email
 public function test_sends_email_if_user_prefers_email(): void
 {
-    $user = new User(['prefers_email' => true, 'email' => 'test@example.com']);
+    $user = new User(['prefers_email' => true, 'email' => 'teste@email.com']);
 
     $mail = Mockery::mock(MailService::class);
     $mail->shouldReceive('send')
         ->once()
-        ->with('test@example.com', 'Hello');
+        ->with('teste@email.com', 'Olá');
 
     $sms = Mockery::mock(SmsService::class);
-    $sms->shouldNotReceive('send');  // Не должен вызываться
+    $sms->shouldNotReceive('send');  // Não deve ser chamado
 
     $service = new NotificationService($mail, $sms);
-    $service->send($user, 'Hello');
+    $service->send($user, 'Olá');
 }
 
-// Тест для SMS
+// Teste de SMS
 public function test_sends_sms_if_user_prefers_sms(): void
 {
-    $user = new User(['prefers_email' => false, 'phone' => '+79001234567']);
+    $user = new User(['prefers_email' => false, 'phone' => '+5511999998888']);
 
     $mail = Mockery::mock(MailService::class);
     $mail->shouldNotReceive('send');
@@ -170,37 +170,37 @@ public function test_sends_sms_if_user_prefers_sms(): void
     $sms = Mockery::mock(SmsService::class);
     $sms->shouldReceive('send')
         ->once()
-        ->with('+79001234567', 'Hello');
+        ->with('+5511999998888', 'Olá');
 
     $service = new NotificationService($mail, $sms);
-    $service->send($user, 'Hello');
+    $service->send($user, 'Olá');
 }
 ```
 
-**Spy (проверка вызовов после):**
+**Spy (verificar as chamadas depois):**
 
 ```php
-// Spy не требует настройки shouldReceive заранее
+// Spy não exige shouldReceive de antemão
 $logger = Mockery::spy(Logger::class);
 
 $service = new OrderService($logger);
 $service->create($user, $items);
 
-// Проверить после выполнения
+// Verificar depois da execução
 $logger->shouldHaveReceived('log')
-    ->with('Order created', Mockery::type('array'));
+    ->with('Pedido criado', Mockery::type('array'));
 ```
 
-**Partial Mock (mock только некоторых методов):**
+**Partial Mock (mock só de alguns métodos):**
 
 ```php
-// Mock только charge(), остальные методы реальные
+// Mock só do charge(); o resto é real
 $gateway = Mockery::mock(PaymentGateway::class)->makePartial();
 $gateway->shouldReceive('charge')
     ->andReturn(true);
 
-// Реальные методы работают
-$gateway->validate($card);  // Реальный метод
+// Métodos reais funcionam
+$gateway->validate($card);  // Método real
 ```
 
 **Fake (Laravel Facades):**
@@ -213,10 +213,10 @@ use Illuminate\Support\Facades\Storage;
 // Mail fake
 Mail::fake();
 
-// Код отправки email
+// Código que envia o email
 Mail::to($user)->send(new Welcome());
 
-// Проверить
+// Verificar
 Mail::assertSent(Welcome::class);
 Mail::assertSent(Welcome::class, function ($mail) use ($user) {
     return $mail->hasTo($user->email);
@@ -234,20 +234,20 @@ $path = Storage::put('photos', $file);
 Storage::assertExists($path);
 ```
 
-**Mock Eloquent Model:**
+**Mock de Eloquent Model:**
 
 ```php
-// ❌ НЕ мокать Eloquent напрямую
-$user = Mockery::mock(User::class);  // Сложно, не нужно
+// ❌ NÃO mocke Eloquent direto
+$user = Mockery::mock(User::class);  // Complicado, não precisa
 
-// ✅ Использовать Factory
-$user = User::factory()->make(['name' => 'John']);
+// ✅ Use Factory
+$user = User::factory()->make(['name' => 'João']);
 
-// ✅ Или создать реальную модель
-$user = new User(['name' => 'John']);
+// ✅ Ou crie o model de verdade
+$user = new User(['name' => 'João']);
 ```
 
-**Mock Repository:**
+**Mock de Repository:**
 
 ```php
 // Interface
@@ -256,7 +256,7 @@ interface UserRepository
     public function find(int $id): ?User;
 }
 
-// Реализация
+// Implementação
 class EloquentUserRepository implements UserRepository
 {
     public function find(int $id): ?User
@@ -279,7 +279,7 @@ class UserService
     }
 }
 
-// Unit тест (mock repository)
+// Unit test (mock do repository)
 public function test_activates_user(): void
 {
     $user = User::factory()->make(['id' => 1, 'active' => false]);
@@ -295,7 +295,7 @@ public function test_activates_user(): void
     $this->assertTrue($user->active);
 }
 
-// Feature тест (реальный repository)
+// Feature test (repository de verdade)
 public function test_activates_user_in_database(): void
 {
     $user = User::factory()->create(['active' => false]);
@@ -314,41 +314,41 @@ public function test_activates_user_in_database(): void
 **Argument Matchers:**
 
 ```php
-// Любое значение
+// Qualquer valor
 $mock->shouldReceive('method')
     ->with(Mockery::any());
 
-// Определённый тип
+// Tipo específico
 $mock->shouldReceive('send')
     ->with(Mockery::type(User::class), Mockery::type('string'));
 
-// Замыкание
+// Closure
 $mock->shouldReceive('create')
     ->with(Mockery::on(function ($arg) {
-        return $arg['email'] === 'test@example.com';
+        return $arg['email'] === 'teste@email.com';
     }));
 
-// Subset (массив содержит)
+// Subset (o array contém)
 $mock->shouldReceive('log')
-    ->with('Error', Mockery::subset(['user_id' => 1]));
+    ->with('Erro', Mockery::subset(['user_id' => 1]));
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "Mock — поддельный объект для изоляции в тестах. Mockery: shouldReceive() ожидает вызов, with() аргументы, andReturn() возврат, once()/never() количество. Spy проверяет вызовы после выполнения. Partial mock мокает только некоторые методы. Laravel Fakes: Mail::fake(), Queue::fake(), Storage::fake(). Не мокать Eloquent — использовать Factory. Mock для дорогих зависимостей (API, email). Argument matchers: Mockery::type(), Mockery::any(), Mockery::on()."
+> "Mock é um objeto falso para isolar o teste. No Mockery: shouldReceive() espera a chamada, with() os argumentos, andReturn() o retorno, once()/never() a quantidade. Spy verifica as chamadas depois da execução. Partial mock mocka só alguns métodos. Laravel Fakes: Mail::fake(), Queue::fake(), Storage::fake(). Não mocko Eloquent — uso Factory. Mock para dependência cara (API, email). Argument matchers: Mockery::type(), Mockery::any(), Mockery::on()."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Mock Payment Gateway
+### Exercício 1: Mock Payment Gateway
 
-Создай `OrderService` который использует `PaymentGateway` для списания средств. Напиши unit тест с mock'ом gateway.
+Crie um `OrderService` que usa `PaymentGateway` para cobrar. Escreva o unit test com mock do gateway.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/OrderService.php
@@ -365,10 +365,10 @@ class OrderService
 
     public function createOrder(User $user, array $items, float $total): Order
     {
-        // Списать деньги
+        // Cobrar
         $transactionId = $this->paymentGateway->charge($user, $total);
 
-        // Создать заказ
+        // Criar o pedido
         $order = Order::create([
             'user_id' => $user->id,
             'items' => $items,
@@ -383,7 +383,7 @@ class OrderService
     public function refundOrder(Order $order): bool
     {
         if ($order->status !== 'paid') {
-            throw new \RuntimeException('Only paid orders can be refunded');
+            throw new \RuntimeException('Só pedidos pagos podem ser reembolsados');
         }
 
         $success = $this->paymentGateway->refund(
@@ -412,7 +412,7 @@ class OrderServiceTest extends TestCase
 {
     public function test_creates_order_and_charges_payment(): void
     {
-        // Mock payment gateway
+        // Mock do payment gateway
         $gateway = Mockery::mock(PaymentGatewayInterface::class);
         $gateway->shouldReceive('charge')
             ->once()
@@ -464,7 +464,7 @@ class OrderServiceTest extends TestCase
         $service = new OrderService($gateway);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Only paid orders can be refunded');
+        $this->expectExceptionMessage('Só pedidos pagos podem ser reembolsados');
 
         $service->refundOrder($order);
     }
@@ -472,12 +472,12 @@ class OrderServiceTest extends TestCase
 ```
 </details>
 
-### Задание 2: Spy для Logger
+### Exercício 2: Spy para Logger
 
-Создай `UserRegistrationService` который логирует действия. Используй Spy для проверки вызовов logger после выполнения.
+Crie um `UserRegistrationService` que registra as ações no log. Use Spy para verificar as chamadas do logger depois da execução.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Services/UserRegistrationService.php
@@ -495,7 +495,7 @@ class UserRegistrationService
 
     public function register(array $data): User
     {
-        $this->logger->info('User registration started', [
+        $this->logger->info('Cadastro de usuário iniciado', [
             'email' => $data['email'],
         ]);
 
@@ -505,7 +505,7 @@ class UserRegistrationService
             'password' => Hash::make($data['password']),
         ]);
 
-        $this->logger->info('User registered successfully', [
+        $this->logger->info('Usuário cadastrado com sucesso', [
             'user_id' => $user->id,
             'email' => $user->email,
         ]);
@@ -515,15 +515,15 @@ class UserRegistrationService
 
     public function registerWithReferral(array $data, string $referralCode): User
     {
-        $this->logger->info('Registration with referral', [
+        $this->logger->info('Cadastro com indicação', [
             'email' => $data['email'],
             'referral_code' => $referralCode,
         ]);
 
         $user = $this->register($data);
 
-        // Логика реферальной программы
-        $this->logger->info('Referral bonus applied', [
+        // Lógica do programa de indicação
+        $this->logger->info('Bônus de indicação aplicado', [
             'user_id' => $user->id,
             'referral_code' => $referralCode,
         ]);
@@ -544,26 +544,26 @@ class UserRegistrationServiceTest extends TestCase
 {
     public function test_logs_registration_process(): void
     {
-        // Spy не требует shouldReceive заранее
+        // Spy não exige shouldReceive de antemão
         $logger = Mockery::spy(LoggerInterface::class);
 
         $service = new UserRegistrationService($logger);
 
         $user = $service->register([
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
+            'name' => 'João Silva',
+            'email' => 'joao@email.com',
             'password' => 'password123',
         ]);
 
-        // Проверить вызовы ПОСЛЕ выполнения
+        // Verificar as chamadas DEPOIS da execução
         $logger->shouldHaveReceived('info')
-            ->with('User registration started', Mockery::subset([
-                'email' => 'john@example.com',
+            ->with('Cadastro de usuário iniciado', Mockery::subset([
+                'email' => 'joao@email.com',
             ]));
 
         $logger->shouldHaveReceived('info')
-            ->with('User registered successfully', Mockery::subset([
-                'email' => 'john@example.com',
+            ->with('Usuário cadastrado com sucesso', Mockery::subset([
+                'email' => 'joao@email.com',
             ]));
     }
 
@@ -574,17 +574,17 @@ class UserRegistrationServiceTest extends TestCase
         $service = new UserRegistrationService($logger);
 
         $user = $service->registerWithReferral([
-            'name' => 'Jane Doe',
-            'email' => 'jane@example.com',
+            'name' => 'Maria Silva',
+            'email' => 'maria@email.com',
             'password' => 'password123',
         ], 'REF123');
 
-        // Должно быть 4 вызова info()
+        // Devem ser 4 chamadas de info()
         $logger->shouldHaveReceived('info')->times(4);
 
-        // Проверить вызов с реферальным кодом
+        // Verificar a chamada com o código de indicação
         $logger->shouldHaveReceived('info')
-            ->with('Registration with referral', Mockery::subset([
+            ->with('Cadastro com indicação', Mockery::subset([
                 'referral_code' => 'REF123',
             ]));
     }
@@ -592,12 +592,12 @@ class UserRegistrationServiceTest extends TestCase
 ```
 </details>
 
-### Задание 3: Laravel Fakes для Mail и Queue
+### Exercício 3: Laravel Fakes para Mail e Queue
 
-Напиши тест для регистрации пользователя, которая отправляет welcome email и запускает job для обработки. Используй fakes.
+Escreva o teste de cadastro de usuário que envia welcome email e dispara um job de processamento. Use fakes.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // app/Http/Controllers/RegisterController.php
@@ -625,14 +625,14 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        // Отправить welcome email
+        // Enviar welcome email
         Mail::to($user)->send(new WelcomeEmail($user));
 
-        // Запустить job для обработки
+        // Disparar o job de processamento
         ProcessNewUser::dispatch($user);
 
         return response()->json([
-            'message' => 'Registration successful',
+            'message' => 'Cadastro realizado com sucesso',
             'user' => $user,
         ], 201);
     }
@@ -658,29 +658,29 @@ class RegisterControllerTest extends TestCase
         Queue::fake();
 
         $response = $this->postJson('/register', [
-            'name' => 'John Doe',
-            'email' => 'john@example.com',
+            'name' => 'João Silva',
+            'email' => 'joao@email.com',
             'password' => 'password123',
         ]);
 
         $response->assertStatus(201);
         $response->assertJson([
-            'message' => 'Registration successful',
+            'message' => 'Cadastro realizado com sucesso',
         ]);
 
-        // Проверить пользователя в БД
+        // Verificar o usuário no banco
         $this->assertDatabaseHas('users', [
-            'email' => 'john@example.com',
+            'email' => 'joao@email.com',
         ]);
 
-        $user = User::where('email', 'john@example.com')->first();
+        $user = User::where('email', 'joao@email.com')->first();
 
-        // Проверить отправку email
+        // Verificar o envio do email
         Mail::assertSent(WelcomeEmail::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
         });
 
-        // Проверить dispatch job
+        // Verificar o dispatch do job
         Queue::assertPushed(ProcessNewUser::class, function ($job) use ($user) {
             return $job->user->id === $user->id;
         });
@@ -692,14 +692,14 @@ class RegisterControllerTest extends TestCase
         Queue::fake();
 
         $response = $this->postJson('/register', [
-            'name' => 'John',
-            'email' => 'invalid-email',  // Невалидный email
-            'password' => '123',  // Слишком короткий
+            'name' => 'João',
+            'email' => 'invalid-email',  // Email inválido
+            'password' => '123',  // Curto demais
         ]);
 
         $response->assertStatus(422);
 
-        // Email и Job НЕ должны быть отправлены
+        // Email e Job NÃO devem ser enviados
         Mail::assertNothingSent();
         Queue::assertNothingPushed();
     }
@@ -707,11 +707,11 @@ class RegisterControllerTest extends TestCase
     public function test_rejects_duplicate_email(): void
     {
         Mail::fake();
-        User::factory()->create(['email' => 'existing@example.com']);
+        User::factory()->create(['email' => 'existente@email.com']);
 
         $response = $this->postJson('/register', [
-            'name' => 'John Doe',
-            'email' => 'existing@example.com',
+            'name' => 'João Silva',
+            'email' => 'existente@email.com',
             'password' => 'password123',
         ]);
 
@@ -726,4 +726,4 @@ class RegisterControllerTest extends TestCase
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

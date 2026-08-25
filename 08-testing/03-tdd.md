@@ -1,89 +1,89 @@
 # 7.3 TDD (Test-Driven Development)
 
-## Краткое резюме
+## Resumo
 
-> **TDD** — методология разработки, где тесты пишутся ДО кода. Цикл Red-Green-Refactor: failing тест → минимальный код → рефакторинг.
+> **TDD** — metodologia de desenvolvimento em que os testes vêm ANTES do código. Ciclo Red-Green-Refactor: teste falhando → código mínimo → refatoração.
 >
-> **Преимущества:** Продуманный API, высокое покрытие (100%), меньше багов. Тесты как документация.
+> **Vantagens:** API pensada, cobertura alta (100%), menos bugs. Testes como documentação.
 >
-> **Важно:** Подходит для бизнес-логики, API, алгоритмов. НЕ для прототипов и UI. Каждый цикл должен быть маленьким (5-10 минут).
+> **Importante:** Serve para lógica de negócio, API, algoritmo. NÃO serve para protótipo e UI. Cada ciclo é curto (5-10 minutos).
 
 ---
 
-## Содержание
+## Conteúdo
 
-- [Что это](#что-это)
-- [Как работает](#как-работает)
-- [Когда использовать](#когда-использовать)
-- [Пример из практики](#пример-из-практики)
-- [На собеседовании](#на-собеседовании-скажешь)
-- [Практические задания](#практические-задания)
-
----
-
-## Что это
-
-**Что это:**
-TDD — методология разработки, где тесты пишутся ДО кода. Цикл: Red → Green → Refactor.
-
-**Цикл TDD:**
-1. **Red** — написать failing тест
-2. **Green** — написать минимальный код для прохождения
-3. **Refactor** — улучшить код
+- [O que é](#o-que-é)
+- [Como funciona](#como-funciona)
+- [Quando usar](#quando-usar)
+- [Exemplo prático](#exemplo-prático)
+- [Na entrevista](#na-entrevista)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Как работает
+## O que é
 
-**Цикл Red-Green-Refactor:**
+**O que é:**
+TDD — metodologia de desenvolvimento em que os testes vêm ANTES do código. Ciclo: Red → Green → Refactor.
+
+**Ciclo TDD:**
+1. **Red** — escrever o teste falhando
+2. **Green** — escrever o código mínimo para passar
+3. **Refactor** — melhorar o código
+
+---
+
+## Como funciona
+
+**Ciclo Red-Green-Refactor:**
 
 ```php
-// 1. RED: Написать failing тест
+// 1. RED: Escrever o teste falhando
 class CalculatorTest extends TestCase
 {
     public function test_adds_two_numbers(): void
     {
-        $calculator = new Calculator();  // Класса ещё нет
+        $calculator = new Calculator();  // A classe ainda não existe
         $result = $calculator->add(2, 3);
 
         $this->assertEquals(5, $result);
     }
 }
 
-// Запустить: php artisan test
-// Ошибка: Class Calculator not found
+// Rodar: php artisan test
+// Erro: Class Calculator not found
 
-// 2. GREEN: Минимальный код для прохождения
+// 2. GREEN: Código mínimo para passar
 class Calculator
 {
     public function add(int $a, int $b): int
     {
-        return $a + $b;  // Простейшая реализация
+        return $a + $b;  // Implementação mais simples
     }
 }
 
-// Запустить: php artisan test
+// Rodar: php artisan test
 // ✅ PASS
 
-// 3. REFACTOR: Улучшить (если нужно)
-// В данном случае код уже хорош
+// 3. REFACTOR: Melhorar (se precisar)
+// Aqui o código já está bom
 ```
 
-**Пример полного цикла:**
+**Ciclo completo:**
 
 ```php
-// Задача: создать PriceCalculator с применением скидок
+// Objetivo: criar um PriceCalculator com desconto
 
-// 1. RED: Тест без скидки
+// 1. RED: Teste sem desconto
 public function test_calculates_price_without_discount(): void
 {
-    $calculator = new PriceCalculator();  // Класса нет
+    $calculator = new PriceCalculator();  // A classe não existe
     $result = $calculator->calculate(100, 2);
 
     $this->assertEquals(200, $result);
 }
 
-// 2. GREEN: Создать класс
+// 2. GREEN: Criar a classe
 class PriceCalculator
 {
     public function calculate(float $price, int $quantity): float
@@ -93,17 +93,17 @@ class PriceCalculator
 }
 // ✅ PASS
 
-// 3. RED: Добавить тест со скидкой
+// 3. RED: Adicionar teste com desconto
 public function test_applies_10_percent_discount(): void
 {
     $calculator = new PriceCalculator();
-    $result = $calculator->calculate(100, 2, 10);  // 10% discount
+    $result = $calculator->calculate(100, 2, 10);  // 10% de desconto
 
     $this->assertEquals(180, $result);  // 200 - 10%
 }
 // ❌ FAIL: Missing argument 3
 
-// 4. GREEN: Добавить discount параметр
+// 4. GREEN: Adicionar o parâmetro discount
 class PriceCalculator
 {
     public function calculate(float $price, int $quantity, float $discount = 0): float
@@ -114,7 +114,7 @@ class PriceCalculator
 }
 // ✅ PASS
 
-// 5. REFACTOR: Улучшить читаемость
+// 5. REFACTOR: Melhorar a leitura
 class PriceCalculator
 {
     public function calculate(float $price, int $quantity, float $discountPercent = 0): float
@@ -135,47 +135,47 @@ class PriceCalculator
         return $amount * $percent / 100;
     }
 }
-// ✅ PASS (тесты не изменились, но код лучше)
+// ✅ PASS (os testes não mudaram, mas o código ficou melhor)
 ```
 
 ---
 
-## Когда использовать
+## Quando usar
 
-**Плюсы TDD:**
-- ✅ Дизайн API (думаешь о публичном интерфейсе)
-- ✅ Высокое покрытие (100% по умолчанию)
-- ✅ Документация (тесты как примеры)
-- ✅ Меньше багов
+**Prós do TDD:**
+- ✅ Design da API (você pensa na interface pública)
+- ✅ Cobertura alta (100% por padrão)
+- ✅ Documentação (testes como exemplos)
+- ✅ Menos bugs
 
-**Минусы TDD:**
-- ❌ Медленнее начало
-- ❌ Требует опыта
-- ❌ Не всегда подходит (UI, прототипы)
+**Contras do TDD:**
+- ❌ Começo mais lento
+- ❌ Pede experiência
+- ❌ Nem sempre cabe (UI, protótipo)
 
-**Когда использовать:**
-- Критичная бизнес-логика
+**Quando usar:**
+- Lógica de negócio crítica
 - Public API/Library
-- Сложные алгоритмы
+- Algoritmos complexos
 
-**Когда НЕ использовать:**
-- Прототипирование
+**Quando NÃO usar:**
+- Protótipo
 - UI/Frontend
-- Простые CRUD
+- CRUD simples
 
 ---
 
-## Пример из практики
+## Exemplo prático
 
-**TDD для Validation Rule:**
+**TDD para Validation Rule:**
 
 ```php
-// 1. RED: Тест для валидного промокода
+// 1. RED: Teste de cupom válido
 class ValidPromoCodeTest extends TestCase
 {
     public function test_passes_for_valid_promo_code(): void
     {
-        $rule = new ValidPromoCode();  // Класса нет
+        $rule = new ValidPromoCode();  // A classe não existe
         $result = $rule->passes('promo_code', 'SAVE10');
 
         $this->assertTrue($result);
@@ -183,25 +183,25 @@ class ValidPromoCodeTest extends TestCase
 }
 // ❌ FAIL
 
-// 2. GREEN: Создать класс
+// 2. GREEN: Criar a classe
 class ValidPromoCode implements Rule
 {
     public function passes($attribute, $value): bool
     {
-        return true;  // Простейшая реализация
+        return true;  // Implementação mais simples
     }
 
     public function message(): string
     {
-        return 'Invalid promo code';
+        return 'Cupom inválido';
     }
 }
 // ✅ PASS
 
-// 3. RED: Тест для истёкшего промокода
+// 3. RED: Teste de cupom expirado
 public function test_fails_for_expired_promo_code(): void
 {
-    // Создать истёкший промокод
+    // Criar um cupom expirado
     PromoCode::factory()->create([
         'code' => 'EXPIRED',
         'expires_at' => now()->subDay(),
@@ -212,9 +212,9 @@ public function test_fails_for_expired_promo_code(): void
 
     $this->assertFalse($result);
 }
-// ❌ FAIL (всегда возвращает true)
+// ❌ FAIL (sempre retorna true)
 
-// 4. GREEN: Реализовать проверку
+// 4. GREEN: Implementar a checagem
 class ValidPromoCode implements Rule
 {
     public function passes($attribute, $value): bool
@@ -226,12 +226,12 @@ class ValidPromoCode implements Rule
 
     public function message(): string
     {
-        return 'Промокод недействителен или истёк';
+        return 'O cupom é inválido ou expirou';
     }
 }
 // ✅ PASS
 
-// 5. RED: Тест для несуществующего промокода
+// 5. RED: Teste de cupom inexistente
 public function test_fails_for_nonexistent_promo_code(): void
 {
     $rule = new ValidPromoCode();
@@ -239,18 +239,18 @@ public function test_fails_for_nonexistent_promo_code(): void
 
     $this->assertFalse($result);
 }
-// ✅ PASS (уже работает)
+// ✅ PASS (já funciona)
 
-// 6. REFACTOR: Улучшить (если нужно)
-// Код уже хорош
+// 6. REFACTOR: Melhorar (se precisar)
+// O código já está bom
 ```
 
-**TDD для Service с зависимостями:**
+**TDD para Service com dependências:**
 
 ```php
-// Задача: OrderService должен создавать заказ и списывать деньги
+// Objetivo: OrderService deve criar o pedido e debitar o saldo
 
-// 1. RED: Тест создания заказа
+// 1. RED: Teste de criação do pedido
 class OrderServiceTest extends TestCase
 {
     use RefreshDatabase;
@@ -260,7 +260,7 @@ class OrderServiceTest extends TestCase
         $user = User::factory()->create(['balance' => 1000]);
         $product = Product::factory()->create(['price' => 100]);
 
-        $service = new OrderService();  // Класса нет
+        $service = new OrderService();  // A classe não existe
         $order = $service->create($user, [
             ['product_id' => $product->id, 'quantity' => 2],
         ]);
@@ -271,7 +271,7 @@ class OrderServiceTest extends TestCase
 }
 // ❌ FAIL
 
-// 2. GREEN: Простейшая реализация
+// 2. GREEN: Implementação mais simples
 class OrderService
 {
     public function create(User $user, array $items): Order
@@ -290,7 +290,7 @@ class OrderService
 }
 // ✅ PASS
 
-// 3. RED: Тест списания баланса
+// 3. RED: Teste do débito do saldo
 public function test_deducts_balance(): void
 {
     $user = User::factory()->create(['balance' => 1000]);
@@ -303,9 +303,9 @@ public function test_deducts_balance(): void
 
     $this->assertEquals(800, $user->fresh()->balance);  // 1000 - 200
 }
-// ❌ FAIL (баланс не изменился)
+// ❌ FAIL (o saldo não mudou)
 
-// 4. GREEN: Добавить списание
+// 4. GREEN: Adicionar o débito
 class OrderService
 {
     public function create(User $user, array $items): Order
@@ -328,7 +328,7 @@ class OrderService
 }
 // ✅ PASS
 
-// 5. RED: Тест для недостаточного баланса
+// 5. RED: Teste de saldo insuficiente
 public function test_throws_exception_for_insufficient_balance(): void
 {
     $user = User::factory()->create(['balance' => 50]);
@@ -343,7 +343,7 @@ public function test_throws_exception_for_insufficient_balance(): void
 }
 // ❌ FAIL
 
-// 6. GREEN: Добавить проверку
+// 6. GREEN: Adicionar a checagem
 class OrderService
 {
     public function create(User $user, array $items): Order
@@ -370,7 +370,7 @@ class OrderService
 }
 // ✅ PASS
 
-// 7. REFACTOR: Извлечь методы
+// 7. REFACTOR: Extrair métodos
 class OrderService
 {
     public function create(User $user, array $items): Order
@@ -417,28 +417,28 @@ class OrderService
         $user->decrement('balance', $total);
     }
 }
-// ✅ PASS (все тесты проходят, код лучше)
+// ✅ PASS (todos os testes passam, o código ficou melhor)
 ```
 
 ---
 
-## На собеседовании скажешь
+## Na entrevista
 
-> "TDD — тесты пишутся ДО кода. Цикл: Red (failing тест) → Green (минимальный код) → Refactor (улучшить). Плюсы: дизайн API, высокое покрытие, меньше багов. Минусы: медленнее начало, требует опыта. Использую для критичной бизнес-логики, API, сложных алгоритмов. Не использую для прототипов, UI. Тесты как документация и примеры использования."
+> "TDD — os testes vêm ANTES do código. Ciclo: Red (teste falhando) → Green (código mínimo) → Refactor (melhorar). Prós: design da API, cobertura alta, menos bugs. Contras: o começo é mais lento, pede experiência. Uso em lógica de negócio crítica, API, algoritmo complexo. Não uso em protótipo, UI. Os testes viram documentação e exemplo de uso."
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Discount Calculator с TDD
+### Exercício 1: Discount Calculator com TDD
 
-Используя TDD, создай `DiscountCalculator` с методом `calculate(price, discountPercent)`. Реализуй пошагово: базовый расчет → проверка отрицательных значений → округление до 2 знаков.
+**Enunciado:** Usando TDD, crie `DiscountCalculator` com o método `calculate(price, discountPercent)`. Vá por etapas: cálculo básico → validação de valores negativos → arredondamento em 2 casas.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
-// ШАГ 1: RED - Написать первый тест
+// PASSO 1: RED - Escrever o primeiro teste
 // tests/Unit/DiscountCalculatorTest.php
 namespace Tests\Unit;
 
@@ -449,17 +449,17 @@ class DiscountCalculatorTest extends TestCase
 {
     public function test_calculates_discount(): void
     {
-        $calculator = new DiscountCalculator();  // Класса ещё нет
+        $calculator = new DiscountCalculator();  // A classe ainda não existe
         $result = $calculator->calculate(100, 10);
 
         $this->assertEquals(90, $result);
     }
 }
 
-// Запустить: php artisan test
+// Rodar: php artisan test
 // ❌ FAIL: Class DiscountCalculator not found
 
-// ШАГ 2: GREEN - Создать минимальный класс
+// PASSO 2: GREEN - Criar a classe mínima
 // app/Services/DiscountCalculator.php
 namespace App\Services;
 
@@ -473,7 +473,7 @@ class DiscountCalculator
 
 // ✅ PASS
 
-// ШАГ 3: RED - Добавить тест на отрицательные значения
+// PASSO 3: RED - Adicionar teste para valores negativos
 public function test_throws_exception_for_negative_price(): void
 {
     $calculator = new DiscountCalculator();
@@ -484,17 +484,17 @@ public function test_throws_exception_for_negative_price(): void
 
 // ❌ FAIL: Expected exception not thrown
 
-// ШАГ 4: GREEN - Добавить валидацию
+// PASSO 4: GREEN - Adicionar a validação
 class DiscountCalculator
 {
     public function calculate(float $price, float $discountPercent): float
     {
         if ($price < 0) {
-            throw new \InvalidArgumentException('Price cannot be negative');
+            throw new \InvalidArgumentException('O preço não pode ser negativo');
         }
 
         if ($discountPercent < 0 || $discountPercent > 100) {
-            throw new \InvalidArgumentException('Discount must be between 0 and 100');
+            throw new \InvalidArgumentException('O desconto deve estar entre 0 e 100');
         }
 
         return $price - ($price * $discountPercent / 100);
@@ -503,7 +503,7 @@ class DiscountCalculator
 
 // ✅ PASS
 
-// ШАГ 5: RED - Тест на округление
+// PASSO 5: RED - Teste de arredondamento
 public function test_rounds_to_two_decimals(): void
 {
     $calculator = new DiscountCalculator();
@@ -514,17 +514,17 @@ public function test_rounds_to_two_decimals(): void
 
 // ❌ FAIL: Expected 84.99, got 84.9915
 
-// ШАГ 6: GREEN - Добавить округление
+// PASSO 6: GREEN - Adicionar o arredondamento
 class DiscountCalculator
 {
     public function calculate(float $price, float $discountPercent): float
     {
         if ($price < 0) {
-            throw new \InvalidArgumentException('Price cannot be negative');
+            throw new \InvalidArgumentException('O preço não pode ser negativo');
         }
 
         if ($discountPercent < 0 || $discountPercent > 100) {
-            throw new \InvalidArgumentException('Discount must be between 0 and 100');
+            throw new \InvalidArgumentException('O desconto deve estar entre 0 e 100');
         }
 
         $finalPrice = $price - ($price * $discountPercent / 100);
@@ -534,7 +534,7 @@ class DiscountCalculator
 
 // ✅ PASS
 
-// ШАГ 7: REFACTOR - Улучшить читаемость
+// PASSO 7: REFACTOR - Melhorar a leitura
 class DiscountCalculator
 {
     public function calculate(float $price, float $discountPercent): float
@@ -551,14 +551,14 @@ class DiscountCalculator
     private function validatePrice(float $price): void
     {
         if ($price < 0) {
-            throw new \InvalidArgumentException('Price cannot be negative');
+            throw new \InvalidArgumentException('O preço não pode ser negativo');
         }
     }
 
     private function validateDiscount(float $discountPercent): void
     {
         if ($discountPercent < 0 || $discountPercent > 100) {
-            throw new \InvalidArgumentException('Discount must be between 0 and 100');
+            throw new \InvalidArgumentException('O desconto deve estar entre 0 e 100');
         }
     }
 
@@ -568,16 +568,16 @@ class DiscountCalculator
     }
 }
 
-// ✅ PASS - Все тесты проходят, код стал лучше
+// ✅ PASS - Todos os testes passam, o código ficou melhor
 ```
 </details>
 
-### Задание 2: Shopping Cart с TDD
+### Exercício 2: Shopping Cart com TDD
 
-Создай `ShoppingCart` используя TDD. Функции: `addItem()`, `removeItem()`, `getTotal()`, `isEmpty()`, `clear()`. Каждый шаг - новый тест.
+**Enunciado:** Crie `ShoppingCart` com TDD. Funções: `addItem()`, `removeItem()`, `getTotal()`, `isEmpty()`, `clear()`. Cada passo é um teste novo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Unit/ShoppingCartTest.php
@@ -588,7 +588,7 @@ use App\Services\ShoppingCart;
 
 class ShoppingCartTest extends TestCase
 {
-    // ШАГ 1: RED
+    // PASSO 1: RED
     public function test_new_cart_is_empty(): void
     {
         $cart = new ShoppingCart();
@@ -596,40 +596,40 @@ class ShoppingCartTest extends TestCase
         $this->assertTrue($cart->isEmpty());
     }
 
-    // ШАГ 2: RED
+    // PASSO 2: RED
     public function test_can_add_item(): void
     {
         $cart = new ShoppingCart();
-        $cart->addItem('Apple', 1.50, 3);
+        $cart->addItem('Maçã', 1.50, 3);
 
         $this->assertFalse($cart->isEmpty());
     }
 
-    // ШАГ 3: RED
+    // PASSO 3: RED
     public function test_calculates_total(): void
     {
         $cart = new ShoppingCart();
-        $cart->addItem('Apple', 1.50, 3);  // 4.50
+        $cart->addItem('Maçã', 1.50, 3);  // 4.50
         $cart->addItem('Banana', 2.00, 2);  // 4.00
 
         $this->assertEquals(8.50, $cart->getTotal());
     }
 
-    // ШАГ 4: RED
+    // PASSO 4: RED
     public function test_can_remove_item(): void
     {
         $cart = new ShoppingCart();
-        $cart->addItem('Apple', 1.50, 3);
-        $cart->removeItem('Apple');
+        $cart->addItem('Maçã', 1.50, 3);
+        $cart->removeItem('Maçã');
 
         $this->assertTrue($cart->isEmpty());
     }
 
-    // ШАГ 5: RED
+    // PASSO 5: RED
     public function test_can_clear_cart(): void
     {
         $cart = new ShoppingCart();
-        $cart->addItem('Apple', 1.50, 3);
+        $cart->addItem('Maçã', 1.50, 3);
         $cart->addItem('Banana', 2.00, 2);
         $cart->clear();
 
@@ -637,17 +637,17 @@ class ShoppingCartTest extends TestCase
         $this->assertEquals(0, $cart->getTotal());
     }
 
-    // ШАГ 6: RED
+    // PASSO 6: RED
     public function test_throws_exception_for_negative_quantity(): void
     {
         $cart = new ShoppingCart();
 
         $this->expectException(\InvalidArgumentException::class);
-        $cart->addItem('Apple', 1.50, -1);
+        $cart->addItem('Maçã', 1.50, -1);
     }
 }
 
-// Реализация после всех тестов
+// Implementação depois de todos os testes
 // app/Services/ShoppingCart.php
 namespace App\Services;
 
@@ -658,11 +658,11 @@ class ShoppingCart
     public function addItem(string $name, float $price, int $quantity): void
     {
         if ($quantity <= 0) {
-            throw new \InvalidArgumentException('Quantity must be positive');
+            throw new \InvalidArgumentException('A quantidade deve ser positiva');
         }
 
         if ($price < 0) {
-            throw new \InvalidArgumentException('Price cannot be negative');
+            throw new \InvalidArgumentException('O preço não pode ser negativo');
         }
 
         $this->items[$name] = [
@@ -705,12 +705,12 @@ class ShoppingCart
 ```
 </details>
 
-### Задание 3: Password Validator с TDD
+### Exercício 3: Password Validator com TDD
 
-Создай `PasswordValidator` с TDD. Требования: минимум 8 символов, хотя бы одна заглавная, одна строчная, одна цифра. Пиши тесты постепенно.
+**Enunciado:** Crie `PasswordValidator` com TDD. Requisitos: mínimo 8 caracteres, pelo menos uma maiúscula, uma minúscula, um dígito. Escreva os testes aos poucos.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 // tests/Unit/PasswordValidatorTest.php
@@ -729,7 +729,7 @@ class PasswordValidatorTest extends TestCase
         $this->validator = new PasswordValidator();
     }
 
-    // ШАГ 1: RED - Минимальная длина
+    // PASSO 1: RED - Tamanho mínimo
     public function test_rejects_password_shorter_than_8_chars(): void
     {
         $result = $this->validator->validate('Short1');
@@ -744,7 +744,7 @@ class PasswordValidatorTest extends TestCase
         $this->assertTrue($result);
     }
 
-    // ШАГ 2: RED - Заглавные буквы
+    // PASSO 2: RED - Letras maiúsculas
     public function test_rejects_password_without_uppercase(): void
     {
         $result = $this->validator->validate('password1');
@@ -752,7 +752,7 @@ class PasswordValidatorTest extends TestCase
         $this->assertFalse($result);
     }
 
-    // ШАГ 3: RED - Строчные буквы
+    // PASSO 3: RED - Letras minúsculas
     public function test_rejects_password_without_lowercase(): void
     {
         $result = $this->validator->validate('PASSWORD1');
@@ -760,7 +760,7 @@ class PasswordValidatorTest extends TestCase
         $this->assertFalse($result);
     }
 
-    // ШАГ 4: RED - Цифры
+    // PASSO 4: RED - Dígitos
     public function test_rejects_password_without_digit(): void
     {
         $result = $this->validator->validate('Password');
@@ -768,7 +768,7 @@ class PasswordValidatorTest extends TestCase
         $this->assertFalse($result);
     }
 
-    // ШАГ 5: Комплексные тесты
+    // PASSO 5: Testes combinados
     public function test_accepts_valid_passwords(): void
     {
         $validPasswords = [
@@ -781,7 +781,7 @@ class PasswordValidatorTest extends TestCase
         foreach ($validPasswords as $password) {
             $this->assertTrue(
                 $this->validator->validate($password),
-                "Failed for password: {$password}"
+                "Falhou para a senha: {$password}"
             );
         }
     }
@@ -790,13 +790,13 @@ class PasswordValidatorTest extends TestCase
     {
         $errors = $this->validator->getErrors('short');
 
-        $this->assertContains('Password must be at least 8 characters', $errors);
-        $this->assertContains('Password must contain at least one uppercase letter', $errors);
-        $this->assertContains('Password must contain at least one digit', $errors);
+        $this->assertContains('A senha deve ter pelo menos 8 caracteres', $errors);
+        $this->assertContains('A senha deve ter pelo menos uma letra maiúscula', $errors);
+        $this->assertContains('A senha deve ter pelo menos um dígito', $errors);
     }
 }
 
-// Финальная реализация
+// Implementação final
 // app/Services/PasswordValidator.php
 namespace App\Services;
 
@@ -809,19 +809,19 @@ class PasswordValidator
         $this->errors = [];
 
         if (strlen($password) < 8) {
-            $this->errors[] = 'Password must be at least 8 characters';
+            $this->errors[] = 'A senha deve ter pelo menos 8 caracteres';
         }
 
         if (!preg_match('/[A-Z]/', $password)) {
-            $this->errors[] = 'Password must contain at least one uppercase letter';
+            $this->errors[] = 'A senha deve ter pelo menos uma letra maiúscula';
         }
 
         if (!preg_match('/[a-z]/', $password)) {
-            $this->errors[] = 'Password must contain at least one lowercase letter';
+            $this->errors[] = 'A senha deve ter pelo menos uma letra minúscula';
         }
 
         if (!preg_match('/[0-9]/', $password)) {
-            $this->errors[] = 'Password must contain at least one digit';
+            $this->errors[] = 'A senha deve ter pelo menos um dígito';
         }
 
         return empty($this->errors);
@@ -838,4 +838,4 @@ class PasswordValidator
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
