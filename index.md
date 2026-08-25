@@ -118,8 +118,11 @@ O handbook entra no programa de mentoria, para uma preparação organizada rumo 
 
 Feito pela equipe CodeMate com base em entrevistas reais e projetos comerciais. O material é atualizado conforme o mercado muda.
 
+**Tradução pt-BR**
+Esta edição em português brasileiro foi traduzida por IA por [Vinícius Freire](https://github.com/alencarfreire).
+
 **Open Source**
-O código está no [GitHub](https://github.com/codemateteam/php-handbook). Contributions são bem-vindas.
+O código está no [GitHub](https://github.com/alencarfreire/php-handbook). Contributions são bem-vindas.
 
 **Mentoria**
 Se você quer ajuda com vaga, code review ou entrevista — veja o programa em [codemate.team](https://codemate.team).

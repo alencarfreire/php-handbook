@@ -26,7 +26,7 @@ export default defineConfig({
       { text: 'Início', link: '/' },
       { text: 'Roadmap', link: '/roadmap' },
       { text: 'Mentoria', link: 'https://codemate.team' },
-      { text: 'GitHub', link: 'https://github.com/codemateteam/php-handbook' }
+      { text: 'GitHub', link: 'https://github.com/alencarfreire/php-handbook' }
     ],
 
     sidebar: [
@@ -301,11 +301,11 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/codemateteam/php-handbook' }
+      { icon: 'github', link: 'https://github.com/alencarfreire/php-handbook' }
     ],
 
     editLink: {
-      pattern: 'https://github.com/codemateteam/php-handbook/edit/main/:path',
+      pattern: 'https://github.com/alencarfreire/php-handbook/edit/translate-pt-br/:path',
       text: 'Editar esta página no GitHub'
     },
 

@@ -91,7 +91,7 @@ Este handbook foi feito pela equipe [CodeMate](https://codemate.team) com base e
 
 ## Tradução pt-BR
 
-Esta edição em português brasileiro foi **traduzida por IA** a partir do original em russo da CodeMate.
+Esta edição em português brasileiro foi **traduzida por IA** por [Vinícius Freire](https://github.com/alencarfreire), a partir do original em russo da CodeMate.
 
 **Metodologia:**
 
