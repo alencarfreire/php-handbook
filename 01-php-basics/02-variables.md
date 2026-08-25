@@ -1,44 +1,44 @@
-# 1.2 Переменные в PHP
+# 1.2 Variáveis em PHP
 
 > **TL;DR**
-> Переменные начинаются с $, динамически типизированы. isset() проверяет существование и не null, empty() — falsy значения. & создаёт ссылку (важно делать unset после foreach). Избегай глобальных переменных, используй DI. Суперглобальные ($_GET, $_POST, $_SERVER) в Laravel заменяются Request объектом. Константы через const в классах для статусов.
+> Variáveis começam com $, tipagem dinâmica. isset() checa existência e não null, empty() checa falsy. & cria referência (faça unset depois do foreach). Evite variável global, use DI. Superglobais ($_GET, $_POST, $_SERVER) no Laravel viram o objeto Request. Constantes: const na classe para status.
 
-## Содержание
+## Conteúdo
 
-- [Объявление и присваивание](#объявление-и-присваивание)
+- [Declaração e atribuição](#declaração-e-atribuição)
 - [isset() vs empty()](#isset-vs-empty)
-- [Переменные переменных](#переменные-переменных)
-- [Ссылки (References)](#ссылки-references)
-- [Глобальные переменные](#глобальные-переменные)
-- [Суперглобальные переменные](#суперглобальные-переменные)
-- [Константы](#константы)
-- [Резюме](#резюме)
-- [Практические задания](#практические-задания)
+- [Variáveis variáveis](#variáveis-variáveis)
+- [Referências (References)](#referências-references)
+- [Variáveis globais](#variáveis-globais)
+- [Variáveis superglobais](#variáveis-superglobais)
+- [Constantes](#constantes)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Объявление и присваивание
+## Declaração e atribuição
 
-**Что это:**
-Переменные в PHP начинаются с `$` и не требуют явного объявления типа.
+**O que é:**
+No PHP a variável começa com `$` e não precisa de tipo explícito.
 
-**Как работает:**
+**Como funciona:**
 ```php
-$name = 'Иван';
+$name = 'João';
 $age = 25;
 $price = 99.99;
 
-// Динамическая типизация
+// Tipagem dinâmica
 $value = 10;        // int
-$value = 'string';  // теперь string (переприсвоение)
+$value = 'string';  // agora string (reatribuição)
 ```
 
-**Когда использовать:**
-Для хранения любых данных в коде (строки, числа, объекты, массивы).
+**Quando usar:**
+Para guardar qualquer dado no código (string, número, objeto, array).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Контроллер
+// Controller
 public function store(Request $request)
 {
     $data = $request->validated();
@@ -48,28 +48,28 @@ public function store(Request $request)
 }
 ```
 
-**На собеседовании скажешь:**
-> "В PHP переменные начинаются с $, динамически типизированы. Тип определяется автоматически при присваивании и может меняться."
+**Na entrevista:**
+> "No PHP variável começa com $, tipagem dinâmica. O tipo entra na atribuição e pode mudar."
 
 ---
 
 ## isset() vs empty()
 
-**Что это:**
-Функции для проверки существования и значения переменной.
+**O que é:**
+Funções para checar se a variável existe e qual o valor.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $var = null;
 
-// isset() — существует И не null
+// isset() — existe E não é null
 var_dump(isset($var));        // false (null)
-var_dump(isset($undefined));  // false (не существует)
+var_dump(isset($undefined));  // false (não existe)
 
 $var = 0;
-var_dump(isset($var));        // true (существует, даже если 0)
+var_dump(isset($var));        // true (existe, mesmo sendo 0)
 
-// empty() — "пустое" значение
+// empty() — valor "vazio"
 var_dump(empty(0));          // true
 var_dump(empty('0'));        // true
 var_dump(empty(''));         // true
@@ -81,198 +81,198 @@ var_dump(empty('hello'));    // false
 var_dump(empty(1));          // false
 ```
 
-**Когда использовать:**
-- `isset()` — проверка, что переменная установлена (не null)
-- `empty()` — проверка, что значение "пустое" (falsy)
+**Quando usar:**
+- `isset()` — checar se a variável está definida (não null)
+- `empty()` — checar se o valor é "vazio" (falsy)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка query параметров
+// Checar query params
 public function index(Request $request)
 {
-    // isset — проверяем, что параметр передан
+    // isset — checa se o parâmetro veio
     if (isset($request->query()['status'])) {
         $status = $request->query('status');
     }
 
-    // empty — проверяем, что значение не пустое
+    // empty — checa se o valor não está vazio
     if (!empty($request->input('search'))) {
         $query->where('name', 'like', "%{$request->input('search')}%");
     }
 }
 
-// Проверка массива
+// Checar array
 $filters = $request->input('filters', []);
 if (!empty($filters)) {
-    // Применяем фильтры
+    // Aplica os filtros
 }
 ```
 
-**На собеседовании скажешь:**
-> "isset() проверяет, что переменная существует и не null. empty() проверяет falsy значения: 0, '0', '', null, [], false. Важно: empty('0') = true, а isset() не проверяет значение, только существование."
+**Na entrevista:**
+> "isset() checa se a variável existe e não é null. empty() checa falsy: 0, '0', '', null, [], false. O pulo do gato: empty('0') = true. isset() não olha o valor, só se existe."
 
 ---
 
-## Переменные переменных
+## Variáveis variáveis
 
-**Что это:**
-Возможность использовать значение одной переменной как имя другой.
+**O que é:**
+Usar o valor de uma variável como nome de outra.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $name = 'value';
 $value = 'Hello!';
 
-echo $$name;  // "Hello!" (обращение к $value)
+echo $$name;  // "Hello!" (acessa $value)
 
-// Более явный синтаксис
+// Sintaxe mais explícita
 echo ${$name};  // "Hello!"
 
-// Опасно!
-$field = $_GET['field'];  // Может быть что угодно
-echo $$field;  // Потенциальная уязвимость
+// Perigoso!
+$field = $_GET['field'];  // Pode ser qualquer coisa
+echo $$field;  // Vulnerabilidade potencial
 ```
 
-**Когда использовать:**
-Редко. Чаще используй массивы или объекты.
+**Quando usar:**
+Raro. Prefira array ou objeto.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// ПЛОХО (не делай так)
-$status_active = 'Активен';
-$status_blocked = 'Заблокирован';
+// RUIM (não faça isso)
+$status_active = 'Ativo';
+$status_blocked = 'Bloqueado';
 $currentStatus = 'active';
-echo ${"status_$currentStatus"};  // "Активен"
+echo ${"status_$currentStatus"};  // "Ativo"
 
-// ХОРОШО (используй массив)
+// BOM (use array)
 $statuses = [
-    'active' => 'Активен',
-    'blocked' => 'Заблокирован',
+    'active' => 'Ativo',
+    'blocked' => 'Bloqueado',
 ];
-echo $statuses[$currentStatus];  // "Активен"
+echo $statuses[$currentStatus];  // "Ativo"
 ```
 
-**На собеседовании скажешь:**
-> "$$var — переменная переменной. Использую редко, предпочитаю массивы или объекты. Может быть опасно, если имя переменной приходит извне (XSS, RCE)."
+**Na entrevista:**
+> "$$var é variável variável. Uso pouco, prefiro array ou objeto. É perigoso se o nome vem de fora (XSS, RCE)."
 
 ---
 
-## Ссылки (References)
+## Referências (References)
 
-**Что это:**
-Возможность создать псевдоним переменной через `&`.
+**O que é:**
+Criar um alias da variável com `&`.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $a = 10;
-$b = &$a;  // $b — ссылка на $a
+$b = &$a;  // $b — referência a $a
 
 $b = 20;
-echo $a;  // 20 (изменили через $b, но $a тоже изменился)
+echo $a;  // 20 (mudou via $b, $a também mudou)
 
-// Передача по ссылке в функцию
+// Passar por referência para a função
 function increment(&$value) {
     $value++;
 }
 
 $count = 5;
 increment($count);
-echo $count;  // 6 (изменился оригинал)
+echo $count;  // 6 (o original mudou)
 ```
 
-**Когда использовать:**
-- Когда нужно изменить оригинальную переменную внутри функции
-- Избегай без необходимости (может усложнить код)
+**Quando usar:**
+- Quando precisa mudar a variável original dentro da função
+- Evite sem necessidade (complica o código)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Модификация массива в цикле
+// Modificar array no loop
 $users = [
-    ['name' => 'Иван', 'active' => false],
-    ['name' => 'Пётр', 'active' => false],
+    ['name' => 'João', 'active' => false],
+    ['name' => 'Pedro', 'active' => false],
 ];
 
-// С ссылкой
+// Com referência
 foreach ($users as &$user) {
-    $user['active'] = true;  // Изменяет оригинальный массив
+    $user['active'] = true;  // Muda o array original
 }
-unset($user);  // ВАЖНО! Очистить ссылку после цикла
+unset($user);  // IMPORTANTE! Limpar a referência depois do loop
 
 var_dump($users);
-// Все пользователи теперь active = true
+// Todos os usuários agora active = true
 
-// Без ссылки (не изменится)
+// Sem referência (não muda)
 foreach ($users as $user) {
-    $user['active'] = false;  // Изменяет только копию
+    $user['active'] = false;  // Muda só a cópia
 }
-// $users не изменился
+// $users não mudou
 ```
 
-**⚠️ Важная ошибка:**
+**⚠️ Erro clássico:**
 ```php
 $array = [1, 2, 3];
 
 foreach ($array as &$value) {
     $value *= 2;
 }
-// НЕ забыть unset($value)!
+// NÃO esquecer unset($value)!
 
-// Если забыть unset():
+// Se esquecer o unset():
 foreach ($array as $value) {
-    // $value всё ещё ссылка на последний элемент!
-    // Это перезапишет последний элемент
+    // $value ainda é referência ao último elemento!
+    // Isso sobrescreve o último elemento
 }
 
-var_dump($array);  // [2, 4, 4] (а не [2, 4, 6])
+var_dump($array);  // [2, 4, 4] (e não [2, 4, 6])
 
-// Правильно:
-unset($value);  // Очистить ссылку после первого foreach
+// Certo:
+unset($value);  // Limpar a referência depois do primeiro foreach
 ```
 
-**На собеседовании скажешь:**
-> "& создаёт ссылку на переменную. Использую для изменения оригинала в функции или в foreach. Важно: после foreach с ссылкой обязательно делать unset(), иначе последний элемент может быть перезаписан."
+**Na entrevista:**
+> "& cria referência. Uso para mudar o original na função ou no foreach. Depois do foreach com referência, unset() é obrigatório — senão o último elemento pode ser sobrescrito."
 
 ---
 
-## Глобальные переменные
+## Variáveis globais
 
-**Что это:**
-Переменные, доступные во всех областях видимости через `global` или `$GLOBALS`.
+**O que é:**
+Variáveis visíveis em qualquer escopo via `global` ou `$GLOBALS`.
 
-**Как работает:**
+**Como funciona:**
 ```php
-$name = 'Иван';  // Глобальная переменная
+$name = 'João';  // Variável global
 
 function greet() {
-    global $name;  // Доступ к глобальной переменной
-    echo "Привет, $name!";
+    global $name;  // Acesso à variável global
+    echo "Olá, $name!";
 }
 
-greet();  // "Привет, Иван!"
+greet();  // "Olá, João!"
 
-// Или через $GLOBALS
+// Ou via $GLOBALS
 function greet2() {
-    echo "Привет, {$GLOBALS['name']}!";
+    echo "Olá, {$GLOBALS['name']}!";
 }
 ```
 
-**Когда использовать:**
-❌ Избегай глобальных переменных! Используй:
+**Quando usar:**
+❌ Evite variável global! Use:
 - Dependency Injection
-- Параметры функций
-- Классы и свойства
+- Parâmetros de função
+- Classes e propriedades
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// ПЛОХО
+// RUIM
 $db = new Database();
 
 function getUsers() {
-    global $db;  // Плохо: зависимость от глобальной переменной
+    global $db;  // Ruim: depende de variável global
     return $db->query('SELECT * FROM users');
 }
 
-// ХОРОШО (Dependency Injection)
+// BOM (Dependency Injection)
 class UserRepository
 {
     public function __construct(private Database $db) {}
@@ -287,54 +287,54 @@ class UserRepository
 $users = app(UserRepository::class)->getUsers();
 ```
 
-**На собеседовании скажешь:**
-> "global даёт доступ к глобальным переменным. Избегаю их использования, предпочитаю Dependency Injection. В Laravel все зависимости через Service Container."
+**Na entrevista:**
+> "global dá acesso a variável global. Evito, prefiro Dependency Injection. No Laravel as dependências passam pelo Service Container."
 
 ---
 
-## Суперглобальные переменные
+## Variáveis superglobais
 
-**Что это:**
-Встроенные массивы PHP, доступные везде.
+**O que é:**
+Arrays nativos do PHP, disponíveis em todo lugar.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// $_GET — параметры из URL (?name=Ivan)
-$name = $_GET['name'] ?? 'Гость';
+// $_GET — parâmetros da URL (?name=Joao)
+$name = $_GET['name'] ?? 'Visitante';
 
-// $_POST — данные из формы
+// $_POST — dados do form
 $email = $_POST['email'] ?? null;
 
-// $_SERVER — информация о сервере
+// $_SERVER — info do servidor
 $ip = $_SERVER['REMOTE_ADDR'];
 $userAgent = $_SERVER['HTTP_USER_AGENT'];
 $method = $_SERVER['REQUEST_METHOD'];
 
-// $_SESSION — данные сессии
+// $_SESSION — dados da sessão
 $_SESSION['user_id'] = 1;
 $userId = $_SESSION['user_id'] ?? null;
 
-// $_COOKIE — куки
+// $_COOKIE — cookies
 $token = $_COOKIE['auth_token'] ?? null;
 
-// $_FILES — загруженные файлы
+// $_FILES — arquivos enviados
 $file = $_FILES['avatar'] ?? null;
 
-// $_ENV — переменные окружения
+// $_ENV — variáveis de ambiente
 $dbHost = $_ENV['DB_HOST'];
 ```
 
-**Когда использовать:**
-В legacy PHP. В Laravel используй:
-- `$request->input()` вместо `$_GET` / `$_POST`
-- `$request->session()` вместо `$_SESSION`
-- `$request->cookie()` вместо `$_COOKIE`
-- `$request->file()` вместо `$_FILES`
-- `env()` или `config()` вместо `$_ENV`
+**Quando usar:**
+Em PHP legado. No Laravel use:
+- `$request->input()` no lugar de `$_GET` / `$_POST`
+- `$request->session()` no lugar de `$_SESSION`
+- `$request->cookie()` no lugar de `$_COOKIE`
+- `$request->file()` no lugar de `$_FILES`
+- `env()` ou `config()` no lugar de `$_ENV`
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// СТАРЫЙ СПОСОБ (plain PHP)
+// JEITO ANTIGO (plain PHP)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? null;
     $password = $_POST['password'] ?? null;
@@ -344,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// СОВРЕМЕННЫЙ (Laravel)
+// MODERNO (Laravel)
 public function login(Request $request)
 {
     $credentials = $request->only('email', 'password');
@@ -355,27 +355,27 @@ public function login(Request $request)
 }
 ```
 
-**На собеседовании скажешь:**
-> "Суперглобальные переменные ($_GET, $_POST, $_SERVER, $_SESSION, $_COOKIE, $_FILES) доступны везде. В Laravel не использую их напрямую, работаю через Request объект и фасады."
+**Na entrevista:**
+> "Superglobais ($_GET, $_POST, $_SERVER, $_SESSION, $_COOKIE, $_FILES) estão em todo lugar. No Laravel eu não uso direto: trabalho com o objeto Request e as facades."
 
 ---
 
-## Константы
+## Constantes
 
-**Что это:**
-Неизменяемые значения, определённые через `define()` или `const`.
+**O que é:**
+Valores imutáveis, definidos com `define()` ou `const`.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// define() — работает везде
+// define() — funciona em qualquer lugar
 define('APP_NAME', 'My App');
 echo APP_NAME;  // "My App"
 
-// const — только на верхнем уровне или в классе
+// const — só no nível superior ou na classe
 const VERSION = '1.0.0';
 echo VERSION;
 
-// В классе
+// Na classe
 class Config
 {
     public const DB_HOST = 'localhost';
@@ -385,10 +385,10 @@ class Config
 echo Config::DB_HOST;  // "localhost"
 ```
 
-**Когда использовать:**
-Для значений, которые не меняются (конфигурация, версия, константы).
+**Quando usar:**
+Para valor que não muda (config, versão, constante).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel config
 // config/app.php
@@ -397,10 +397,10 @@ return [
     'version' => '10.0',
 ];
 
-// Использование
+// Uso
 $appName = config('app.name');
 
-// Константы в классе (статусы, типы)
+// Constantes na classe (status, tipos)
 class Order
 {
     public const STATUS_PENDING = 'pending';
@@ -414,43 +414,43 @@ class Order
     }
 }
 
-// Использование
+// Uso
 if ($order->status === Order::STATUS_PAID) {
     // ...
 }
 ```
 
-**На собеседовании скажешь:**
-> "Константы через define() или const. В классах использую const для статусов, типов. В Laravel конфигурация через config(), не через константы."
+**Na entrevista:**
+> "Constantes via define() ou const. Na classe uso const para status e tipo. No Laravel a config vai em config(), não em constante."
 
 ---
 
-## Резюме
+## Recapitulando
 
-**Основное:**
-- `$var` — переменная (динамическая типизация)
-- `isset()` — существует и не null
-- `empty()` — falsy значение (0, '0', '', null, [], false)
-- `&` — ссылка (изменяет оригинал)
-- `global` / `$GLOBALS` — избегай, используй DI
-- Суперглобальные: `$_GET`, `$_POST`, `$_SERVER` — в Laravel через Request
-- Константы: `define()` или `const`
+**O essencial:**
+- `$var` — variável (tipagem dinâmica)
+- `isset()` — existe e não é null
+- `empty()` — valor falsy (0, '0', '', null, [], false)
+- `&` — referência (muda o original)
+- `global` / `$GLOBALS` — evite, use DI
+- Superglobais: `$_GET`, `$_POST`, `$_SERVER` — no Laravel via Request
+- Constantes: `define()` ou `const`
 
-**Важно на собесе:**
-- `empty('0')` = true (частый вопрос)
-- После foreach с `&$value` делать `unset($value)`
-- Избегай глобальных переменных, используй Dependency Injection
-- В Laravel работай через Request, а не суперглобальные переменные
+**Importante na entrevista:**
+- `empty('0')` = true (pergunta clássica)
+- Depois do foreach com `&$value`, faça `unset($value)`
+- Evite variável global, use Dependency Injection
+- No Laravel trabalhe com Request, não com superglobal
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: isset() vs empty()
-**Условие:** Определи результат выполнения для разных значений переменной.
+### Exercício 1: isset() vs empty()
+**Enunciado:** Determine o resultado para valores diferentes da variável.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -466,7 +466,7 @@ function testVariable($value): array
     ];
 }
 
-// Тесты
+// Testes
 var_dump(testVariable(null));
 // ['isset' => false, 'empty' => true, 'is_null' => true, 'bool_cast' => false]
 
@@ -489,71 +489,71 @@ var_dump(testVariable('false'));
 // ['isset' => true, 'empty' => false, 'is_null' => false, 'bool_cast' => true] ⚠️
 ```
 
-**Ключевые моменты:**
-- `isset()`: false только для null и несуществующих переменных
-- `empty()`: true для всех falsy значений
-- Строка `'false'` НЕ пустая (это truthy значение)
+**Pontos-chave:**
+- `isset()`: false só para null e variável inexistente
+- `empty()`: true para todo valor falsy
+- A string `'false'` NÃO é vazia (é truthy)
 </details>
 
-### Задание 2: Проблема ссылок в foreach
-**Условие:** Найди и исправь ошибку в коде.
+### Exercício 2: Problema das referências no foreach
+**Enunciado:** Encontre e corrija o erro no código.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ НЕПРАВИЛЬНО
+// ❌ ERRADO
 $numbers = [1, 2, 3];
 
 foreach ($numbers as &$n) {
     $n *= 2;
 }
-// Забыли unset($n)!
+// Esqueceu o unset($n)!
 
 foreach ($numbers as $n) {
     echo $n . ' ';
 }
-// Вывод: 2 4 4 (а не 2 4 6)
-// Последний элемент перезаписан!
+// Saída: 2 4 4 (e não 2 4 6)
+// Último elemento sobrescrito!
 
-// ✅ ПРАВИЛЬНО
+// ✅ CERTO
 $numbers = [1, 2, 3];
 
 foreach ($numbers as &$n) {
     $n *= 2;
 }
-unset($n);  // ОБЯЗАТЕЛЬНО!
+unset($n);  // OBRIGATÓRIO!
 
 foreach ($numbers as $n) {
     echo $n . ' ';
 }
-// Вывод: 2 4 6 ✅
+// Saída: 2 4 6 ✅
 
-// ✅ ЕЩЁ ЛУЧШЕ (без ссылки)
+// ✅ AINDA MELHOR (sem referência)
 $numbers = array_map(fn($n) => $n * 2, $numbers);
-// Или в Laravel:
+// Ou no Laravel:
 $numbers = collect($numbers)->map(fn($n) => $n * 2)->toArray();
 ```
 
-**Ключевые моменты:**
-- После foreach с `&` переменная остаётся ссылкой на последний элемент
-- Второй foreach перезаписывает последний элемент
-- Всегда делай `unset()` после foreach с ссылкой
-- Предпочитай функциональный подход (array_map, Collection)
+**Pontos-chave:**
+- Depois do foreach com `&` a variável continua referência ao último elemento
+- O segundo foreach sobrescreve o último elemento
+- Sempre faça `unset()` depois do foreach com referência
+- Prefira o jeito funcional (array_map, Collection)
 </details>
 
-### Задание 3: Dependency Injection вместо глобальных переменных
-**Условие:** Рефакторинг кода с глобальными переменными на DI.
+### Exercício 3: Dependency Injection no lugar de variáveis globais
+**Enunciado:** Refatore o código com variáveis globais para DI.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ ПЛОХО (глобальные переменные)
+// ❌ RUIM (variáveis globais)
 $db = new PDO('mysql:host=localhost;dbname=test', 'root', '');
 $logger = new Logger('app.log');
 
@@ -561,11 +561,11 @@ function getUsers(): array
 {
     global $db, $logger;
 
-    $logger->info('Fetching users');
+    $logger->info('Buscando usuários');
     return $db->query('SELECT * FROM users')->fetchAll();
 }
 
-// ✅ ХОРОШО (Dependency Injection)
+// ✅ BOM (Dependency Injection)
 class UserRepository
 {
     public function __construct(
@@ -575,12 +575,12 @@ class UserRepository
 
     public function getAll(): array
     {
-        $this->logger->info('Fetching users');
+        $this->logger->info('Buscando usuários');
         return $this->db->query('SELECT * FROM users')->fetchAll();
     }
 }
 
-// Использование
+// Uso
 $repository = new UserRepository($db, $logger);
 $users = $repository->getAll();
 
@@ -594,23 +594,23 @@ class UserRepository
 
     public function getAll(): array
     {
-        $this->logger->info('Fetching users');
+        $this->logger->info('Buscando usuários');
         return $this->db->table('users')->get();
     }
 }
 
-// Laravel автоматически инжектит зависимости
+// Laravel injeta as dependências sozinho
 $repository = app(UserRepository::class);
 $users = $repository->getAll();
 ```
 
-**Ключевые моменты:**
-- Глобальные переменные усложняют тестирование
-- DI делает зависимости явными
-- Laravel Service Container автоматически резолвит зависимости
-- Легче мокировать в тестах
+**Pontos-chave:**
+- Variável global complica o teste
+- DI deixa a dependência explícita
+- O Service Container do Laravel resolve as dependências sozinho
+- Fica mais fácil mockar no teste
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,9 +1,9 @@
-# 1.4 Управляющие конструкции
+# 1.4 Estruturas de controle
 
 > **TL;DR**
-> Предпочитай guard clauses (ранний return) вместо вложенных if. match вместо switch (PHP 8.0). while для неизвестного количества итераций, for для счётчика, foreach для массивов. После foreach с &$var обязательно unset($var). break выходит из цикла, continue пропускает итерацию. Избегай exit/die в контроллерах. Всегда используй declare(strict_types=1).
+> Prefira guard clauses (return cedo) em vez de if aninhado. match em vez de switch (PHP 8.0). while quando você não sabe quantas iterações, for para contador, foreach para arrays. Depois de foreach com &$var, sempre unset($var). break sai do loop, continue pula a iteração. Evite exit/die em controllers. Sempre use declare(strict_types=1).
 
-## Содержание
+## Conteúdo
 
 - [if, elseif, else](#if-elseif-else)
 - [switch vs match](#switch-vs-match)
@@ -13,57 +13,57 @@
 - [break, continue](#break-continue)
 - [return, exit, die](#return-exit-die)
 - [declare (strict_types)](#declare-strict_types)
-- [Резюме управляющих конструкций](#резюме-управляющих-конструкций)
-- [Практические задания](#практические-задания)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
 ## if, elseif, else
 
-**Что это:**
-Условное выполнение кода.
+**O que é:**
+Execução condicional de código.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $age = 25;
 
 if ($age < 18) {
-    echo 'Несовершеннолетний';
+    echo 'Menor de idade';
 } elseif ($age < 65) {
-    echo 'Взрослый';
+    echo 'Adulto';
 } else {
-    echo 'Пенсионер';
+    echo 'Aposentado';
 }
 
-// Без фигурных скобок (не рекомендуется)
+// Sem chaves (não recomendado)
 if ($isActive)
-    echo 'Активен';
+    echo 'Ativo';
 
-// С фигурными скобками (рекомендуется)
+// Com chaves (recomendado)
 if ($isActive) {
-    echo 'Активен';
+    echo 'Ativo';
 }
 
-// Альтернативный синтаксис (для шаблонов)
+// Sintaxe alternativa (para templates)
 <?php if ($user->isAdmin()): ?>
-    <div>Панель администратора</div>
+    <div>Painel do administrador</div>
 <?php endif; ?>
 ```
 
-**Когда использовать:**
-Для любых условных проверок.
+**Quando usar:**
+Qualquer checagem condicional.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка прав доступа
+// Checar permissão
 public function update(Request $request, Post $post)
 {
     if (!auth()->check()) {
-        abort(401, 'Требуется авторизация');
+        abort(401, 'Autenticação necessária');
     }
 
     if (!Gate::allows('update', $post)) {
-        abort(403, 'Нет прав на редактирование');
+        abort(403, 'Sem permissão para editar');
     }
 
     $post->update($request->validated());
@@ -71,10 +71,10 @@ public function update(Request $request, Post $post)
     return response()->json($post);
 }
 
-// Guard clauses (ранний выход)
+// Guard clauses (saída antecipada)
 public function process(?User $user)
 {
-    // ХОРОШО (guard clause)
+    // BOM (guard clause)
     if ($user === null) {
         return;
     }
@@ -83,52 +83,52 @@ public function process(?User $user)
         throw new InactiveUserException();
     }
 
-    // Основная логика
+    // Lógica principal
     $this->doSomething($user);
 }
 
-// ПЛОХО (глубокая вложенность)
+// RUIM (aninhamento profundo)
 public function processBad(?User $user)
 {
     if ($user !== null) {
         if ($user->isActive()) {
-            // Основная логика на 3-м уровне вложенности
+            // Lógica principal no 3º nível de aninhamento
             $this->doSomething($user);
         }
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "if-elseif-else для условий. Предпочитаю guard clauses (ранний выход) вместо глубокой вложенности. В шаблонах использую альтернативный синтаксис (if: ... endif;)."
+**Na entrevista:**
+> "if-elseif-else para condições. Prefiro guard clauses (return cedo) em vez de if aninhado. Em template eu uso a sintaxe alternativa (if: ... endif;)."
 
 ---
 
 ## switch vs match
 
-**Что это:**
-Множественный выбор на основе значения.
+**O que é:**
+Escolha múltipla com base em um valor.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// switch (старый способ)
+// switch (jeito antigo)
 $status = 'active';
 
 switch ($status) {
     case 'active':
-        $message = 'Активен';
+        $message = 'Ativo';
         break;
     case 'pending':
-        $message = 'В ожидании';
+        $message = 'Pendente';
         break;
     case 'blocked':
-        $message = 'Заблокирован';
+        $message = 'Bloqueado';
         break;
     default:
-        $message = 'Неизвестен';
+        $message = 'Desconhecido';
 }
 
-// ⚠️ Без break — выполнятся все case ниже (fall-through)
+// ⚠️ Sem break — executa todos os case abaixo (fall-through)
 switch ($role) {
     case 'admin':
         $permissions[] = 'delete';
@@ -138,17 +138,17 @@ switch ($role) {
         $permissions[] = 'view';
         break;
 }
-// Если $role = 'editor' → $permissions = ['edit', 'view']
+// Se $role = 'editor' → $permissions = ['edit', 'view']
 
 // match (PHP 8.0+)
 $message = match($status) {
-    'active' => 'Активен',
-    'pending' => 'В ожидании',
-    'blocked' => 'Заблокирован',
-    default => 'Неизвестен',
+    'active' => 'Ativo',
+    'pending' => 'Pendente',
+    'blocked' => 'Bloqueado',
+    default => 'Desconhecido',
 };
 
-// Несколько значений
+// Vários valores
 $httpCategory = match($statusCode) {
     200, 201, 204 => 'success',
     400, 401, 403, 404 => 'client_error',
@@ -157,13 +157,13 @@ $httpCategory = match($statusCode) {
 };
 ```
 
-**Когда использовать:**
-- `match` — всегда, когда возможно (PHP 8.0+)
-- `switch` — для legacy кода или сложной логики в case
+**Quando usar:**
+- `match` — sempre que der (PHP 8.0+)
+- `switch` — código legado ou lógica pesada dentro do case
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Обработка HTTP статусов
+// Tratar status HTTP
 $result = match($response->status()) {
     200 => $response->json(),
     201 => ['message' => 'Created', 'id' => $response->json('id')],
@@ -173,7 +173,7 @@ $result = match($response->status()) {
     default => throw new HttpException($response->status()),
 };
 
-// Права доступа
+// Permissões
 $canEdit = match(true) {
     $user->isAdmin() => true,
     $user->owns($post) && !$post->isPublished() => true,
@@ -198,59 +198,59 @@ $badge = match($order->status) {
 };
 ```
 
-**На собеседовании скажешь:**
-> "switch — множественный выбор с break. match (PHP 8.0) — улучшенный switch: строгое сравнение, возвращает значение, не нужен break. Предпочитаю match для возврата значений."
+**Na entrevista:**
+> "switch é escolha múltipla com break. match (PHP 8.0) é o switch melhorado: comparação estrita, devolve valor, não precisa de break. Prefiro match quando vou devolver um valor."
 
 ---
 
 ## while, do-while
 
-**Что это:**
-Циклы с условием.
+**O que é:**
+Loops com condição.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// while — проверка ДО выполнения
+// while — checa ANTES de executar
 $i = 0;
 while ($i < 5) {
     echo $i;
     $i++;
 }
-// Выведет: 01234
+// Imprime: 01234
 
-// do-while — проверка ПОСЛЕ выполнения (выполнится минимум 1 раз)
+// do-while — checa DEPOIS de executar (roda pelo menos 1 vez)
 $i = 10;
 do {
     echo $i;
     $i++;
 } while ($i < 5);
-// Выведет: 10 (хотя условие false, выполнилось 1 раз)
+// Imprime: 10 (mesmo com condição false, rodou 1 vez)
 
-// Бесконечный цикл
+// Loop infinito
 while (true) {
     $job = $queue->pop();
 
     if ($job === null) {
-        break;  // Выход из цикла
+        break;  // Sai do loop
     }
 
     $job->handle();
 }
 ```
 
-**Когда использовать:**
-- `while` — когда не знаешь количество итераций заранее
-- `do-while` — когда нужно выполнить минимум 1 раз
-- `for` / `foreach` — когда знаешь количество итераций
+**Quando usar:**
+- `while` — quando você não sabe quantas iterações vêm
+- `do-while` — quando precisa rodar pelo menos 1 vez
+- `for` / `foreach` — quando você já sabe a quantidade
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Построчное чтение большого файла
+// Ler arquivo grande linha a linha
 $handle = fopen('large-file.csv', 'r');
 
 while (($line = fgets($handle)) !== false) {
     $data = str_getcsv($line);
-    // Обработка строки
+    // Processa a linha
     $this->processRow($data);
 }
 
@@ -274,75 +274,75 @@ while (true) {
     }
 }
 
-// Retry logic
+// Retry
 $attempts = 0;
 $maxAttempts = 3;
 
 while ($attempts < $maxAttempts) {
     try {
         $result = $this->apiClient->request();
-        break;  // Успех — выходим
+        break;  // Sucesso — sai
     } catch (ApiException $e) {
         $attempts++;
         if ($attempts >= $maxAttempts) {
             throw $e;
         }
-        sleep(2);  // Задержка перед повтором
+        sleep(2);  // Espera antes de tentar de novo
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "while проверяет условие ДО выполнения, do-while — ПОСЛЕ (минимум 1 раз). Использую для retry logic, построчного чтения файлов, queue workers."
+**Na entrevista:**
+> "while checa a condição ANTES de executar, do-while DEPOIS (pelo menos 1 vez). Uso para retry, ler arquivo linha a linha, queue worker."
 
 ---
 
 ## for
 
-**Что это:**
-Цикл с счётчиком.
+**O que é:**
+Loop com contador.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// for (инициализация; условие; инкремент)
+// for (inicialização; condição; incremento)
 for ($i = 0; $i < 5; $i++) {
     echo $i;
 }
-// Выведет: 01234
+// Imprime: 01234
 
-// Обратный порядок
+// Ordem inversa
 for ($i = 5; $i > 0; $i--) {
     echo $i;
 }
-// Выведет: 54321
+// Imprime: 54321
 
-// Шаг 2
+// Passo 2
 for ($i = 0; $i <= 10; $i += 2) {
     echo $i;
 }
-// Выведет: 0246810
+// Imprime: 0246810
 
-// Несколько переменных
+// Várias variáveis
 for ($i = 0, $j = 10; $i < $j; $i++, $j--) {
     echo "$i-$j ";
 }
-// Выведет: 0-10 1-9 2-8 3-7 4-6
+// Imprime: 0-10 1-9 2-8 3-7 4-6
 
-// Бесконечный цикл
+// Loop infinito
 for (;;) {
-    // Выполняется вечно
+    // Roda para sempre
     if ($shouldStop) {
         break;
     }
 }
 ```
 
-**Когда использовать:**
-Когда нужен счётчик или известно количество итераций.
+**Quando usar:**
+Quando você precisa de contador ou já sabe quantas iterações são.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Генерация номеров страниц
+// Gerar números de página
 $totalPages = 10;
 $currentPage = 5;
 
@@ -354,7 +354,7 @@ for ($i = 1; $i <= $totalPages; $i++) {
     }
 }
 
-// Batch обработка
+// Processamento em batch
 $total = User::count();  // 100 000
 $batchSize = 1000;
 
@@ -362,15 +362,15 @@ for ($offset = 0; $offset < $total; $offset += $batchSize) {
     $users = User::skip($offset)->take($batchSize)->get();
 
     foreach ($users as $user) {
-        // Обработка
+        // Processa
         $this->processUser($user);
     }
 
-    // Освобождаем память
+    // Libera memória
     unset($users);
 }
 
-// Генерация диапазона дат
+// Gerar intervalo de datas
 $start = new DateTime('2024-01-01');
 $end = new DateTime('2024-01-31');
 $dates = [];
@@ -380,58 +380,58 @@ for ($date = clone $start; $date <= $end; $date->modify('+1 day')) {
 }
 ```
 
-**На собеседовании скажешь:**
-> "for для циклов со счётчиком. Использую для batch обработки, генерации диапазонов, когда нужен индекс. Для массивов предпочитаю foreach."
+**Na entrevista:**
+> "for é loop com contador. Uso para batch, gerar intervalo, quando preciso do índice. Para array eu prefiro foreach."
 
 ---
 
 ## foreach
 
-**Что это:**
-Итерация по массивам и объектам.
+**O que é:**
+Iteração em arrays e objetos.
 
-**Как работает:**
+**Como funciona:**
 ```php
-$users = ['Иван', 'Пётр', 'Мария'];
+$users = ['João', 'Pedro', 'Maria'];
 
-// Только значения
+// Só valores
 foreach ($users as $user) {
     echo $user;
 }
 
-// Ключ + значение
-$ages = ['Иван' => 25, 'Пётр' => 30];
+// Chave + valor
+$ages = ['João' => 25, 'Pedro' => 30];
 
 foreach ($ages as $name => $age) {
-    echo "$name: $age лет";
+    echo "$name: $age anos";
 }
 
-// Изменение через ссылку
+// Alterar por referência
 $numbers = [1, 2, 3];
 
 foreach ($numbers as &$number) {
     $number *= 2;
 }
-unset($number);  // ⚠️ ВАЖНО! Очистить ссылку
+unset($number);  // ⚠️ IMPORTANTE! Limpar a referência
 
 var_dump($numbers);  // [2, 4, 6]
 
-// Ошибка без unset
+// Erro sem unset
 foreach ($numbers as &$number) {
     $number *= 2;
 }
-// Забыли unset($number)
+// Esqueceu unset($number)
 
 foreach ($numbers as $number) {
-    // $number всё ещё ссылка на последний элемент!
-    // Последний элемент будет перезаписан
+    // $number ainda é referência ao último elemento!
+    // O último elemento será sobrescrito
 }
 ```
 
-**Когда использовать:**
-Для итерации по массивам, коллекциям, объектам с Iterator.
+**Quando usar:**
+Iterar array, collection, objeto com Iterator.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Eloquent Collection
 $users = User::where('is_active', true)->get();
@@ -440,189 +440,189 @@ foreach ($users as $user) {
     echo $user->name;
 }
 
-// Изменение массива через ссылку
+// Alterar array por referência
 $data = [
-    ['name' => 'Товар 1', 'price' => 100],
-    ['name' => 'Товар 2', 'price' => 200],
+    ['name' => 'Produto 1', 'price' => 100],
+    ['name' => 'Produto 2', 'price' => 200],
 ];
 
 foreach ($data as &$item) {
-    $item['price'] *= 1.1;  // Увеличить цену на 10%
+    $item['price'] *= 1.1;  // Aumenta o preço em 10%
 }
 unset($item);
 
-// Laravel Collection (лучше использовать map)
+// Laravel Collection (melhor usar map)
 $discounted = collect($data)->map(function ($item) {
-    $item['price'] *= 0.9;  // Скидка 10%
+    $item['price'] *= 0.9;  // Desconto de 10%
     return $item;
 });
 
-// Группировка
+// Agrupar
 $usersByDepartment = [];
 
 foreach ($users as $user) {
     $usersByDepartment[$user->department_id][] = $user;
 }
 
-// Laravel Collection (лучше groupBy)
+// Laravel Collection (melhor groupBy)
 $grouped = $users->groupBy('department_id');
 ```
 
-**На собеседовании скажешь:**
-> "foreach для итерации по массивам и коллекциям. Для изменения элементов использую &$var, но ОБЯЗАТЕЛЬНО unset() после цикла. В Laravel предпочитаю методы Collection (map, filter, groupBy)."
+**Na entrevista:**
+> "foreach itera array e collection. Para alterar elemento eu uso &$var, mas DEPOIS do loop é obrigatório unset(). No Laravel eu prefiro os métodos da Collection (map, filter, groupBy)."
 
 ---
 
 ## break, continue
 
-**Что это:**
-Управление выполнением цикла.
+**O que é:**
+Controle da execução do loop.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// break — выход из цикла
+// break — sai do loop
 for ($i = 0; $i < 10; $i++) {
     if ($i === 5) {
-        break;  // Выход при i = 5
+        break;  // Sai quando i = 5
     }
     echo $i;
 }
-// Выведет: 01234
+// Imprime: 01234
 
-// continue — пропустить текущую итерацию
+// continue — pula a iteração atual
 for ($i = 0; $i < 10; $i++) {
     if ($i % 2 === 0) {
-        continue;  // Пропустить чётные
+        continue;  // Pula os pares
     }
     echo $i;
 }
-// Выведет: 13579
+// Imprime: 13579
 
-// break с уровнем (выход из вложенных циклов)
+// break com nível (sai de loops aninhados)
 for ($i = 0; $i < 3; $i++) {
     for ($j = 0; $j < 3; $j++) {
         if ($i === 1 && $j === 1) {
-            break 2;  // Выход из ОБОИХ циклов
+            break 2;  // Sai dos DOIS loops
         }
         echo "$i-$j ";
     }
 }
-// Выведет: 0-0 0-1 0-2 1-0
+// Imprime: 0-0 0-1 0-2 1-0
 ```
 
-**Когда использовать:**
-- `break` — выход при выполнении условия (найден результат, ошибка)
-- `continue` — пропустить элемент (фильтрация)
+**Quando usar:**
+- `break` — sair quando a condição bate (achou o resultado, deu erro)
+- `continue` — pular o item (filtro)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Поиск пользователя
+// Buscar usuário
 $found = null;
 
 foreach ($users as $user) {
     if ($user->email === $searchEmail) {
         $found = $user;
-        break;  // Нашли — выходим
+        break;  // Achou — sai
     }
 }
 
-// Лучше через Collection
+// Melhor com Collection
 $found = $users->firstWhere('email', $searchEmail);
 
-// Валидация с ранним выходом
+// Validação com saída antecipada
 public function validate(array $data): array
 {
     $errors = [];
 
     foreach ($data as $field => $value) {
         if (empty($value)) {
-            $errors[$field] = 'Поле обязательно';
-            continue;  // Пропустить остальные проверки для этого поля
+            $errors[$field] = 'Campo obrigatório';
+            continue;  // Pula as outras checagens deste campo
         }
 
         if ($field === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            $errors[$field] = 'Неверный email';
+            $errors[$field] = 'Email inválido';
         }
     }
 
     return $errors;
 }
 
-// Batch обработка с ошибками
+// Processamento em batch com erros
 foreach ($items as $item) {
     try {
         $this->process($item);
     } catch (ProcessException $e) {
-        Log::error("Ошибка обработки: {$e->getMessage()}");
-        continue;  // Пропустить элемент с ошибкой, продолжить обработку
+        Log::error("Erro ao processar: {$e->getMessage()}");
+        continue;  // Pula o item com erro, segue o processamento
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "break выходит из цикла, continue пропускает итерацию. break 2 выходит из вложенных циклов. Использую break для раннего выхода при нахождении результата, continue для пропуска элементов с ошибками."
+**Na entrevista:**
+> "break sai do loop, continue pula a iteração. break 2 sai de loops aninhados. Uso break para sair cedo quando acho o resultado, continue para pular item com erro."
 
 ---
 
 ## return, exit, die
 
-**Что это:**
-Прерывание выполнения функции или скрипта.
+**O que é:**
+Interrompe a função ou o script.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// return — выход из функции с возвратом значения
+// return — sai da função e devolve valor
 function findUser(int $id): ?User
 {
     $user = User::find($id);
 
     if ($user === null) {
-        return null;  // Ранний выход
+        return null;  // Saída antecipada
     }
 
     return $user;
 }
 
-// exit / die — полная остановка скрипта
+// exit / die — para o script por completo
 if (!auth()->check()) {
-    exit('Требуется авторизация');  // Остановка выполнения
+    exit('Autenticação necessária');  // Para a execução
 }
 
-// exit() = die() (алиасы)
-die('Fatal error');
+// exit() = die() (aliases)
+die('Erro fatal');
 
-// С кодом выхода (для CLI)
-exit(0);   // Успех
-exit(1);   // Ошибка
+// Com código de saída (para CLI)
+exit(0);   // Sucesso
+exit(1);   // Erro
 ```
 
-**Когда использовать:**
-- `return` — всегда для выхода из функции
-- `exit` / `die` — только для критических ошибок (не в продакшене!)
+**Quando usar:**
+- `return` — sempre para sair da função
+- `exit` / `die` — só em erro crítico (não em produção!)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// ПЛОХО (не используй exit в контроллере)
+// RUIM (não use exit no controller)
 public function show(int $id)
 {
     $user = User::find($id);
 
     if ($user === null) {
-        exit('User not found');  // ❌ Плохо
+        exit('User not found');  // ❌ Ruim
     }
 
     return view('user.show', compact('user'));
 }
 
-// ХОРОШО (используй abort или исключения)
+// BOM (use abort ou exceção)
 public function show(int $id)
 {
-    $user = User::findOrFail($id);  // 404 если не найден
+    $user = User::findOrFail($id);  // 404 se não achar
 
     return view('user.show', compact('user'));
 }
 
-// Guard clauses (ранний return)
+// Guard clauses (return cedo)
 public function update(Request $request, Post $post)
 {
     if (!Gate::allows('update', $post)) {
@@ -634,12 +634,12 @@ public function update(Request $request, Post $post)
     return response()->json($post);
 }
 
-// CLI команда
+// Comando CLI
 public function handle()
 {
-    if (!$this->confirm('Удалить все данные?')) {
-        $this->info('Отменено');
-        return 0;  // Код успеха
+    if (!$this->confirm('Apagar todos os dados?')) {
+        $this->info('Cancelado');
+        return 0;  // Código de sucesso
     }
 
     try {
@@ -647,44 +647,44 @@ public function handle()
         return 0;
     } catch (\Exception $e) {
         $this->error($e->getMessage());
-        return 1;  // Код ошибки
+        return 1;  // Código de erro
     }
 }
 ```
 
-**На собеседовании скажешь:**
-> "return выходит из функции. exit/die останавливают скрипт (не использую в продакшене, только для критических ошибок). Предпочитаю guard clauses (ранний return) вместо вложенных if."
+**Na entrevista:**
+> "return sai da função. exit/die param o script (não uso em produção, só em erro crítico). Prefiro guard clauses (return cedo) em vez de if aninhado."
 
 ---
 
 ## declare (strict_types)
 
-**Что это:**
-Объявление директив для PHP.
+**O que é:**
+Declara diretivas para o PHP.
 
-**Как работает:**
+**Como funciona:**
 ```php
 <?php
 declare(strict_types=1);
 
-// strict_types — строгая типизация
+// strict_types — tipagem estrita
 function add(int $a, int $b): int
 {
     return $a + $b;
 }
 
 add(5, 10);      // OK
-add(5, '10');    // ❌ TypeError (без strict_types приведёт '10' → 10)
+add(5, '10');    // ❌ TypeError (sem strict_types converte '10' → 10)
 
-// Без strict_types (по умолчанию)
-add(5, '10');    // OK, '10' → 10 (автоматическое приведение)
-add(5, 'abc');   // ❌ TypeError ('abc' нельзя привести к int)
+// Sem strict_types (padrão)
+add(5, '10');    // OK, '10' → 10 (conversão automática)
+add(5, 'abc');   // ❌ TypeError ('abc' não dá para converter para int)
 ```
 
-**Когда использовать:**
-**Всегда** используй `declare(strict_types=1)` в начале файла.
+**Quando usar:**
+**Sempre** use `declare(strict_types=1)` no começo do arquivo.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 <?php
 declare(strict_types=1);
@@ -695,7 +695,7 @@ class OrderService
 {
     public function create(int $userId, float $amount): Order
     {
-        // $userId и $amount строго типизированы
+        // $userId e $amount com tipo estrito
         return Order::create([
             'user_id' => $userId,
             'amount' => $amount,
@@ -703,61 +703,61 @@ class OrderService
     }
 }
 
-// Без strict_types
-$service->create('5', '100.50');  // OK (приведёт к int и float)
+// Sem strict_types
+$service->create('5', '100.50');  // OK (converte para int e float)
 
-// С strict_types
+// Com strict_types
 $service->create('5', '100.50');  // ❌ TypeError
 
-// Правильно
+// Correto
 $service->create(5, 100.50);  // ✅ OK
 ```
 
-**На собеседовании скажешь:**
-> "declare(strict_types=1) включает строгую типизацию. Без неё PHP автоматически приводит типы ('5' → 5). Всегда использую strict_types для избежания ошибок типизации."
+**Na entrevista:**
+> "declare(strict_types=1) liga a tipagem estrita. Sem isso o PHP converte sozinho ('5' → 5). Sempre uso strict_types para o tipo não me surpreender."
 
 ---
 
-## Резюме управляющих конструкций
+## Recapitulando
 
-**Условия:**
-- `if-elseif-else` — для любых условий
-- `match` (PHP 8.0) — вместо switch
-- Guard clauses (ранний return) — вместо вложенных if
+**Condições:**
+- `if-elseif-else` — qualquer condição
+- `match` (PHP 8.0) — no lugar de switch
+- Guard clauses (return cedo) — no lugar de if aninhado
 
-**Циклы:**
-- `for` — когда нужен счётчик
-- `foreach` — для массивов и коллекций
-- `while` — когда неизвестно количество итераций
-- `do-while` — минимум 1 выполнение
+**Loops:**
+- `for` — quando precisa de contador
+- `foreach` — array e collection
+- `while` — quando você não sabe quantas iterações
+- `do-while` — roda pelo menos 1 vez
 
-**Управление:**
-- `break` — выход из цикла
-- `continue` — пропустить итерацию
-- `return` — выход из функции
-- `exit` / `die` — остановка скрипта (не использовать!)
+**Controle:**
+- `break` — sai do loop
+- `continue` — pula a iteração
+- `return` — sai da função
+- `exit` / `die` — para o script (não use!)
 
-**Важно на собесе:**
+**Importante na entrevista:**
 - `match` vs `switch` (PHP 8.0)
-- Guard clauses (ранний выход)
-- `&$var` в foreach + обязательный `unset()`
-- `declare(strict_types=1)` — всегда использовать
-- Избегай `exit` / `die` в контроллерах
+- Guard clauses (saída antecipada)
+- `&$var` no foreach + `unset()` obrigatório
+- `declare(strict_types=1)` — use sempre
+- Evite `exit` / `die` em controllers
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Guard Clauses vs Вложенные if
-**Условие:** Рефакторинг вложенных if на guard clauses.
+### Exercício 1: Guard Clauses vs if aninhado
+**Enunciado:** Refatore if aninhados para guard clauses.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ ПЛОХО (глубокая вложенность)
+// ❌ RUIM (aninhamento profundo)
 function processOrder(?Order $order, ?User $user): void
 {
     if ($order !== null) {
@@ -765,7 +765,7 @@ function processOrder(?Order $order, ?User $user): void
             if ($user->isActive()) {
                 if ($order->isPending()) {
                     if ($user->hasEnoughBalance($order->total)) {
-                        // Основная логика на 5-м уровне вложенности
+                        // Lógica principal no 5º nível de aninhamento
                         $order->process();
                         $user->deductBalance($order->total);
                     } else {
@@ -785,10 +785,10 @@ function processOrder(?Order $order, ?User $user): void
     }
 }
 
-// ✅ ХОРОШО (guard clauses)
+// ✅ BOM (guard clauses)
 function processOrderRefactored(?Order $order, ?User $user): void
 {
-    // Ранние выходы
+    // Saídas antecipadas
     if ($order === null) {
         throw new OrderNotFoundException();
     }
@@ -809,24 +809,24 @@ function processOrderRefactored(?Order $order, ?User $user): void
         throw new InsufficientBalanceException();
     }
 
-    // Основная логика на 1-м уровне вложенности
+    // Lógica principal no 1º nível
     $order->process();
     $user->deductBalance($order->total);
 }
 ```
 
-**Ключевые моменты:**
-- Guard clauses уменьшают вложенность
-- Основная логика на верхнем уровне
-- Легче читать и поддерживать
-- Явные условия ошибок
+**Pontos-chave:**
+- Guard clauses diminuem o aninhamento
+- Lógica principal fica no nível de cima
+- Mais fácil de ler e manter
+- Condição de erro fica explícita
 </details>
 
-### Задание 2: Цикл с break и continue
-**Условие:** Обработка массива заказов с пропуском и остановкой.
+### Exercício 2: Loop com break e continue
+**Enunciado:** Processe um array de pedidos pulando itens e parando no limite.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -837,31 +837,31 @@ function processOrders(array $orders, int $maxAmount): array
     $totalAmount = 0;
 
     foreach ($orders as $order) {
-        // Пропустить отменённые заказы
+        // Pula pedidos cancelados
         if ($order['status'] === 'cancelled') {
             continue;
         }
 
-        // Пропустить заказы с ошибками
+        // Pula pedidos com erro
         if (empty($order['items'])) {
-            Log::warning("Order #{$order['id']} has no items");
+            Log::warning("Pedido #{$order['id']} sem itens");
             continue;
         }
 
-        // Остановиться, если достигнут лимит
+        // Para se atingir o limite
         if ($totalAmount + $order['total'] > $maxAmount) {
-            Log::info("Reached max amount limit");
+            Log::info("Atingiu o limite máximo");
             break;
         }
 
-        // Обработка заказа
+        // Processa o pedido
         try {
             $this->processOrder($order);
             $processed[] = $order['id'];
             $totalAmount += $order['total'];
         } catch (ProcessException $e) {
-            Log::error("Failed to process order #{$order['id']}: {$e->getMessage()}");
-            continue;  // Пропустить неудачный заказ
+            Log::error("Falha ao processar pedido #{$order['id']}: {$e->getMessage()}");
+            continue;  // Pula o pedido que falhou
         }
     }
 
@@ -872,7 +872,7 @@ function processOrders(array $orders, int $maxAmount): array
     ];
 }
 
-// Пример использования
+// Exemplo de uso
 $orders = [
     ['id' => 1, 'status' => 'pending', 'total' => 1000, 'items' => ['A', 'B']],
     ['id' => 2, 'status' => 'cancelled', 'total' => 500, 'items' => ['C']],
@@ -884,23 +884,23 @@ $result = processOrders($orders, 5000);
 // processed: [1, 4], total_amount: 3000
 ```
 
-**Ключевые моменты:**
-- `continue` пропускает текущую итерацию
-- `break` полностью выходит из цикла
-- Подходит для batch обработки с лимитами
-- Логирование ошибок без остановки всего процесса
+**Pontos-chave:**
+- `continue` pula a iteração atual
+- `break` sai do loop de vez
+- Serve para processamento em batch com limite
+- Loga o erro sem parar o processo inteiro
 </details>
 
-### Задание 3: Генератор для больших данных
-**Условие:** Построчное чтение большого CSV файла.
+### Exercício 3: Generator para dados grandes
+**Enunciado:** Leia um CSV grande linha a linha.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ ПЛОХО (загружает весь файл в память)
+// ❌ RUIM (carrega o arquivo inteiro na memória)
 function readCsvBad(string $filePath): array
 {
     $data = [];
@@ -911,32 +911,32 @@ function readCsvBad(string $filePath): array
     }
 
     fclose($handle);
-    return $data;  // Весь файл в памяти!
+    return $data;  // Arquivo inteiro na memória!
 }
 
-// ✅ ХОРОШО (генератор, экономит память)
+// ✅ BOM (generator, economiza memória)
 function readCsv(string $filePath): Generator
 {
     $handle = fopen($filePath, 'r');
 
-    // Пропустить заголовок
+    // Pula o cabeçalho
     fgets($handle);
 
     while (($line = fgets($handle)) !== false) {
         $row = str_getcsv($line);
 
-        // Пропустить пустые строки
+        // Pula linhas vazias
         if (empty($row[0])) {
             continue;
         }
 
-        yield $row;  // Возвращаем по одной строке
+        yield $row;  // Devolve uma linha por vez
     }
 
     fclose($handle);
 }
 
-// Использование
+// Uso
 function importUsers(string $csvPath): array
 {
     $imported = [];
@@ -947,13 +947,13 @@ function importUsers(string $csvPath): array
         try {
             [$name, $email, $age] = $row;
 
-            // Валидация
+            // Validação
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Row $index: Invalid email";
+                $errors[] = "Linha $index: email inválido";
                 continue;
             }
 
-            // Импорт
+            // Importa
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
@@ -963,14 +963,14 @@ function importUsers(string $csvPath): array
             $imported[] = $user->id;
             $count++;
 
-            // Остановиться после 1000 записей
+            // Para depois de 1000 registros
             if ($count >= 1000) {
-                Log::info('Reached import limit');
+                Log::info('Atingiu o limite de importação');
                 break;
             }
 
         } catch (\Exception $e) {
-            $errors[] = "Row $index: {$e->getMessage()}";
+            $errors[] = "Linha $index: {$e->getMessage()}";
             continue;
         }
     }
@@ -983,13 +983,13 @@ function importUsers(string $csvPath): array
 }
 ```
 
-**Ключевые моменты:**
-- Генератор (yield) не загружает весь файл в память
-- `continue` пропускает невалидные строки
-- `break` ограничивает количество обработанных записей
-- Подходит для импорта больших файлов
+**Pontos-chave:**
+- Generator (`yield`) não carrega o arquivo inteiro na memória
+- `continue` pula linha inválida
+- `break` limita quantos registros processar
+- Serve para importar arquivo grande
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

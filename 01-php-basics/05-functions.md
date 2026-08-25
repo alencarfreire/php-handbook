@@ -1,45 +1,45 @@
-# 1.5 Функции в PHP
+# 1.5 Funções em PHP
 
 > **TL;DR**
-> Всегда указывай типы параметров и возврата с declare(strict_types=1). Arrow functions (fn) автоматически захватывают переменные (не нужен use). Генераторы (yield) экономят память для больших выборок. Variadic функции (...$args) принимают переменное количество аргументов. Рекурсия требует базовый случай + ограничение глубины. PHP 8.1 добавил first-class callable (func(...)).
+> Sempre declare tipos de parâmetro e retorno com declare(strict_types=1). Arrow functions (fn) capturam variáveis automaticamente (não precisa de use). Generators (yield) economizam memória em consultas grandes. Funções variadic (...$args) aceitam quantidade variável de argumentos. Recursão precisa de caso base + limite de profundidade. PHP 8.1 trouxe first-class callable (func(...)).
 
-## Содержание
+## Conteúdo
 
-- [Объявление и вызов функций](#объявление-и-вызов-функций)
-- [Type Hints (Типизация параметров и возврата)](#type-hints-типизация-параметров-и-возврата)
-- [Анонимные функции (Closures)](#анонимные-функции-closures)
+- [Declaração e chamada de funções](#declaração-e-chamada-de-funções)
+- [Type Hints (Tipagem de parâmetros e retorno)](#type-hints-tipagem-de-parâmetros-e-retorno)
+- [Funções anônimas (Closures)](#funções-anônimas-closures)
 - [Arrow Functions (PHP 7.4+)](#arrow-functions-php-74)
-- [Variadic Functions (Переменное количество аргументов)](#variadic-functions-переменное-количество-аргументов)
-- [Generators (Генераторы)](#generators-генераторы)
-- [Рекурсия](#рекурсия)
-- [Callable и First-Class Callable (PHP 8.1+)](#callable-и-first-class-callable-php-81)
-- [Резюме функций](#резюме-функций)
-- [Практические задания](#практические-задания)
+- [Variadic Functions (Quantidade variável de argumentos)](#variadic-functions-quantidade-variável-de-argumentos)
+- [Generators (Geradores)](#generators-geradores)
+- [Recursão](#recursão)
+- [Callable e First-Class Callable (PHP 8.1+)](#callable-e-first-class-callable-php-81)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Объявление и вызов функций
+## Declaração e chamada de funções
 
-**Что это:**
-Именованный блок кода, который можно вызывать многократно.
+**O que é:**
+Bloco de código com nome, que você chama quantas vezes quiser.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Простая функция
+// Função simples
 function greet(string $name): string
 {
-    return "Привет, $name!";
+    return "Olá, $name!";
 }
 
-echo greet('Иван');  // "Привет, Иван!"
+echo greet('João');  // "Olá, João!"
 
-// Без return (void)
+// Sem return (void)
 function log(string $message): void
 {
     file_put_contents('log.txt', $message . PHP_EOL, FILE_APPEND);
 }
 
-// Значения по умолчанию
+// Valores padrão
 function getUsers(int $limit = 10, string $sort = 'created_at'): array
 {
     return User::orderBy($sort)->limit($limit)->get()->toArray();
@@ -49,57 +49,57 @@ getUsers();              // limit=10, sort='created_at'
 getUsers(20);            // limit=20, sort='created_at'
 getUsers(20, 'name');    // limit=20, sort='name'
 
-// Именованные аргументы (PHP 8.0+)
-getUsers(sort: 'name', limit: 5);  // Порядок не важен
+// Argumentos nomeados (PHP 8.0+)
+getUsers(sort: 'name', limit: 5);  // A ordem não importa
 ```
 
-**Когда использовать:**
-Для повторяющегося кода, выделения логики, упрощения чтения.
+**Quando usar:**
+Código repetido, extrair lógica, facilitar a leitura.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Форматирование цены
-function formatPrice(int $cents, string $currency = 'RUB'): string
+// Formatação de preço
+function formatPrice(int $cents, string $currency = 'BRL'): string
 {
-    $rubles = $cents / 100;
-    return number_format($rubles, 2, '.', ' ') . " $currency";
+    $reais = $cents / 100;
+    return number_format($reais, 2, ',', '.') . " $currency";
 }
 
-echo formatPrice(199900);  // "1 999.00 RUB"
+echo formatPrice(199900);  // "1.999,00 BRL"
 
-// Проверка прав
+// Checagem de permissão
 function canEdit(User $user, Post $post): bool
 {
     return $user->isAdmin() || $user->id === $post->author_id;
 }
 
 if (canEdit($currentUser, $post)) {
-    // Редактирование
+    // Editar
 }
 
-// В Laravel лучше через Gate/Policy
+// No Laravel, melhor via Gate/Policy
 Gate::define('update', fn(User $user, Post $post) => $user->id === $post->author_id);
 ```
 
-**На собеседовании скажешь:**
-> "Функция — именованный блок кода. PHP 8.0 добавил именованные аргументы. Использую для повторяющейся логики, но в Laravel предпочитаю классы (Services, Actions) вместо глобальных функций."
+**Na entrevista:**
+> "Função é um bloco de código com nome. PHP 8.0 trouxe argumentos nomeados. Uso para lógica repetida, mas no Laravel eu prefiro classes (Services, Actions) em vez de função global."
 
 ---
 
-## Type Hints (Типизация параметров и возврата)
+## Type Hints (Tipagem de parâmetros e retorno)
 
-**Что это:**
-Указание типов параметров и возвращаемого значения.
+**O que é:**
+Declarar o tipo dos parâmetros e do valor de retorno.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Скалярные типы (PHP 7.0+)
+// Tipos escalares (PHP 7.0+)
 function add(int $a, int $b): int
 {
     return $a + $b;
 }
 
-// Nullable типы (PHP 7.1+)
+// Tipos nullable (PHP 7.1+)
 function findUser(?int $id): ?User
 {
     return $id ? User::find($id) : null;
@@ -120,7 +120,7 @@ function log(mixed $value): void
 // Intersection types (PHP 8.1+)
 function save(Countable&Iterator $collection): void
 {
-    // $collection должен реализовывать ОБА интерфейса
+    // $collection precisa implementar as DUAS interfaces
 }
 
 // Never (PHP 8.1+)
@@ -131,10 +131,10 @@ function redirect(string $url): never
 }
 ```
 
-**Когда использовать:**
-**Всегда** указывай типы (с `declare(strict_types=1)`).
+**Quando usar:**
+**Sempre** declare os tipos (com `declare(strict_types=1)`).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 <?php
 declare(strict_types=1);
@@ -177,26 +177,26 @@ class OrderService
 }
 ```
 
-**На собеседовании скажешь:**
-> "Type hints указывают типы параметров и возврата. PHP 8.0 добавил union types (int|string), PHP 8.1 — intersection types. Всегда использую строгую типизацию (declare(strict_types=1))."
+**Na entrevista:**
+> "Type hints declaram tipos de parâmetro e retorno. PHP 8.0 trouxe union types (int|string), PHP 8.1 intersection types. Sempre uso tipagem estrita (declare(strict_types=1))."
 
 ---
 
-## Анонимные функции (Closures)
+## Funções anônimas (Closures)
 
-**Что это:**
-Функции без имени, которые можно присвоить переменной или передать как аргумент.
+**O que é:**
+Função sem nome. Você atribui a uma variável ou passa como argumento.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Анонимная функция
+// Função anônima
 $greet = function(string $name): string {
-    return "Привет, $name!";
+    return "Olá, $name!";
 };
 
-echo $greet('Иван');  // "Привет, Иван!"
+echo $greet('João');  // "Olá, João!"
 
-// Использование внешних переменных (use)
+// Usar variáveis de fora (use)
 $prefix = 'Mr. ';
 
 $addPrefix = function(string $name) use ($prefix): string {
@@ -205,7 +205,7 @@ $addPrefix = function(string $name) use ($prefix): string {
 
 echo $addPrefix('Smith');  // "Mr. Smith"
 
-// По ссылке
+// Por referência
 $counter = 0;
 
 $increment = function() use (&$counter): void {
@@ -216,7 +216,7 @@ $increment();
 $increment();
 echo $counter;  // 2
 
-// Callback функции
+// Funções de callback
 $numbers = [1, 2, 3, 4, 5];
 
 $squared = array_map(function($n) {
@@ -226,10 +226,10 @@ $squared = array_map(function($n) {
 var_dump($squared);  // [1, 4, 9, 16, 25]
 ```
 
-**Когда использовать:**
-Для callback'ов (array_map, array_filter, usort), Laravel Collection, события.
+**Quando usar:**
+Callbacks (array_map, array_filter, usort), Laravel Collection, eventos.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Collection
 $users = User::all();
@@ -242,7 +242,7 @@ $names = $users->map(function($user) {
     return $user->name;
 });
 
-// Eager loading с условием
+// Eager load com condição
 $posts = Post::with(['comments' => function($query) {
     $query->where('approved', true)
           ->orderBy('created_at', 'desc')
@@ -265,19 +265,19 @@ Event::listen('user.created', function(User $user) {
 });
 ```
 
-**На собеседовании скажешь:**
-> "Анонимные функции (closures) — функции без имени. Для доступа к внешним переменным использую use. В Laravel часто применяю в Collection методах (map, filter), Eloquent (with), middleware."
+**Na entrevista:**
+> "Closures são funções sem nome. Para acessar variável de fora, uso use. No Laravel aparece muito em Collection (map, filter), Eloquent (with), middleware."
 
 ---
 
 ## Arrow Functions (PHP 7.4+)
 
-**Что это:**
-Короткий синтаксис для простых анонимных функций.
+**O que é:**
+Sintaxe curta para closure simples.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Обычная анонимная функция
+// Função anônima comum
 $squared = array_map(function($n) {
     return $n ** 2;
 }, [1, 2, 3]);
@@ -285,31 +285,31 @@ $squared = array_map(function($n) {
 // Arrow function
 $squared = array_map(fn($n) => $n ** 2, [1, 2, 3]);
 
-// Автоматический use (без объявления)
+// use automático (sem declarar)
 $multiplier = 10;
 
-// Обычная (нужно use)
+// Comum (precisa de use)
 $multiply = function($n) use ($multiplier) {
     return $n * $multiplier;
 };
 
-// Arrow function (автоматически захватывает $multiplier)
+// Arrow function (captura $multiplier sozinha)
 $multiply = fn($n) => $n * $multiplier;
 
-// ⚠️ Только однострочные выражения
+// ⚠️ Só expressão de uma linha
 $process = fn($x) => $x * 2 + 1;  // ✅ OK
 
-// Нельзя многострочное
+// Não aceita várias linhas
 $process = fn($x) => {  // ❌ Syntax error
     $result = $x * 2;
     return $result + 1;
 };
 ```
 
-**Когда использовать:**
-Для простых callback'ов (одна строка, одно выражение).
+**Quando usar:**
+Callback simples (uma linha, uma expressão).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Laravel Collection
 $users = User::all();
@@ -319,10 +319,10 @@ $activeNames = $users
     ->map(fn($user) => $user->name)
     ->toArray();
 
-// Сортировка
+// Ordenação
 $sorted = $users->sortBy(fn($user) => $user->created_at);
 
-// groupBy с преобразованием
+// groupBy com transformação
 $grouped = $posts->groupBy(fn($post) => $post->created_at->format('Y-m'));
 
 // usort
@@ -335,19 +335,19 @@ Route::get('/posts/{post}', fn(Post $post) => view('posts.show', compact('post')
 Gate::define('update', fn(User $user, Post $post) => $user->id === $post->author_id);
 ```
 
-**На собеседовании скажешь:**
-> "Arrow functions (fn) — короткий синтаксис для однострочных функций (PHP 7.4+). Автоматически захватывают переменные из внешней области (не нужен use). Использую в Collection методах, сортировке, Gates."
+**Na entrevista:**
+> "Arrow functions (fn) são o atalho para função de uma linha (PHP 7.4+). Capturam variáveis do escopo de fora automaticamente (não precisa de use). Uso em Collection, ordenação, Gates."
 
 ---
 
-## Variadic Functions (Переменное количество аргументов)
+## Variadic Functions (Quantidade variável de argumentos)
 
-**Что это:**
-Функция, принимающая произвольное количество аргументов через `...`.
+**O que é:**
+Função que aceita quantidade livre de argumentos via `...`.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Variadic параметр
+// Parâmetro variadic
 function sum(int ...$numbers): int
 {
     return array_sum($numbers);
@@ -356,19 +356,19 @@ function sum(int ...$numbers): int
 echo sum(1, 2, 3);        // 6
 echo sum(1, 2, 3, 4, 5);  // 15
 
-// Первые параметры обычные, последний variadic
+// Os primeiros parâmetros são normais, o último é variadic
 function format(string $format, mixed ...$args): string
 {
     return sprintf($format, ...$args);
 }
 
-echo format('Привет, %s! Тебе %d лет.', 'Иван', 25);
+echo format('Olá, %s! Você tem %d anos.', 'João', 25);
 
-// Распаковка массива в аргументы
+// Unpack do array em argumentos
 $numbers = [1, 2, 3, 4, 5];
 echo sum(...$numbers);  // 15
 
-// Типизация variadic параметра
+// Tipagem do parâmetro variadic
 function addUsers(User ...$users): void
 {
     foreach ($users as $user) {
@@ -377,10 +377,10 @@ function addUsers(User ...$users): void
 }
 ```
 
-**Когда использовать:**
-Когда количество аргументов неизвестно (логирование, математические функции, builder'ы).
+**Quando usar:**
+Quando a quantidade de argumentos é desconhecida (log, função matemática, builders).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Logger
 class Logger
@@ -392,7 +392,7 @@ class Logger
     }
 }
 
-$logger->log('ERROR', 'User not found', ['user_id' => 123, 'ip' => '127.0.0.1']);
+$logger->log('ERROR', 'Usuário não encontrado', ['user_id' => 123, 'ip' => '127.0.0.1']);
 
 // Query builder
 class QueryBuilder
@@ -421,48 +421,48 @@ $dispatcher->fire('user.created', $user, $timestamp);
 
 // Laravel Eloquent with()
 Post::with('author', 'category', 'comments')->get();
-// Под капотом: with(...$relations)
+// Por baixo dos panos: with(...$relations)
 ```
 
-**На собеседовании скажешь:**
-> "Variadic функции принимают переменное количество аргументов через ... (PHP 5.6+). Внутри функции это массив. Можно распаковать массив в аргументы: func(...$array). Использую для логирования, builder'ов."
+**Na entrevista:**
+> "Funções variadic aceitam quantidade variável de argumentos com ... (PHP 5.6+). Dentro da função vira array. Dá para fazer unpack: func(...$array). Uso em log e builders."
 
 ---
 
-## Generators (Генераторы)
+## Generators (Geradores)
 
-**Что это:**
-Функция, которая возвращает итератор через `yield` вместо `return`.
+**O que é:**
+Função que devolve um iterator via `yield` em vez de `return`.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Обычная функция (загружает всё в память)
+// Função comum (carrega tudo na memória)
 function getNumbersArray(): array
 {
     $result = [];
     for ($i = 1; $i <= 1000000; $i++) {
         $result[] = $i;
     }
-    return $result;  // Вся память занята
+    return $result;  // Toda a memória ocupada
 }
 
-// Generator (по одному элементу)
+// Generator (um item por vez)
 function getNumbersGenerator(): Generator
 {
     for ($i = 1; $i <= 1000000; $i++) {
-        yield $i;  // Возвращает по одному, память не забита
+        yield $i;  // Devolve um por vez, memória livre
     }
 }
 
-// Использование
+// Uso
 foreach (getNumbersGenerator() as $number) {
-    echo $number;  // Получаем по одному
+    echo $number;  // Recebe um por vez
 }
 
 // yield key => value
 function getUsersGenerator(): Generator
 {
-    $users = User::cursor();  // Построчное чтение из БД
+    $users = User::cursor();  // Leitura linha a linha do banco
 
     foreach ($users as $user) {
         yield $user->id => $user->name;
@@ -474,12 +474,12 @@ foreach (getUsersGenerator() as $id => $name) {
 }
 ```
 
-**Когда использовать:**
-Для больших выборок из БД, файлов, API (избегаем загрузки всего в память).
+**Quando usar:**
+Consulta grande no banco, arquivo, API (sem carregar tudo na memória).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Построчное чтение большого файла
+// Leitura linha a linha de arquivo grande
 function readCsv(string $filePath): Generator
 {
     $handle = fopen($filePath, 'r');
@@ -492,17 +492,17 @@ function readCsv(string $filePath): Generator
 }
 
 foreach (readCsv('large.csv') as $row) {
-    // Обрабатываем по одной строке (не загружаем весь файл)
+    // Processa uma linha por vez (não carrega o arquivo inteiro)
     $this->processRow($row);
 }
 
-// Eloquent cursor (использует generator под капотом)
+// Eloquent cursor (usa generator por baixo)
 foreach (User::cursor() as $user) {
-    // Загружает по одной записи из БД
+    // Carrega um registro por vez do banco
     $this->processUser($user);
 }
 
-// Пагинация API
+// Paginação de API
 function fetchAllPages(string $url): Generator
 {
     $page = 1;
@@ -520,35 +520,35 @@ function fetchAllPages(string $url): Generator
 }
 
 foreach (fetchAllPages('/api/products') as $product) {
-    // Обрабатываем по одному продукту
+    // Processa um produto por vez
 }
 ```
 
-**На собеседовании скажешь:**
-> "Generator возвращает итератор через yield вместо return. Не загружает всё в память, отдаёт по одному элементу. Использую для больших выборок из БД (cursor), файлов, API. Eloquent::cursor() использует generator."
+**Na entrevista:**
+> "Generator devolve um iterator via yield em vez de return. Não carrega tudo na memória, entrega um item por vez. Uso em consulta grande no banco (cursor), arquivo, API. Eloquent::cursor() usa generator."
 
 ---
 
-## Рекурсия
+## Recursão
 
-**Что это:**
-Функция, которая вызывает сама себя.
+**O que é:**
+Função que chama ela mesma.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Факториал
+// Fatorial
 function factorial(int $n): int
 {
     if ($n <= 1) {
-        return 1;  // Базовый случай (остановка)
+        return 1;  // Caso base (parada)
     }
 
-    return $n * factorial($n - 1);  // Рекурсивный вызов
+    return $n * factorial($n - 1);  // Chamada recursiva
 }
 
 echo factorial(5);  // 5 * 4 * 3 * 2 * 1 = 120
 
-// Обход дерева категорий
+// Percorrer árvore de categorias
 function getCategoryTree(int $parentId = null): array
 {
     $categories = Category::where('parent_id', $parentId)->get();
@@ -557,24 +557,24 @@ function getCategoryTree(int $parentId = null): array
         return [
             'id' => $category->id,
             'name' => $category->name,
-            'children' => getCategoryTree($category->id),  // Рекурсия
+            'children' => getCategoryTree($category->id),  // Recursão
         ];
     })->toArray();
 }
 
-$tree = getCategoryTree();  // Вся иерархия
+$tree = getCategoryTree();  // A hierarquia inteira
 ```
 
-**Когда использовать:**
-Для древовидных структур (меню, категории, комментарии), обхода вложенных массивов.
+**Quando usar:**
+Estrutura em árvore (menu, categoria, comentário), percorrer array aninhado.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Меню с подменю
+// Menu com submenu
 function buildMenu(int $parentId = null, int $depth = 0): string
 {
     if ($depth > 3) {
-        return '';  // Защита от бесконечной рекурсии
+        return '';  // Proteção contra recursão infinita
     }
 
     $items = MenuItem::where('parent_id', $parentId)
@@ -588,7 +588,7 @@ function buildMenu(int $parentId = null, int $depth = 0): string
     $html = '<ul>';
     foreach ($items as $item) {
         $html .= "<li>{$item->title}";
-        $html .= buildMenu($item->id, $depth + 1);  // Рекурсия для подменю
+        $html .= buildMenu($item->id, $depth + 1);  // Recursão para o submenu
         $html .= '</li>';
     }
     $html .= '</ul>';
@@ -596,7 +596,7 @@ function buildMenu(int $parentId = null, int $depth = 0): string
     return $html;
 }
 
-// Поиск файла в директории
+// Buscar arquivo no diretório
 function findFile(string $directory, string $filename): ?string
 {
     $files = scandir($directory);
@@ -613,7 +613,7 @@ function findFile(string $directory, string $filename): ?string
         }
 
         if (is_dir($path)) {
-            $found = findFile($path, $filename);  // Рекурсия
+            $found = findFile($path, $filename);  // Recursão
             if ($found !== null) {
                 return $found;
             }
@@ -624,24 +624,24 @@ function findFile(string $directory, string $filename): ?string
 }
 ```
 
-**На собеседовании скажешь:**
-> "Рекурсия — функция вызывает сама себя. Обязателен базовый случай (условие выхода), иначе бесконечная рекурсия. Использую для древовидных структур (меню, категории), обхода вложенных массивов. Важно ограничить глубину рекурсии."
+**Na entrevista:**
+> "Recursão é a função chamando ela mesma. Precisa de caso base (condição de parada), senão vira infinita. Uso em estrutura em árvore (menu, categoria) e array aninhado. O ponto é limitar a profundidade."
 
 ---
 
-## Callable и First-Class Callable (PHP 8.1+)
+## Callable e First-Class Callable (PHP 8.1+)
 
-**Что это:**
-Способы передачи функций как значений.
+**O que é:**
+Formas de passar funções como valor.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Callable типы
-// 1. Имя функции (строка)
+// Tipos callable
+// 1. Nome da função (string)
 $callback = 'strtoupper';
 echo $callback('hello');  // "HELLO"
 
-// 2. Анонимная функция
+// 2. Função anônima
 $callback = function($str) {
     return strtoupper($str);
 };
@@ -649,11 +649,11 @@ $callback = function($str) {
 // 3. Arrow function
 $callback = fn($str) => strtoupper($str);
 
-// 4. Метод класса
+// 4. Método de classe
 $callback = [$object, 'methodName'];
 $callback = [ClassName::class, 'staticMethod'];
 
-// 5. Инвокация объекта (__invoke)
+// 5. Invocar o objeto (__invoke)
 class Transformer
 {
     public function __invoke(string $str): string
@@ -666,17 +666,17 @@ $callback = new Transformer();
 echo $callback('hello');  // "HELLO"
 
 // First-Class Callable (PHP 8.1+)
-$callback = strtoupper(...);  // Короче, чем fn($x) => strtoupper($x)
+$callback = strtoupper(...);  // Mais curto que fn($x) => strtoupper($x)
 echo $callback('hello');  // "HELLO"
 
 $callback = $object->method(...);
 $callback = ClassName::staticMethod(...);
 ```
 
-**Когда использовать:**
-Для callback'ов, стратегий, фабрик, middleware.
+**Quando usar:**
+Callbacks, strategies, factories, middleware.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Strategy pattern
 class PriceCalculator
@@ -689,7 +689,7 @@ class PriceCalculator
 
 $calculator = new PriceCalculator();
 
-// Разные стратегии
+// Estratégias diferentes
 $withTax = fn($price) => (int) ($price * 1.2);
 $withDiscount = fn($price) => (int) ($price * 0.9);
 
@@ -705,68 +705,68 @@ $result = Pipeline::send($request)
     ])
     ->then(fn($req) => $this->handle($req));
 
-// array_map с first-class callable (PHP 8.1)
-$names = ['ivan', 'petr'];
-$upper = array_map(strtoupper(...), $names);  // ['IVAN', 'PETR']
+// array_map com first-class callable (PHP 8.1)
+$names = ['joao', 'pedro'];
+$upper = array_map(strtoupper(...), $names);  // ['JOAO', 'PEDRO']
 ```
 
-**На собеседовании скажешь:**
-> "Callable — тип для функций, которые можно вызвать. PHP 8.1 добавил first-class callable (func(...)), короче чем fn($x) => func($x). Использую для callback'ов, стратегий, Pipeline."
+**Na entrevista:**
+> "Callable é o tipo de coisa que você pode chamar. PHP 8.1 trouxe first-class callable (func(...)), mais curto que fn($x) => func($x). Uso em callback, strategy, Pipeline."
 
 ---
 
-## Резюме функций
+## Recapitulando
 
-**Основное:**
-- Объявление: `function name(params): returnType { ... }`
-- Type hints: всегда указывай типы + `declare(strict_types=1)`
-- Анонимные функции: `function() use ($var) { ... }`
+**O essencial:**
+- Declaração: `function name(params): returnType { ... }`
+- Type hints: sempre declare os tipos + `declare(strict_types=1)`
+- Funções anônimas: `function() use ($var) { ... }`
 - Arrow functions: `fn($x) => $x * 2` (PHP 7.4+)
-- Variadic: `function(...$args)` (переменное количество аргументов)
-- Generator: `yield` для больших выборок (экономия памяти)
-- Callable: передача функций как значений
+- Variadic: `function(...$args)` (quantidade variável de argumentos)
+- Generator: `yield` para consulta grande (economia de memória)
+- Callable: passar funções como valor
 - First-class callable: `func(...)` (PHP 8.1+)
 
-**Важно на собесе:**
-- Arrow functions автоматически захватывают переменные (не нужен use)
-- Generator (yield) не загружает всё в память
-- Eloquent::cursor() использует generator
-- Рекурсия: обязателен базовый случай + ограничение глубины
-- `declare(strict_types=1)` — всегда использовать
+**Importante na entrevista:**
+- Arrow functions capturam variáveis automaticamente (não precisa de use)
+- Generator (yield) não carrega tudo na memória
+- Eloquent::cursor() usa generator
+- Recursão: caso base obrigatório + limite de profundidade
+- `declare(strict_types=1)` — use sempre
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Arrow Function vs Closure
-**Условие:** Сравни поведение arrow function и closure с внешними переменными.
+### Exercício 1: Arrow Function vs Closure
+**Enunciado:** Compare o comportamento de arrow function e closure com variáveis de fora.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
 $multiplier = 10;
 
-// Closure (нужен use)
+// Closure (precisa de use)
 $closure = function($n) use ($multiplier) {
     return $n * $multiplier;
 };
 
-// Arrow function (автоматический use)
+// Arrow function (use automático)
 $arrow = fn($n) => $n * $multiplier;
 
 echo $closure(5);  // 50
 echo $arrow(5);    // 50
 
-// Изменение внешней переменной
+// Mudança da variável de fora
 $multiplier = 20;
 
-echo $closure(5);  // 50 (захватил старое значение)
-echo $arrow(5);    // 100 (захватил новое значение)
+echo $closure(5);  // 50 (ficou com o valor antigo)
+echo $arrow(5);    // 100 (pegou o valor novo)
 
-// По ссылке в closure
+// Por referência na closure
 $counter = 0;
 
 $increment = function() use (&$counter) {
@@ -777,10 +777,10 @@ $increment();
 $increment();
 echo $counter;  // 2
 
-// ⚠️ Arrow function не поддерживает use по ссылке
-// $arrowIncrement = fn() => $counter++;  // Не изменит внешнюю переменную
+// ⚠️ Arrow function não aceita use por referência
+// $arrowIncrement = fn() => $counter++;  // Não altera a variável de fora
 
-// Практический пример (Laravel Collection)
+// Exemplo prático (Laravel Collection)
 $users = User::all();
 $minAge = 18;
 
@@ -789,10 +789,10 @@ $adults = $users->filter(function($user) use ($minAge) {
     return $user->age >= $minAge;
 });
 
-// Arrow function (короче)
+// Arrow function (mais curto)
 $adults = $users->filter(fn($user) => $user->age >= $minAge);
 
-// Цепочка
+// Encadeamento
 $result = $users
     ->filter(fn($u) => $u->is_active)
     ->map(fn($u) => $u->name)
@@ -800,23 +800,23 @@ $result = $users
     ->values();
 ```
 
-**Ключевые моменты:**
-- Arrow function автоматически захватывает переменные
-- Arrow function только для однострочных выражений
-- Arrow function не поддерживает use по ссылке
-- Arrow function короче и читаемее для простых случаев
+**Pontos-chave:**
+- Arrow function captura variáveis automaticamente
+- Arrow function só aceita expressão de uma linha
+- Arrow function não aceita use por referência
+- Arrow function é mais curta e mais legível no caso simples
 </details>
 
-### Задание 2: Генератор для пагинации API
-**Условие:** Создай генератор для получения всех страниц из API.
+### Exercício 2: Generator para paginação de API
+**Enunciado:** Crie um generator para buscar todas as páginas de uma API.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ ПЛОХО (загружает все страницы в память)
+// ❌ RUIM (carrega todas as páginas na memória)
 function fetchAllPagesBad(string $url): array
 {
     $allData = [];
@@ -830,10 +830,10 @@ function fetchAllPagesBad(string $url): array
         $page++;
     } while (!empty($data));
 
-    return $allData;  // Весь результат в памяти!
+    return $allData;  // O resultado inteiro na memória!
 }
 
-// ✅ ХОРОШО (генератор, экономит память)
+// ✅ BOM (generator, economiza memória)
 function fetchAllPages(string $url): Generator
 {
     $page = 1;
@@ -843,7 +843,7 @@ function fetchAllPages(string $url): Generator
         $data = $response->json('data');
 
         foreach ($data as $item) {
-            yield $item;  // Возвращаем по одному элементу
+            yield $item;  // Devolve um item por vez
         }
 
         $hasMore = $response->json('meta.has_more', false);
@@ -852,7 +852,7 @@ function fetchAllPages(string $url): Generator
     } while ($hasMore);
 }
 
-// Использование
+// Uso
 function syncProducts(): array
 {
     $synced = [];
@@ -885,7 +885,7 @@ function syncProducts(): array
     ];
 }
 
-// Генератор с ключами
+// Generator com chaves
 function fetchUsersWithKeys(): Generator
 {
     foreach (User::cursor() as $user) {
@@ -898,18 +898,18 @@ foreach (fetchUsersWithKeys() as $id => $name) {
 }
 ```
 
-**Ключевые моменты:**
-- Генератор не загружает все данные в память
-- `yield` возвращает по одному элементу
-- Подходит для API с пагинацией
-- Eloquent::cursor() также использует генератор
+**Pontos-chave:**
+- Generator não carrega todos os dados na memória
+- `yield` devolve um item por vez
+- Serve para API com paginação
+- Eloquent::cursor() também usa generator
 </details>
 
-### Задание 3: Рекурсивное построение дерева категорий
-**Условие:** Построй иерархическое дерево категорий с защитой от бесконечной рекурсии.
+### Exercício 3: Montar árvore de categorias com recursão
+**Enunciado:** Monte uma árvore hierárquica de categorias com proteção contra recursão infinita.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -919,17 +919,17 @@ class CategoryTree
     private const MAX_DEPTH = 5;
 
     /**
-     * Построение дерева категорий
+     * Monta a árvore de categorias
      *
-     * @param int|null $parentId ID родительской категории
-     * @param int $depth Текущая глубина рекурсии
+     * @param int|null $parentId ID da categoria pai
+     * @param int $depth Profundidade atual da recursão
      * @return array
      */
     public function buildTree(?int $parentId = null, int $depth = 0): array
     {
-        // Защита от бесконечной рекурсии
+        // Proteção contra recursão infinita
         if ($depth >= self::MAX_DEPTH) {
-            Log::warning("Max depth reached for parent_id: $parentId");
+            Log::warning("Profundidade máxima atingida para parent_id: $parentId");
             return [];
         }
 
@@ -949,7 +949,7 @@ class CategoryTree
     }
 
     /**
-     * Поиск пути к категории (хлебные крошки)
+     * Caminho até a categoria (breadcrumbs)
      */
     public function findPath(int $categoryId): array
     {
@@ -970,7 +970,7 @@ class CategoryTree
     }
 
     /**
-     * Проверка, является ли категория потомком другой
+     * Checa se a categoria é descendente de outra
      */
     public function isDescendantOf(int $childId, int $ancestorId, int $maxDepth = 10): bool
     {
@@ -990,17 +990,17 @@ class CategoryTree
     }
 }
 
-// Использование
+// Uso
 $tree = (new CategoryTree())->buildTree();
 /*
 [
     [
         'id' => 1,
-        'name' => 'Электроника',
+        'name' => 'Eletrônicos',
         'children' => [
             [
                 'id' => 2,
-                'name' => 'Телефоны',
+                'name' => 'Celulares',
                 'children' => [...]
             ]
         ]
@@ -1009,17 +1009,17 @@ $tree = (new CategoryTree())->buildTree();
 */
 
 $breadcrumbs = (new CategoryTree())->findPath(5);
-// [['id' => 1, 'name' => 'Электроника'], ['id' => 2, 'name' => 'Телефоны'], ...]
+// [['id' => 1, 'name' => 'Eletrônicos'], ['id' => 2, 'name' => 'Celulares'], ...]
 ```
 
-**Ключевые моменты:**
-- Обязательная защита от бесконечной рекурсии (MAX_DEPTH)
-- Базовый случай (когда прекратить рекурсию)
-- Передача глубины через параметр
-- Логирование при достижении лимита
-- Альтернатива — цикл while (findPath, isDescendantOf)
+**Pontos-chave:**
+- Proteção obrigatória contra recursão infinita (MAX_DEPTH)
+- Caso base (quando parar a recursão)
+- Passar a profundidade no parâmetro
+- Log ao atingir o limite
+- Alternativa — loop while (findPath, isDescendantOf)
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

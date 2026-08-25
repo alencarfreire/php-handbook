@@ -1,302 +1,302 @@
-# 1.3 Операторы в PHP
+# 1.3 Operadores em PHP
 
 > **TL;DR**
-> Всегда используй === вместо == (строгое сравнение). PHP 8.0 добавил match (улучшенный switch), nullsafe оператор (?>), null coalescing (??). PHP 7.4 — spread оператор (...). Spaceship (<=>) для сортировки. Ленивое вычисление в && и ||. Arrow functions (fn) автоматически захватывают переменные. Тернарный оператор ?: проверяет falsy, ?? проверяет только null.
+> Sempre use === em vez de == (comparação estrita). PHP 8.0 trouxe match (switch melhorado), operador nullsafe (?->), null coalescing (??). PHP 7.4 — spread (...). Spaceship (<=>) para ordenar. Short-circuit em && e ||. Arrow functions (fn) capturam variáveis sozinhas. Ternário ?: checa falsy, ?? checa só null.
 
-## Содержание
+## Conteúdo
 
-- [Арифметические операторы](#арифметические-операторы)
-- [Операторы сравнения](#операторы-сравнения)
-- [Логические операторы](#логические-операторы)
-- [Null-операторы (PHP 7+)](#null-операторы-php-7)
-- [Тернарный оператор](#тернарный-оператор)
+- [Operadores aritméticos](#operadores-aritméticos)
+- [Operadores de comparação](#operadores-de-comparação)
+- [Operadores lógicos](#operadores-lógicos)
+- [Operadores de null (PHP 7+)](#operadores-de-null-php-7)
+- [Operador ternário](#operador-ternário)
 - [match (PHP 8.0+)](#match-php-80)
-- [Оператор объединения строк](#оператор-объединения-строк)
-- [Оператор распаковки (Spread, PHP 7.4+)](#оператор-распаковки-spread-php-74)
-- [Резюме операторов](#резюме-операторов)
-- [Практические задания](#практические-задания)
+- [Operador de concatenação](#operador-de-concatenação)
+- [Operador spread (PHP 7.4+)](#operador-spread-php-74)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Арифметические операторы
+## Operadores aritméticos
 
-**Что это:**
-Операторы для математических вычислений.
+**O que é:**
+Operadores para cálculo matemático.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $a = 10;
 $b = 3;
 
-echo $a + $b;   // 13 (сложение)
-echo $a - $b;   // 7  (вычитание)
-echo $a * $b;   // 30 (умножение)
-echo $a / $b;   // 3.333... (деление)
-echo $a % $b;   // 1  (остаток от деления)
-echo $a ** $b;  // 1000 (возведение в степень, PHP 5.6+)
+echo $a + $b;   // 13 (soma)
+echo $a - $b;   // 7  (subtração)
+echo $a * $b;   // 30 (multiplicação)
+echo $a / $b;   // 3.333... (divisão)
+echo $a % $b;   // 1  (resto da divisão)
+echo $a ** $b;  // 1000 (potência, PHP 5.6+)
 
-// Унарные
-echo -$a;       // -10 (отрицание)
-echo +$a;       // 10  (положительное)
+// Unários
+echo -$a;       // -10 (negação)
+echo +$a;       // 10  (positivo)
 
-// Инкремент/декремент
+// Incremento/decremento
 $i = 5;
-echo ++$i;      // 6 (сначала увеличил, потом вернул)
-echo $i++;      // 6 (сначала вернул, потом увеличил)
+echo ++$i;      // 6 (incrementa primeiro, depois devolve)
+echo $i++;      // 6 (devolve primeiro, depois incrementa)
 echo $i;        // 7
 ```
 
-**Когда использовать:**
-Для вычислений (сумма, количество, процент, пагинация).
+**Quando usar:**
+Cálculo (soma, quantidade, porcentagem, paginação).
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Пагинация
+// Paginação
 $page = $request->input('page', 1);
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
 
 $users = User::skip($offset)->take($perPage)->get();
 
-// Расчёт скидки
+// Cálculo de desconto
 $price = 1000;
 $discount = 15;  // 15%
 $finalPrice = $price - ($price * $discount / 100);
 
-// Округление до копеек (цена в центах)
+// Arredondar para centavos (preço em centavos)
 $priceInCents = 1099;
-$priceInRubles = $priceInCents / 100;  // 10.99
+$priceInReais = $priceInCents / 100;  // 10.99
 ```
 
-**На собеседовании скажешь:**
-> "Арифметические операторы: +, -, *, /, %, **. Для инкремента: ++$i (сначала увеличить) vs $i++ (сначала вернуть). Для денег использую int в копейках, не float."
+**Na entrevista:**
+> "Operadores aritméticos: +, -, *, /, %, **. Incremento: ++$i incrementa primeiro, $i++ devolve primeiro. Para dinheiro eu uso int em centavos, não float."
 
 ---
 
-## Операторы сравнения
+## Operadores de comparação
 
-**Что это:**
-Операторы для сравнения значений.
+**O que é:**
+Operadores para comparar valores.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// == (равно, с приведением типов)
-var_dump(5 == '5');      // true (строка '5' → int 5)
+// == (igual, com conversão de tipos)
+var_dump(5 == '5');      // true (string '5' → int 5)
 var_dump(0 == false);    // true
 var_dump('' == false);   // true
 
-// === (идентично, без приведения типов)
-var_dump(5 === '5');     // false (разные типы)
+// === (idêntico, sem conversão de tipos)
+var_dump(5 === '5');     // false (tipos diferentes)
 var_dump(0 === false);   // false
 var_dump('' === false);  // false
 
-// != (не равно) vs !== (не идентично)
+// != (diferente) vs !== (não idêntico)
 var_dump(5 != '5');      // false
 var_dump(5 !== '5');     // true
 
-// Сравнение
+// Comparação
 var_dump(5 > 3);         // true
 var_dump(5 >= 5);        // true
 var_dump(3 < 5);         // true
 var_dump(3 <= 3);        // true
 
 // <=> (spaceship, PHP 7.0+)
-echo 1 <=> 2;   // -1 (левое меньше)
-echo 2 <=> 2;   //  0 (равны)
-echo 3 <=> 2;   //  1 (левое больше)
+echo 1 <=> 2;   // -1 (esquerda menor)
+echo 2 <=> 2;   //  0 (iguais)
+echo 3 <=> 2;   //  1 (esquerda maior)
 ```
 
-**Когда использовать:**
-- `===` / `!==` — везде, где возможно (строгое сравнение)
-- `==` / `!=` — только если нужно приведение типов
-- `<=>` — для сортировки
+**Quando usar:**
+- `===` / `!==` — sempre que der (comparação estrita)
+- `==` / `!=` — só quando você quer conversão de tipos
+- `<=>` — para ordenar
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка параметра
+// Checar parâmetro
 if ($request->input('status') === 'active') {
-    // Строгое сравнение (избегаем '0', false, null)
+    // Comparação estrita (evita '0', false, null)
 }
 
-// ПЛОХО
-if ($user->role == 'admin') {  // '0' тоже пройдёт!
+// RUIM
+if ($user->role == 'admin') {  // '0' também passa!
     // ...
 }
 
-// ХОРОШО
+// BOM
 if ($user->role === 'admin') {
     // ...
 }
 
-// Сортировка с <=>
+// Ordenação com <=>
 usort($users, fn($a, $b) => $a['age'] <=> $b['age']);
 
 // Laravel Collection
-$sorted = $users->sortBy('age');  // Под капотом использует <=>
+$sorted = $users->sortBy('age');  // Por baixo dos panos usa <=>
 ```
 
-**На собеседовании скажешь:**
-> "== делает приведение типов (5 == '5'), === проверяет тип и значение. Всегда использую ===, кроме случаев, когда нужно приведение. <=> (spaceship) для сортировки, возвращает -1, 0, 1."
+**Na entrevista:**
+> "== converte tipo (5 == '5'), === checa tipo e valor. Eu sempre uso ===, salvo quando preciso da conversão. <=> (spaceship) é para ordenar: devolve -1, 0 ou 1."
 
 ---
 
-## Логические операторы
+## Operadores lógicos
 
-**Что это:**
-Операторы для логических выражений.
+**O que é:**
+Operadores para expressão lógica.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// && (AND) — оба должны быть true
+// && (AND) — os dois precisam ser true
 var_dump(true && true);   // true
 var_dump(true && false);  // false
 
-// || (OR) — хотя бы одно true
+// || (OR) — pelo menos um true
 var_dump(true || false);  // true
 var_dump(false || false); // false
 
-// ! (NOT) — инверсия
+// ! (NOT) — inversão
 var_dump(!true);          // false
 var_dump(!false);         // true
 
-// and, or, xor (низкий приоритет)
-$a = true and false;  // $a = true (сначала присваивание, потом and)
-$a = true && false;   // $a = false (сначала &&, потом присваивание)
+// and, or, xor (precedência baixa)
+$a = true and false;  // $a = true (atribui primeiro, depois o and)
+$a = true && false;   // $a = false (&& primeiro, depois a atribuição)
 ```
 
-**Когда использовать:**
-Для условий, валидации, проверок.
+**Quando usar:**
+Condição, validação, checagem.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка прав доступа
+// Checar permissão
 if ($user->isAdmin() && $user->isActive()) {
-    // Пользователь админ И активен
+    // Usuário é admin E está ativo
 }
 
-// Проверка наличия
+// Checar se existe
 if (isset($data['email']) && filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-    // Email существует И валидный
+    // Email existe E é válido
 }
 
-// Short-circuit evaluation (ленивое вычисление)
+// Short-circuit evaluation (avaliação preguiçosa)
 if ($user && $user->isAdmin()) {
-    // Если $user = null, $user->isAdmin() НЕ вызовется (избегаем ошибки)
+    // Se $user = null, $user->isAdmin() NÃO roda (evita o erro)
 }
 
-// Gate в Laravel
+// Gate no Laravel
 if (Gate::allows('update', $post) && $post->isPublished()) {
-    // Может редактировать И пост опубликован
+    // Pode editar E o post está publicado
 }
 ```
 
-**На собеседовании скажешь:**
-> "Логические операторы: && (AND), || (OR), ! (NOT). PHP использует ленивое вычисление: если первое условие в && = false, второе не проверяется. Это полезно для избежания ошибок (null->method())."
+**Na entrevista:**
+> "Operadores lógicos: && (AND), || (OR), ! (NOT). O PHP faz short-circuit: se o primeiro lado do && é false, o segundo nem roda. Isso evita erro tipo chamar método em null."
 
 ---
 
-## Null-операторы (PHP 7+)
+## Operadores de null (PHP 7+)
 
-**Что это:**
-Операторы для работы с null значениями.
+**O que é:**
+Operadores para trabalhar com null.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // ?? (null coalescing, PHP 7.0+)
-$name = $user->name ?? 'Гость';
-// Если $user->name = null или не существует → 'Гость'
+$name = $user->name ?? 'Visitante';
+// Se $user->name = null ou não existe → 'Visitante'
 
-// Эквивалентно:
-$name = isset($user->name) ? $user->name : 'Гость';
+// Equivale a:
+$name = isset($user->name) ? $user->name : 'Visitante';
 
-// Цепочка
+// Em cadeia
 $value = $a ?? $b ?? $c ?? 'default';
 
 // ??= (null coalescing assignment, PHP 7.4+)
 $config['timeout'] ??= 30;
-// Если $config['timeout'] = null или не существует → присвоить 30
+// Se $config['timeout'] = null ou não existe → atribui 30
 
-// Эквивалентно:
+// Equivale a:
 $config['timeout'] = $config['timeout'] ?? 30;
 
 // ?-> (nullsafe operator, PHP 8.0+)
 $street = $user?->address?->street;
-// Если $user = null → вернёт null (без ошибки)
-// Если $address = null → вернёт null (без ошибки)
+// Se $user = null → devolve null (sem erro)
+// Se $address = null → devolve null (sem erro)
 
-// Без nullsafe (PHP < 8.0)
+// Sem nullsafe (PHP < 8.0)
 $street = $user && $user->address ? $user->address->street : null;
 ```
 
-**Когда использовать:**
-- `??` — для значений по умолчанию
-- `??=` — для ленивой инициализации
-- `?->` — для безопасного доступа к свойствам/методам
+**Quando usar:**
+- `??` — valor default
+- `??=` — lazy init
+- `?->` — acesso seguro a propriedade/método
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Параметры запроса с default значениями
+// Query params com default
 $page = $request->input('page') ?? 1;
 $perPage = $request->input('per_page') ?? 20;
 $sort = $request->input('sort') ?? 'created_at';
 
-// Конфиг с default
+// Config com default
 $timeout = config('api.timeout') ?? 30;
 
-// Ленивая инициализация
+// Lazy init
 class Cache
 {
     private ?Redis $redis = null;
 
     public function getRedis(): Redis
     {
-        $this->redis ??= new Redis();  // Создаст только 1 раз
+        $this->redis ??= new Redis();  // Cria só uma vez
         return $this->redis;
     }
 }
 
-// Nullsafe для вложенных объектов
-$city = $user?->profile?->address?->city ?? 'Не указан';
+// Nullsafe em objetos aninhados
+$city = $user?->profile?->address?->city ?? 'Não informado';
 
 // Eloquent
-$department = $user?->department?->name ?? 'Без департамента';
+$department = $user?->department?->name ?? 'Sem departamento';
 ```
 
-**На собеседовании скажешь:**
-> "?? возвращает первое не-null значение. ??= присваивает, если null. ?-> (PHP 8) безопасный доступ к свойствам: если объект null → вернёт null без ошибки. Использую везде вместо isset() ? : default."
+**Na entrevista:**
+> "?? devolve o primeiro valor que não é null. ??= atribui se for null. ?-> (PHP 8) é acesso seguro: se o objeto é null, devolve null sem erro. Uso no lugar de isset() ? : default."
 
 ---
 
-## Тернарный оператор
+## Operador ternário
 
-**Что это:**
-Сокращённая форма if-else.
+**O que é:**
+if-else enxuto.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Полная форма
-$status = $isActive ? 'Активен' : 'Неактивен';
+// Forma completa
+$status = $isActive ? 'Ativo' : 'Inativo';
 
-// Сокращённая форма (Elvis operator, PHP 5.3+)
-$name = $user->name ?: 'Гость';
-// Если $user->name = truthy → вернёт его
-// Если $user->name = falsy (null, '', 0) → вернёт 'Гость'
+// Forma curta (Elvis operator, PHP 5.3+)
+$name = $user->name ?: 'Visitante';
+// Se $user->name = truthy → devolve ele
+// Se $user->name = falsy (null, '', 0) → devolve 'Visitante'
 
-// ⚠️ Отличие от ??
+// ⚠️ Diferença para ??
 $value = 0;
 echo $value ?: 'default';   // "default" (0 = falsy)
-echo $value ?? 'default';   // "0" (?? проверяет только null)
+echo $value ?? 'default';   // "0" (?? checa só null)
 ```
 
-**Когда использовать:**
-Для простых условий. Если сложно — лучше if-else.
+**Quando usar:**
+Condição simples. Se ficar complexo, use if-else.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Короткие условия
-$role = $user->isAdmin() ? 'Администратор' : 'Пользователь';
+// Condição curta
+$role = $user->isAdmin() ? 'Administrador' : 'Usuário';
 
-// Badge цвета
+// Cor do badge
 $badgeClass = match($status) {
     'active' => 'badge-success',
     'pending' => 'badge-warning',
@@ -304,50 +304,50 @@ $badgeClass = match($status) {
     default => 'badge-secondary',
 };
 
-// В Blade (Laravel)
+// No Blade (Laravel)
 <span class="{{ $user->isActive() ? 'text-success' : 'text-danger' }}">
-    {{ $user->isActive() ? 'Активен' : 'Неактивен' }}
+    {{ $user->isActive() ? 'Ativo' : 'Inativo' }}
 </span>
 
-// ПЛОХО (слишком сложно)
+// RUIM (complicou demais)
 $result = $a > $b ? ($a > $c ? $a : $c) : ($b > $c ? $b : $c);
 
-// ХОРОШО (понятнее)
+// BOM (mais claro)
 $result = max($a, $b, $c);
 ```
 
-**На собеседовании скажешь:**
-> "Тернарный оператор: condition ? true : false. Сокращённая форма ?: возвращает truthy значение или default. Отличие: ?: проверяет falsy (0, '', false), ?? проверяет только null."
+**Na entrevista:**
+> "Ternário: condition ? true : false. A forma curta ?: devolve o valor truthy ou o default. A diferença: ?: checa falsy (0, '', false), ?? checa só null."
 
 ---
 
 ## match (PHP 8.0+)
 
-**Что это:**
-Улучшенный switch с возвратом значения и строгим сравнением.
+**O que é:**
+Switch melhorado: devolve valor e compara com ===.
 
-**Как работает:**
+**Como funciona:**
 ```php
 // switch (PHP < 8.0)
 switch ($status) {
     case 'active':
-        $message = 'Активен';
+        $message = 'Ativo';
         break;
     case 'pending':
-        $message = 'В ожидании';
+        $message = 'Aguardando';
         break;
     default:
-        $message = 'Неизвестно';
+        $message = 'Desconhecido';
 }
 
 // match (PHP 8.0+)
 $message = match($status) {
-    'active' => 'Активен',
-    'pending' => 'В ожидании',
-    default => 'Неизвестно',
+    'active' => 'Ativo',
+    'pending' => 'Aguardando',
+    default => 'Desconhecido',
 };
 
-// Несколько значений
+// Vários valores
 $type = match($code) {
     200, 201, 204 => 'success',
     400, 404 => 'client_error',
@@ -355,7 +355,7 @@ $type = match($code) {
     default => 'unknown',
 };
 
-// Условия
+// Condições
 $category = match(true) {
     $age < 18 => 'child',
     $age < 65 => 'adult',
@@ -363,18 +363,18 @@ $category = match(true) {
 };
 ```
 
-**Плюсы vs switch:**
-1. **Строгое сравнение** (===, а не ==)
-2. **Возвращает значение** (не нужен break)
-3. **Ошибка, если нет default** и нет совпадений
-4. **Меньше кода**
+**Prós e contras vs switch:**
+1. **Comparação estrita** (===, não ==)
+2. **Devolve valor** (não precisa de break)
+3. **Erro se não tem default** e não deu match
+4. **Menos código**
 
-**Когда использовать:**
-Вместо switch, когда нужно вернуть значение.
+**Quando usar:**
+No lugar de switch, quando você precisa devolver um valor.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// HTTP статус коды
+// Status HTTP
 $message = match($response->status()) {
     200 => 'OK',
     201 => 'Created',
@@ -394,12 +394,12 @@ enum Status: string {
 }
 
 $message = match($user->status) {
-    Status::Active => 'Пользователь активен',
-    Status::Pending => 'Ожидает подтверждения',
-    Status::Blocked => 'Заблокирован',
+    Status::Active => 'Usuário ativo',
+    Status::Pending => 'Aguardando confirmação',
+    Status::Blocked => 'Bloqueado',
 };
 
-// Права доступа
+// Permissão
 $canEdit = match(true) {
     $user->isAdmin() => true,
     $user->owns($post) => true,
@@ -408,46 +408,46 @@ $canEdit = match(true) {
 };
 ```
 
-**На собеседовании скажешь:**
-> "match — улучшенный switch в PHP 8. Отличия: строгое сравнение (===), возвращает значение, не нужен break. Выбрасывает ошибку, если нет совпадений и default. Использую вместо switch для возврата значений."
+**Na entrevista:**
+> "match é o switch melhorado do PHP 8. Diferenças: comparação estrita (===), devolve valor, não precisa de break. Se não der match e não tiver default, lança erro. Uso no lugar de switch quando preciso devolver valor."
 
 ---
 
-## Оператор объединения строк
+## Operador de concatenação
 
-**Что это:**
-Конкатенация строк через `.` или интерполяция.
+**O que é:**
+Juntar strings com `.` ou interpolação.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Конкатенация через .
-$firstName = 'Иван';
-$lastName = 'Иванов';
-$fullName = $firstName . ' ' . $lastName;  // "Иван Иванов"
+// Concatenação com .
+$firstName = 'João';
+$lastName = 'Silva';
+$fullName = $firstName . ' ' . $lastName;  // "João Silva"
 
-// .= (добавление к строке)
-$message = 'Привет, ';
+// .= (acrescenta na string)
+$message = 'Olá, ';
 $message .= $firstName;
 $message .= '!';
-echo $message;  // "Привет, Иван!"
+echo $message;  // "Olá, João!"
 
-// Интерполяция (в двойных кавычках)
-$greeting = "Привет, $firstName!";  // "Привет, Иван!"
-$greeting = "Привет, {$firstName}!";  // Явная интерполяция
+// Interpolação (aspas duplas)
+$greeting = "Olá, $firstName!";  // "Olá, João!"
+$greeting = "Olá, {$firstName}!";  // Interpolação explícita
 
-// Для свойств/методов — обязательны {}
-$greeting = "Привет, {$user->name}!";
+// Propriedade/método — {} é obrigatório
+$greeting = "Olá, {$user->name}!";
 ```
 
-**Когда использовать:**
-- Интерполяция — для простых случаев
-- Конкатенация — для сложных выражений
+**Quando usar:**
+- Interpolação — caso simples
+- Concatenação — expressão mais complexa
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Email шаблон
-$subject = "Здравствуйте, {$user->name}!";
-$body = "Ваш заказ #{$order->id} готов к отправке.";
+// Template de email
+$subject = "Olá, {$user->name}!";
+$body = "Seu pedido #{$order->id} está pronto para envio.";
 
 // Query building
 $sql = "SELECT * FROM users ";
@@ -458,31 +458,31 @@ $sql .= "ORDER BY created_at DESC";
 $url = "/api/users/{$userId}/posts/{$postId}";
 
 // Blade (Laravel)
-<h1>Привет, {{ $user->name }}!</h1>
-<p>Заказ #{{ $order->id }}</p>
+<h1>Olá, {{ $user->name }}!</h1>
+<p>Pedido #{{ $order->id }}</p>
 ```
 
-**На собеседовании скажешь:**
-> "Конкатенация через . или интерполяция в двойных кавычках. Для переменных: $var или {$var}. Для свойств/методов обязательны {}: {$user->name}."
+**Na entrevista:**
+> "Concatenação com . ou interpolação em aspas duplas. Variável: $var ou {$var}. Propriedade e método exigem {}: {$user->name}."
 
 ---
 
-## Оператор распаковки (Spread, PHP 7.4+)
+## Operador spread (PHP 7.4+)
 
-**Что это:**
-Распаковка массивов через `...`.
+**O que é:**
+Unpacking de arrays com `...`.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Распаковка массива
+// Unpacking do array
 $arr1 = [1, 2, 3];
 $arr2 = [4, 5, 6];
 $merged = [...$arr1, ...$arr2];  // [1, 2, 3, 4, 5, 6]
 
-// Эквивалентно array_merge, но быстрее
+// Equivale a array_merge, mas mais rápido
 $merged = array_merge($arr1, $arr2);
 
-// Распаковка в функцию
+// Unpacking na função
 function sum(int ...$numbers): int {
     return array_sum($numbers);
 }
@@ -490,37 +490,37 @@ function sum(int ...$numbers): int {
 echo sum(1, 2, 3, 4, 5);  // 15
 
 $values = [1, 2, 3];
-echo sum(...$values);  // 6 (распаковка массива в аргументы)
+echo sum(...$values);  // 6 (unpacking do array em argumentos)
 
-// Ассоциативные массивы (PHP 8.1+)
-$user = ['name' => 'Иван', 'age' => 25];
-$extra = ['city' => 'Москва'];
+// Arrays associativos (PHP 8.1+)
+$user = ['name' => 'João', 'age' => 25];
+$extra = ['city' => 'São Paulo'];
 $merged = [...$user, ...$extra];
-// ['name' => 'Иван', 'age' => 25, 'city' => 'Москва']
+// ['name' => 'João', 'age' => 25, 'city' => 'São Paulo']
 ```
 
-**Когда использовать:**
-Для слияния массивов, передачи списка аргументов.
+**Quando usar:**
+Juntar arrays, passar lista de argumentos.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Merge query параметров
+// Merge de query params
 $defaultFilters = ['status' => 'active', 'per_page' => 20];
 $userFilters = $request->only(['search', 'category']);
 $filters = [...$defaultFilters, ...$userFilters];
 
-// Eloquent with() с дополнительными отношениями
+// Eloquent with() com relations extras
 $baseRelations = ['author', 'category'];
 $extraRelations = ['comments', 'tags'];
 $posts = Post::with([...$baseRelations, ...$extraRelations])->get();
 
-// Variadic функция
+// Função variadic
 class EventDispatcher
 {
     public function fire(string $event, ...$args): void
     {
         foreach ($this->listeners[$event] ?? [] as $listener) {
-            $listener(...$args);  // Передаём все аргументы
+            $listener(...$args);  // Passa todos os argumentos
         }
     }
 }
@@ -528,89 +528,89 @@ class EventDispatcher
 $dispatcher->fire('user.created', $user, $timestamp);
 ```
 
-**На собеседовании скажешь:**
-> "... (spread) распаковывает массив. Использую для слияния массивов (быстрее array_merge), передачи списка аргументов в функцию. PHP 8.1 поддерживает spread для ассоциативных массивов."
+**Na entrevista:**
+> "... (spread) desempacota o array. Uso para juntar arrays (mais rápido que array_merge) e passar lista de argumentos. PHP 8.1 aceita spread em array associativo."
 
 ---
 
-## Резюме операторов
+## Recapitulando
 
-**Арифметические:**
+**Aritméticos:**
 - `+, -, *, /, %, **`
-- `++, --` (инкремент/декремент)
+- `++, --` (incremento/decremento)
 
-**Сравнение:**
-- `==` vs `===` (всегда используй ===)
-- `<=>` (spaceship для сортировки)
+**Comparação:**
+- `==` vs `===` (sempre use ===)
+- `<=>` (spaceship para ordenar)
 
-**Логические:**
-- `&&, ||, !` (ленивое вычисление)
+**Lógicos:**
+- `&&, ||, !` (short-circuit)
 
-**Null-операторы:**
+**Operadores de null:**
 - `??` (null coalescing)
 - `??=` (null coalescing assignment)
 - `?->` (nullsafe, PHP 8.0)
 
-**Условные:**
-- `? :` (тернарный)
-- `match` (PHP 8.0, вместо switch)
+**Condicionais:**
+- `? :` (ternário)
+- `match` (PHP 8.0, no lugar do switch)
 
-**Строки:**
-- `.` (конкатенация)
-- `"$var"` (интерполяция)
+**Strings:**
+- `.` (concatenação)
+- `"$var"` (interpolação)
 
-**Массивы:**
+**Arrays:**
 - `...` (spread, PHP 7.4+)
 
-**Важно на собесе:**
-- `===` vs `==` (строгое vs нестрогое)
+**Importante na entrevista:**
+- `===` vs `==` (estrita vs frouxa)
 - `??` vs `?:` (null vs falsy)
 - `match` vs `switch` (PHP 8.0)
-- `?->` для безопасного доступа (PHP 8.0)
+- `?->` para acesso seguro (PHP 8.0)
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Разница между == и ===
-**Условие:** Предскажи результат сравнений.
+### Exercício 1: Diferença entre == e ===
+**Enunciado:** Preveja o resultado das comparações.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// == (нестрогое сравнение)
-var_dump(5 == '5');       // true (приведёт '5' → 5)
+// == (comparação frouxa)
+var_dump(5 == '5');       // true (converte '5' → 5)
 var_dump(0 == false);     // true
 var_dump('' == false);    // true
 var_dump(null == false);  // true
 var_dump('0' == false);   // true
 var_dump([] == false);    // true
 
-// === (строгое сравнение)
-var_dump(5 === '5');      // false (разные типы)
+// === (comparação estrita)
+var_dump(5 === '5');      // false (tipos diferentes)
 var_dump(0 === false);    // false
 var_dump('' === false);   // false
 var_dump(null === false); // false
 var_dump('0' === false);  // false
 var_dump([] === false);   // false
 
-// Опасная проблема с ==
+// Problema perigoso do ==
 function findUserById(int $id, array $users): ?array
 {
     foreach ($users as $user) {
-        // ❌ ОПАСНО
+        // ❌ PERIGOSO
         if ($user['id'] == $id) {
             return $user;
         }
-        // Если $id = '1abc', найдёт пользователя с id = 1!
+        // Se $id = '1abc', acha o usuário com id = 1!
     }
     return null;
 }
 
-// ✅ ПРАВИЛЬНО
+// ✅ CERTO
 function findUserByIdCorrect(int $id, array $users): ?array
 {
     foreach ($users as $user) {
@@ -622,124 +622,124 @@ function findUserByIdCorrect(int $id, array $users): ?array
 }
 ```
 
-**Ключевые моменты:**
-- `==` приводит типы (type juggling)
-- `===` проверяет тип и значение
-- Всегда используй `===` для безопасности
+**Pontos-chave:**
+- `==` converte tipos (type juggling)
+- `===` checa tipo e valor
+- Sempre use `===` por segurança
 </details>
 
-### Задание 2: ?? vs ?:
-**Условие:** Объясни разницу между ?? и ?:.
+### Exercício 2: ?? vs ?:
+**Enunciado:** Explique a diferença entre ?? e ?:.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
 $value = 0;
 
-// ?: (Elvis operator) проверяет truthy/falsy
+// ?: (Elvis operator) checa truthy/falsy
 echo $value ?: 'default';   // "default" (0 = falsy)
 
-// ?? (null coalescing) проверяет только null
-echo $value ?? 'default';   // "0" (0 не null)
+// ?? (null coalescing) checa só null
+echo $value ?? 'default';   // "0" (0 não é null)
 
-// Примеры
+// Exemplos
 $name = '';
-echo $name ?: 'Guest';      // "Guest" ('' = falsy)
-echo $name ?? 'Guest';      // "" ('' не null)
+echo $name ?: 'Visitante';      // "Visitante" ('' = falsy)
+echo $name ?? 'Visitante';      // "" ('' não é null)
 
 $age = null;
 echo $age ?: 18;            // 18
 echo $age ?? 18;            // 18
 
-// Практический пример
+// Exemplo prático
 function getConfig(array $config): array
 {
     return [
-        // ?: для значений, которые могут быть пустыми
-        'title' => $config['title'] ?: 'Untitled',
+        // ?: para valores que podem vir vazios
+        'title' => $config['title'] ?: 'Sem título',
 
-        // ?? для опциональных параметров
+        // ?? para parâmetros opcionais
         'timeout' => $config['timeout'] ?? 30,
         'retries' => $config['retries'] ?? 3,
     ];
 }
 
-// Laravel пример
+// Exemplo Laravel
 public function index(Request $request)
 {
-    // ?? для query параметров
+    // ?? para query params
     $page = $request->input('page') ?? 1;
     $perPage = $request->input('per_page') ?? 20;
 
-    // ?: для fallback значений
+    // ?: para fallback
     $search = $request->input('search') ?: null;
 }
 ```
 
-**Ключевые моменты:**
-- `?:` проверяет falsy (0, '', false, null, [])
-- `??` проверяет только null
-- `??` безопаснее для числовых значений (0, '0')
+**Pontos-chave:**
+- `?:` checa falsy (0, '', false, null, [])
+- `??` checa só null
+- `??` é mais seguro para número (0, '0')
 </details>
 
-### Задание 3: match vs switch
-**Условие:** Перепиши switch на match.
+### Exercício 3: match vs switch
+**Enunciado:** Reescreva o switch usando match.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ switch (старый способ)
+// ❌ switch (jeito antigo)
 $status = 'pending';
 $message = '';
 
 switch ($status) {
     case 'pending':
-        $message = 'В ожидании';
+        $message = 'Aguardando';
         break;
     case 'paid':
-        $message = 'Оплачен';
+        $message = 'Pago';
         break;
     case 'shipped':
-        $message = 'Отправлен';
+        $message = 'Enviado';
         break;
     default:
-        $message = 'Неизвестен';
+        $message = 'Desconhecido';
 }
 
 echo $message;
 
 // ✅ match (PHP 8.0)
 $message = match($status) {
-    'pending' => 'В ожидании',
-    'paid' => 'Оплачен',
-    'shipped' => 'Отправлен',
-    default => 'Неизвестен',
+    'pending' => 'Aguardando',
+    'paid' => 'Pago',
+    'shipped' => 'Enviado',
+    default => 'Desconhecido',
 };
 
 echo $message;
 
-// Преимущества match
-// 1. Строгое сравнение (===)
+// Vantagens do match
+// 1. Comparação estrita (===)
 $value = '1';
 
 switch ($value) {
-    case 1:  // Выполнится! (== приведёт '1' → 1)
+    case 1:  // Roda! (== converte '1' → 1)
         echo 'One';
         break;
 }
 
 match($value) {
-    1 => 'One',  // НЕ выполнится (=== разные типы)
+    1 => 'One',  // NÃO roda (=== tipos diferentes)
     default => 'Other',
 };
 
-// 2. Возвращает значение
+// 2. Devolve valor
 $badge = match($status) {
     'pending' => 'badge-warning',
     'paid' => 'badge-success',
@@ -747,7 +747,7 @@ $badge = match($status) {
     default => 'badge-secondary',
 };
 
-// 3. Несколько значений
+// 3. Vários valores
 $httpCategory = match($code) {
     200, 201, 204 => 'success',
     400, 401, 403, 404 => 'client_error',
@@ -755,7 +755,7 @@ $httpCategory = match($code) {
     default => 'unknown',
 };
 
-// 4. Условия
+// 4. Condições
 $category = match(true) {
     $age < 18 => 'child',
     $age < 65 => 'adult',
@@ -763,13 +763,13 @@ $category = match(true) {
 };
 ```
 
-**Ключевые моменты:**
-- `match` использует строгое сравнение (===)
-- `match` возвращает значение (не нужен break)
-- `match` выбрасывает UnhandledMatchError если нет совпадений
-- `match` короче и читаемее
+**Pontos-chave:**
+- `match` usa comparação estrita (===)
+- `match` devolve valor (não precisa de break)
+- `match` lança UnhandledMatchError se não der match
+- `match` é mais curto e mais legível
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

@@ -1,65 +1,65 @@
-# 1.6 Массивы в PHP
+# 1.6 Arrays em PHP
 
 > **TL;DR**
-> PHP массивы — упорядоченная хеш-таблица с copy-on-write. in_array по умолчанию нестрогое (нужен третий параметр true). unset() не переиндексирует (нужен array_values). array_key_exists работает с null, isset() нет. Spread (...) быстрее array_merge. В Laravel предпочитай Collection методы (map, filter, reduce) вместо array_*.
+> Array em PHP é uma hash table ordenada com copy-on-write. in_array por padrão não é estrito (precisa do terceiro parâmetro true). unset() não reindexa (precisa de array_values). array_key_exists funciona com null, isset() não. Spread (...) é mais rápido que array_merge. No Laravel, prefira os métodos de Collection (map, filter, reduce) no lugar de array_*.
 
-## Содержание
+## Conteúdo
 
-- [Создание массивов](#создание-массивов)
-- [Добавление и удаление элементов](#добавление-и-удаление-элементов)
+- [Criação de arrays](#criação-de-arrays)
+- [Adição e remoção de elementos](#adição-e-remoção-de-elementos)
 - [array_map, array_filter, array_reduce](#array_map-array_filter-array_reduce)
-- [Сортировка массивов](#сортировка-массивов)
+- [Ordenação de arrays](#ordenação-de-arrays)
 - [array_merge, array_combine, array_diff](#array_merge-array_combine-array_diff)
 - [in_array, array_key_exists, array_search](#in_array-array_key_exists-array_search)
 - [array_column, array_unique, array_flip](#array_column-array_unique-array_flip)
-- [Деструктуризация массивов (PHP 7.1+)](#деструктуризация-массивов-php-71)
+- [Desestruturação de arrays (PHP 7.1+)](#desestruturação-de-arrays-php-71)
 - [Spread Operator (PHP 7.4+)](#spread-operator-php-74)
-- [Резюме массивов](#резюме-массивов)
-- [Практические задания](#практические-задания)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Создание массивов
+## Criação de arrays
 
-**Что это:**
-Упорядоченная коллекция пар ключ-значение.
+**O que é:**
+Coleção ordenada de pares chave-valor.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Индексный массив (numeric keys)
+// Array indexado (numeric keys)
 $numbers = [1, 2, 3, 4, 5];
-$numbers = array(1, 2, 3, 4, 5);  // Старый синтаксис
+$numbers = array(1, 2, 3, 4, 5);  // Sintaxe antiga
 
-// Ассоциативный массив (string keys)
+// Array associativo (string keys)
 $user = [
     'id' => 1,
-    'name' => 'Иван',
-    'email' => 'ivan@mail.com',
+    'name' => 'João',
+    'email' => 'joao@email.com',
 ];
 
-// Смешанный массив
+// Array misto
 $mixed = [
     0 => 'first',
     'key' => 'value',
     1 => 'second',
 ];
 
-// Вложенные массивы
+// Arrays aninhados
 $users = [
-    ['id' => 1, 'name' => 'Иван'],
-    ['id' => 2, 'name' => 'Пётр'],
+    ['id' => 1, 'name' => 'João'],
+    ['id' => 2, 'name' => 'Pedro'],
 ];
 
-// Доступ к элементам
+// Acesso aos elementos
 echo $numbers[0];      // 1
-echo $user['name'];    // "Иван"
+echo $user['name'];    // "João"
 echo $users[0]['id'];  // 1
 ```
 
-**Когда использовать:**
-Для списков, коллекций, конфигураций, параметров запросов.
+**Quando usar:**
+Lista, coleção, config, parâmetros de request.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
 // Request data
 $data = $request->only(['name', 'email', 'password']);
@@ -82,45 +82,45 @@ return response()->json([
 ]);
 ```
 
-**На собеседовании скажешь:**
-> "PHP массивы — упорядоченная хеш-таблица. Поддерживают индексные (numeric keys) и ассоциативные (string keys) ключи. Внутренне это одна структура данных."
+**Na entrevista:**
+> "Array em PHP é uma hash table ordenada. Aceita chave numérica (indexado) e string (associativo). Por baixo é a mesma estrutura."
 
 ---
 
-## Добавление и удаление элементов
+## Adição e remoção de elementos
 
-**Как работает:**
+**Como funciona:**
 ```php
 $arr = [1, 2, 3];
 
-// Добавление в конец
+// Adicionar no final
 $arr[] = 4;  // [1, 2, 3, 4]
 array_push($arr, 5, 6);  // [1, 2, 3, 4, 5, 6]
 
-// Добавление в начало
+// Adicionar no início
 array_unshift($arr, 0);  // [0, 1, 2, 3, 4, 5, 6]
 
-// Удаление с конца
-$last = array_pop($arr);  // 6, массив [0, 1, 2, 3, 4, 5]
+// Remover do final
+$last = array_pop($arr);  // 6, array [0, 1, 2, 3, 4, 5]
 
-// Удаление с начала
-$first = array_shift($arr);  // 0, массив [1, 2, 3, 4, 5]
+// Remover do início
+$first = array_shift($arr);  // 0, array [1, 2, 3, 4, 5]
 
-// Удаление по ключу
-unset($arr[2]);  // [1, 2, 4, 5] (ключи: 0, 1, 3, 4)
+// Remover por chave
+unset($arr[2]);  // [1, 2, 4, 5] (chaves: 0, 1, 3, 4)
 
-// Удаление с переиндексацией
-$arr = array_values($arr);  // [1, 2, 4, 5] (ключи: 0, 1, 2, 3)
+// Remover e reindexar
+$arr = array_values($arr);  // [1, 2, 4, 5] (chaves: 0, 1, 2, 3)
 
-// Ассоциативные массивы
-$user = ['name' => 'Иван', 'email' => 'ivan@mail.com'];
-$user['age'] = 25;  // Добавить
-unset($user['email']);  // Удалить
+// Arrays associativos
+$user = ['name' => 'João', 'email' => 'joao@email.com'];
+$user['age'] = 25;  // Adicionar
+unset($user['email']);  // Remover
 ```
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Добавление фильтров
+// Adicionar filtros
 $filters = [];
 
 if ($request->has('status')) {
@@ -131,41 +131,41 @@ if ($request->has('department_id')) {
     $filters['department_id'] = $request->input('department_id');
 }
 
-// Merge массивов
+// Merge de arrays
 $defaultParams = ['per_page' => 20, 'sort' => 'created_at'];
 $params = array_merge($defaultParams, $request->only(['search', 'status']));
 
-// Удаление пустых значений
+// Remover valores vazios
 $data = array_filter($request->all(), fn($value) => $value !== null && $value !== '');
 ```
 
-**На собеседовании скажешь:**
-> "Добавление: [] или array_push (конец), array_unshift (начало). Удаление: array_pop (конец), array_shift (начало), unset (по ключу). unset не переиндексирует, нужен array_values."
+**Na entrevista:**
+> "Adicionar: [] ou array_push (final), array_unshift (início). Remover: array_pop (final), array_shift (início), unset (por chave). unset não reindexa — precisa de array_values."
 
 ---
 
 ## array_map, array_filter, array_reduce
 
-**Что это:**
-Функции высшего порядка для работы с массивами.
+**O que é:**
+Funções de ordem superior para trabalhar com arrays.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $numbers = [1, 2, 3, 4, 5];
 
-// array_map — преобразование каждого элемента
+// array_map — transforma cada elemento
 $squared = array_map(fn($n) => $n ** 2, $numbers);
 // [1, 4, 9, 16, 25]
 
-// array_filter — фильтрация элементов
+// array_filter — filtra elementos
 $even = array_filter($numbers, fn($n) => $n % 2 === 0);
-// [2, 4] (ключи сохраняются: [1 => 2, 3 => 4])
+// [2, 4] (as chaves ficam: [1 => 2, 3 => 4])
 
-// array_reduce — свёртка в одно значение
+// array_reduce — reduz a um valor
 $sum = array_reduce($numbers, fn($carry, $n) => $carry + $n, 0);
 // 15 (1 + 2 + 3 + 4 + 5)
 
-// Комбинация
+// Combinando
 $result = array_reduce(
     array_filter($numbers, fn($n) => $n % 2 === 0),
     fn($carry, $n) => $carry + $n ** 2,
@@ -174,28 +174,28 @@ $result = array_reduce(
 // 20 (2² + 4² = 4 + 16)
 ```
 
-**Когда использовать:**
-Для преобразования, фильтрации, агрегации данных.
+**Quando usar:**
+Transformar, filtrar, agregar dados.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Преобразование в ID массив
+// Extrair IDs
 $userIds = array_map(fn($user) => $user['id'], $users);
 
-// Фильтрация активных пользователей
+// Filtrar usuários ativos
 $active = array_filter($users, fn($user) => $user['is_active']);
 
-// Расчёт суммы заказов
+// Somar pedidos
 $total = array_reduce($orders, fn($sum, $order) => $sum + $order['amount'], 0);
 
-// Laravel Collection (лучше использовать вместо array_*)
+// Laravel Collection (melhor que array_*)
 $users = User::all();
 
 $ids = $users->map(fn($user) => $user->id);
 $active = $users->filter(fn($user) => $user->is_active);
 $total = $orders->sum('amount');
 
-// Плюсы Collection: цепочки, ленивое выполнение, читаемость
+// Prós da Collection: encadeia, lazy, lê melhor
 $result = $users
     ->filter(fn($u) => $u->is_active)
     ->map(fn($u) => $u->name)
@@ -203,61 +203,61 @@ $result = $users
     ->values();
 ```
 
-**На собеседовании скажешь:**
-> "array_map — преобразование, array_filter — фильтрация, array_reduce — свёртка. В Laravel предпочитаю Collection методы (map, filter, reduce) — читаемее, поддерживают цепочки."
+**Na entrevista:**
+> "array_map transforma, array_filter filtra, array_reduce reduz a um valor. No Laravel eu prefiro Collection (map, filter, reduce) — lê melhor e encadeia."
 
 ---
 
-## Сортировка массивов
+## Ordenação de arrays
 
-**Как работает:**
+**Como funciona:**
 ```php
 $numbers = [3, 1, 4, 1, 5, 9];
 
-// sort — по значению (ключи переиндексируются)
+// sort — por valor (reindexa as chaves)
 sort($numbers);  // [1, 1, 3, 4, 5, 9]
 
-// rsort — по значению (обратный порядок)
+// rsort — por valor (ordem inversa)
 rsort($numbers);  // [9, 5, 4, 3, 1, 1]
 
-// asort — по значению (ключи сохраняются)
-$ages = ['Иван' => 25, 'Пётр' => 30, 'Мария' => 20];
-asort($ages);  // ['Мария' => 20, 'Иван' => 25, 'Пётр' => 30]
+// asort — por valor (mantém as chaves)
+$ages = ['João' => 25, 'Pedro' => 30, 'Maria' => 20];
+asort($ages);  // ['Maria' => 20, 'João' => 25, 'Pedro' => 30]
 
-// arsort — по значению обратный порядок (ключи сохраняются)
-arsort($ages);  // ['Пётр' => 30, 'Иван' => 25, 'Мария' => 20]
+// arsort — por valor, ordem inversa (mantém as chaves)
+arsort($ages);  // ['Pedro' => 30, 'João' => 25, 'Maria' => 20]
 
-// ksort — по ключу
-ksort($ages);  // ['Иван' => 25, 'Мария' => 20, 'Пётр' => 30]
+// ksort — por chave
+ksort($ages);  // ['João' => 25, 'Maria' => 20, 'Pedro' => 30]
 
-// krsort — по ключу обратный порядок
-krsort($ages);  // ['Пётр' => 30, 'Мария' => 20, 'Иван' => 25]
+// krsort — por chave, ordem inversa
+krsort($ages);  // ['Pedro' => 30, 'Maria' => 20, 'João' => 25]
 
-// usort — custom сортировка
+// usort — sort custom
 $users = [
-    ['name' => 'Иван', 'age' => 25],
-    ['name' => 'Пётр', 'age' => 30],
-    ['name' => 'Мария', 'age' => 20],
+    ['name' => 'João', 'age' => 25],
+    ['name' => 'Pedro', 'age' => 30],
+    ['name' => 'Maria', 'age' => 20],
 ];
 
 usort($users, fn($a, $b) => $a['age'] <=> $b['age']);
-// [['Мария', 20], ['Иван', 25], ['Пётр', 30]]
+// [['Maria', 20], ['João', 25], ['Pedro', 30]]
 ```
 
-**Когда использовать:**
-Для упорядочивания данных по критерию.
+**Quando usar:**
+Ordenar dados por um critério.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Сортировка товаров по цене
+// Ordenar produtos por preço
 usort($products, fn($a, $b) => $a['price'] <=> $b['price']);
 
-// Сортировка по убыванию
+// Ordem decrescente
 usort($products, fn($a, $b) => $b['price'] <=> $a['price']);
 
-// Многоуровневая сортировка
+// Ordenação em mais de um nível
 usort($products, function($a, $b) {
-    // Сначала по категории, потом по цене
+    // Primeiro por categoria, depois por preço
     $categoryCompare = $a['category'] <=> $b['category'];
     if ($categoryCompare !== 0) {
         return $categoryCompare;
@@ -274,117 +274,117 @@ $sorted = $products->sortBy([
 ]);
 ```
 
-**На собеседовании скажешь:**
-> "sort — по значению (переиндексирует), asort — по значению (сохраняет ключи), ksort — по ключу. usort — custom сортировка через callback. В Laravel использую Collection::sortBy()."
+**Na entrevista:**
+> "sort ordena por valor e reindexa. asort ordena por valor e guarda as chaves. ksort ordena por chave. usort é sort custom com callback. No Laravel eu uso Collection::sortBy()."
 
 ---
 
 ## array_merge, array_combine, array_diff
 
-**Как работает:**
+**Como funciona:**
 ```php
-// array_merge — слияние массивов
+// array_merge — junta arrays
 $arr1 = [1, 2, 3];
 $arr2 = [4, 5, 6];
 $merged = array_merge($arr1, $arr2);  // [1, 2, 3, 4, 5, 6]
 
-// Ассоциативные — последнее значение перезаписывает
-$user1 = ['name' => 'Иван', 'age' => 25];
-$user2 = ['age' => 30, 'email' => 'ivan@mail.com'];
+// Associativo — o último valor sobrescreve
+$user1 = ['name' => 'João', 'age' => 25];
+$user2 = ['age' => 30, 'email' => 'joao@email.com'];
 $merged = array_merge($user1, $user2);
-// ['name' => 'Иван', 'age' => 30, 'email' => 'ivan@mail.com']
+// ['name' => 'João', 'age' => 30, 'email' => 'joao@email.com']
 
 // Spread operator (PHP 7.4+)
 $merged = [...$arr1, ...$arr2];
 
-// array_combine — создать массив из ключей и значений
+// array_combine — monta o array a partir de chaves e valores
 $keys = ['name', 'age', 'email'];
-$values = ['Иван', 25, 'ivan@mail.com'];
+$values = ['João', 25, 'joao@email.com'];
 $user = array_combine($keys, $values);
-// ['name' => 'Иван', 'age' => 25, 'email' => 'ivan@mail.com']
+// ['name' => 'João', 'age' => 25, 'email' => 'joao@email.com']
 
-// array_diff — разница между массивами (по значению)
+// array_diff — diferença entre arrays (por valor)
 $arr1 = [1, 2, 3, 4, 5];
 $arr2 = [3, 4, 5, 6, 7];
 $diff = array_diff($arr1, $arr2);  // [1, 2]
 
-// array_intersect — пересечение
+// array_intersect — interseção
 $intersect = array_intersect($arr1, $arr2);  // [3, 4, 5]
 ```
 
-**Когда использовать:**
-Для объединения, сравнения, создания массивов.
+**Quando usar:**
+Juntar, comparar, montar arrays.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Merge параметров запроса с default значениями
+// Merge dos parâmetros do request com defaults
 $defaults = ['per_page' => 20, 'sort' => 'created_at', 'order' => 'desc'];
 $params = array_merge($defaults, $request->only(['per_page', 'sort', 'order']));
 
-// Spread для merge (быстрее)
+// Spread no merge (mais rápido)
 $params = [...$defaults, ...$request->only(['per_page', 'sort', 'order'])];
 
-// Создание массива из результатов запроса
+// Montar array a partir do resultado da query
 $users = User::all();
 $ids = $users->pluck('id')->toArray();
 $names = $users->pluck('name')->toArray();
 $usersById = array_combine($ids, $names);
-// [1 => 'Иван', 2 => 'Пётр', ...]
+// [1 => 'João', 2 => 'Pedro', ...]
 
-// Найти удалённые роли пользователя
+// Achar roles removidas do usuário
 $oldRoles = [1, 2, 3, 4];
 $newRoles = [2, 3, 5];
 $removed = array_diff($oldRoles, $newRoles);  // [1, 4]
 $added = array_diff($newRoles, $oldRoles);    // [5]
 
-// Синхронизация ролей
-$user->roles()->sync($newRoles);  // Laravel автоматически найдёт diff
+// Sincronizar roles
+$user->roles()->sync($newRoles);  // O Laravel acha o diff sozinho
 ```
 
-**На собеседовании скажешь:**
-> "array_merge объединяет массивы (последнее значение перезаписывает). array_combine создаёт массив из ключей и значений. array_diff — разница, array_intersect — пересечение. Spread (...) быстрее array_merge."
+**Na entrevista:**
+> "array_merge junta arrays (o último valor sobrescreve). array_combine monta o array a partir de chaves e valores. array_diff é a diferença, array_intersect é a interseção. Spread (...) é mais rápido que array_merge."
 
 ---
 
 ## in_array, array_key_exists, array_search
 
-**Как работает:**
+**Como funciona:**
 ```php
 $numbers = [1, 2, 3, 4, 5];
-$user = ['name' => 'Иван', 'age' => 25];
+$user = ['name' => 'João', 'age' => 25];
 
-// in_array — проверка значения (НЕстрогая по умолчанию)
+// in_array — checa o valor (NÃO estrito por padrão)
 var_dump(in_array(3, $numbers));     // true
-var_dump(in_array('3', $numbers));   // true (приведёт '3' → 3)
+var_dump(in_array('3', $numbers));   // true (converte '3' → 3)
 
-// Строгая проверка (third parameter)
+// Checagem estrita (terceiro parâmetro)
 var_dump(in_array('3', $numbers, true));  // false
 
-// array_key_exists — проверка ключа
+// array_key_exists — checa a chave
 var_dump(array_key_exists('name', $user));  // true
 var_dump(array_key_exists('email', $user)); // false
 
 // isset() vs array_key_exists()
 $arr = ['key' => null];
-var_dump(isset($arr['key']));              // false (значение null)
-var_dump(array_key_exists('key', $arr));   // true (ключ существует)
+var_dump(isset($arr['key']));              // false (valor null)
+var_dump(array_key_exists('key', $arr));   // true (a chave existe)
 
-// array_search — поиск ключа по значению
+// array_search — acha a chave pelo valor
 $fruits = ['apple', 'banana', 'orange'];
 $key = array_search('banana', $fruits);  // 1
-$key = array_search('grape', $fruits);   // false (не найдено)
+$key = array_search('grape', $fruits);   // false (não achou)
 ```
 
-**Когда использовать:**
-Для проверки наличия значения, ключа, поиска позиции.
+**Quando usar:**
+Checar se o valor existe, se a chave existe, achar a posição.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка ролей пользователя
+// Checar roles do usuário
 $userRoles = ['editor', 'author'];
 
 if (in_array('admin', $userRoles, true)) {
-    // Пользователь админ
+    // Usuário é admin
 }
 
 // Laravel Collection
@@ -392,7 +392,7 @@ if ($user->roles->contains('name', 'admin')) {
     // ...
 }
 
-// Проверка наличия параметра
+// Checar se o parâmetro veio
 if (array_key_exists('status', $request->query())) {
     $status = $request->query('status');
 }
@@ -402,136 +402,136 @@ if ($request->has('status')) {
     $status = $request->input('status');
 }
 
-// Поиск индекса элемента
+// Achar o índice do elemento
 $statuses = ['pending', 'paid', 'shipped', 'delivered'];
 $currentIndex = array_search($order->status, $statuses);
 $nextStatus = $statuses[$currentIndex + 1] ?? null;
 ```
 
-**На собеседовании скажешь:**
-> "in_array проверяет значение (по умолчанию нестрогое, нужен третий параметр true). array_key_exists проверяет ключ (работает с null). array_search возвращает ключ по значению. В Laravel использую Collection::contains()."
+**Na entrevista:**
+> "in_array checa o valor (por padrão não é estrito — precisa do terceiro parâmetro true). array_key_exists checa a chave (funciona com null). array_search devolve a chave pelo valor. No Laravel eu uso Collection::contains()."
 
 ---
 
 ## array_column, array_unique, array_flip
 
-**Как работает:**
+**Como funciona:**
 ```php
 $users = [
-    ['id' => 1, 'name' => 'Иван', 'age' => 25],
-    ['id' => 2, 'name' => 'Пётр', 'age' => 30],
-    ['id' => 3, 'name' => 'Мария', 'age' => 20],
+    ['id' => 1, 'name' => 'João', 'age' => 25],
+    ['id' => 2, 'name' => 'Pedro', 'age' => 30],
+    ['id' => 3, 'name' => 'Maria', 'age' => 20],
 ];
 
-// array_column — извлечь колонку
-$names = array_column($users, 'name');  // ['Иван', 'Пётр', 'Мария']
+// array_column — extrai a coluna
+$names = array_column($users, 'name');  // ['João', 'Pedro', 'Maria']
 $ids = array_column($users, 'id');      // [1, 2, 3]
 
-// С индексом по другой колонке
+// Com índice de outra coluna
 $usersById = array_column($users, null, 'id');
 // [1 => [...], 2 => [...], 3 => [...]]
 
 $nameById = array_column($users, 'name', 'id');
-// [1 => 'Иван', 2 => 'Пётр', 3 => 'Мария']
+// [1 => 'João', 2 => 'Pedro', 3 => 'Maria']
 
-// array_unique — удалить дубликаты
+// array_unique — tira duplicatas
 $numbers = [1, 2, 2, 3, 3, 3, 4];
-$unique = array_unique($numbers);  // [1, 2, 3, 4] (ключи сохраняются!)
+$unique = array_unique($numbers);  // [1, 2, 3, 4] (as chaves ficam!)
 
-// array_flip — поменять ключи и значения местами
+// array_flip — troca chave e valor
 $map = ['a' => 'apple', 'b' => 'banana'];
 $flipped = array_flip($map);  // ['apple' => 'a', 'banana' => 'b']
 ```
 
-**Когда использовать:**
-- `array_column` — извлечь определённые поля из массива объектов/массивов
-- `array_unique` — убрать дубликаты
-- `array_flip` — создать reverse map (значение → ключ)
+**Quando usar:**
+- `array_column` — extrair campos de um array de objetos/arrays
+- `array_unique` — tirar duplicatas
+- `array_flip` — montar o reverse map (valor → chave)
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Получить ID всех пользователей
+// Pegar o ID de todos os usuários
 $users = User::all()->toArray();
 $ids = array_column($users, 'id');
 
-// Laravel Collection (лучше)
+// Laravel Collection (melhor)
 $ids = User::all()->pluck('id')->toArray();
 
-// Индексировать по ID
+// Indexar por ID
 $usersById = array_column($users, null, 'id');
 
 // Laravel Collection
 $usersById = User::all()->keyBy('id');
 
-// Убрать дубликаты категорий
+// Tirar categorias duplicadas
 $categories = [1, 2, 2, 3, 3, 3];
 $unique = array_unique($categories);
 
 // Laravel Collection
 $unique = collect($categories)->unique()->values();
 
-// Reverse map для быстрого поиска
-$statusNames = ['pending' => 'В ожидании', 'paid' => 'Оплачен'];
+// Reverse map para busca rápida
+$statusNames = ['pending' => 'Aguardando', 'paid' => 'Pago'];
 $nameToStatus = array_flip($statusNames);
-// ['В ожидании' => 'pending', 'Оплачен' => 'paid']
+// ['Aguardando' => 'pending', 'Pago' => 'paid']
 ```
 
-**На собеседовании скажешь:**
-> "array_column извлекает колонку из массива массивов. array_unique удаляет дубликаты (ключи сохраняются). array_flip меняет ключи и значения местами. В Laravel использую Collection методы (pluck, unique, keyBy)."
+**Na entrevista:**
+> "array_column extrai uma coluna de um array de arrays. array_unique tira duplicatas (as chaves ficam). array_flip troca chave e valor. No Laravel eu uso os métodos de Collection (pluck, unique, keyBy)."
 
 ---
 
-## Деструктуризация массивов (PHP 7.1+)
+## Desestruturação de arrays (PHP 7.1+)
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Индексный массив
-$user = ['Иван', 'ivan@mail.com', 25];
+// Array indexado
+$user = ['João', 'joao@email.com', 25];
 
-// Старый способ
+// Jeito antigo
 $name = $user[0];
 $email = $user[1];
 $age = $user[2];
 
-// Деструктуризация (PHP 7.1+)
+// Desestruturação (PHP 7.1+)
 [$name, $email, $age] = $user;
 
-// Пропуск элементов
-[$name, , $age] = $user;  // Пропустили $email
+// Pular elementos
+[$name, , $age] = $user;  // Pulou $email
 
-// Ассоциативный массив (PHP 7.1+)
-$user = ['name' => 'Иван', 'email' => 'ivan@mail.com', 'age' => 25];
+// Array associativo (PHP 7.1+)
+$user = ['name' => 'João', 'email' => 'joao@email.com', 'age' => 25];
 ['name' => $name, 'age' => $age] = $user;
 
-// В foreach
+// No foreach
 $users = [
-    ['name' => 'Иван', 'age' => 25],
-    ['name' => 'Пётр', 'age' => 30],
+    ['name' => 'João', 'age' => 25],
+    ['name' => 'Pedro', 'age' => 30],
 ];
 
 foreach ($users as ['name' => $name, 'age' => $age]) {
-    echo "$name: $age лет";
+    echo "$name: $age anos";
 }
 
-// В параметрах функции
+// Nos parâmetros da função
 function greet(['name' => $name, 'age' => $age]): string
 {
-    return "Привет, $name! Тебе $age лет.";
+    return "Olá, $name! Você tem $age anos.";
 }
 
-echo greet(['name' => 'Иван', 'age' => 25]);
+echo greet(['name' => 'João', 'age' => 25]);
 ```
 
-**Когда использовать:**
-Для распаковки массивов, возвращающих несколько значений.
+**Quando usar:**
+Desempacotar arrays que devolvem vários valores.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Получение min/max
+// Pegar min/max
 $prices = [100, 200, 150, 300];
 [$min, $max] = [min($prices), max($prices)];
 
-// Пагинация
+// Paginação
 function paginate(int $page, int $perPage): array
 {
     $offset = ($page - 1) * $perPage;
@@ -548,40 +548,40 @@ function paginate(int $page, int $perPage): array
 // Laravel
 [$users, $total] = [User::paginate(20)->items(), User::count()];
 
-// Координаты
-$point = [55.7558, 37.6173];  // Москва
+// Coordenadas
+$point = [-23.5505, -46.6333];  // São Paulo
 [$lat, $lng] = $point;
 ```
 
-**На собеседовании скажешь:**
-> "Деструктуризация (PHP 7.1+) распаковывает массив в переменные: [$a, $b] = [1, 2]. Работает с индексными и ассоциативными массивами. Использую для распаковки результатов функций, в foreach."
+**Na entrevista:**
+> "Desestruturação (PHP 7.1+) desempacota o array em variáveis: [$a, $b] = [1, 2]. Funciona com indexado e associativo. Uso para desempacotar o retorno da função e no foreach."
 
 ---
 
 ## Spread Operator (PHP 7.4+)
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Распаковка массивов
+// Desempacotar arrays
 $arr1 = [1, 2, 3];
 $arr2 = [4, 5, 6];
 
 // array_merge
 $merged = array_merge($arr1, $arr2);  // [1, 2, 3, 4, 5, 6]
 
-// Spread (быстрее и короче)
+// Spread (mais rápido e mais curto)
 $merged = [...$arr1, ...$arr2];  // [1, 2, 3, 4, 5, 6]
 
-// Добавление элементов
+// Inserir elementos
 $extended = [...$arr1, 99, ...$arr2];  // [1, 2, 3, 99, 4, 5, 6]
 
-// Ассоциативные массивы (PHP 8.1+)
-$user = ['name' => 'Иван', 'age' => 25];
-$extra = ['city' => 'Москва'];
+// Arrays associativos (PHP 8.1+)
+$user = ['name' => 'João', 'age' => 25];
+$extra = ['city' => 'São Paulo'];
 $merged = [...$user, ...$extra];
-// ['name' => 'Иван', 'age' => 25, 'city' => 'Москва']
+// ['name' => 'João', 'age' => 25, 'city' => 'São Paulo']
 
-// Variadic функции
+// Funções variadic
 function sum(int ...$numbers): int
 {
     return array_sum($numbers);
@@ -591,17 +591,17 @@ $numbers = [1, 2, 3, 4, 5];
 echo sum(...$numbers);  // 15
 ```
 
-**Когда использовать:**
-Для слияния массивов (быстрее array_merge), передачи списка аргументов.
+**Quando usar:**
+Juntar arrays (mais rápido que array_merge), passar lista de argumentos.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Merge конфигов
+// Merge de configs
 $defaults = ['timeout' => 30, 'retries' => 3];
 $custom = ['timeout' => 60];
-$config = [...$defaults, ...$custom];  // timeout будет 60
+$config = [...$defaults, ...$custom];  // timeout fica 60
 
-// Добавление middleware
+// Adicionar middleware
 $baseMiddleware = ['auth', 'verified'];
 $adminMiddleware = [...$baseMiddleware, 'admin'];
 
@@ -609,87 +609,87 @@ Route::middleware($adminMiddleware)->group(function() {
     // ...
 });
 
-// Передача параметров
+// Passar parâmetros
 $params = ['status' => 'active', 'department_id' => 5];
-$users = User::where(...$params)->get();  // ❌ Не работает так
+$users = User::where(...$params)->get();  // ❌ Não funciona assim
 
-// Правильно
+// Certo
 $users = User::where($params)->get();
-// или
+// ou
 foreach ($params as $key => $value) {
     $query->where($key, $value);
 }
 ```
 
-**На собеседовании скажешь:**
-> "Spread (...) распаковывает массив (PHP 7.4+). Быстрее array_merge. PHP 8.1 добавил поддержку ассоциативных массивов. Использую для слияния массивов, передачи списка аргументов в функцию."
+**Na entrevista:**
+> "Spread (...) desempacota o array (PHP 7.4+). É mais rápido que array_merge. PHP 8.1 passou a aceitar array associativo. Uso para juntar arrays e passar lista de argumentos."
 
 ---
 
-## Резюме массивов
+## Recapitulando
 
-**Основное:**
-- Создание: `[1, 2, 3]` или `['key' => 'value']`
-- Добавление: `[]` (конец), `array_push`, `array_unshift`
-- Удаление: `array_pop`, `array_shift`, `unset`
-- Функции высшего порядка: `array_map`, `array_filter`, `array_reduce`
-- Сортировка: `sort`, `asort`, `ksort`, `usort`
-- Слияние: `array_merge`, spread `[...$a, ...$b]`
-- Поиск: `in_array`, `array_key_exists`, `array_search`
-- Утилиты: `array_column`, `array_unique`, `array_flip`
-- Деструктуризация: `[$a, $b] = [1, 2]` (PHP 7.1+)
+**O essencial:**
+- Criação: `[1, 2, 3]` ou `['key' => 'value']`
+- Adicionar: `[]` (final), `array_push`, `array_unshift`
+- Remover: `array_pop`, `array_shift`, `unset`
+- Funções de ordem superior: `array_map`, `array_filter`, `array_reduce`
+- Ordenação: `sort`, `asort`, `ksort`, `usort`
+- Merge: `array_merge`, spread `[...$a, ...$b]`
+- Busca: `in_array`, `array_key_exists`, `array_search`
+- Utilitários: `array_column`, `array_unique`, `array_flip`
+- Desestruturação: `[$a, $b] = [1, 2]` (PHP 7.1+)
 - Spread: `...$array` (PHP 7.4+)
 
-**Важно на собесе:**
-- PHP массивы — это хеш-таблица (поддерживает и индексы, и ключи)
-- `in_array` по умолчанию нестрогое сравнение (нужен третий параметр `true`)
-- `unset()` не переиндексирует, нужен `array_values()`
-- `array_key_exists()` работает с `null`, `isset()` — нет
-- Spread `...` быстрее `array_merge`
-- В Laravel предпочитаю Collection методы вместо array_* функций
+**Importante na entrevista:**
+- Array em PHP é hash table (aceita índice e chave)
+- `in_array` por padrão não é estrito (precisa do terceiro parâmetro `true`)
+- `unset()` não reindexa — precisa de `array_values()`
+- `array_key_exists()` funciona com `null`, `isset()` não
+- Spread `...` é mais rápido que `array_merge`
+- No Laravel eu prefiro os métodos de Collection no lugar de array_*
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: in_array с нестрогим сравнением
-**Условие:** Найди и исправь проблему безопасности в коде проверки ролей.
+### Exercício 1: in_array com comparação não estrita
+**Enunciado:** Ache e corrija o problema de segurança na checagem de roles.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// ❌ ОПАСНО (нестрогое сравнение)
+// ❌ PERIGOSO (comparação não estrita)
 function hasRole(User $user, string $role): bool
 {
     $userRoles = $user->roles->pluck('name')->toArray();
-    return in_array($role, $userRoles);  // Небезопасно!
+    return in_array($role, $userRoles);  // Inseguro!
 }
 
-// Проблема:
+// O problema:
 $userRoles = ['editor', 'author'];
 
 var_dump(in_array('admin', $userRoles));      // false ✅
 var_dump(in_array('0', $userRoles));          // false ✅
-var_dump(in_array(0, $userRoles));            // TRUE! ❌ (0 == 'editor' = false, но...)
+var_dump(in_array(0, $userRoles));            // TRUE! ❌ (0 == 'editor' = false, mas...)
 var_dump(in_array(true, $userRoles));         // TRUE! ❌ (true == 'editor' = true)
 
-// ✅ ПРАВИЛЬНО (строгое сравнение)
+// ✅ CERTO (comparação estrita)
 function hasRoleCorrect(User $user, string $role): bool
 {
     $userRoles = $user->roles->pluck('name')->toArray();
-    return in_array($role, $userRoles, true);  // Строгое сравнение
+    return in_array($role, $userRoles, true);  // Comparação estrita
 }
 
-// Или Laravel Collection
+// Ou Laravel Collection
 function hasRoleCollection(User $user, string $role): bool
 {
-    return $user->roles->contains('name', $role);  // Использует ===
+    return $user->roles->contains('name', $role);  // Usa ===
 }
 
-// Тесты
+// Testes
 $admin = new User(['roles' => ['admin', 'editor']]);
 $guest = new User(['roles' => ['guest']]);
 
@@ -699,53 +699,53 @@ var_dump(hasRoleCorrect($admin, '0'));         // false
 var_dump(hasRoleCorrect($admin, 0));           // TypeError (strict_types)
 ```
 
-**Ключевые моменты:**
-- `in_array()` по умолчанию использует `==` (нестрогое)
-- Третий параметр `true` включает строгое сравнение `===`
-- Без строгого сравнения: `0`, `true` могут пройти проверку
-- В Laravel Collection методы используют строгое сравнение
+**Pontos-chave:**
+- `in_array()` por padrão usa `==` (não estrito)
+- O terceiro parâmetro `true` liga a comparação estrita `===`
+- Sem comparação estrita: `0` e `true` podem passar na checagem
+- No Laravel, os métodos de Collection usam comparação estrita
 </details>
 
-### Задание 2: array_key_exists vs isset
-**Условие:** Объясни разницу между array_key_exists и isset.
+### Exercício 2: array_key_exists vs isset
+**Enunciado:** Explique a diferença entre array_key_exists e isset.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
 $data = [
-    'name' => 'John',
+    'name' => 'João',
     'age' => 0,
     'email' => null,
     'active' => false,
 ];
 
-// isset() - проверяет существование И !== null
+// isset() — checa se existe E !== null
 var_dump(isset($data['name']));     // true
-var_dump(isset($data['age']));      // true (0 не null)
+var_dump(isset($data['age']));      // true (0 não é null)
 var_dump(isset($data['email']));    // false (null)
-var_dump(isset($data['active']));   // true (false не null)
-var_dump(isset($data['missing']));  // false (не существует)
+var_dump(isset($data['active']));   // true (false não é null)
+var_dump(isset($data['missing']));  // false (não existe)
 
-// array_key_exists() - проверяет только существование ключа
+// array_key_exists() — checa só se a chave existe
 var_dump(array_key_exists('name', $data));     // true
 var_dump(array_key_exists('age', $data));      // true
-var_dump(array_key_exists('email', $data));    // true (ключ есть!)
+var_dump(array_key_exists('email', $data));    // true (a chave está lá!)
 var_dump(array_key_exists('active', $data));   // true
 var_dump(array_key_exists('missing', $data));  // false
 
-// Практический пример
+// Exemplo prático
 function getConfig(array $config, string $key, mixed $default = null): mixed
 {
-    // ❌ НЕПРАВИЛЬНО
+    // ❌ ERRADO
     if (isset($config[$key])) {
         return $config[$key];
     }
-    // Если $config[$key] = null, вернёт default (неожиданно!)
+    // Se $config[$key] = null, devolve o default (surpresa!)
 
-    // ✅ ПРАВИЛЬНО
+    // ✅ CERTO
     if (array_key_exists($key, $config)) {
         return $config[$key];
     }
@@ -754,70 +754,70 @@ function getConfig(array $config, string $key, mixed $default = null): mixed
 }
 
 $config = [
-    'timeout' => null,  // Явно установлен в null
+    'timeout' => null,  // Explicitamente null
     'retries' => 3,
 ];
 
-echo getConfig($config, 'timeout', 30);  // null (не 30!)
+echo getConfig($config, 'timeout', 30);  // null (não 30!)
 echo getConfig($config, 'missing', 30);  // 30
 
-// Laravel helper (использует array_key_exists)
+// Helper do Laravel (usa array_key_exists)
 $timeout = data_get($config, 'timeout', 30);  // null
 $missing = data_get($config, 'missing', 30);  // 30
 ```
 
-**Ключевые моменты:**
-- `isset()` возвращает false для null значений
-- `array_key_exists()` проверяет только наличие ключа
-- Для конфигов с null значениями используй `array_key_exists()`
-- Laravel `data_get()` использует `array_key_exists()`
+**Pontos-chave:**
+- `isset()` devolve false para valor null
+- `array_key_exists()` checa só se a chave existe
+- Em config com null, use `array_key_exists()`
+- O `data_get()` do Laravel usa `array_key_exists()`
 </details>
 
-### Задание 3: Spread оператор vs array_merge
-**Условие:** Сравни производительность и поведение spread и array_merge.
+### Exercício 3: Spread vs array_merge
+**Enunciado:** Compare performance e comportamento de spread e array_merge.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-// Индексные массивы
+// Arrays indexados
 $arr1 = [1, 2, 3];
 $arr2 = [4, 5, 6];
 
 // array_merge
 $merged1 = array_merge($arr1, $arr2);  // [1, 2, 3, 4, 5, 6]
 
-// Spread (быстрее)
+// Spread (mais rápido)
 $merged2 = [...$arr1, ...$arr2];       // [1, 2, 3, 4, 5, 6]
 
-// Ассоциативные массивы
-$user1 = ['name' => 'John', 'age' => 25];
-$user2 = ['age' => 30, 'city' => 'Moscow'];
+// Arrays associativos
+$user1 = ['name' => 'João', 'age' => 25];
+$user2 = ['age' => 30, 'city' => 'São Paulo'];
 
-// array_merge (последнее значение перезаписывает)
+// array_merge (o último valor sobrescreve)
 $merged3 = array_merge($user1, $user2);
-// ['name' => 'John', 'age' => 30, 'city' => 'Moscow']
+// ['name' => 'João', 'age' => 30, 'city' => 'São Paulo']
 
 // Spread (PHP 8.1+)
 $merged4 = [...$user1, ...$user2];
-// ['name' => 'John', 'age' => 30, 'city' => 'Moscow']
+// ['name' => 'João', 'age' => 30, 'city' => 'São Paulo']
 
-// Spread с числовыми ключами
+// Spread com chaves numéricas
 $arr1 = [0 => 'a', 1 => 'b'];
 $arr2 = [0 => 'c', 1 => 'd'];
 
-array_merge($arr1, $arr2);  // [0 => 'a', 1 => 'b', 2 => 'c', 3 => 'd'] (переиндексация)
-[...$arr1, ...$arr2];       // [0 => 'a', 1 => 'b', 2 => 'c', 3 => 'd'] (тоже переиндексация)
+array_merge($arr1, $arr2);  // [0 => 'a', 1 => 'b', 2 => 'c', 3 => 'd'] (reindexa)
+[...$arr1, ...$arr2];       // [0 => 'a', 1 => 'b', 2 => 'c', 3 => 'd'] (também reindexa)
 
-// Spread со строковыми ключами (сохраняет)
+// Spread com chaves string (mantém)
 $arr1 = ['a' => 1, 'b' => 2];
 $arr2 = ['c' => 3];
 
 [...$arr1, ...$arr2];  // ['a' => 1, 'b' => 2, 'c' => 3]
 
-// Практический пример (Laravel)
+// Exemplo prático (Laravel)
 class UserController
 {
     public function store(Request $request)
@@ -827,29 +827,29 @@ class UserController
             'email_verified' => false,
         ];
 
-        // Spread (быстрее и короче)
+        // Spread (mais rápido e mais curto)
         $data = [...$defaults, ...$request->validated()];
 
-        // array_merge (старый способ)
+        // array_merge (jeito antigo)
         $data = array_merge($defaults, $request->validated());
 
         return User::create($data);
     }
 }
 
-// Benchmark (приблизительно)
-// array_merge: ~1.5x медленнее
-// spread: ~1.5x быстрее
+// Benchmark (aproximado)
+// array_merge: ~1.5x mais lento
+// spread: ~1.5x mais rápido
 ```
 
-**Ключевые моменты:**
-- Spread `...` быстрее `array_merge`
-- Spread для ассоциативных массивов требует PHP 8.1+
-- Оба переиндексируют числовые ключи
-- Последнее значение перезаписывает предыдущие
-- Spread короче и читаемее
+**Pontos-chave:**
+- Spread `...` é mais rápido que `array_merge`
+- Spread em array associativo pede PHP 8.1+
+- Os dois reindexam chave numérica
+- O último valor sobrescreve os anteriores
+- Spread é mais curto e lê melhor
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*

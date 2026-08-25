@@ -1,74 +1,74 @@
-# 1.7 Строки и регулярные выражения
+# 1.7 Strings e expressões regulares
 
 > **TL;DR**
-> Для кириллицы используй mb_* функции (mb_strlen, mb_substr, mb_strtolower). strpos() возвращает 0 (falsy), проверяй !== false. PHP 8.0 добавил str_contains, str_starts_with, str_ends_with. Для email используй filter_var, не regex. preg_match ищет первое совпадение, preg_match_all — все. В Laravel есть Str helper и валидация regex.
+> Para Unicode (acentos) use as funções mb_* (mb_strlen, mb_substr, mb_strtolower). strpos() devolve 0 (falsy), compare com !== false. PHP 8.0 trouxe str_contains, str_starts_with, str_ends_with. Para email use filter_var, não regex. preg_match acha a primeira ocorrência, preg_match_all acha todas. No Laravel tem o helper Str e validação regex.
 
-## Содержание
+## Conteúdo
 
-- [Работа со строками](#работа-со-строками)
+- [Trabalhando com strings](#trabalhando-com-strings)
 - [substr, mb_substr, str_replace](#substr-mb_substr-str_replace)
 - [explode, implode, str_split](#explode-implode-str_split)
 - [strpos, str_contains, str_starts_with (PHP 8.0+)](#strpos-str_contains-str_starts_with-php-80)
-- [Регулярные выражения: preg_match, preg_replace](#регулярные-выражения-preg_match-preg_replace)
-- [Основные паттерны регулярных выражений](#основные-паттерны-регулярных-выражений)
-- [Популярные регулярки](#популярные-регулярки)
-- [Резюме строк и регулярных выражений](#резюме-строк-и-регулярных-выражений)
-- [Практические задания](#практические-задания)
+- [Expressões regulares: preg_match, preg_replace](#expressões-regulares-preg_match-preg_replace)
+- [Padrões principais de regex](#padrões-principais-de-regex)
+- [Regex populares](#regex-populares)
+- [Recapitulando](#recapitulando)
+- [Exercícios práticos](#exercícios-práticos)
 
 ---
 
-## Работа со строками
+## Trabalhando com strings
 
-**Что это:**
-Функции для манипуляции текстом.
+**O que é:**
+Funções para mexer com texto.
 
-**Как работает:**
+**Como funciona:**
 ```php
 $str = 'Hello, World!';
 
-// strlen — длина строки (байты, НЕ символы!)
+// strlen — tamanho da string (bytes, NÃO caracteres!)
 echo strlen($str);  // 13
 
-// mb_strlen — длина в символах (Unicode)
-$russian = 'Привет';
-echo strlen($russian);     // 12 (байты UTF-8)
-echo mb_strlen($russian);  // 6 (символы)
+// mb_strlen — tamanho em caracteres (Unicode)
+$portuguese = 'Ação';
+echo strlen($portuguese);     // 6 (bytes UTF-8)
+echo mb_strlen($portuguese);  // 4 (caracteres)
 
-// strtolower / strtoupper — регистр
+// strtolower / strtoupper — caixa
 echo strtolower($str);  // "hello, world!"
 echo strtoupper($str);  // "HELLO, WORLD!"
 
-// mb_* для Unicode
-$text = 'ПРИВЕТ';
-echo strtolower($text);     // "ПРИВЕТ" (не работает!)
-echo mb_strtolower($text);  // "привет" ✅
+// mb_* para Unicode
+$text = 'AÇÃO';
+echo strtolower($text);     // "aÇÃo" (não funciona!)
+echo mb_strtolower($text);  // "ação" ✅
 
-// ucfirst / ucwords — первая буква в верхнем регистре
+// ucfirst / ucwords — primeira letra maiúscula
 echo ucfirst('hello');   // "Hello"
 echo ucwords('hello world');  // "Hello World"
 
-// trim — удаление пробелов с краёв
+// trim — tira espaço das pontas
 $input = '  hello  ';
 echo trim($input);   // "hello"
-echo ltrim($input);  // "hello  " (только слева)
-echo rtrim($input);  // "  hello" (только справа)
+echo ltrim($input);  // "hello  " (só da esquerda)
+echo rtrim($input);  // "  hello" (só da direita)
 ```
 
-**Когда использовать:**
-Для обработки пользовательского ввода, форматирования текста.
+**Quando usar:**
+Tratar input do usuário, formatar texto.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация и очистка ввода
+// Validar e limpar input
 $email = trim($request->input('email'));
 $email = strtolower($email);
 
-// Форматирование имени
+// Formatando o nome
 $name = ucwords(mb_strtolower($request->input('name')));
 
-// Подготовка для БД
+// Preparar pra busca no banco
 $search = trim($request->input('search'));
-$search = preg_replace('/\s+/', ' ', $search);  // Убрать лишние пробелы
+$search = preg_replace('/\s+/', ' ', $search);  // Tira espaço sobrando
 
 // Laravel Request
 $validated = $request->validate([
@@ -76,116 +76,116 @@ $validated = $request->validate([
 ]);
 ```
 
-**На собеседовании скажешь:**
-> "strlen возвращает байты, mb_strlen — символы (для Unicode). Для кириллицы всегда использую mb_* функции (mb_strlen, mb_strtolower, mb_substr). trim удаляет пробелы с краёв."
+**Na entrevista:**
+> "strlen devolve bytes, mb_strlen devolve caracteres (Unicode). Para acento eu sempre uso mb_* (mb_strlen, mb_strtolower, mb_substr). trim tira espaço das pontas."
 
 ---
 
 ## substr, mb_substr, str_replace
 
-**Как работает:**
+**Como funciona:**
 ```php
 $str = 'Hello, World!';
 
-// substr — извлечение подстроки
+// substr — pega um pedaço da string
 echo substr($str, 0, 5);   // "Hello"
 echo substr($str, 7);      // "World!"
-echo substr($str, -6);     // "World!" (с конца)
-echo substr($str, 0, -7);  // "Hello" (до -7 с конца)
+echo substr($str, -6);     // "World!" (do fim)
+echo substr($str, 0, -7);  // "Hello" (até -7 do fim)
 
-// mb_substr для Unicode
-$text = 'Привет, мир!';
-echo substr($text, 0, 6);     // "Пр" (обрежет по байтам!)
-echo mb_substr($text, 0, 6);  // "Привет" ✅
+// mb_substr para Unicode
+$text = 'Olá, mundo!';
+echo substr($text, 0, 3);     // "Ol�" (corta no meio do á!)
+echo mb_substr($text, 0, 3);  // "Olá" ✅
 
-// str_replace — замена подстроки
+// str_replace — troca um trecho
 echo str_replace('World', 'PHP', $str);  // "Hello, PHP!"
 
-// Множественная замена
+// Troca em várias ocorrências
 $text = 'Hello, World! Hello, PHP!';
 echo str_replace('Hello', 'Hi', $text);  // "Hi, World! Hi, PHP!"
 
-// Массив замен
+// Array de trocas
 $text = str_replace(['Hello', 'World'], ['Hi', 'PHP'], $text);
 // "Hi, PHP! Hi, PHP!"
 
-// str_ireplace — без учёта регистра
+// str_ireplace — ignora caixa
 echo str_ireplace('hello', 'Hi', $text);  // "Hi, World!"
 ```
 
-**Когда использовать:**
-Для извлечения частей строки, замены текста.
+**Quando usar:**
+Pegar um pedaço da string, trocar texto.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Обрезка описания
-$description = 'Очень длинное описание товара...';
+// Encurtar descrição
+$description = 'Descrição bem longa do produto...';
 $short = mb_substr($description, 0, 100) . '...';
 
-// Замена плейсхолдеров в шаблоне
-$template = 'Привет, {name}! Ваш заказ #{order_id} готов.';
+// Trocar placeholder no template
+$template = 'Olá, {name}! Seu pedido #{order_id} está pronto.';
 $message = str_replace(
     ['{name}', '{order_id}'],
     [$user->name, $order->id],
     $template
 );
 
-// Очистка номера телефона
-$phone = '+7 (999) 123-45-67';
+// Limpar telefone
+$phone = '+55 (11) 98765-4321';
 $clean = str_replace(['+', ' ', '(', ')', '-'], '', $phone);
-// "79991234567"
+// "5511987654321"
 
 // Laravel Str helper
 use Illuminate\Support\Str;
 
 $short = Str::limit($description, 100);
-$slug = Str::slug('Название статьи');  // "nazvanie-stati"
+$slug = Str::slug('Título do artigo');  // "titulo-do-artigo"
 ```
 
-**На собеседовании скажешь:**
-> "substr извлекает подстроку (по байтам), mb_substr — по символам. str_replace заменяет подстроки (можно массив). Для Unicode использую mb_substr. В Laravel есть Str helper с полезными методами."
+**Na entrevista:**
+> "substr pega um pedaço da string (por bytes), mb_substr pega por caracteres. str_replace troca trechos (aceita array). Para Unicode eu uso mb_substr. No Laravel tem o helper Str com uns métodos úteis."
 
 ---
 
 ## explode, implode, str_split
 
-**Как работает:**
+**Como funciona:**
 ```php
-// explode — разбить строку в массив
+// explode — parte a string em array
 $csv = 'apple,banana,orange';
 $fruits = explode(',', $csv);  // ['apple', 'banana', 'orange']
 
-// Ограничение количества элементов
+// Limite de pedaços
 $text = 'one:two:three:four';
 $parts = explode(':', $text, 2);  // ['one', 'two:three:four']
 
-// implode (join) — объединить массив в строку
+// implode (join) — junta o array numa string
 $fruits = ['apple', 'banana', 'orange'];
 $csv = implode(',', $fruits);  // "apple,banana,orange"
 
-// str_split — разбить на символы
+// str_split — parte em caracteres
 $str = 'hello';
 $chars = str_split($str);  // ['h', 'e', 'l', 'l', 'o']
 
-// Разбить по N символов
+// Partir de N em N
 $chunks = str_split($str, 2);  // ['he', 'll', 'o']
 
-// mb_str_split для Unicode (PHP 7.4+)
-$text = 'Привет';
-$chars = mb_str_split($text);  // ['П', 'р', 'и', 'в', 'е', 'т']
+// mb_str_split para Unicode (PHP 7.4+)
+$text = 'Ação';
+$chars = mb_str_split($text);  // ['A', 'ç', 'ã', 'o']
 ```
 
-**Когда использовать:**
-Для парсинга CSV, объединения массивов, разбиения строк.
+**Quando usar:**
+Parsear CSV, juntar array, partir string.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Парсинг тегов
+// Parsear tags
 $tagString = 'php, laravel, mysql';
 $tags = explode(',', $tagString);
 $tags = array_map('trim', $tags);  // ['php', 'laravel', 'mysql']
 
-// Генерация CSV
+// Gerar CSV
 $users = User::all();
 $csv = "name,email,age\n";
 
@@ -196,7 +196,7 @@ foreach ($users as $user) {
 // Laravel Collection
 $tagString = $post->tags->pluck('name')->implode(', ');
 
-// URL segments
+// Segmentos da URL
 $url = '/api/v1/users/123';
 $segments = explode('/', trim($url, '/'));  // ['api', 'v1', 'users', '123']
 
@@ -204,56 +204,56 @@ $segments = explode('/', trim($url, '/'));  // ['api', 'v1', 'users', '123']
 $segments = request()->segments();  // ['api', 'v1', 'users', '123']
 ```
 
-**На собеседовании скажешь:**
-> "explode разбивает строку в массив по разделителю. implode (join) объединяет массив в строку. str_split разбивает на символы (по байтам), mb_str_split — по символам Unicode."
+**Na entrevista:**
+> "explode parte a string em array pelo separador. implode (join) junta o array numa string. str_split parte em caracteres (por bytes), mb_str_split parte por caracteres Unicode."
 
 ---
 
 ## strpos, str_contains, str_starts_with (PHP 8.0+)
 
-**Как работает:**
+**Como funciona:**
 ```php
 $str = 'Hello, World!';
 
-// strpos — позиция подстроки (или false)
+// strpos — posição do trecho (ou false)
 $pos = strpos($str, 'World');  // 7
 $pos = strpos($str, 'PHP');    // false
 
-// Проверка наличия (НЕ используй == для проверки!)
+// Checar se existe (NÃO use == pra checar!)
 if (strpos($str, 'Hello') !== false) {
-    echo 'Найдено';
+    echo 'Encontrado';
 }
 
-// ⚠️ Частая ошибка
-if (strpos($str, 'Hello')) {  // ❌ Вернёт 0 (falsy!)
-    echo 'Никогда не выполнится';
+// ⚠️ Erro clássico
+if (strpos($str, 'Hello')) {  // ❌ Devolve 0 (falsy!)
+    echo 'Nunca vai executar';
 }
 
-// PHP 8.0: str_contains (удобнее)
+// PHP 8.0: str_contains (mais fácil)
 if (str_contains($str, 'World')) {
-    echo 'Найдено';
+    echo 'Encontrado';
 }
 
 // str_starts_with (PHP 8.0+)
 if (str_starts_with($str, 'Hello')) {
-    echo 'Начинается с Hello';
+    echo 'Começa com Hello';
 }
 
 // str_ends_with (PHP 8.0+)
 if (str_ends_with($str, '!')) {
-    echo 'Заканчивается на !';
+    echo 'Termina com !';
 }
 
-// stripos — без учёта регистра
+// stripos — ignora caixa
 $pos = stripos($str, 'hello');  // 0
 ```
 
-**Когда использовать:**
-Для проверки наличия подстроки, валидации, парсинга.
+**Quando usar:**
+Checar se tem um trecho, validar, parsear.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Проверка расширения файла
+// Checar extensão do arquivo
 $filename = 'document.pdf';
 
 // PHP < 8.0
@@ -263,17 +263,17 @@ if (strpos($filename, '.pdf') !== false) {
 
 // PHP 8.0+
 if (str_ends_with($filename, '.pdf')) {
-    // Это PDF
+    // É PDF
 }
 
-// Проверка URL
+// Checar URL
 $url = 'https://example.com/api/users';
 
 if (str_starts_with($url, 'https://')) {
-    // Безопасное соединение
+    // Conexão segura
 }
 
-// Фильтрация по префиксу
+// Filtrar por prefixo
 $routes = ['admin/users', 'admin/posts', 'api/users'];
 $adminRoutes = array_filter($routes, fn($r) => str_starts_with($r, 'admin/'));
 
@@ -293,170 +293,170 @@ if (Str::contains($email, '@gmail.com')) {
 }
 ```
 
-**На собеседовании скажешь:**
-> "strpos возвращает позицию или false (проверять !== false, не ==). PHP 8.0 добавил str_contains, str_starts_with, str_ends_with — удобнее для проверок. В Laravel есть Str::startsWith, Str::endsWith, Str::contains."
+**Na entrevista:**
+> "strpos devolve a posição ou false (tem que checar !== false, não ==). PHP 8.0 trouxe str_contains, str_starts_with, str_ends_with — mais fácil pra checar. No Laravel tem Str::startsWith, Str::endsWith, Str::contains."
 
 ---
 
-## Регулярные выражения: preg_match, preg_replace
+## Expressões regulares: preg_match, preg_replace
 
-**Что это:**
-Паттерны для поиска и замены в строках.
+**O que é:**
+Padrões pra achar e trocar trechos na string.
 
-**Как работает:**
+**Como funciona:**
 ```php
-$text = 'Мой email: test@mail.com';
+$text = 'Meu email: teste@email.com';
 
-// preg_match — поиск первого совпадения
+// preg_match — primeira ocorrência
 if (preg_match('/\w+@\w+\.\w+/', $text, $matches)) {
-    echo $matches[0];  // "test@mail.com"
+    echo $matches[0];  // "teste@email.com"
 }
 
-// Группы захвата
-$text = 'Дата: 2024-01-15';
+// Grupos de captura
+$text = 'Data: 2024-01-15';
 if (preg_match('/(\d{4})-(\d{2})-(\d{2})/', $text, $matches)) {
     $year = $matches[1];   // "2024"
     $month = $matches[2];  // "01"
     $day = $matches[3];    // "15"
 }
 
-// Именованные группы
+// Grupos nomeados
 if (preg_match('/(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/', $text, $matches)) {
     $year = $matches['year'];
 }
 
-// preg_match_all — все совпадения
-$text = 'Email: test@mail.com, admin@site.com';
+// preg_match_all — todas as ocorrências
+$text = 'Email: teste@email.com, admin@site.com';
 preg_match_all('/\w+@\w+\.\w+/', $text, $matches);
-var_dump($matches[0]);  // ["test@mail.com", "admin@site.com"]
+var_dump($matches[0]);  // ["teste@email.com", "admin@site.com"]
 
-// preg_replace — замена по паттерну
-$text = 'Цена: 1000 рублей';
-$text = preg_replace('/\d+/', '2000', $text);  // "Цена: 2000 рублей"
+// preg_replace — troca pelo padrão
+$text = 'Preço: 1000 reais';
+$text = preg_replace('/\d+/', '2000', $text);  // "Preço: 2000 reais"
 
-// С группами захвата
+// Com grupos de captura
 $text = '2024-01-15';
 $text = preg_replace('/(\d{4})-(\d{2})-(\d{2})/', '$3.$2.$1', $text);
 // "15.01.2024"
 ```
 
-**Когда использовать:**
-Для валидации email, телефонов, URL, парсинга сложных форматов.
+**Quando usar:**
+Validar email, telefone, URL, parsear formato chato.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация email
+// Validar email
 if (preg_match('/^[\w\.\-]+@[\w\.\-]+\.\w+$/', $email)) {
-    // Email валидный
+    // Email válido
 }
 
-// Лучше использовать filter_var
+// Melhor: filter_var
 if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    // Email валидный
+    // Email válido
 }
 
-// Парсинг номера телефона
-$phone = '+7 (999) 123-45-67';
-if (preg_match('/\+7 \((\d{3})\) (\d{3})-(\d{2})-(\d{2})/', $phone, $matches)) {
-    $code = $matches[1];  // "999"
-    $number = $matches[2] . $matches[3] . $matches[4];  // "1234567"
+// Parsear telefone
+$phone = '+55 (11) 98765-4321';
+if (preg_match('/\+55 \((\d{2})\) (\d{5})-(\d{4})/', $phone, $matches)) {
+    $ddd = $matches[1];  // "11"
+    $number = $matches[2] . $matches[3];  // "987654321"
 }
 
-// Очистка HTML тегов
+// Limpar tags HTML
 $text = '<p>Hello <b>World</b></p>';
 $clean = preg_replace('/<[^>]*>/', '', $text);  // "Hello World"
 
-// Лучше strip_tags
+// Melhor: strip_tags
 $clean = strip_tags($text);
 
-// Laravel Validation (использует regex)
+// Laravel Validation (usa regex)
 $validated = $request->validate([
-    'phone' => 'required|regex:/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/',
+    'phone' => 'required|regex:/^\+55 \(\d{2}\) \d{5}-\d{4}$/',
 ]);
 ```
 
-**На собеседовании скажешь:**
-> "preg_match ищет первое совпадение, preg_match_all — все. preg_replace заменяет по паттерну. Использую для валидации сложных форматов (телефоны, даты). Для email лучше filter_var, для HTML — strip_tags."
+**Na entrevista:**
+> "preg_match acha a primeira ocorrência, preg_match_all acha todas. preg_replace troca pelo padrão. Uso pra validar formato chato (telefone, data). Pra email eu uso filter_var, pra HTML uso strip_tags."
 
 ---
 
-## Основные паттерны регулярных выражений
+## Padrões principais de regex
 
-**Что это:**
-Синтаксис для описания шаблонов.
+**O que é:**
+Sintaxe pra descrever o formato.
 
-**Как работает:**
+**Como funciona:**
 ```php
-// Базовые метасимволы
-// . — любой символ (кроме \n)
-// \d — цифра [0-9]
-// \w — буква, цифра, _ [a-zA-Z0-9_]
-// \s — пробельный символ (space, tab, newline)
-// \D, \W, \S — отрицание
+// Metacaracteres básicos
+// . — qualquer caractere (exceto \n)
+// \d — dígito [0-9]
+// \w — letra, dígito, _ [a-zA-Z0-9_]
+// \s — espaço em branco (space, tab, newline)
+// \D, \W, \S — negação
 
-// Квантификаторы
-// * — 0 или больше
-// + — 1 или больше
-// ? — 0 или 1
-// {n} — ровно n
-// {n,} — n или больше
-// {n,m} — от n до m
+// Quantificadores
+// * — 0 ou mais
+// + — 1 ou mais
+// ? — 0 ou 1
+// {n} — exatamente n
+// {n,} — n ou mais
+// {n,m} — de n até m
 
-// Примеры
-preg_match('/\d+/', 'abc123');        // true (одна или больше цифр)
-preg_match('/\d{4}/', '2024');        // true (ровно 4 цифры)
-preg_match('/\w{3,10}/', 'hello');    // true (3-10 букв/цифр)
+// Exemplos
+preg_match('/\d+/', 'abc123');        // true (um ou mais dígitos)
+preg_match('/\d{4}/', '2024');        // true (exatamente 4 dígitos)
+preg_match('/\w{3,10}/', 'hello');    // true (3-10 letras/dígitos)
 
-// Якоря
-// ^ — начало строки
-// $ — конец строки
-preg_match('/^\d{4}$/', '2024');      // true (ТОЛЬКО 4 цифры)
+// Âncoras
+// ^ — começo da string
+// $ — fim da string
+preg_match('/^\d{4}$/', '2024');      // true (SÓ 4 dígitos)
 preg_match('/^\d{4}$/', '2024abc');   // false
 
-// Классы символов
-// [abc] — a, b или c
-// [a-z] — любая строчная буква
-// [^abc] — НЕ a, b, c
+// Classes de caracteres
+// [abc] — a, b ou c
+// [a-z] — qualquer letra minúscula
+// [^abc] — NÃO a, b, c
 
 preg_match('/[0-9]+/', 'abc123');     // true
 preg_match('/[a-z]+/', 'Hello');      // true ("ello")
 preg_match('/[^0-9]+/', 'abc123');    // true ("abc")
 
-// Группы и альтернативы
-// (abc) — группа
-// a|b — a ИЛИ b
+// Grupos e alternativas
+// (abc) — grupo
+// a|b — a OU b
 
 preg_match('/(http|https):\/\//', 'https://example.com');  // true
 ```
 
-**Когда использовать:**
-Для валидации форматов, парсинга, очистки данных.
+**Quando usar:**
+Validar formato, parsear, limpar dado.
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация логина (буквы, цифры, _, 3-20 символов)
+// Validar login (letra, dígito, _, 3-20 caracteres)
 if (preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
     // OK
 }
 
-// Валидация пароля (минимум 8 символов, буква + цифра)
+// Validar senha (mínimo 8, letra + dígito)
 if (preg_match('/^(?=.*[A-Za-z])(?=.*\d).{8,}$/', $password)) {
     // OK
 }
 
-// Извлечение хештегов
-$text = 'Привет #php #laravel #coding';
+// Extrair hashtags
+$text = 'Olá #php #laravel #coding';
 preg_match_all('/#(\w+)/', $text, $matches);
 $hashtags = $matches[1];  // ["php", "laravel", "coding"]
 
-// Замена URL на ссылки
-$text = 'Сайт: https://example.com';
+// Trocar URL por link
+$text = 'Site: https://example.com';
 $text = preg_replace(
     '/(https?:\/\/[^\s]+)/',
     '<a href="$1">$1</a>',
     $text
 );
-// "Сайт: <a href="https://example.com">https://example.com</a>"
+// "Site: <a href="https://example.com">https://example.com</a>"
 
 // Laravel Validation
 $validated = $request->validate([
@@ -465,54 +465,54 @@ $validated = $request->validate([
 ]);
 ```
 
-**На собеседовании скажешь:**
-> "Регулярные выражения: метасимволы (\d, \w, \s), квантификаторы (+, *, ?), якоря (^, $), классы ([a-z]). Использую для валидации сложных форматов. В Laravel есть валидация regex для форм."
+**Na entrevista:**
+> "Regex: metacaracteres (\d, \w, \s), quantificadores (+, *, ?), âncoras (^, $), classes ([a-z]). Uso pra validar formato complexo. No Laravel tem validação regex no form."
 
 ---
 
-## Популярные регулярки
+## Regex populares
 
-**Что это:**
-Готовые паттерны для частых задач.
+**O que é:**
+Padrões prontos pra tarefa comum.
 
 ```php
 // Email
 $email = '/^[\w\.\-]+@[\w\.\-]+\.\w+$/';
-// Лучше: filter_var($email, FILTER_VALIDATE_EMAIL)
+// Melhor: filter_var($email, FILTER_VALIDATE_EMAIL)
 
-// Телефон (РФ)
-$phone = '/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/';
-// +7 (999) 123-45-67
+// Telefone (BR)
+$phone = '/^\+55 \(\d{2}\) \d{5}-\d{4}$/';
+// +55 (11) 98765-4321
 
 // URL
 $url = '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/';
 
-// IP адрес
+// Endereço IP
 $ip = '/^(\d{1,3}\.){3}\d{1,3}$/';
-// Не валидирует диапазон (0-255)
+// Não valida o intervalo (0-255)
 
-// Дата (YYYY-MM-DD)
+// Data (YYYY-MM-DD)
 $date = '/^\d{4}-\d{2}-\d{2}$/';
 
-// Время (HH:MM)
+// Hora (HH:MM)
 $time = '/^([01]\d|2[0-3]):([0-5]\d)$/';
 
-// Пароль (минимум 8 символов, буква + цифра + спецсимвол)
+// Senha (mínimo 8, letra + dígito + caractere especial)
 $password = '/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/';
 
-// Слаг (URL-friendly)
+// Slug (URL-friendly)
 $slug = '/^[a-z0-9]+(?:-[a-z0-9]+)*$/';
 
-// Хештег
+// Hashtag
 $hashtag = '/#[a-zA-Z0-9_]+/';
 
 // Mention (@username)
 $mention = '/@[a-zA-Z0-9_]+/';
 ```
 
-**Пример из практики:**
+**Exemplo prático:**
 ```php
-// Валидация формы
+// Validação de form
 class RegistrationRequest extends FormRequest
 {
     public function rules(): array
@@ -529,17 +529,17 @@ class RegistrationRequest extends FormRequest
                 'min:8',
                 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])/',
             ],
-            'phone' => 'required|regex:/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/',
+            'phone' => 'required|regex:/^\+55 \(\d{2}\) \d{5}-\d{4}$/',
         ];
     }
 }
 
-// Извлечение упоминаний
-$text = '@ivan написал @petr привет';
+// Extrair menções
+$text = '@joao escreveu @pedro olá';
 preg_match_all('/@(\w+)/', $text, $matches);
-$mentions = $matches[1];  // ["ivan", "petr"]
+$mentions = $matches[1];  // ["joao", "pedro"]
 
-// Автоматическая замена URL
+// Trocar URL automaticamente
 function linkify(string $text): string
 {
     return preg_replace(
@@ -550,103 +550,103 @@ function linkify(string $text): string
 }
 ```
 
-**На собеседовании скажешь:**
-> "Для частых задач (email, URL, телефон) использую готовые паттерны или встроенные функции (filter_var для email). В Laravel валидация regex для сложных форматов. Извлекаю @mentions и #hashtags через preg_match_all."
+**Na entrevista:**
+> "Pra coisa comum (email, URL, telefone) eu uso padrão pronto ou função nativa (filter_var no email). No Laravel, validação regex pra formato específico. @mention e #hashtag eu extraio com preg_match_all."
 
 ---
 
-## Резюме строк и регулярных выражений
+## Recapitulando
 
-**Строки:**
-- `strlen` (байты) vs `mb_strlen` (символы)
-- `mb_*` функции для Unicode (mb_strtolower, mb_substr)
-- `trim` — удаление пробелов
-- `substr`, `str_replace` — извлечение и замена
-- `explode` / `implode` — разбиение и объединение
+**Strings:**
+- `strlen` (bytes) vs `mb_strlen` (caracteres)
+- Funções `mb_*` para Unicode (mb_strtolower, mb_substr)
+- `trim` — tira espaço das pontas
+- `substr`, `str_replace` — extrair e trocar
+- `explode` / `implode` — partir e juntar
 - `strpos` (PHP < 8.0) vs `str_contains`, `str_starts_with` (PHP 8.0+)
 
-**Регулярные выражения:**
-- `preg_match` — поиск первого совпадения
-- `preg_match_all` — все совпадения
-- `preg_replace` — замена по паттерну
-- Метасимволы: `\d`, `\w`, `\s`, `.`
-- Квантификаторы: `+`, `*`, `?`, `{n,m}`
-- Якоря: `^`, `$`
-- Классы: `[a-z]`, `[^0-9]`
+**Expressões regulares:**
+- `preg_match` — primeira ocorrência
+- `preg_match_all` — todas as ocorrências
+- `preg_replace` — troca pelo padrão
+- Metacaracteres: `\d`, `\w`, `\s`, `.`
+- Quantificadores: `+`, `*`, `?`, `{n,m}`
+- Âncoras: `^`, `$`
+- Classes: `[a-z]`, `[^0-9]`
 
-**Важно на собесе:**
-- Для кириллицы используй `mb_*` функции
-- `strpos()` возвращает `0` (falsy!), проверяй `!== false`
+**Importante na entrevista:**
+- Para acentos/Unicode use as funções `mb_*`
+- `strpos()` devolve `0` (falsy!), compare com `!== false`
 - PHP 8.0: `str_contains`, `str_starts_with`, `str_ends_with`
-- Для email используй `filter_var`, не regex
-- В Laravel есть `Str` helper и валидация `regex`
+- Para email use `filter_var`, não regex
+- No Laravel tem o helper `Str` e validação `regex`
 
 ---
 
-## Практические задания
+## Exercícios práticos
 
-### Задание 1: Проблема с strpos
-**Условие:** Найди и исправь ошибку в проверке подстроки.
+### Exercício 1: O problema do strpos
+**Enunciado:** Ache e corrija o erro na checagem de substring.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
 $url = 'https://example.com/api/users';
 
-// ❌ НЕПРАВИЛЬНО
+// ❌ ERRADO
 if (strpos($url, 'https')) {
-    echo 'Secure connection';
+    echo 'Conexão segura';
 } else {
-    echo 'Insecure connection';
+    echo 'Conexão insegura';
 }
-// Выведет: "Insecure connection" ❌
-// strpos вернул 0 (позицию), а 0 = falsy!
+// Vai imprimir: "Conexão insegura" ❌
+// strpos devolveu 0 (a posição), e 0 = falsy!
 
-// ✅ ПРАВИЛЬНО (строгая проверка)
+// ✅ CERTO (comparação estrita)
 if (strpos($url, 'https') !== false) {
-    echo 'Secure connection';
+    echo 'Conexão segura';
 }
 
 // ✅ PHP 8.0+ (str_contains)
 if (str_contains($url, 'https')) {
-    echo 'Secure connection';
+    echo 'Conexão segura';
 }
 
 // ✅ PHP 8.0+ (str_starts_with)
 if (str_starts_with($url, 'https://')) {
-    echo 'Secure connection';
+    echo 'Conexão segura';
 }
 
-// Практический пример
+// Exemplo prático
 function validateImageExtension(string $filename): bool
 {
     $allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
-    // ❌ НЕПРАВИЛЬНО
+    // ❌ ERRADO
     foreach ($allowedExtensions as $ext) {
-        if (strpos($filename, $ext)) {  // Проблема с файлом "0.jpg"
+        if (strpos($filename, $ext)) {  // Quebra no arquivo "0.jpg"
             return true;
         }
     }
 
-    // ✅ ПРАВИЛЬНО (PHP < 8.0)
+    // ✅ CERTO (PHP < 8.0)
     foreach ($allowedExtensions as $ext) {
         if (strpos($filename, $ext) !== false) {
             return true;
         }
     }
 
-    // ✅ ПРАВИЛЬНО (PHP 8.0+)
+    // ✅ CERTO (PHP 8.0+)
     foreach ($allowedExtensions as $ext) {
         if (str_ends_with($filename, $ext)) {
             return true;
         }
     }
 
-    // ✅ ЕЩЁ ЛУЧШЕ (Laravel)
+    // ✅ AINDA MELHOR (Laravel)
     return Str::endsWith($filename, $allowedExtensions);
 }
 
@@ -656,35 +656,35 @@ $request->validate([
 ]);
 ```
 
-**Ключевые моменты:**
-- `strpos()` возвращает `0` при совпадении с началом строки
-- `0` — falsy значение, проверка `if (strpos(...))` не работает
-- Всегда используй `!== false`
-- PHP 8.0: `str_contains`, `str_starts_with`, `str_ends_with` безопаснее
+**Pontos-chave:**
+- `strpos()` devolve `0` quando o trecho está no começo
+- `0` é falsy, então `if (strpos(...))` não funciona
+- Sempre compare com `!== false`
+- PHP 8.0: `str_contains`, `str_starts_with`, `str_ends_with` são mais seguros
 </details>
 
-### Задание 2: mb_* функции для кириллицы
-**Условие:** Обрежь русский текст до 100 символов корректно.
+### Exercício 2: Funções mb_* para Unicode
+**Enunciado:** Corte um texto em português até 100 caracteres, do jeito certo.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
 
-$text = 'Очень длинное описание товара на русском языке с кириллическими символами';
+$text = 'Descrição bem longa do produto em português com caracteres acentuados';
 
-// ❌ НЕПРАВИЛЬНО (обрезает по байтам)
+// ❌ ERRADO (corta por bytes)
 $short = substr($text, 0, 50);
-echo $short;  // "Очень длинное описание товара на р" (обрезано некорректно)
-echo strlen($short);  // 50 байт, но меньше 50 символов
+echo $short;  // pode cortar no meio de um caractere acentuado
+echo strlen($short);  // 50 bytes, menos de 50 caracteres
 
-// ✅ ПРАВИЛЬНО (обрезает по символам)
+// ✅ CERTO (corta por caracteres)
 $short = mb_substr($text, 0, 50);
-echo $short;  // "Очень длинное описание товара на русском языке с к"
-echo mb_strlen($short);  // 50 символов
+echo $short;  // 50 caracteres, sem quebrar acento
+echo mb_strlen($short);  // 50 caracteres
 
-// Функция для обрезки с многоточием
+// Função pra cortar com reticências
 function truncate(string $text, int $length, string $suffix = '...'): string
 {
     if (mb_strlen($text) <= $length) {
@@ -693,7 +693,7 @@ function truncate(string $text, int $length, string $suffix = '...'): string
 
     $truncated = mb_substr($text, 0, $length);
 
-    // Обрезать до последнего пробела
+    // Cortar no último espaço
     $lastSpace = mb_strrpos($truncated, ' ');
     if ($lastSpace !== false) {
         $truncated = mb_substr($truncated, 0, $lastSpace);
@@ -703,42 +703,42 @@ function truncate(string $text, int $length, string $suffix = '...'): string
 }
 
 echo truncate($text, 30);
-// "Очень длинное описание..."
+// "Descrição bem longa do..."
 
 // Laravel Str helper
 use Illuminate\Support\Str;
 
-echo Str::limit($text, 30);  // "Очень длинное описание товара..."
-echo Str::words($text, 5);   // "Очень длинное описание товара на..."
+echo Str::limit($text, 30);  // "Descrição bem longa do produto..."
+echo Str::words($text, 5);   // "Descrição bem longa do produto em..."
 
-// Сравнение с учётом регистра (кириллица)
-$search = 'ТОВАР';
-$text = 'Описание товара';
+// Comparar ignorando caixa (acentos)
+$search = 'ÇÃO';
+$text = 'Descrição do produto';
 
-// ❌ НЕПРАВИЛЬНО
-var_dump(stripos($text, $search));  // false (не работает для кириллицы)
+// ❌ ERRADO
+var_dump(stripos($text, $search));  // false (não funciona com acento)
 
-// ✅ ПРАВИЛЬНО
-var_dump(mb_stripos($text, $search));  // 9 (позиция)
+// ✅ CERTO
+var_dump(mb_stripos($text, $search));  // 6 (posição)
 
-// Или через strtolower
+// Ou via strtolower
 $textLower = mb_strtolower($text);
 $searchLower = mb_strtolower($search);
-var_dump(strpos($textLower, $searchLower));  // 9
+var_dump(strpos($textLower, $searchLower));  // 6
 ```
 
-**Ключевые моменты:**
-- `strlen()` возвращает байты, `mb_strlen()` — символы
-- UTF-8: русская буква = 2 байта
-- Всегда используй `mb_*` для кириллицы
-- Laravel `Str` helper использует `mb_*` под капотом
+**Pontos-chave:**
+- `strlen()` devolve bytes, `mb_strlen()` devolve caracteres
+- UTF-8: letra acentuada = 2 bytes
+- Sempre use `mb_*` quando tiver acento
+- O helper `Str` do Laravel usa `mb_*` por baixo
 </details>
 
-### Задание 3: Валидация и очистка пользовательского ввода
-**Условие:** Создай функцию для валидации и очистки данных формы.
+### Exercício 3: Validar e limpar input do usuário
+**Enunciado:** Crie uma função pra validar e limpar os dados de um form.
 
 <details>
-<summary>Решение</summary>
+<summary>Solução</summary>
 
 ```php
 <?php
@@ -746,15 +746,15 @@ var_dump(strpos($textLower, $searchLower));  // 9
 class InputSanitizer
 {
     /**
-     * Очистка и валидация email
+     * Limpa e valida o email
      */
     public function sanitizeEmail(string $email): ?string
     {
-        // Очистка пробелов и приведение к нижнему регистру
+        // Tira espaço e joga pra minúsculo
         $email = trim($email);
         $email = mb_strtolower($email);
 
-        // Валидация
+        // Validação
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return $email;
         }
@@ -763,28 +763,28 @@ class InputSanitizer
     }
 
     /**
-     * Очистка имени
+     * Limpa o nome
      */
     public function sanitizeName(string $name): string
     {
-        // Убрать лишние пробелы
+        // Tira espaço sobrando
         $name = trim($name);
         $name = preg_replace('/\s+/', ' ', $name);
 
-        // Первая буква заглавная для каждого слова
+        // Primeira letra maiúscula em cada palavra
         return mb_convert_case($name, MB_CASE_TITLE, 'UTF-8');
     }
 
     /**
-     * Очистка телефона
+     * Limpa o telefone
      */
     public function sanitizePhone(string $phone): ?string
     {
-        // Убрать всё кроме цифр и +
+        // Tira tudo que não for dígito ou +
         $phone = preg_replace('/[^\d+]/', '', $phone);
 
-        // Валидация формата
-        if (preg_match('/^\+7\d{10}$/', $phone)) {
+        // Valida o formato
+        if (preg_match('/^\+55\d{11}$/', $phone)) {
             return $phone;
         }
 
@@ -792,83 +792,82 @@ class InputSanitizer
     }
 
     /**
-     * Очистка URL slug
+     * Limpa o slug da URL
      */
     public function sanitizeSlug(string $slug): string
     {
-        // Транслитерация кириллицы
+        // Tira acento
         $slug = $this->transliterate($slug);
 
-        // Нижний регистр
+        // Minúsculo
         $slug = mb_strtolower($slug);
 
-        // Заменить всё кроме букв, цифр и дефиса
+        // Troca tudo que não for letra, dígito ou hífen
         $slug = preg_replace('/[^a-z0-9-]+/', '-', $slug);
 
-        // Убрать повторяющиеся дефисы
+        // Tira hífen repetido
         $slug = preg_replace('/-+/', '-', $slug);
 
-        // Убрать дефисы с краёв
+        // Tira hífen das pontas
         return trim($slug, '-');
     }
 
     private function transliterate(string $text): string
     {
         $transliteration = [
-            'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd',
-            'е' => 'e', 'ё' => 'e', 'ж' => 'zh', 'з' => 'z', 'и' => 'i',
-            'й' => 'y', 'к' => 'k', 'л' => 'l', 'м' => 'm', 'н' => 'n',
-            'о' => 'o', 'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't',
-            'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'ts', 'ч' => 'ch',
-            'ш' => 'sh', 'щ' => 'sch', 'ъ' => '', 'ы' => 'y', 'ь' => '',
-            'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+            'á' => 'a', 'à' => 'a', 'ã' => 'a', 'â' => 'a',
+            'é' => 'e', 'ê' => 'e',
+            'í' => 'i',
+            'ó' => 'o', 'ô' => 'o', 'õ' => 'o',
+            'ú' => 'u', 'ü' => 'u',
+            'ç' => 'c',
         ];
 
         return strtr(mb_strtolower($text), $transliteration);
     }
 }
 
-// Использование
+// Uso
 $sanitizer = new InputSanitizer();
 
 // Email
 $email = $sanitizer->sanitizeEmail('  JoHn@Example.COM  ');
 // "john@example.com"
 
-// Имя
-$name = $sanitizer->sanitizeName('  иван   иванов  ');
-// "Иван Иванов"
+// Nome
+$name = $sanitizer->sanitizeName('  joão   silva  ');
+// "João Silva"
 
-// Телефон
-$phone = $sanitizer->sanitizePhone('+7 (999) 123-45-67');
-// "+79991234567"
+// Telefone
+$phone = $sanitizer->sanitizePhone('+55 (11) 98765-4321');
+// "+5511987654321"
 
 // Slug
-$slug = $sanitizer->sanitizeSlug('Название статьи на русском!');
-// "nazvanie-stati-na-russkom"
+$slug = $sanitizer->sanitizeSlug('Título do artigo em português!');
+// "titulo-do-artigo-em-portugues"
 
-// Laravel (встроенные валидаторы)
+// Laravel (validadores nativos)
 $request->validate([
     'email' => 'required|email|max:255',
     'name' => 'required|string|max:100',
-    'phone' => 'required|regex:/^\+7\d{10}$/',
+    'phone' => 'required|regex:/^\+55\d{11}$/',
 ]);
 
 // Laravel Str helper
 use Illuminate\Support\Str;
 
-$slug = Str::slug('Название статьи');  // "nazvanie-stati"
-$name = Str::title('иван иванов');     // "Иван Иванов"
+$slug = Str::slug('Título do artigo');  // "titulo-do-artigo"
+$name = Str::title('joão silva');     // "João Silva"
 ```
 
-**Ключевые моменты:**
-- Всегда очищай пользовательский ввод (trim, регистр)
-- Используй `filter_var` для валидации email
-- Регулярные выражения для сложных форматов (телефон)
-- Laravel имеет встроенные валидаторы
-- `Str::slug()` автоматически транслитерирует кириллицу
+**Pontos-chave:**
+- Sempre limpe o input do usuário (trim, caixa)
+- Use `filter_var` pra validar email
+- Regex pra formato específico (telefone)
+- Laravel já tem validador pronto
+- `Str::slug()` tira acento sozinho
 </details>
 
 ---
 
-*Часть [PHP/Laravel Interview Handbook](/) | Сделано с ❤️ командой [CodeMate](https://codemate.team)*
+*Parte do [PHP/Laravel Interview Handbook](/) | Feito com ❤️ pela equipe [CodeMate](https://codemate.team)*
