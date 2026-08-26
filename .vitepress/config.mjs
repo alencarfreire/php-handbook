@@ -310,7 +310,9 @@ export default defineConfig({
           { text: '2. API MVC + SOLID', link: '/23-projects/02-api-mvc' },
           { text: '2. Código completo', link: '/23-projects/02-api-mvc-codigo' },
           { text: '2. Baixar zip', link: '/downloads/02-api-mvc.zip' },
-          { text: '3. Symfony (em breve)', link: '/23-projects/03-symfony' },
+          { text: '3. Symfony', link: '/23-projects/03-symfony' },
+          { text: '3. Código completo', link: '/23-projects/03-symfony-codigo' },
+          { text: '3. Baixar zip', link: '/downloads/03-symfony.zip' },
           { text: '4. Laravel básico (em breve)', link: '/23-projects/04-laravel-basico' },
           { text: '5. Laravel completo (em breve)', link: '/23-projects/05-laravel-completo' }
         ]

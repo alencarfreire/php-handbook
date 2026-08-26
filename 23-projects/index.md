@@ -29,10 +29,10 @@ A ordem é de propósito: sessão na mão → API MVC/SOLID em PHP puro → fram
 
 1. [Páginas com sessão](/23-projects/01-sessoes) — PHP puro. Form na home, dados na `$_SESSION`. [Código](/23-projects/01-sessoes-codigo) · [Baixar zip](/downloads/01-sessoes.zip)
 2. [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, PDO SQLite, token Bearer. [Código](/23-projects/02-api-mvc-codigo) · [Baixar zip](/downloads/02-api-mvc.zip)
+3. [Symfony de porta de entrada](/23-projects/03-symfony) — CRUD de tasks, Twig, Doctrine, SQLite. [Código](/23-projects/03-symfony-codigo) · [Baixar zip](/downloads/03-symfony.zip)
 
 ## Em desenvolvimento
 
-3. **Symfony de porta de entrada** — um CRUD curto para parar de ter medo do Symfony.
 4. **Laravel básico** — o CRUD que a vaga júnior pede.
 5. **Laravel completo** — filas, policies, API, testes. Conceitos que caem em middle.
 

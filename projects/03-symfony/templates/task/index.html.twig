@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Tasks</h1>
+    <p class="hint">Symfony 7 + Twig + Doctrine + SQLite. Sem auth neste bolso.</p>
+
+    {{ form_start(form, { attr: { class: 'nova' } }) }}
+        {{ form_widget(form.title) }}
+        <button type="submit">Criar</button>
+    {{ form_end(form) }}
+
+    {% if tasks is empty %}
+        <p>Nenhuma task. Cria a primeira.</p>
+    {% else %}
+        <ul>
+            {% for task in tasks %}
+                <li class="{{ task.done ? 'done' : '' }}">
+                    <span>{{ task.title }}</span>
+                    <form method="post" action="{{ path('task_toggle', { id: task.id }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('task' ~ task.id) }}">
+                        <button type="submit">{{ task.done ? 'Reabrir' : 'Fechar' }}</button>
+                    </form>
+                    <form method="post" action="{{ path('task_delete', { id: task.id }) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('task' ~ task.id) }}">
+                        <button type="submit">Apagar</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

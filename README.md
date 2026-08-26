@@ -112,7 +112,7 @@ Pasta [`23-projects/`](23-projects/index.md) + código em [`projects/`](projects
 
 1. [Páginas com sessão](23-projects/01-sessoes.md) — PHP puro, no ar
 2. [API MVC + SOLID](23-projects/02-api-mvc.md) — PHP puro, no ar
-3. Symfony — em desenvolvimento
+3. [Symfony](23-projects/03-symfony.md) — CRUD, no ar
 4. Laravel básico — em desenvolvimento
 5. Laravel completo — em desenvolvimento
 

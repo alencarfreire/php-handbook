@@ -1,0 +1,7 @@
+# CSRF clássico (campo hidden + sessão). O recipe vem com stateless;
+# neste bolso o token no form é o que você explica na entrevista.
+framework:
+    csrf_protection: ~
+    form:
+        csrf_protection:
+            enabled: true

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Tasks Symfony{% endblock %}</title>
+    <style>
+        body { font-family: sans-serif; max-width: 36rem; margin: 2.5rem auto; padding: 0 1rem; }
+        form.nova { display: flex; gap: 0.5rem; margin: 1rem 0 1.5rem; }
+        form.nova input { flex: 1; padding: 0.4rem; }
+        li { display: flex; align-items: center; gap: 0.5rem; margin: 0.4rem 0; }
+        li.done span { text-decoration: line-through; color: #666; }
+        button { padding: 0.35rem 0.7rem; }
+        .hint { color: #555; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    {% block body %}{% endblock %}
+</body>
+</html>

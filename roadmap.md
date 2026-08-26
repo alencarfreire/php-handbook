@@ -234,7 +234,7 @@ Gerados por IA. **Não existem no handbook original da CodeMate.**
 
 - [Páginas com sessão](/23-projects/01-sessoes) — PHP puro, no ar
 - [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, no ar
-- Symfony — em desenvolvimento
+- [Symfony](/23-projects/03-symfony) — CRUD, no ar
 - Laravel básico — em desenvolvimento
 - Laravel completo — em desenvolvimento
 

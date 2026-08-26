@@ -213,6 +213,7 @@ Esta seção **não existe** no handbook original da CodeMate.
 * [23.1 Código completo](23-projects/01-sessoes-codigo.md)
 * [23.2 API MVC + SOLID](23-projects/02-api-mvc.md)
 * [23.2 Código completo](23-projects/02-api-mvc-codigo.md)
-* 23.3 Symfony (em desenvolvimento)
+* [23.3 Symfony](23-projects/03-symfony.md)
+* [23.3 Código completo](23-projects/03-symfony-codigo.md)
 * 23.4 Laravel básico (em desenvolvimento)
 * 23.5 Laravel completo (em desenvolvimento)

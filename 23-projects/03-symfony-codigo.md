@@ -1,40 +1,10 @@
-# 23.3 Symfony de porta de entrada
+# Código completo — 23.3 Symfony de porta de entrada
 
-> **TL;DR**
-> CRUD de tasks. Symfony 7.4, Twig, Doctrine, SQLite. Você não escreve o kernel. Escreve entity, form, controller e template. O resto o Flex monta.
+> Fonte que **roda**. Gerado por IA. Não existe no handbook original da CodeMate.
 
-**Gerado por IA. Não existe no handbook original da CodeMate.**
-
-## Conteúdo
-
-- [O recorte](#o-recorte)
-- [Como rodar](#como-rodar)
-- [O que o Flex já fez](#o-que-o-flex-já-fez)
-- [Entity](#entity)
-- [Repository](#repository)
-- [Form](#form)
-- [Controller](#controller)
-- [Twig](#twig)
-- [CSRF](#csrf)
-- [Na entrevista](#na-entrevista)
-- [Recapitulando](#recapitulando)
-- [Exercícios práticos](#exercícios-práticos)
-
----
-
-## O recorte
-
-Lista, cria, marca feito, apaga. Sem auth. Sem API. O ponto é parar de ter medo do Symfony: rota no atributo, autowire, form, Twig, Doctrine.
-
-| Método | Rota | Nome |
-|---|---|---|
-| GET+POST | `/` | `task_index` |
-| POST | `/{id}/toggle` | `task_toggle` |
-| POST | `/{id}/delete` | `task_delete` |
+Walkthrough: [23.3](/23-projects/03-symfony) · [Baixar zip](/downloads/03-symfony.zip)
 
 ## Como rodar
-
-Não precisa clonar o repo. [Baixe o zip](/downloads/03-symfony.zip).
 
 ```bash
 unzip 03-symfony.zip
@@ -44,27 +14,57 @@ php bin/console doctrine:schema:update --force
 php -S localhost:8002 -t public
 ```
 
-Abre http://localhost:8002. `vendor/` não vai no zip.
+Abre http://localhost:8002. `vendor/` não vai no zip — `composer install` baixa.
 
-SQLite: `DATABASE_URL="sqlite:///%kernel.project_dir%/var/data.db"` no `.env`.
+## `README.md`
 
----
+````markdown
+# 03 — Symfony de porta de entrada
 
-## O que o Flex já fez
+CRUD de tasks. Symfony 7.4, Twig, Doctrine, SQLite.
 
-`composer create-project symfony/skeleton` + `composer require twig doctrine form validator security-csrf`.
+**Gerado por IA.** Não faz parte do handbook original da CodeMate.
 
-Isso cria `public/index.php`, `src/Kernel.php`, `config/`. Você **não** reescreve. Você adiciona `src/Entity`, `src/Controller`, `templates/`.
+## O que você treina
 
-Autowire em `config/services.yaml`: classe em `src/` vira serviço. Por isso o controller pede `TaskRepository` no método e o Symfony injeta.
+- `#[Route]` no controller
+- Autowire (repository e EntityManager caem no método)
+- Form + CSRF
+- Twig (`path`, `form_*`)
+- Doctrine entity / persist / flush
 
----
+## Como rodar
 
-## Entity
+```bash
+composer install
+php bin/console doctrine:database:create --if-not-exists
+php bin/console doctrine:schema:update --force
+php -S localhost:8002 -t public
+```
 
-Atributo `#[ORM\Entity]`. Sem SQL na mão. `schema:update` cria a tabela.
+Abre http://localhost:8002
 
-### `src/Entity/Task.php`
+## O que não entra (de propósito)
+
+- Auth / Security
+- API JSON
+- Webpack / Asset Mapper
+- Testes
+````
+
+## `config/packages/csrf.yaml`
+
+```yaml
+# CSRF clássico (campo hidden + sessão). O recipe vem com stateless;
+# neste bolso o token no form é o que você explica na entrevista.
+framework:
+    csrf_protection: ~
+    form:
+        csrf_protection:
+            enabled: true
+```
+
+## `src/Entity/Task.php`
 
 ```php
 <?php
@@ -124,14 +124,7 @@ class Task
 }
 ```
 
-
----
-
-## Repository
-
-Query extra (`allNewestFirst`). `find($id)` já vem do pai — o param converter do controller usa.
-
-### `src/Repository/TaskRepository.php`
+## `src/Repository/TaskRepository.php`
 
 ```php
 <?php
@@ -162,14 +155,7 @@ class TaskRepository extends ServiceEntityRepository
 }
 ```
 
-
----
-
-## Form
-
-Amarrado na entidade (`data_class`). CSRF o `form_end` coloca. Título é o único campo visível.
-
-### `src/Form/TaskType.php`
+## `src/Form/TaskType.php`
 
 ```php
 <?php
@@ -202,14 +188,7 @@ class TaskType extends AbstractType
 }
 ```
 
-
----
-
-## Controller
-
-`#[Route]` no método. POST válido → `persist` + `flush` + redirect (PRG). `Task $task` na rota `{id}` é param converter: não achou, 404.
-
-### `src/Controller/TaskController.php`
+## `src/Controller/TaskController.php`
 
 ```php
 <?php
@@ -282,14 +261,7 @@ final class TaskController extends AbstractController
 }
 ```
 
-
----
-
-## Twig
-
-`path('task_toggle', { id: task.id })` gera a URL. `form_start` / `form_widget` / `form_end` renderizam o form **e** o token CSRF.
-
-### `templates/base.html.twig`
+## `templates/base.html.twig`
 
 ```twig
 <!DOCTYPE html>
@@ -314,8 +286,7 @@ final class TaskController extends AbstractController
 </html>
 ```
 
-
-### `templates/task/index.html.twig`
+## `templates/task/index.html.twig`
 
 ```twig
 {% extends 'base.html.twig' %}
@@ -350,81 +321,5 @@ final class TaskController extends AbstractController
     {% endif %}
 {% endblock %}
 ```
-
-
----
-
-## CSRF
-
-O recipe do Symfony 7.4 vem com CSRF **stateless** (sem campo hidden). Neste bolso voltamos ao clássico: campo + sessão. Pacote: `symfony/security-csrf`.
-
-### `config/packages/csrf.yaml`
-
-```yaml
-# CSRF clássico (campo hidden + sessão). O recipe vem com stateless;
-# neste bolso o token no form é o que você explica na entrevista.
-framework:
-    csrf_protection: ~
-    form:
-        csrf_protection:
-            enabled: true
-```
-
-
-Toggle e delete não passam pelo Form component — por isso `csrf_token('task' ~ task.id)` na mão + `isCsrfTokenValid`.
-
----
-
-## Na entrevista
-
-> "No Symfony eu não instancio o repository. O autowire injeta. Rota é atributo no controller. Form amarra na entity. Twig chama `path()`. Doctrine faz persist/flush. CSRF do form o Symfony coloca; no POST solto eu coloco o token na mão."
-
-Se puxarem Laravel: “Blade é o Twig. Eloquent é o Doctrine. Route::get é o #[Route]. O container é o mesmo papo de autowire.”
-
-## Recapitulando
-
-- Flex monta o esqueleto. Você escreve entity, form, controller, twig
-- Autowire: type-hint no método, o container injeta
-- Param converter: `{id}` vira `Task` ou 404
-- CSRF: form_end no form; `csrf_token` nos POST soltos
-- SQLite de bolso. Sem Postgres neste projeto
-
-## Exercícios práticos
-
-### Exercício 1
-
-**Enunciado:**
-Adicione um campo `notas` (texto opcional) na Task. Mostre na lista.
-
-<details>
-<summary>Solução</summary>
-
-Coluna `#[ORM\Column(type: 'text', nullable: true)]` + getter/setter. No `TaskType`, `TextareaType` com `required => false`. No Twig, `{ task.notas }`. Rode `doctrine:schema:update --force`.
-
-</details>
-
-### Exercício 2
-
-**Enunciado:**
-Por que toggle e delete são POST, não GET?
-
-<details>
-<summary>Solução</summary>
-
-GET não muda estado. Bookmark / prefetch / crawler não pode apagar a task. CSRF em GET não tem o mesmo efeito. Entrevista: “mutação é POST (ou PATCH/DELETE). GET é leitura.”
-
-</details>
-
-### Exercício 3
-
-**Enunciado:**
-Tire o `form_end` e explique o que quebra.
-
-<details>
-<summary>Solução</summary>
-
-O campo `task[_token]` some. O POST cai em CSRF inválido / form inválido. É o mesmo bug de quem renderiza só `form_widget(form.title)` e esquece o resto.
-
-</details>
 
 *Parte do [PHP/Laravel Interview Handbook](/) — seção gerada por IA, só neste fork.*
