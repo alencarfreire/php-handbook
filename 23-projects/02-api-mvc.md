@@ -7,6 +7,7 @@
 
 ## Conteúdo
 
+- [Código completo](/23-projects/02-api-mvc-codigo)
 - [O recorte](#o-recorte)
 - [As camadas](#as-camadas)
 - [SOLID neste tamanho](#solid-neste-tamanho)
@@ -21,7 +22,7 @@
 
 ## O recorte
 
-Código em `projects/02-api-mvc/`.
+**Código completo no site:** [todos os arquivos](/23-projects/02-api-mvc-codigo). Pasta: `projects/02-api-mvc/`.
 
 Recurso: `Task` do usuário logado. Auth: `POST /register`, `POST /login`, depois `Authorization: Bearer`.
 

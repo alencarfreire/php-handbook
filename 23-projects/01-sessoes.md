@@ -5,6 +5,7 @@
 
 ## Conteúdo
 
+- [Código completo](/23-projects/01-sessoes-codigo)
 - [O que é](#o-que-é)
 - [Como funciona](#como-funciona)
 - [O form e o POST](#o-form-e-o-post)
@@ -25,7 +26,7 @@ Sessão é estado do usuário no servidor, amarrado a um cookie (`PHPSESSID`). O
 **Como funciona:**
 `session_start()` no topo de **cada** script que lê ou grava. Sem isso, `$_SESSION` não existe.
 
-Código em `projects/01-sessoes/`.
+**Código completo no site:** [todos os arquivos](/23-projects/01-sessoes-codigo). Pasta: `projects/01-sessoes/`.
 
 ## Como funciona
 

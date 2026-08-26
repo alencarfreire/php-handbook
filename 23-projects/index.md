@@ -27,8 +27,8 @@ A ordem é de propósito: sessão na mão → API MVC/SOLID em PHP puro → fram
 
 ## Já no ar
 
-1. [Páginas com sessão](/23-projects/01-sessoes) — PHP puro. Form na home, dados na `$_SESSION`, outra página lê. Sem banco, sem framework. Código: `projects/01-sessoes/`
-2. [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, PDO SQLite, token Bearer, camadas. Código: `projects/02-api-mvc/`
+1. [Páginas com sessão](/23-projects/01-sessoes) — PHP puro. Form na home, dados na `$_SESSION`, outra página lê. Sem banco, sem framework. **[Código completo](/23-projects/01-sessoes-codigo)**
+2. [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, PDO SQLite, token Bearer, camadas. **[Código completo](/23-projects/02-api-mvc-codigo)**
 
 ## Em desenvolvimento
 
