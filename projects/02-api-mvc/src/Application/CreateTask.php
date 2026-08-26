@@ -18,6 +18,7 @@ final class CreateTask
             throw new AppException(422, 'Título obrigatório.');
         }
 
+        // userId vem do token, não do body. O client não escolhe o dono.
         return $this->tasks->save(new Task(null, $userId, $title, false));
     }
 }

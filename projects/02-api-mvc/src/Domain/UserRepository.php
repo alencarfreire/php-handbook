@@ -2,6 +2,7 @@
 
 namespace App\Domain;
 
+// Contrato. Quem implementa (PDO, memória, MySQL) fica na Infrastructure.
 interface UserRepository
 {
     public function save(User $user): User;

@@ -28,6 +28,7 @@ final class TaskController
     public function store(): never
     {
         $body = Json::body();
+        // userId do token. Se vier user_id no JSON, ignora.
         $task = $this->create->handle(
             $this->auth->userId(),
             (string) ($body['title'] ?? ''),

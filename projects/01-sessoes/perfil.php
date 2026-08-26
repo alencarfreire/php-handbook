@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Página protegida: sem sessão, nem tenta renderizar. Volta pra home.
 if (empty($_SESSION['usuario'])) {
     header('Location: /index.php');
     exit;

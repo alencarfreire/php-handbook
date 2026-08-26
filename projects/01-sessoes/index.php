@@ -1,6 +1,8 @@
 <?php
+// Sem isto, $_SESSION não existe — mesmo com o cookie PHPSESSID no browser.
 session_start();
 
+// Flash: gravou no POST, redirecionou, leu aqui, apaga. Senão o erro gruda.
 $erro = $_SESSION['erro'] ?? null;
 unset($_SESSION['erro']);
 
@@ -27,6 +29,7 @@ $usuario = $_SESSION['usuario'] ?? null;
 
     <?php if ($usuario): ?>
         <p class="ok">
+            <?php // htmlspecialchars: o nome veio do form. Sem isso, XSS. ?>
             Olá, <?= htmlspecialchars($usuario['nome'], ENT_QUOTES, 'UTF-8') ?>.
             <a href="/perfil.php">Ver perfil</a>
         </p>

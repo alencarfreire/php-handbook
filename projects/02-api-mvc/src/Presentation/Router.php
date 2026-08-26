@@ -9,6 +9,7 @@ final class Router
 
     public function add(string $method, string $path, callable $handler): void
     {
+        // /tasks/{id} vira regex. Sem framework.
         $names = [];
         $regex = preg_replace_callback('/\{([a-zA-Z_]+)\}/', static function (array $m) use (&$names): string {
             $names[] = $m[1];
@@ -47,6 +48,7 @@ final class Router
             return;
         }
 
+        // Path existe, verbo não: 405. Path não existe: 404.
         if ($allowed) {
             Json::error(405, 'Método não permitido.');
         }

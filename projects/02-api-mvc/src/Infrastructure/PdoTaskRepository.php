@@ -47,6 +47,7 @@ final class PdoTaskRepository implements TaskRepository
 
     public function findByIdForUser(int $id, int $userId): ?Task
     {
+        // AND user_id: a task 1 do João não volta para a Maria.
         $stmt = $this->pdo->prepare(
             'SELECT * FROM tasks WHERE id = :id AND user_id = :user_id'
         );

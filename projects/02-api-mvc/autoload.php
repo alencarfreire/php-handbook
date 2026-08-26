@@ -1,5 +1,6 @@
 <?php
 
+// Sem Composer: App\Foo\Bar → src/Foo/Bar.php
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {

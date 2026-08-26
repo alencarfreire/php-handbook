@@ -5,6 +5,7 @@ namespace App\Presentation;
 use App\Application\LoginUser;
 use App\Application\RegisterUser;
 
+// HTTP in, JSON out. SQL fica no repository.
 final class AuthController
 {
     public function __construct(

@@ -6,6 +6,7 @@ use App\Domain\User;
 use App\Domain\UserRepository;
 use App\Infrastructure\NativePasswordHasher;
 
+// Um handle = um caso de uso. Sem echo, sem SQL.
 final class RegisterUser
 {
     public function __construct(

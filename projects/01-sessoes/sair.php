@@ -1,8 +1,10 @@
 <?php
 session_start();
 
+// Esvazia o array desta request.
 $_SESSION = [];
 
+// Sem apagar o cookie, o browser ainda manda o PHPSESSID velho.
 if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
     setcookie(
@@ -16,6 +18,7 @@ if (ini_get('session.use_cookies')) {
     );
 }
 
+// Apaga o store no servidor. O próximo session_start() nasce vazio.
 session_destroy();
 
 header('Location: /index.php');

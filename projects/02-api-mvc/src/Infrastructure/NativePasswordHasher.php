@@ -4,6 +4,7 @@ namespace App\Infrastructure;
 
 final class NativePasswordHasher
 {
+    // Nunca md5. PASSWORD_DEFAULT acompanha o PHP (hoje bcrypt/argon).
     public function hash(string $plain): string
     {
         return password_hash($plain, PASSWORD_DEFAULT);

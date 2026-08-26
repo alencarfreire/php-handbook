@@ -12,6 +12,7 @@ final class Auth
 
     public function userId(): int
     {
+        // Authorization: Bearer <token> — não é cookie de sessão.
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         if (!preg_match('/^Bearer\s+(\S+)/', $header, $m)) {
             Json::error(401, 'Token ausente.');

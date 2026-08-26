@@ -12,6 +12,7 @@ final class TokenService
 
     public function issue(int $userId): string
     {
+        // 64 chars hex. Não é JWT. Some se apagar a linha na tabela.
         $token = bin2hex(random_bytes(32));
         $stmt = $this->pdo->prepare(
             'INSERT INTO tokens (token, user_id, created_at) VALUES (:token, :user_id, :created_at)'

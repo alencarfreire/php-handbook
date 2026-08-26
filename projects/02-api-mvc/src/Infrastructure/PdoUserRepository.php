@@ -6,6 +6,7 @@ use App\Domain\User;
 use App\Domain\UserRepository;
 use PDO;
 
+// PDO implementa o contrato. O caso de uso não vê SQL.
 final class PdoUserRepository implements UserRepository
 {
     public function __construct(private readonly PDO $pdo)

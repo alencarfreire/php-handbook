@@ -2,6 +2,7 @@
 
 namespace App\Domain;
 
+// Entidade. Sem PDO, sem HTTP. passwordHash nunca vai no JSON público.
 final class User
 {
     public function __construct(

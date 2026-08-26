@@ -23,6 +23,7 @@ use App\Presentation\TaskController;
 
 require dirname(__DIR__) . '/autoload.php';
 
+// Composition root: o único lugar que new em todo mundo.
 $pdo = Connection::make();
 $users = new PdoUserRepository($pdo);
 $tasks = new PdoTaskRepository($pdo);
@@ -61,5 +62,6 @@ try {
 } catch (AppException $e) {
     Json::error($e->status, $e->getMessage());
 } catch (Throwable $e) {
+    // Não vaza stack para o client.
     Json::error(500, 'Erro interno.');
 }

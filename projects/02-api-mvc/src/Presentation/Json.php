@@ -2,6 +2,7 @@
 
 namespace App\Presentation;
 
+// Única saída HTTP. Controller não dá echo.
 final class Json
 {
     public static function send(int $status, mixed $payload): never
@@ -19,6 +20,7 @@ final class Json
 
     public static function body(): array
     {
+        // Body JSON. $_POST não existe em PUT/PATCH.
         $raw = file_get_contents('php://input') ?: '';
         if ($raw === '') {
             return [];

@@ -84,6 +84,7 @@ curl -s http://localhost:8001/tasks \
 ```php
 <?php
 
+// Sem Composer: App\Foo\Bar → src/Foo/Bar.php
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     if (!str_starts_with($class, $prefix)) {
@@ -102,6 +103,8 @@ spl_autoload_register(static function (string $class): void {
 ## `database/schema.sql`
 
 ```sql
+-- SQLite de bolso. Roda no primeiro request (Connection::make).
+
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -109,6 +112,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL
 );
 
+-- Token opaco na tabela. Não é JWT. Login gera, header Bearer consome.
 CREATE TABLE IF NOT EXISTS tokens (
     token TEXT PRIMARY KEY,
     user_id INTEGER NOT NULL,
@@ -116,6 +120,7 @@ CREATE TABLE IF NOT EXISTS tokens (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- Toda query de task filtra user_id. Sem isso, IDOR.
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -153,6 +158,7 @@ use App\Presentation\TaskController;
 
 require dirname(__DIR__) . '/autoload.php';
 
+// Composition root: o único lugar que new em todo mundo.
 $pdo = Connection::make();
 $users = new PdoUserRepository($pdo);
 $tasks = new PdoTaskRepository($pdo);
@@ -191,6 +197,7 @@ try {
 } catch (AppException $e) {
     Json::error($e->status, $e->getMessage());
 } catch (Throwable $e) {
+    // Não vaza stack para o client.
     Json::error(500, 'Erro interno.');
 }
 ```
@@ -204,6 +211,7 @@ namespace App\Application;
 
 use RuntimeException;
 
+// Erro de regra (422, 401, 404…). O front controller vira JSON. Sem echo aqui.
 final class AppException extends RuntimeException
 {
     public function __construct(
@@ -238,6 +246,7 @@ final class CreateTask
             throw new AppException(422, 'Título obrigatório.');
         }
 
+        // userId vem do token, não do body. O client não escolhe o dono.
         return $this->tasks->save(new Task(null, $userId, $title, false));
     }
 }
@@ -286,6 +295,7 @@ final class GetTask
     public function handle(int $id, int $userId): Task
     {
         $task = $this->tasks->findByIdForUser($id, $userId);
+        // 404, não 403: você nem admite que a task do outro existe.
         if ($task === null) {
             throw new AppException(404, 'Task não encontrada.');
         }
@@ -344,6 +354,7 @@ final class LoginUser
     public function handle(string $email, string $password): array
     {
         $user = $this->users->findByEmail($email);
+        // Mesma mensagem se o e-mail não existe ou a senha erra. Não vaza cadastro.
         if ($user === null || !$this->hasher->verify($password, $user->passwordHash)) {
             throw new AppException(401, 'Credenciais inválidas.');
         }
@@ -367,6 +378,7 @@ use App\Domain\User;
 use App\Domain\UserRepository;
 use App\Infrastructure\NativePasswordHasher;
 
+// Um handle = um caso de uso. Sem echo, sem SQL.
 final class RegisterUser
 {
     public function __construct(
@@ -473,6 +485,7 @@ interface TaskRepository
 {
     public function save(Task $task): Task;
 
+    // Sempre com userId: a task do João não aparece para a Maria.
     public function findByIdForUser(int $id, int $userId): ?Task;
 
     /** @return list<Task> */
@@ -489,6 +502,7 @@ interface TaskRepository
 
 namespace App\Domain;
 
+// Entidade. Sem PDO, sem HTTP. passwordHash nunca vai no JSON público.
 final class User
 {
     public function __construct(
@@ -517,6 +531,7 @@ final class User
 
 namespace App\Domain;
 
+// Contrato. Quem implementa (PDO, memória, MySQL) fica na Infrastructure.
 interface UserRepository
 {
     public function save(User $user): User;
@@ -545,6 +560,7 @@ final class Connection
             mkdir($dir, 0777, true);
         }
 
+        // SQLite num arquivo. Trocar o DSN é o que muda se for MySQL.
         $pdo = new PDO('sqlite:' . $dir . '/app.sqlite');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -567,6 +583,7 @@ namespace App\Infrastructure;
 
 final class NativePasswordHasher
 {
+    // Nunca md5. PASSWORD_DEFAULT acompanha o PHP (hoje bcrypt/argon).
     public function hash(string $plain): string
     {
         return password_hash($plain, PASSWORD_DEFAULT);
@@ -631,6 +648,7 @@ final class PdoTaskRepository implements TaskRepository
 
     public function findByIdForUser(int $id, int $userId): ?Task
     {
+        // AND user_id: a task 1 do João não volta para a Maria.
         $stmt = $this->pdo->prepare(
             'SELECT * FROM tasks WHERE id = :id AND user_id = :user_id'
         );
@@ -683,6 +701,7 @@ use App\Domain\User;
 use App\Domain\UserRepository;
 use PDO;
 
+// PDO implementa o contrato. O caso de uso não vê SQL.
 final class PdoUserRepository implements UserRepository
 {
     public function __construct(private readonly PDO $pdo)
@@ -755,6 +774,7 @@ final class TokenService
 
     public function issue(int $userId): string
     {
+        // 64 chars hex. Não é JWT. Some se apagar a linha na tabela.
         $token = bin2hex(random_bytes(32));
         $stmt = $this->pdo->prepare(
             'INSERT INTO tokens (token, user_id, created_at) VALUES (:token, :user_id, :created_at)'
@@ -796,6 +816,7 @@ final class Auth
 
     public function userId(): int
     {
+        // Authorization: Bearer <token> — não é cookie de sessão.
         $header = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
         if (!preg_match('/^Bearer\s+(\S+)/', $header, $m)) {
             Json::error(401, 'Token ausente.');
@@ -821,6 +842,7 @@ namespace App\Presentation;
 use App\Application\LoginUser;
 use App\Application\RegisterUser;
 
+// HTTP in, JSON out. SQL fica no repository.
 final class AuthController
 {
     public function __construct(
@@ -859,6 +881,7 @@ final class AuthController
 
 namespace App\Presentation;
 
+// Única saída HTTP. Controller não dá echo.
 final class Json
 {
     public static function send(int $status, mixed $payload): never
@@ -876,6 +899,7 @@ final class Json
 
     public static function body(): array
     {
+        // Body JSON. $_POST não existe em PUT/PATCH.
         $raw = file_get_contents('php://input') ?: '';
         if ($raw === '') {
             return [];
@@ -905,6 +929,7 @@ final class Router
 
     public function add(string $method, string $path, callable $handler): void
     {
+        // /tasks/{id} vira regex. Sem framework.
         $names = [];
         $regex = preg_replace_callback('/\{([a-zA-Z_]+)\}/', static function (array $m) use (&$names): string {
             $names[] = $m[1];
@@ -943,6 +968,7 @@ final class Router
             return;
         }
 
+        // Path existe, verbo não: 405. Path não existe: 404.
         if ($allowed) {
             Json::error(405, 'Método não permitido.');
         }
@@ -985,6 +1011,7 @@ final class TaskController
     public function store(): never
     {
         $body = Json::body();
+        // userId do token. Se vier user_id no JSON, ignora.
         $task = $this->create->handle(
             $this->auth->userId(),
             (string) ($body['title'] ?? ''),

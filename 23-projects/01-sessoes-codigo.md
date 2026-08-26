@@ -53,8 +53,10 @@ Abre http://localhost:8000
 
 ```php
 <?php
+// Sem isto, $_SESSION não existe — mesmo com o cookie PHPSESSID no browser.
 session_start();
 
+// Flash: gravou no POST, redirecionou, leu aqui, apaga. Senão o erro gruda.
 $erro = $_SESSION['erro'] ?? null;
 unset($_SESSION['erro']);
 
@@ -81,6 +83,7 @@ $usuario = $_SESSION['usuario'] ?? null;
 
     <?php if ($usuario): ?>
         <p class="ok">
+            <?php // htmlspecialchars: o nome veio do form. Sem isso, XSS. ?>
             Olá, <?= htmlspecialchars($usuario['nome'], ENT_QUOTES, 'UTF-8') ?>.
             <a href="/perfil.php">Ver perfil</a>
         </p>
@@ -109,6 +112,7 @@ $usuario = $_SESSION['usuario'] ?? null;
 <?php
 session_start();
 
+// Página protegida: sem sessão, nem tenta renderizar. Volta pra home.
 if (empty($_SESSION['usuario'])) {
     header('Location: /index.php');
     exit;
@@ -154,8 +158,10 @@ $usuario = $_SESSION['usuario'];
 <?php
 session_start();
 
+// Esvazia o array desta request.
 $_SESSION = [];
 
+// Sem apagar o cookie, o browser ainda manda o PHPSESSID velho.
 if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
     setcookie(
@@ -169,6 +175,7 @@ if (ini_get('session.use_cookies')) {
     );
 }
 
+// Apaga o store no servidor. O próximo session_start() nasce vazio.
 session_destroy();
 
 header('Location: /index.php');
@@ -181,6 +188,7 @@ exit;
 <?php
 session_start();
 
+// Este script só grava. GET aqui seria bug — 405 e para.
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     header('Allow: POST');
@@ -196,11 +204,13 @@ if ($nome === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+// Isto some quando o processo morre. Não é banco.
 $_SESSION['usuario'] = [
     'nome'  => $nome,
     'email' => $email,
 ];
 
+// PRG: redirect depois do POST. F5 no perfil não reenvia o form.
 header('Location: /perfil.php');
 exit;
 ```
