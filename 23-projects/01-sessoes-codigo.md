@@ -2,14 +2,13 @@
 
 > Fonte que **roda**. Gerado por IA. Não existe no handbook original da CodeMate.
 
-Pasta no GitHub: [`projects/01-sessoes/`](https://github.com/alencarfreire/php-handbook/tree/translate-pt-br/projects/01-sessoes)
-
-Walkthrough: [23.1](/23-projects/01-sessoes)
+Walkthrough: [23.1](/23-projects/01-sessoes) · [Baixar zip](/downloads/01-sessoes.zip)
 
 ## Como rodar
 
 ```bash
-cd projects/01-sessoes
+unzip 01-sessoes.zip
+cd 01-sessoes
 php -S localhost:8000
 ```
 
@@ -33,7 +32,6 @@ PHP puro. Sem Composer, sem banco, sem framework.
 ## Como rodar
 
 ```bash
-cd projects/01-sessoes
 php -S localhost:8000
 ```
 

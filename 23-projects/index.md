@@ -21,14 +21,14 @@
 
 ## O recorte
 
-Cada projeto é código que roda em `projects/` + um walkthrough aqui. PHP 8.2+ no built-in server, depois Symfony, depois Laravel.
+Tudo que você precisa está **neste handbook**: walkthrough com o fonte inteiro, página de código e um zip para rodar. Não precisa ir ao GitHub.
 
 A ordem é de propósito: sessão na mão → API MVC/SOLID em PHP puro → framework.
 
 ## Já no ar
 
-1. [Páginas com sessão](/23-projects/01-sessoes) — PHP puro. Form na home, dados na `$_SESSION`, outra página lê. Sem banco, sem framework. **[Código completo](/23-projects/01-sessoes-codigo)**
-2. [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, PDO SQLite, token Bearer, camadas. **[Código completo](/23-projects/02-api-mvc-codigo)**
+1. [Páginas com sessão](/23-projects/01-sessoes) — PHP puro. Form na home, dados na `$_SESSION`. [Código](/23-projects/01-sessoes-codigo) · [Baixar zip](/downloads/01-sessoes.zip)
+2. [API MVC + SOLID](/23-projects/02-api-mvc) — PHP puro, PDO SQLite, token Bearer. [Código](/23-projects/02-api-mvc-codigo) · [Baixar zip](/downloads/02-api-mvc.zip)
 
 ## Em desenvolvimento
 
@@ -48,8 +48,8 @@ Não entram agora. Ficam no radar:
 
 ## Como usar
 
-1. Leia o walkthrough.
-2. Rode o código em `projects/0N-...`.
+1. Leia o walkthrough (o fonte inteiro está na página).
+2. Baixe o zip, extraia, `php -S`.
 3. Quebre de propósito. Mude o form. Tire o `session_start()` e veja o estrago.
 4. Na entrevista, fale o que o projeto treina — não recorde o README.
 

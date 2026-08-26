@@ -15,7 +15,6 @@ PHP puro. Sem Composer, sem banco, sem framework.
 ## Como rodar
 
 ```bash
-cd projects/01-sessoes
 php -S localhost:8000
 ```
 

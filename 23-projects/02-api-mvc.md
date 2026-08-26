@@ -51,8 +51,11 @@ Não é Clean Architecture de livro. Entidade anêmica, sem bus, sem DTO de bord
 
 ## Como rodar
 
+Não precisa clonar o repo. [Baixe o zip](/downloads/02-api-mvc.zip), extraia, suba o server.
+
 ```bash
-cd projects/02-api-mvc
+unzip 02-api-mvc.zip
+cd 02-api-mvc
 php -S localhost:8001 -t public
 ```
 

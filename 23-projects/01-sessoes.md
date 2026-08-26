@@ -37,12 +37,15 @@ Quatro arquivos. Nenhum é recorte — é o app inteiro.
 
 ## Como rodar
 
+Não precisa clonar o repo. [Baixe o zip](/downloads/01-sessoes.zip), extraia, suba o server.
+
 ```bash
-cd projects/01-sessoes
+unzip 01-sessoes.zip
+cd 01-sessoes
 php -S localhost:8000
 ```
 
-Abre `http://localhost:8000`. Sem Apache. Sem nginx.
+Abre `http://localhost:8000`. Sem Apache. Sem nginx. O fonte completo também está [nesta página](#indexphp--o-form) e em [código completo](/23-projects/01-sessoes-codigo).
 
 ---
 

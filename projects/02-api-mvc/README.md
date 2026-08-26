@@ -15,7 +15,6 @@ API JSON em PHP 8.2+. Sem Laravel, sem Slim, sem Composer obrigatório.
 ## Como rodar
 
 ```bash
-cd projects/02-api-mvc
 php -S localhost:8001 -t public
 ```
 

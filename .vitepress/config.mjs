@@ -306,8 +306,10 @@ export default defineConfig({
           { text: 'O recorte', link: '/23-projects/' },
           { text: '1. Páginas com sessão', link: '/23-projects/01-sessoes' },
           { text: '1. Código completo', link: '/23-projects/01-sessoes-codigo' },
+          { text: '1. Baixar zip', link: '/downloads/01-sessoes.zip' },
           { text: '2. API MVC + SOLID', link: '/23-projects/02-api-mvc' },
           { text: '2. Código completo', link: '/23-projects/02-api-mvc-codigo' },
+          { text: '2. Baixar zip', link: '/downloads/02-api-mvc.zip' },
           { text: '3. Symfony (em breve)', link: '/23-projects/03-symfony' },
           { text: '4. Laravel básico (em breve)', link: '/23-projects/04-laravel-basico' },
           { text: '5. Laravel completo (em breve)', link: '/23-projects/05-laravel-completo' }

@@ -2,18 +2,17 @@
 
 > Fonte que **roda**. Gerado por IA. Não existe no handbook original da CodeMate.
 
-Pasta no GitHub: [`projects/02-api-mvc/`](https://github.com/alencarfreire/php-handbook/tree/translate-pt-br/projects/02-api-mvc)
-
-Walkthrough: [23.2](/23-projects/02-api-mvc)
+Walkthrough: [23.2](/23-projects/02-api-mvc) · [Baixar zip](/downloads/02-api-mvc.zip)
 
 ## Como rodar
 
 ```bash
-cd projects/02-api-mvc
+unzip 02-api-mvc.zip
+cd 02-api-mvc
 php -S localhost:8001 -t public
 ```
 
-Curls no `README.md` da pasta.
+Curls no walkthrough e no `README.md` abaixo.
 
 ## `README.md`
 
@@ -35,7 +34,6 @@ API JSON em PHP 8.2+. Sem Laravel, sem Slim, sem Composer obrigatório.
 ## Como rodar
 
 ```bash
-cd projects/02-api-mvc
 php -S localhost:8001 -t public
 ```
 
