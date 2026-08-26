@@ -305,7 +305,7 @@ export default defineConfig({
         items: [
           { text: 'O recorte', link: '/23-projects/' },
           { text: '1. Páginas com sessão', link: '/23-projects/01-sessoes' },
-          { text: '2. API MVC (em breve)', link: '/23-projects/02-api-mvc' },
+          { text: '2. API MVC + SOLID', link: '/23-projects/02-api-mvc' },
           { text: '3. Symfony (em breve)', link: '/23-projects/03-symfony' },
           { text: '4. Laravel básico (em breve)', link: '/23-projects/04-laravel-basico' },
           { text: '5. Laravel completo (em breve)', link: '/23-projects/05-laravel-completo' }
