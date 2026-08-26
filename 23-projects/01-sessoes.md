@@ -3,14 +3,16 @@
 > **TL;DR**
 > PHP puro. Home com form. POST grava nome e e-mail na `$_SESSION`. `/perfil.php` lê. Sem banco, sem Composer, sem framework. Sessão some quando o browser fecha o cookie (ou você chama `session_destroy()`).
 
+**Gerado por IA. Não existe no handbook original da CodeMate.**
+
 ## Conteúdo
 
-- [Código completo](/23-projects/01-sessoes-codigo)
 - [O que é](#o-que-é)
-- [Como funciona](#como-funciona)
-- [O form e o POST](#o-form-e-o-post)
-- [A página que lê a sessão](#a-página-que-lê-a-sessão)
-- [Sair](#sair)
+- [Como rodar](#como-rodar)
+- [index.php — o form](#indexphp--o-form)
+- [salvar.php — o POST](#salvarphp--o-post)
+- [perfil.php — a página protegida](#perfilphp--a-página-protegida)
+- [sair.php — destruir a sessão](#sairphp--destruir-a-sessão)
 - [Quando usar](#quando-usar)
 - [Na entrevista](#na-entrevista)
 - [Recapitulando](#recapitulando)
@@ -20,26 +22,20 @@
 
 ## O que é
 
-**O que é:**
 Sessão é estado do usuário no servidor, amarrado a um cookie (`PHPSESSID`). O browser manda o cookie. O PHP reabre o array `$_SESSION`.
 
-**Como funciona:**
 `session_start()` no topo de **cada** script que lê ou grava. Sem isso, `$_SESSION` não existe.
 
-**Código completo no site:** [todos os arquivos](/23-projects/01-sessoes-codigo). Pasta: `projects/01-sessoes/`.
-
-## Como funciona
-
-Três arquivos de verdade:
+Quatro arquivos. Nenhum é recorte — é o app inteiro.
 
 | Arquivo | Papel |
 |---|---|
-| `index.php` | Form. GET. Mostra erro da sessão, se tiver. |
+| `index.php` | Form. GET. Flash de erro. Saudação se já tem sessão. |
 | `salvar.php` | POST. Valida. Grava `$_SESSION['usuario']`. Redirect. |
-| `perfil.php` | GET. Se não tem sessão, volta pra home. Senão mostra os dados. |
-| `sair.php` | Destroi a sessão. Redirect pra home. |
+| `perfil.php` | GET. Sem sessão → home. Com sessão → mostra nome e e-mail. |
+| `sair.php` | Destroi sessão e cookie. Redirect pra home. |
 
-Subir:
+## Como rodar
 
 ```bash
 cd projects/01-sessoes
@@ -48,23 +44,80 @@ php -S localhost:8000
 
 Abre `http://localhost:8000`. Sem Apache. Sem nginx.
 
-## O form e o POST
+---
 
-**O que é:**
-HTML manda `POST` para `salvar.php`. PHP lê `$_POST`. Não confie no client.
+## index.php — o form
 
-**Como funciona:**
+`session_start()` primeiro. Tira o flash `erro` (grava, redirect, lê, `unset`). Se já tem `usuario`, mostra o nome. O form manda POST para `/salvar.php`. Saída passa por `htmlspecialchars`.
 
 ```php
+<?php
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+$erro = $_SESSION['erro'] ?? null;
+unset($_SESSION['erro']);
+
+$usuario = $_SESSION['usuario'] ?? null;
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home — sessão</title>
+    <style>
+        body { font-family: sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; }
+        label { display: block; margin: 0.75rem 0 0.25rem; }
+        input { width: 100%; padding: 0.4rem; box-sizing: border-box; }
+        button { margin-top: 1rem; padding: 0.5rem 1rem; }
+        .erro { color: #b00020; }
+        .ok { background: #f3f3f3; padding: 0.75rem 1rem; }
+    </style>
+</head>
+<body>
+    <h1>Home</h1>
+    <p>PHP puro. O form grava na sessão. Não tem banco.</p>
+
+    <?php if ($usuario): ?>
+        <p class="ok">
+            Olá, <?= htmlspecialchars($usuario['nome'], ENT_QUOTES, 'UTF-8') ?>.
+            <a href="/perfil.php">Ver perfil</a>
+        </p>
+    <?php endif; ?>
+
+    <?php if ($erro): ?>
+        <p class="erro"><?= htmlspecialchars($erro, ENT_QUOTES, 'UTF-8') ?></p>
+    <?php endif; ?>
+
+    <form method="post" action="/salvar.php">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" required placeholder="João">
+
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" required placeholder="joao@email.com">
+
+        <button type="submit">Guardar na sessão</button>
+    </form>
+</body>
+</html>
+```
+
+## salvar.php — o POST
+
+Só aceita POST (405 se não for). `trim` + e-mail válido. Erro vai na sessão e volta pra home (não imprime HTML aqui). Sucesso grava o array e redireciona pro perfil — **PRG**: F5 no perfil não reenvia o form.
+
+```php
+<?php
+session_start();
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
+    header('Allow: POST');
     exit('Só POST');
 }
 
-$nome  = trim($_POST['nome'] ?? '');
-$email = trim($_POST['email'] ?? '');
+$nome  = trim((string) ($_POST['nome'] ?? ''));
+$email = trim((string) ($_POST['email'] ?? ''));
 
 if ($nome === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $_SESSION['erro'] = 'Nome e e-mail válidos, por favor.';
@@ -81,14 +134,12 @@ header('Location: /perfil.php');
 exit;
 ```
 
-**Importante na entrevista:**
-Redirect depois do POST (PRG). Se o usuário der F5 no perfil, não reenvia o form.
+## perfil.php — a página protegida
 
-Flash de erro também vai na sessão: grava, redirect, lê, `unset`.
-
-## A página que lê a sessão
+Sem `$_SESSION['usuario']`, volta pra home. Com sessão, imprime os dois campos. XSS: `htmlspecialchars(..., ENT_QUOTES, 'UTF-8')`.
 
 ```php
+<?php
 session_start();
 
 if (empty($_SESSION['usuario'])) {
@@ -97,21 +148,69 @@ if (empty($_SESSION['usuario'])) {
 }
 
 $usuario = $_SESSION['usuario'];
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Perfil — sessão</title>
+    <style>
+        body { font-family: sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; }
+        dl { background: #f3f3f3; padding: 1rem; }
+        dt { font-weight: 700; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <h1>Perfil</h1>
+    <p>Estes dados estão na <code>$_SESSION</code>. Recarregou a página? Continuam. Fechou o servidor? Sumiram.</p>
+
+    <dl>
+        <dt>Nome</dt>
+        <dd><?= htmlspecialchars($usuario['nome'], ENT_QUOTES, 'UTF-8') ?></dd>
+        <dt>E-mail</dt>
+        <dd><?= htmlspecialchars($usuario['email'], ENT_QUOTES, 'UTF-8') ?></dd>
+    </dl>
+
+    <p>
+        <a href="/index.php">Home</a>
+        ·
+        <a href="/sair.php">Sair</a>
+    </p>
+</body>
+</html>
 ```
 
-Aí você imprime `$usuario['nome']` e `$usuario['email']`. Escape com `htmlspecialchars`. XSS de form cai nesta frase.
+## sair.php — destruir a sessão
 
-## Sair
+Esvazia o array, apaga o cookie de sessão e chama `session_destroy()`. O cookie sozinho no browser não reabre o que já morreu no servidor.
 
 ```php
+<?php
 session_start();
+
 $_SESSION = [];
+
+if (ini_get('session.use_cookies')) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params['path'],
+        $params['domain'],
+        $params['secure'],
+        $params['httponly']
+    );
+}
+
 session_destroy();
+
 header('Location: /index.php');
 exit;
 ```
 
-Cookie ainda pode existir no browser. `session_destroy()` apaga o arquivo/store no servidor. O próximo `session_start()` cria outra sessão vazia.
+---
 
 ## Quando usar
 
@@ -123,7 +222,7 @@ Cookie ainda pode existir no browser. `session_destroy()` apaga o arquivo/store 
 
 > "Sessão no PHP é `session_start()` + cookie `PHPSESSID`. Eu guardo o usuário no `$_SESSION` depois do POST. A outra página só lê. Sem `session_start()`, o array não existe. Não é banco: se o processo/store some, os dados somem."
 
-Se puxarem segurança: cookie `HttpOnly`, `Secure` em HTTPS, `SameSite`. Neste projeto de bolso o default do built-in server basta — mas você **fala** isso.
+Se puxarem segurança: cookie `HttpOnly`, `Secure` em HTTPS, `SameSite`. Neste bolso o default do built-in server basta — mas você **fala** isso.
 
 ## Recapitulando
 
@@ -155,7 +254,7 @@ Se o usuário já tem sessão e abre a home, mostre “Olá, João” e um link 
 <details>
 <summary>Solução</summary>
 
-Depois do `session_start()` no `index.php`, se `!empty($_SESSION['usuario'])`, echo do nome e `<a href="/perfil.php">`. O form pode continuar ali — ou você esconde. Os dois são válidos; na entrevista diga o que escolheu e por quê.
+Já está no `index.php` deste projeto: `if ($usuario)` + link para `/perfil.php`. O exercício é **entender** o que já está lá, ou esconder o form depois do login se achar melhor.
 
 </details>
 
