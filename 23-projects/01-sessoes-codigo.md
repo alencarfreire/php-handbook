@@ -14,7 +14,7 @@ php -S localhost:8000
 
 ## `README.md`
 
-```md
+````markdown
 # 01 — Páginas com sessão
 
 PHP puro. Sem Composer, sem banco, sem framework.
@@ -47,7 +47,7 @@ Abre http://localhost:8000
 - Senha / login de verdade
 - CSRF token
 - Framework
-```
+````
 
 ## `index.php`
 

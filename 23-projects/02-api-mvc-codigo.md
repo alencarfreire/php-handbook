@@ -12,11 +12,11 @@ cd 02-api-mvc
 php -S localhost:8001 -t public
 ```
 
-Curls no walkthrough e no `README.md` abaixo.
+Curls no walkthrough.
 
 ## `README.md`
 
-```md
+````markdown
 # 02 — API MVC + SOLID (PHP puro)
 
 API JSON em PHP 8.2+. Sem Laravel, sem Slim, sem Composer obrigatório.
@@ -77,7 +77,7 @@ curl -s http://localhost:8001/tasks \
 - CORS / rate limit
 - Framework
 - Testes automatizados (o exercício é o curl)
-```
+````
 
 ## `autoload.php`
 
