@@ -25,6 +25,7 @@ export default defineConfig({
     nav: [
       { text: 'Início', link: '/' },
       { text: 'Roadmap', link: '/roadmap' },
+      { text: 'Projetos', link: '/23-projects/' },
       { text: 'Mentoria', link: 'https://codemate.team' },
       { text: 'GitHub', link: 'https://github.com/alencarfreire/php-handbook' }
     ],
@@ -296,6 +297,18 @@ export default defineConfig({
           { text: 'Debugging', link: '/22-practice/03-debugging' },
           { text: 'Refactoring', link: '/22-practice/04-refactoring' },
           { text: 'Real World Cases', link: '/22-practice/05-real-world-cases' }
+        ]
+      },
+      {
+        text: 'Projetos (IA, só neste fork)',
+        collapsed: false,
+        items: [
+          { text: 'O recorte', link: '/23-projects/' },
+          { text: '1. Páginas com sessão', link: '/23-projects/01-sessoes' },
+          { text: '2. API MVC (em breve)', link: '/23-projects/02-api-mvc' },
+          { text: '3. Symfony (em breve)', link: '/23-projects/03-symfony' },
+          { text: '4. Laravel básico (em breve)', link: '/23-projects/04-laravel-basico' },
+          { text: '5. Laravel completo (em breve)', link: '/23-projects/05-laravel-completo' }
         ]
       }
     ],

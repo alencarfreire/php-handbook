@@ -203,3 +203,14 @@
 * [22.3 Debugging](22-practice/03-debugging.md)
 * [22.4 Refactoring](22-practice/04-refactoring.md)
 * [22.5 Real World Cases](22-practice/05-real-world-cases.md)
+
+## 23. Projetos (gerados por IA — só neste fork)
+
+Esta seção **não existe** no handbook original da CodeMate.
+
+* [O recorte](23-projects/index.md)
+* [23.1 Páginas com sessão](23-projects/01-sessoes.md)
+* 23.2 API MVC + SOLID (em desenvolvimento)
+* 23.3 Symfony (em desenvolvimento)
+* 23.4 Laravel básico (em desenvolvimento)
+* 23.5 Laravel completo (em desenvolvimento)

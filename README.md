@@ -104,6 +104,18 @@ Esta edição em português brasileiro foi **traduzida por IA** por [Vinícius F
 
 Pode ter tom irregular. Correção via PR é bem-vinda.
 
+## Projetos de bolso (só neste fork)
+
+Pasta [`23-projects/`](23-projects/index.md) + código em [`projects/`](projects/README.md).
+
+**Gerados por IA.** Não existem no [handbook original da CodeMate](https://github.com/codemateteam/php-handbook). Não abrir PR desses arquivos para o upstream.
+
+1. [Páginas com sessão](23-projects/01-sessoes.md) — PHP puro, no ar
+2. API MVC + SOLID — em desenvolvimento
+3. Symfony — em desenvolvimento
+4. Laravel básico — em desenvolvimento
+5. Laravel completo — em desenvolvimento
+
 ---
 
 **Pronto?** Escolha uma seção na navegação e começa.

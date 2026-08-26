@@ -121,6 +121,9 @@ Feito pela equipe CodeMate com base em entrevistas reais e projetos comerciais. 
 **Tradução pt-BR**
 Esta edição em português brasileiro foi traduzida por IA por [Vinícius Freire](https://github.com/alencarfreire).
 
+**Projetos de bolso (só neste fork)**
+Seção gerada por IA — **não está no repositório original** da CodeMate. Começa em [Projetos](/23-projects/). Primeiro app: PHP puro com [sessão](/23-projects/01-sessoes).
+
 **Open Source**
 O código está no [GitHub](https://github.com/alencarfreire/php-handbook). Contributions são bem-vindas.
 

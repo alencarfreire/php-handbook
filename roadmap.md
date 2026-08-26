@@ -228,6 +228,20 @@ Depois da teoria, fixe na prática:
 
 ---
 
+## Projetos de bolso (só neste fork)
+
+Gerados por IA. **Não existem no handbook original da CodeMate.**
+
+- [Páginas com sessão](/23-projects/01-sessoes) — PHP puro, no ar
+- API MVC + SOLID — em desenvolvimento
+- Symfony — em desenvolvimento
+- Laravel básico — em desenvolvimento
+- Laravel completo — em desenvolvimento
+
+Comece em [Projetos](/23-projects/).
+
+---
+
 ## Extra
 
 **Junior**
